@@ -30,7 +30,7 @@ export const Header = () => {
   return (
     <>
       {/* Top Corner Accent - Behind Header */}
-      <div className="fixed top-0 right-0 z-40 overflow-hidden pointer-events-none hidden lg:block">
+      <div className="fixed top-8 right-0 z-40 overflow-hidden pointer-events-none hidden lg:block">
         <div 
           className="bg-secondary w-[280px] h-[140px]"
           style={{
@@ -41,7 +41,7 @@ export const Header = () => {
 
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          "fixed top-8 left-0 right-0 z-50 transition-all duration-300",
           isScrolled
             ? "bg-background/95 backdrop-blur-md shadow-md py-2"
             : "bg-transparent py-4"

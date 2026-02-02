@@ -10,9 +10,9 @@ import { CTASection } from "@/components/home/CTASection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="min-h-screen pt-8">
       <SponsorBanner />
+      <Header />
       <main>
         <HeroSection />
         <AboutSection />
