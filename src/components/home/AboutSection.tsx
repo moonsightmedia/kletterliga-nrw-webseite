@@ -21,8 +21,8 @@ export const AboutSection = () => {
           {/* Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             <div className="card-kl group">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
-                <Target className="text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
+              <div className="w-16 h-16 mx-auto mb-4 -skew-x-6 bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
+                <Target className="skew-x-6 text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
               </div>
               <h3 className="font-headline text-xl text-primary mb-2">Wettkampfcharakter</h3>
               <p className="text-muted-foreground text-sm">
@@ -32,8 +32,8 @@ export const AboutSection = () => {
             </div>
 
             <div className="card-kl group">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
-                <Users className="text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
+              <div className="w-16 h-16 mx-auto mb-4 -skew-x-6 bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
+                <Users className="skew-x-6 text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
               </div>
               <h3 className="font-headline text-xl text-primary mb-2">Community</h3>
               <p className="text-muted-foreground text-sm">
@@ -43,8 +43,8 @@ export const AboutSection = () => {
             </div>
 
             <div className="card-kl group">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
-                <Trophy className="text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
+              <div className="w-16 h-16 mx-auto mb-4 -skew-x-6 bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
+                <Trophy className="skew-x-6 text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
               </div>
               <h3 className="font-headline text-xl text-primary mb-2">Das Finale</h3>
               <p className="text-muted-foreground text-sm">
