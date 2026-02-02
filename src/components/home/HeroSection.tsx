@@ -1,6 +1,6 @@
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logoColor from "@/assets/logo-color.png";
+import logo from "@/assets/logo.png";
 
 export const HeroSection = () => {
   return (
@@ -96,7 +96,7 @@ export const HeroSection = () => {
             <div className="relative mb-10">
               <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl scale-110" />
               <img 
-                src={logoColor} 
+                src={logo} 
                 alt="Kletterliga NRW Logo" 
                 className="relative w-48 h-48 md:w-64 md:h-64 lg:w-72 lg:h-72 object-contain drop-shadow-2xl"
               />
