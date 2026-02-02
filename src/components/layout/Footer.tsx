@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Mail } from "lucide-react";
-import logoColor from "@/assets/logo-color.png";
+import logo from "@/assets/logo.png";
 
 const footerLinks = {
   navigation: [
@@ -34,7 +34,7 @@ export const Footer = () => {
           <div className="lg:col-span-1">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
               <img 
-                src={logoColor} 
+                src={logo} 
                 alt="Kletterliga NRW" 
                 className="w-14 h-14 object-contain"
               />
@@ -97,10 +97,10 @@ export const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors"
+                  className="w-10 h-10 -skew-x-6 bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors"
                   aria-label={social.label}
                 >
-                  <social.icon size={18} />
+                  <social.icon size={18} className="skew-x-6" />
                 </a>
               ))}
             </div>
@@ -108,11 +108,11 @@ export const Footer = () => {
             {/* Partner Placeholder */}
             <h4 className="font-headline text-lg mb-3 text-accent">Partner</h4>
             <div className="flex gap-3 flex-wrap">
-              <div className="h-10 w-20 rounded bg-primary-foreground/10 flex items-center justify-center">
-                <span className="text-xs text-primary-foreground/50">Logo</span>
+              <div className="h-10 w-20 -skew-x-6 bg-primary-foreground/10 flex items-center justify-center">
+                <span className="skew-x-6 text-xs text-primary-foreground/50">Logo</span>
               </div>
-              <div className="h-10 w-20 rounded bg-primary-foreground/10 flex items-center justify-center">
-                <span className="text-xs text-primary-foreground/50">Logo</span>
+              <div className="h-10 w-20 -skew-x-6 bg-primary-foreground/10 flex items-center justify-center">
+                <span className="skew-x-6 text-xs text-primary-foreground/50">Logo</span>
               </div>
             </div>
           </div>
@@ -127,9 +127,9 @@ export const Footer = () => {
             href="https://app.kletterliga-nrw.de"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent hover:text-accent/80 transition-colors font-medium"
+            className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
           >
-            Zum Teilnehmerbereich →
+            <span className="skew-x-6">Zum Teilnehmerbereich →</span>
           </a>
         </div>
       </div>
