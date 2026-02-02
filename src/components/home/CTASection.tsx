@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button";
 export const CTASection = () => {
   return (
     <section className="section-padding bg-gradient-kl relative overflow-hidden">
-      {/* Background Patterns */}
-      <div className="absolute inset-0">
-        <div className="absolute top-10 left-10 w-40 h-40 rounded-full border-2 border-primary-foreground/10" />
-        <div className="absolute bottom-10 right-10 w-60 h-60 rounded-full border-2 border-primary-foreground/10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-primary-foreground/5" />
+      {/* Background Patterns - Diagonal stripes */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div 
+          className="absolute bg-primary-foreground/[0.03] w-[200%] h-32"
+          style={{ top: '20%', left: '-50%', transform: 'rotate(-15deg)' }}
+        />
+        <div 
+          className="absolute bg-primary-foreground/[0.02] w-[200%] h-24"
+          style={{ top: '60%', left: '-50%', transform: 'rotate(-15deg)' }}
+        />
       </div>
 
       <div className="container-kl relative z-10">
@@ -23,15 +28,16 @@ export const CTASection = () => {
             in die Saison 2026!
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
             <Button
               asChild
+              variant="secondary"
               size="lg"
-              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-10 py-6 text-lg font-semibold"
+              className="h-14 min-w-[200px] px-10 text-lg"
             >
-              <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
-                Jetzt registrieren
-                <ArrowRight className="ml-2" size={20} />
+              <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                <span className="skew-x-6">Jetzt registrieren</span>
+                <ArrowRight className="ml-2 skew-x-6" size={20} />
               </a>
             </Button>
             
@@ -39,10 +45,10 @@ export const CTASection = () => {
               asChild
               variant="outline"
               size="lg"
-              className="border-2 border-accent text-accent hover:bg-accent hover:text-primary rounded-full px-10 py-6 text-lg font-semibold"
+              className="h-14 min-w-[200px] px-10 text-lg border-accent text-accent hover:bg-accent hover:text-primary"
             >
-              <a href="/modus">
-                Regeln & Modus
+              <a href="/modus" className="flex items-center justify-center">
+                <span className="skew-x-6">Regeln & Modus</span>
               </a>
             </Button>
           </div>

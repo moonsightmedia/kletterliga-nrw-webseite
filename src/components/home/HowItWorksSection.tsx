@@ -51,21 +51,21 @@ export const HowItWorksSection = () => {
               {/* Connector Line (desktop) */}
               {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-border z-0">
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-secondary rounded-full" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-secondary -skew-x-6" />
                 </div>
               )}
 
               <div className="card-kl text-center relative z-10 h-full">
                 {/* Number Badge */}
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-block bg-secondary text-secondary-foreground font-headline text-sm px-3 py-1 rounded-full">
-                    {step.number}
+                  <span className="inline-block bg-secondary text-secondary-foreground font-headline text-sm px-3 py-1 -skew-x-6">
+                    <span className="skew-x-6 inline-block">{step.number}</span>
                   </span>
                 </div>
 
                 {/* Icon */}
-                <div className="w-16 h-16 mx-auto mb-4 mt-4 rounded-full bg-accent flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <step.icon className="text-primary" size={28} />
+                <div className="w-16 h-16 mx-auto mb-4 mt-4 bg-accent -skew-x-6 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <step.icon className="text-primary skew-x-6" size={28} />
                 </div>
 
                 {/* Content */}

@@ -42,10 +42,10 @@ export const HeroSection = () => {
           <div className="text-center lg:text-left order-2 lg:order-1">
             {/* Badge */}
             <div 
-              className="inline-flex items-center bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
+              className="inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
             >
-              <span className="w-2 h-2 bg-secondary rounded-full mr-2 animate-pulse" />
-              SAISON 2026
+              <span className="w-2 h-2 bg-secondary mr-2 animate-pulse" />
+              <span className="skew-x-6">SAISON 2026</span>
             </div>
 
             {/* Headline */}
