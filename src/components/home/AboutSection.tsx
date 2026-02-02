@@ -24,7 +24,7 @@ export const AboutSection = () => {
               <div className="w-16 h-16 mx-auto mb-4 -skew-x-6 bg-accent flex items-center justify-center group-hover:bg-secondary transition-colors">
                 <Target className="skew-x-6 text-primary group-hover:text-secondary-foreground transition-colors" size={28} />
               </div>
-              <h3 className="font-headline text-xl text-primary mb-2">Wettkampfcharakter</h3>
+              <h3 className="font-headline text-xl text-primary mb-2">Wettkampf</h3>
               <p className="text-muted-foreground text-sm">
                 Jede Route zählt. Sammle Punkte in deinem eigenen Tempo und miss 
                 dich mit Kletterer:innen aus ganz NRW.
