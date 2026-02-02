@@ -17,14 +17,14 @@ export const SeasonSection = () => {
         {/* Timeline Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Qualifikation */}
-          <div className="bg-gradient-kl rounded-3xl p-8 md:p-10 text-primary-foreground relative overflow-hidden">
+          <div className="bg-gradient-kl rounded-lg p-8 md:p-10 text-primary-foreground relative overflow-hidden">
             {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary-foreground/10 -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-32 h-32 -skew-x-6 bg-primary-foreground/10 -translate-y-1/2 translate-x-1/2" />
             
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                  <Calendar className="text-primary" size={24} />
+                <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
+                  <Calendar className="skew-x-6 text-primary" size={24} />
                 </div>
                 <span className="text-accent font-headline text-lg">QUALIFIKATION</span>
               </div>
@@ -51,14 +51,14 @@ export const SeasonSection = () => {
           </div>
 
           {/* Finale */}
-          <div className="bg-secondary rounded-3xl p-8 md:p-10 text-secondary-foreground relative overflow-hidden">
+          <div className="bg-secondary rounded-lg p-8 md:p-10 text-secondary-foreground relative overflow-hidden">
             {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-secondary-foreground/10 -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-32 h-32 -skew-x-6 bg-secondary-foreground/10 -translate-y-1/2 translate-x-1/2" />
             
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                  <Trophy className="text-primary" size={24} />
+                <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
+                  <Trophy className="skew-x-6 text-primary" size={24} />
                 </div>
                 <span className="text-accent font-headline text-lg">DAS FINALE</span>
               </div>
