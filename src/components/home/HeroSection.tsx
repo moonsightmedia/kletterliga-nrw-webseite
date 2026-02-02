@@ -5,74 +5,80 @@ import logoColor from "@/assets/logo-color.png";
 export const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-accent">
-      {/* Geometric Background Elements - inspired by brand guidelines */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Large blue block - bottom left */}
-        <div className="absolute -bottom-20 -left-20 w-[45%] h-[70%] bg-primary rounded-tr-[4rem]" />
+      {/* Geometric Background Elements - positioned to not overlap content */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large blue block - bottom left, behind content */}
+        <div 
+          className="absolute bottom-0 left-0 w-[40%] md:w-[35%] lg:w-[30%] h-[65%] bg-primary"
+          style={{ borderTopRightRadius: '3rem' }}
+        />
         
-        {/* Brown accent block - top of blue */}
-        <div className="absolute bottom-[55%] left-[5%] w-[25%] h-[30%] bg-secondary rounded-tr-[2rem]" />
+        {/* Brown accent block - on top of blue */}
+        <div 
+          className="absolute bottom-[50%] left-0 w-[20%] md:w-[18%] lg:w-[15%] h-[25%] bg-secondary"
+          style={{ borderTopRightRadius: '2rem' }}
+        />
         
-        {/* Decorative circles */}
-        <div className="absolute top-[15%] right-[10%] w-32 h-32 rounded-full border-4 border-primary/20" />
-        <div className="absolute bottom-[20%] right-[25%] w-20 h-20 rounded-full border-4 border-secondary/30" />
+        {/* Decorative elements - right side */}
+        <div className="hidden lg:block absolute top-[12%] right-[8%] w-36 h-36 rounded-full border-[3px] border-primary/15" />
+        <div className="hidden lg:block absolute top-[45%] right-[3%] w-24 h-24 rounded-full border-[3px] border-primary/10" />
         
-        {/* Abstract climbing hold shape - right side */}
+        {/* Dashed decorative arc */}
         <svg 
-          className="absolute right-[5%] top-1/2 -translate-y-1/2 w-64 h-80 opacity-10"
-          viewBox="0 0 200 300"
+          className="hidden lg:block absolute right-[15%] top-[30%] w-48 h-64 opacity-30"
+          viewBox="0 0 100 150"
           fill="none"
         >
           <path 
-            d="M50 20 L150 40 L180 120 L160 200 L120 280 L60 260 L20 180 L30 80 Z" 
-            fill="hsl(var(--primary))"
-          />
-          <path 
-            d="M70 60 L120 70 L140 120 L130 170 L100 200 L70 190 L50 150 L55 90 Z" 
-            fill="hsl(var(--accent))"
+            d="M90 10 C 100 60, 80 120, 50 145" 
+            stroke="hsl(var(--primary))"
+            strokeWidth="2"
+            strokeDasharray="6 4"
+            fill="none"
           />
         </svg>
         
-        {/* Rope/knot decorative element - subtle */}
+        {/* Subtle rope element */}
         <svg 
-          className="absolute left-[42%] bottom-[10%] w-8 h-40 opacity-20"
-          viewBox="0 0 30 150"
+          className="hidden md:block absolute left-[38%] bottom-[5%] w-6 h-32 opacity-20"
+          viewBox="0 0 24 120"
           fill="none"
         >
           <path 
-            d="M15 0 L15 40 C15 50 25 55 25 65 C25 75 5 80 5 90 C5 100 25 105 25 115 C25 125 15 130 15 150" 
+            d="M12 0 L12 35 C12 45 20 50 20 60 C20 70 4 75 4 85 C4 95 20 100 20 110 L12 120" 
             stroke="hsl(var(--primary))"
-            strokeWidth="4"
+            strokeWidth="3"
             fill="none"
           />
         </svg>
       </div>
 
-      {/* Content */}
-      <div className="container-kl relative z-10 pt-28 pb-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Content - with proper z-index and padding */}
+      <div className="container-kl relative z-10 pt-32 pb-24">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          
           {/* Left Column - Text Content */}
-          <div className="text-left">
+          <div className="pl-4 md:pl-8 lg:pl-12">
             {/* Year Badge */}
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-bold mb-6 animate-fade-in-up">
-              <span>SAISON 2026</span>
+            <div className="inline-flex items-center bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-bold mb-8 animate-fade-in-up">
+              SAISON 2026
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary leading-[1.1] mb-6 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+            <h1 className="font-headline text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-primary leading-[0.95] mb-8 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
               KLETTERLIGA
               <br />
               <span className="text-secondary">NRW</span>
             </h1>
 
             {/* Description */}
-            <p className="text-lg md:text-xl text-primary/80 mb-4 max-w-lg animate-fade-in-up leading-relaxed" style={{ animationDelay: "200ms" }}>
+            <p className="text-base md:text-lg text-primary/70 mb-3 max-w-md animate-fade-in-up leading-relaxed" style={{ animationDelay: "200ms" }}>
               Der landesweite Hallenkletter-Wettkampf mit digitaler Ergebniswertung und großem Finale.
             </p>
 
             {/* Tagline */}
-            <p className="text-xl md:text-2xl font-headline text-secondary mb-10 animate-fade-in-up" style={{ animationDelay: "250ms" }}>
-              Mehrere Hallen. Eine Liga. Ein Finale.
+            <p className="text-lg md:text-xl font-headline text-secondary mb-10 animate-fade-in-up tracking-wide" style={{ animationDelay: "250ms" }}>
+              MEHRERE HALLEN. EINE LIGA. EIN FINALE.
             </p>
 
             {/* CTA Buttons */}
@@ -80,18 +86,18 @@ export const HeroSection = () => {
               <Button
                 asChild
                 size="lg"
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-8 py-6 text-lg font-semibold"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
               >
                 <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
                   Jetzt teilnehmen
-                  <ArrowRight className="ml-2" size={20} />
+                  <ArrowRight className="ml-2" size={18} />
                 </a>
               </Button>
               <Button
                 asChild
                 variant="outline"
                 size="lg"
-                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8 py-6 text-lg font-semibold"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8 py-6 text-base font-semibold transition-all"
               >
                 <a href="#so-funktionierts">
                   So funktioniert's
@@ -100,72 +106,74 @@ export const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right Column - Logo & Visual */}
+          {/* Right Column - Logo */}
           <div className="hidden lg:flex items-center justify-center animate-fade-in-up" style={{ animationDelay: "400ms" }}>
-            <div className="relative">
-              {/* Decorative ring behind logo */}
-              <div className="absolute inset-0 scale-125 rounded-full border-4 border-dashed border-primary/20 animate-[spin_30s_linear_infinite]" />
+            <div className="relative flex flex-col items-center">
+              {/* Dashed rotating ring */}
+              <div 
+                className="absolute w-[380px] h-[380px] rounded-full border-2 border-dashed border-primary/25"
+                style={{ animation: 'spin 40s linear infinite' }}
+              />
               
               {/* Logo */}
               <img 
                 src={logoColor} 
                 alt="Kletterliga NRW Logo" 
-                className="w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain relative z-10 drop-shadow-2xl"
+                className="w-72 h-72 lg:w-80 lg:h-80 object-contain relative z-10"
               />
               
               {/* Stats below logo */}
-              <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-8 text-center">
+              <div className="flex gap-10 mt-10 text-center">
                 <div>
                   <span className="font-headline text-3xl text-primary">6+</span>
-                  <p className="text-sm text-primary/70">Hallen</p>
+                  <p className="text-sm text-primary/60 mt-1">Hallen</p>
                 </div>
-                <div className="w-px h-12 bg-primary/20" />
+                <div className="w-px h-12 bg-primary/20 self-center" />
                 <div>
-                  <span className="font-headline text-3xl text-primary">2</span>
-                  <p className="text-sm text-primary/70">Ligen</p>
+                  <span className="font-headline text-3xl text-secondary">2</span>
+                  <p className="text-sm text-primary/60 mt-1">Ligen</p>
                 </div>
-                <div className="w-px h-12 bg-primary/20" />
+                <div className="w-px h-12 bg-primary/20 self-center" />
                 <div>
                   <span className="font-headline text-3xl text-primary">5+</span>
-                  <p className="text-sm text-primary/70">Klassen</p>
+                  <p className="text-sm text-primary/60 mt-1">Klassen</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Logo - shown only on mobile */}
-        <div className="lg:hidden flex justify-center mt-12 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+        {/* Mobile: Logo & Stats */}
+        <div className="lg:hidden flex flex-col items-center mt-16 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
           <img 
             src={logoColor} 
             alt="Kletterliga NRW Logo" 
-            className="w-48 h-48 object-contain drop-shadow-xl"
+            className="w-44 h-44 object-contain"
           />
-        </div>
-
-        {/* Bottom Stats - Mobile */}
-        <div className="lg:hidden flex justify-center gap-8 mt-8 text-center animate-fade-in-up" style={{ animationDelay: "500ms" }}>
-          <div>
-            <span className="font-headline text-2xl text-primary">6+</span>
-            <p className="text-xs text-primary/70">Hallen</p>
-          </div>
-          <div className="w-px h-10 bg-primary/20" />
-          <div>
-            <span className="font-headline text-2xl text-primary">2</span>
-            <p className="text-xs text-primary/70">Ligen</p>
-          </div>
-          <div className="w-px h-10 bg-primary/20" />
-          <div>
-            <span className="font-headline text-2xl text-primary">5+</span>
-            <p className="text-xs text-primary/70">Klassen</p>
+          
+          <div className="flex gap-8 mt-8 text-center">
+            <div>
+              <span className="font-headline text-2xl text-primary">6+</span>
+              <p className="text-xs text-primary/60">Hallen</p>
+            </div>
+            <div className="w-px h-10 bg-primary/20 self-center" />
+            <div>
+              <span className="font-headline text-2xl text-secondary">2</span>
+              <p className="text-xs text-primary/60">Ligen</p>
+            </div>
+            <div className="w-px h-10 bg-primary/20 self-center" />
+            <div>
+              <span className="font-headline text-2xl text-primary">5+</span>
+              <p className="text-xs text-primary/60">Klassen</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
-        <div className="w-6 h-10 rounded-full border-2 border-primary/50 flex items-start justify-center p-2">
-          <div className="w-1 h-2 bg-primary/50 rounded-full" />
+        <div className="w-6 h-10 rounded-full border-2 border-primary/40 flex items-start justify-center p-2">
+          <div className="w-1 h-2 bg-primary/40 rounded-full" />
         </div>
       </div>
     </section>
