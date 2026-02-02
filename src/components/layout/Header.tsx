@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import logoColor from "@/assets/logo-color.png";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { label: "Start", href: "/" },
@@ -29,8 +29,8 @@ export const Header = () => {
 
   return (
     <>
-      {/* Top Corner Accent - Behind Header */}
-      <div className="fixed top-8 right-0 z-40 overflow-hidden pointer-events-none hidden lg:block">
+      {/* Top Corner Accent - Static, doesn't scroll */}
+      <div className="absolute top-8 right-0 z-30 overflow-hidden pointer-events-none hidden lg:block">
         <div 
           className="bg-secondary w-[280px] h-[140px]"
           style={{
@@ -51,7 +51,7 @@ export const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src={logoColor} 
+              src={logo} 
               alt="Kletterliga NRW" 
               className="w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
             />
