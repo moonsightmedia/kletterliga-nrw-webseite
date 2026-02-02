@@ -5,16 +5,45 @@ import logoColor from "@/assets/logo-color.png";
 export const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center bg-accent overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full border-[3px] border-primary" />
-        <div className="absolute top-40 right-20 w-40 h-40 rounded-full border-[3px] border-primary" />
-        <div className="absolute bottom-32 left-1/4 w-24 h-24 rounded-full border-[3px] border-primary" />
-        <div className="absolute bottom-20 right-1/3 w-52 h-52 rounded-full border-[3px] border-primary" />
+      {/* Paper Texture Effect */}
+      <div 
+        className="absolute inset-0 opacity-[0.4]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Diagonal Stripes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Main diagonal stripe */}
+        <div 
+          className="absolute bg-accent-foreground/[0.06] w-[200%] h-32 md:h-48"
+          style={{
+            top: '30%',
+            left: '-50%',
+            transform: 'rotate(-15deg)',
+          }}
+        />
+        {/* Second diagonal stripe */}
+        <div 
+          className="absolute bg-accent-foreground/[0.04] w-[200%] h-24 md:h-36"
+          style={{
+            top: '55%',
+            left: '-50%',
+            transform: 'rotate(-15deg)',
+          }}
+        />
       </div>
 
-      {/* Subtle Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-accent/80" />
+      {/* Top Corner Accent */}
+      <div className="absolute top-0 right-0 overflow-hidden">
+        <div 
+          className="bg-secondary w-48 h-48 md:w-64 md:h-64"
+          style={{
+            clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
+          }}
+        />
+      </div>
 
       <div className="container-kl relative z-10 py-24 md:py-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
