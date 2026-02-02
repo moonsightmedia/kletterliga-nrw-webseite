@@ -1,80 +1,109 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoColor from "@/assets/logo-color.png";
 
 export const HeroSection = () => {
   return (
-    <section className="min-h-screen flex items-center bg-accent pt-20">
-      <div className="container-kl py-16 md:py-24">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Logo */}
-          <img 
-            src={logoColor} 
-            alt="Kletterliga NRW Logo" 
-            className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-8 animate-fade-in-up"
-          />
+    <section className="relative min-h-screen flex items-center bg-accent overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full border-[3px] border-primary" />
+        <div className="absolute top-40 right-20 w-40 h-40 rounded-full border-[3px] border-primary" />
+        <div className="absolute bottom-32 left-1/4 w-24 h-24 rounded-full border-[3px] border-primary" />
+        <div className="absolute bottom-20 right-1/3 w-52 h-52 rounded-full border-[3px] border-primary" />
+      </div>
 
-          {/* Badge */}
-          <div className="inline-flex items-center bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-bold mb-6 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-            SAISON 2026
-          </div>
+      {/* Subtle Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-accent/80" />
 
-          {/* Headline */}
-          <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary leading-tight mb-6 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
-            KLETTERLIGA <span className="text-secondary">NRW</span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-primary/80 mb-4 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-            Der landesweite Hallenkletter-Wettkampf mit digitaler Ergebniswertung und großem Finale.
-          </p>
-
-          {/* Tagline */}
-          <p className="font-headline text-xl md:text-2xl text-secondary mb-10 animate-fade-in-up" style={{ animationDelay: "250ms" }}>
-            Mehrere Hallen. Eine Liga. Ein Finale.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-            <Button
-              asChild
-              size="lg"
-              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-8 py-6 text-lg font-semibold"
+      <div className="container-kl relative z-10 py-24 md:py-32">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left Content */}
+          <div className="text-center lg:text-left order-2 lg:order-1">
+            {/* Badge */}
+            <div 
+              className="inline-flex items-center bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
             >
-              <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
-                Jetzt teilnehmen
-                <ArrowRight className="ml-2" size={20} />
-              </a>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8 py-6 text-lg font-semibold"
-            >
-              <a href="#so-funktionierts">
-                So funktioniert's
-              </a>
-            </Button>
+              <span className="w-2 h-2 bg-secondary rounded-full mr-2 animate-pulse" />
+              SAISON 2026
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl xl:text-7xl text-primary leading-[1.1] mb-6 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+              KLETTERLIGA{" "}
+              <span className="text-secondary block sm:inline">NRW</span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-primary/75 mb-4 max-w-xl mx-auto lg:mx-0 animate-fade-in-up leading-relaxed" style={{ animationDelay: "150ms" }}>
+              Der landesweite Hallenkletter-Wettkampf mit digitaler Ergebniswertung und großem Finale.
+            </p>
+
+            {/* Tagline */}
+            <p className="font-headline text-xl md:text-2xl text-secondary mb-10 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+              Mehrere Hallen. Eine Liga. Ein Finale.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up" style={{ animationDelay: "250ms" }}>
+              <Button
+                asChild
+                size="lg"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
+                  Jetzt teilnehmen
+                  <ArrowRight className="ml-2" size={20} />
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8 py-6 text-lg font-semibold transition-all duration-300"
+              >
+                <a href="#so-funktionierts">
+                  So funktioniert's
+                </a>
+              </Button>
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex justify-center gap-8 md:gap-12 animate-fade-in-up" style={{ animationDelay: "350ms" }}>
-            <div className="text-center">
-              <span className="font-headline text-3xl md:text-4xl text-primary">6+</span>
-              <p className="text-sm text-primary/60">Hallen</p>
+          {/* Right Content - Logo & Stats */}
+          <div className="order-1 lg:order-2 flex flex-col items-center animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+            {/* Logo with Glow Effect */}
+            <div className="relative mb-10">
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl scale-110" />
+              <img 
+                src={logoColor} 
+                alt="Kletterliga NRW Logo" 
+                className="relative w-48 h-48 md:w-64 md:h-64 lg:w-72 lg:h-72 object-contain drop-shadow-2xl"
+              />
             </div>
-            <div className="w-px h-12 bg-primary/20" />
-            <div className="text-center">
-              <span className="font-headline text-3xl md:text-4xl text-secondary">2</span>
-              <p className="text-sm text-primary/60">Ligen</p>
-            </div>
-            <div className="w-px h-12 bg-primary/20" />
-            <div className="text-center">
-              <span className="font-headline text-3xl md:text-4xl text-primary">5+</span>
-              <p className="text-sm text-primary/60">Klassen</p>
+
+            {/* Stats Cards */}
+            <div className="flex gap-6 md:gap-8">
+              <div className="text-center bg-primary/5 backdrop-blur-sm rounded-2xl px-6 py-4 border border-primary/10">
+                <span className="font-headline text-3xl md:text-4xl text-primary block">6+</span>
+                <p className="text-sm text-primary/60 font-medium">Hallen</p>
+              </div>
+              <div className="text-center bg-secondary/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-secondary/20">
+                <span className="font-headline text-3xl md:text-4xl text-secondary block">2</span>
+                <p className="text-sm text-primary/60 font-medium">Ligen</p>
+              </div>
+              <div className="text-center bg-primary/5 backdrop-blur-sm rounded-2xl px-6 py-4 border border-primary/10">
+                <span className="font-headline text-3xl md:text-4xl text-primary block">5+</span>
+                <p className="text-sm text-primary/60 font-medium">Klassen</p>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden md:block">
+          <a href="#so-funktionierts" className="text-primary/40 hover:text-primary transition-colors">
+            <ChevronDown size={32} />
+          </a>
         </div>
       </div>
     </section>
