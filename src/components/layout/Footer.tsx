@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Mail } from "lucide-react";
+import logoColor from "@/assets/logo-color.png";
 
 const footerLinks = {
   navigation: [
@@ -32,9 +33,11 @@ export const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                <span className="text-secondary-foreground font-headline text-xl">KL</span>
-              </div>
+              <img 
+                src={logoColor} 
+                alt="Kletterliga NRW" 
+                className="w-14 h-14 object-contain"
+              />
               <div>
                 <span className="font-headline text-xl text-primary-foreground tracking-wide">
                   KLETTERLIGA

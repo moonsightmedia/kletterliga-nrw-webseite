@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import logoColor from "@/assets/logo-color.png";
 
 const navItems = [
   { label: "Start", href: "/" },
@@ -31,16 +32,18 @@ export const Header = () => {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-md py-3"
-          : "bg-transparent py-5"
+          ? "bg-background/95 backdrop-blur-md shadow-md py-2"
+          : "bg-transparent py-4"
       )}
     >
       <div className="container-kl flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-            <span className="text-primary-foreground font-headline text-lg md:text-xl">KL</span>
-          </div>
+          <img 
+            src={logoColor} 
+            alt="Kletterliga NRW" 
+            className="w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+          />
           <div className="hidden sm:block">
             <span className="font-headline text-lg md:text-xl text-primary tracking-wide">
               KLETTERLIGA
@@ -68,7 +71,7 @@ export const Header = () => {
         <div className="hidden lg:block">
           <Button
             asChild
-            className="btn-kl-secondary rounded-full px-6"
+            className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-6"
           >
             <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
               Teilnehmen
@@ -107,7 +110,7 @@ export const Header = () => {
           <div className="pt-4 mt-2 border-t border-border">
             <Button
               asChild
-              className="w-full btn-kl-secondary rounded-full"
+              className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full"
             >
               <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
                 Jetzt teilnehmen
