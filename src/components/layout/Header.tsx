@@ -82,10 +82,10 @@ export const Header = () => {
           <div className="hidden lg:block relative z-10">
             <Button
               asChild
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+              className="px-6"
             >
               <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
-                Teilnehmen
+                <span className="skew-x-6">Teilnehmen</span>
               </a>
             </Button>
           </div>
@@ -121,10 +121,11 @@ export const Header = () => {
             <div className="pt-4 mt-2 border-t border-border">
               <Button
                 asChild
-                className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full"
+                variant="secondary"
+                className="w-full"
               >
                 <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
-                  Jetzt teilnehmen
+                  <span className="skew-x-6">Jetzt teilnehmen</span>
                 </a>
               </Button>
             </div>

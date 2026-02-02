@@ -68,22 +68,23 @@ export const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up" style={{ animationDelay: "250ms" }}>
               <Button
                 asChild
+                variant="secondary"
                 size="lg"
-                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+                className="px-8 py-6 text-lg shadow-lg hover:shadow-xl"
               >
                 <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
-                  Jetzt teilnehmen
-                  <ArrowRight className="ml-2" size={20} />
+                  <span className="skew-x-6">Jetzt teilnehmen</span>
+                  <ArrowRight className="ml-2 skew-x-6" size={20} />
                 </a>
               </Button>
               <Button
                 asChild
                 variant="outline"
                 size="lg"
-                className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-8 py-6 text-lg font-semibold transition-all duration-300"
+                className="px-8 py-6 text-lg"
               >
                 <a href="#so-funktionierts">
-                  So funktioniert's
+                  <span className="skew-x-6">So funktioniert's</span>
                 </a>
               </Button>
             </div>
