@@ -7,10 +7,10 @@
    All colors in HSL format
 */
 
-/* Heavitas Font - Placeholder until font files are uploaded */
+/* Heavitas Font */
 @font-face {
   font-family: 'Heavitas';
-  src: local('Heavitas'), local('Arial Black');
+  src: url('/fonts/Heavitas.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
