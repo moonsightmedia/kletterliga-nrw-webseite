@@ -103,18 +103,18 @@ export const HeroSection = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="flex gap-6 md:gap-8">
-              <div className="text-center bg-primary/5 backdrop-blur-sm rounded-2xl px-6 py-4 border border-primary/10">
-                <span className="font-headline text-3xl md:text-4xl text-primary block">6+</span>
-                <p className="text-sm text-primary/60 font-medium">Hallen</p>
+            <div className="flex gap-4 md:gap-6">
+              <div className="text-center bg-primary -skew-x-6 px-6 py-4">
+                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">6+</span>
+                <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Hallen</p>
               </div>
-              <div className="text-center bg-secondary/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-secondary/20">
-                <span className="font-headline text-3xl md:text-4xl text-secondary block">2</span>
-                <p className="text-sm text-primary/60 font-medium">Ligen</p>
+              <div className="text-center bg-secondary -skew-x-6 px-6 py-4">
+                <span className="font-headline text-3xl md:text-4xl text-secondary-foreground block skew-x-6">2</span>
+                <p className="text-sm text-secondary-foreground/70 font-medium skew-x-6">Ligen</p>
               </div>
-              <div className="text-center bg-primary/5 backdrop-blur-sm rounded-2xl px-6 py-4 border border-primary/10">
-                <span className="font-headline text-3xl md:text-4xl text-primary block">5+</span>
-                <p className="text-sm text-primary/60 font-medium">Klassen</p>
+              <div className="text-center bg-primary -skew-x-6 px-6 py-4">
+                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">5+</span>
+                <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Klassen</p>
               </div>
             </div>
           </div>
