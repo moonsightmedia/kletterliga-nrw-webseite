@@ -8,6 +8,8 @@ const gyms = [
   { name: "Boulderwelt Dortmund", city: "Dortmund" },
   { name: "Klettermax Münster", city: "Münster" },
   { name: "DAV Kletterzentrum Bonn", city: "Bonn" },
+  { name: "Kletterfabrik Wuppertal", city: "Wuppertal" },
+  { name: "Stuntwerk Köln", city: "Köln" },
 ];
 
 export const GymsSection = () => {
@@ -25,7 +27,7 @@ export const GymsSection = () => {
         </div>
 
         {/* Gyms Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
           {gyms.map((gym) => (
             <div
               key={gym.name}
