@@ -28,69 +28,32 @@ export const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
       {/* Main Footer Content */}
-      <div className="container-kl section-padding pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+      <div className="container-kl py-16 md:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
           {/* Brand Column */}
-          <div className="lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-3 mb-4">
+          <div>
+            <Link to="/" className="inline-flex items-center gap-4 mb-6">
               <img 
                 src={logo} 
                 alt="Kletterliga NRW" 
-                className="w-14 h-14 object-contain"
+                className="w-16 h-16 md:w-20 md:h-20 object-contain"
               />
               <div>
-                <span className="font-headline text-xl text-primary-foreground tracking-wide">
+                <span className="font-headline text-2xl md:text-3xl text-primary-foreground tracking-wide">
                   KLETTERLIGA
                 </span>
-                <span className="font-headline text-xl text-accent ml-1 tracking-wide">
+                <span className="font-headline text-2xl md:text-3xl text-accent ml-2 tracking-wide">
                   NRW
                 </span>
               </div>
             </Link>
-            <p className="text-primary-foreground/70 text-sm leading-relaxed">
+            <p className="text-primary-foreground/70 text-lg leading-relaxed max-w-md">
               Der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen.
               Mehrere Hallen. Eine Liga. Ein Finale.
             </p>
-          </div>
 
-          {/* Navigation Links */}
-          <div>
-            <h4 className="font-headline text-lg mb-4 text-accent">Navigation</h4>
-            <ul className="space-y-2">
-              {footerLinks.navigation.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-primary-foreground/70 hover:text-accent transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h4 className="font-headline text-lg mb-4 text-accent">Rechtliches</h4>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-primary-foreground/70 hover:text-accent transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Social & Partner */}
-          <div>
-            <h4 className="font-headline text-lg mb-4 text-accent">Folge uns</h4>
-            <div className="flex gap-3 mb-6">
+            {/* Social Links */}
+            <div className="flex gap-3 mt-8">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -104,25 +67,43 @@ export const Footer = () => {
                 </a>
               ))}
             </div>
-            
-            {/* Partner Placeholder */}
-            <h4 className="font-headline text-lg mb-3 text-accent">Partner</h4>
-            <div className="flex gap-3 flex-wrap">
-              <div className="h-10 w-20 -skew-x-6 bg-primary-foreground/10 flex items-center justify-center">
-                <span className="skew-x-6 text-xs text-primary-foreground/50">Logo</span>
-              </div>
-              <div className="h-10 w-20 -skew-x-6 bg-primary-foreground/10 flex items-center justify-center">
-                <span className="skew-x-6 text-xs text-primary-foreground/50">Logo</span>
-              </div>
-            </div>
+          </div>
+
+          {/* Navigation Column */}
+          <div className="md:text-right">
+            <h4 className="font-headline text-xl md:text-2xl mb-6 text-accent">NAVIGATION</h4>
+            <ul className="space-y-3">
+              {footerLinks.navigation.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="text-primary-foreground/80 hover:text-accent transition-colors text-lg md:text-xl"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
       <div className="border-t border-primary-foreground/10">
-        <div className="container-kl py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-primary-foreground/50">
-          <p>© {new Date().getFullYear()} Kletterliga NRW. Alle Rechte vorbehalten.</p>
+        <div className="container-kl py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-4 text-primary-foreground/50">
+            <p>© {new Date().getFullYear()} Kletterliga NRW</p>
+            <span className="hidden md:inline">·</span>
+            {footerLinks.legal.map((link, index) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="hover:text-accent transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
           <a
             href="https://app.kletterliga-nrw.de"
             target="_blank"
