@@ -35,15 +35,6 @@ export const HeroSection = () => {
         />
       </div>
 
-      {/* Top Corner Accent */}
-      <div className="absolute top-0 right-0 overflow-hidden">
-        <div 
-          className="bg-secondary w-24 h-24 md:w-36 md:h-36"
-          style={{
-            clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
-          }}
-        />
-      </div>
 
       <div className="container-kl relative z-10 py-24 md:py-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
