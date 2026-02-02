@@ -70,7 +70,7 @@ export const HeroSection = () => {
                 asChild
                 variant="secondary"
                 size="lg"
-                className="px-8 py-6 text-lg shadow-lg hover:shadow-xl"
+                className="min-w-[200px] px-8 py-6 text-lg shadow-lg hover:shadow-xl"
               >
                 <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
                   <span className="skew-x-6">Jetzt teilnehmen</span>
@@ -81,7 +81,7 @@ export const HeroSection = () => {
                 asChild
                 variant="outline"
                 size="lg"
-                className="px-8 py-6 text-lg"
+                className="min-w-[200px] px-8 py-6 text-lg"
               >
                 <a href="#so-funktionierts">
                   <span className="skew-x-6">So funktioniert's</span>
