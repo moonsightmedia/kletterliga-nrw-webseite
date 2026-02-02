@@ -32,8 +32,8 @@ export const GymsSection = () => {
               className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer"
             >
               {/* Logo Placeholder */}
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors">
-                <span className="font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors">
+              <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors">
+                <span className="skew-x-6 font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors">
                   {gym.name.charAt(0)}
                 </span>
               </div>
