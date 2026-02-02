@@ -35,24 +35,24 @@ export const SponsorBanner = () => {
   }, []);
 
   return (
-    <div className="bg-primary py-3 overflow-hidden">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-primary py-1.5 overflow-hidden">
       <div
         ref={scrollRef}
-        className="flex gap-12 overflow-hidden whitespace-nowrap"
+        className="flex gap-8 overflow-hidden whitespace-nowrap"
         style={{ scrollBehavior: "auto" }}
       >
         {/* Double the sponsors for seamless loop */}
         {[...sponsors, ...sponsors].map((sponsor, index) => (
           <div
             key={`${sponsor.name}-${index}`}
-            className="flex items-center gap-3 flex-shrink-0"
+            className="flex items-center gap-2 flex-shrink-0"
           >
-            <div className="w-10 h-10 -skew-x-6 bg-accent flex items-center justify-center">
-              <span className="skew-x-6 font-headline text-sm text-primary">
+            <div className="w-6 h-6 -skew-x-6 bg-accent flex items-center justify-center">
+              <span className="skew-x-6 font-headline text-xs text-primary">
                 {sponsor.logo}
               </span>
             </div>
-            <span className="text-primary-foreground font-medium text-sm">
+            <span className="text-primary-foreground font-medium text-xs">
               {sponsor.name}
             </span>
           </div>

@@ -4,7 +4,7 @@ import logoColor from "@/assets/logo-color.png";
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center bg-accent overflow-hidden">
+    <section className="relative min-h-screen flex items-center bg-accent overflow-hidden pt-8">
       {/* Paper Texture Effect */}
       <div 
         className="absolute inset-0 opacity-[0.4]"
