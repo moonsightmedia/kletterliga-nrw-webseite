@@ -65,14 +65,14 @@ export const HeroSection = () => {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up" style={{ animationDelay: "250ms" }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-stretch animate-fade-in-up" style={{ animationDelay: "250ms" }}>
               <Button
                 asChild
                 variant="secondary"
                 size="lg"
-                className="min-w-[200px] px-8 py-6 text-lg shadow-lg hover:shadow-xl"
+                className="h-14 min-w-[200px] px-8 text-lg shadow-lg hover:shadow-xl"
               >
-                <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer">
+                <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt teilnehmen</span>
                   <ArrowRight className="ml-2 skew-x-6" size={20} />
                 </a>
@@ -81,9 +81,9 @@ export const HeroSection = () => {
                 asChild
                 variant="outline"
                 size="lg"
-                className="min-w-[200px] px-8 py-6 text-lg"
+                className="h-14 min-w-[200px] px-8 text-lg"
               >
-                <a href="#so-funktionierts">
+                <a href="#so-funktionierts" className="flex items-center justify-center">
                   <span className="skew-x-6">So funktioniert's</span>
                 </a>
               </Button>
