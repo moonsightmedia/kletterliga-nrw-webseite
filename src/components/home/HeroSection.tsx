@@ -38,7 +38,7 @@ export const HeroSection = () => {
       {/* Top Corner Accent */}
       <div className="absolute top-0 right-0 overflow-hidden">
         <div 
-          className="bg-secondary w-48 h-48 md:w-64 md:h-64"
+          className="bg-secondary w-24 h-24 md:w-36 md:h-36"
           style={{
             clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
           }}
