@@ -36,13 +36,13 @@ export const Footer = () => {
               <img 
                 src={logo} 
                 alt="Kletterliga NRW" 
-                className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                className="w-16 h-16 md:w-20 md:h-20 object-contain flex-shrink-0"
               />
-              <div>
-                <span className="font-headline text-2xl md:text-3xl text-primary-foreground tracking-wide">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="font-headline text-xl md:text-2xl text-primary-foreground tracking-wide whitespace-nowrap">
                   KLETTERLIGA
                 </span>
-                <span className="font-headline text-2xl md:text-3xl text-accent ml-2 tracking-wide">
+                <span className="font-headline text-xl md:text-2xl text-accent tracking-wide whitespace-nowrap">
                   NRW
                 </span>
               </div>
