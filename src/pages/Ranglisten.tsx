@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 
 // Placeholder leaderboard data
 const leaderboardPreview = [
-  { rank: 1, name: "Max M.", category: "Herren", points: 1245, icon: Trophy },
-  { rank: 2, name: "Sarah K.", category: "Damen", points: 1180, icon: Medal },
-  { rank: 3, name: "Tim B.", category: "Herren U18", points: 1095, icon: Award },
-  { rank: 4, name: "Laura S.", category: "Damen", points: 1020 },
-  { rank: 5, name: "Jonas W.", category: "Herren", points: 985 },
+  { rank: 1, name: "Max M.", category: "Ü16 männlich", points: 245, icon: Trophy },
+  { rank: 2, name: "Sarah K.", category: "Ü16 weiblich", points: 230, icon: Medal },
+  { rank: 3, name: "Tim B.", category: "U16 männlich", points: 218, icon: Award },
+  { rank: 4, name: "Laura S.", category: "Ü40 weiblich", points: 205 },
+  { rank: 5, name: "Jonas W.", category: "Ü16 männlich", points: 198 },
 ];
 
 const Ranglisten = () => {

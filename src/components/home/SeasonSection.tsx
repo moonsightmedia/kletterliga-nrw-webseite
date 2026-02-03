@@ -32,7 +32,7 @@ export const SeasonSection = () => {
                 </div>
 
                 <h3 className="font-headline text-3xl md:text-4xl mb-4">
-                  März – Oktober 2026
+                  01.05. – 13.09.2026
                 </h3>
 
                 <ul className="space-y-3 text-primary-foreground/80">
@@ -68,7 +68,7 @@ export const SeasonSection = () => {
                 </div>
 
                 <h3 className="font-headline text-3xl md:text-4xl mb-4">
-                  November 2026
+                  Samstag, 03.10.2026
                 </h3>
 
                 <ul className="space-y-3 text-secondary-foreground/80">
