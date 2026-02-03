@@ -71,9 +71,9 @@ export const Header = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200 rounded-lg hover:bg-accent/50"
+                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors duration-200 -skew-x-6"
               >
-                {item.label}
+                <span className="skew-x-6 inline-block">{item.label}</span>
               </Link>
             ))}
           </nav>
@@ -113,9 +113,9 @@ export const Header = () => {
                 key={item.href}
                 to={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 text-base font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
+                className="px-4 py-3 text-base font-medium text-foreground hover:text-primary hover:bg-accent/90 transition-colors -skew-x-6"
               >
-                {item.label}
+                <span className="skew-x-6 inline-block">{item.label}</span>
               </Link>
             ))}
             <div className="pt-4 mt-2 border-t border-border">
