@@ -1,4 +1,5 @@
 import { UserPlus, MapPin, TrendingUp, Award } from "lucide-react";
+import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 
 const steps = [
   {
@@ -32,22 +33,23 @@ export const HowItWorksSection = () => {
     <section id="so-funktionierts" className="section-padding bg-muted/50">
       <div className="container-kl">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <AnimatedSection animation="fade-up" className="text-center mb-16">
           <h2 className="font-headline text-3xl sm:text-4xl md:text-5xl text-primary mb-4">
             SO FUNKTIONIERT'S
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             In vier einfachen Schritten zum Liga-Erlebnis
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <StaggeredAnimation 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          staggerDelay={150}
+          animation="slide-right"
+        >
           {steps.map((step, index) => (
-            <div
-              key={step.number}
-              className="relative group"
-            >
+            <div key={step.number} className="relative group">
               {/* Connector Line (desktop) */}
               {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-border z-0">
@@ -64,7 +66,7 @@ export const HowItWorksSection = () => {
                 </div>
 
                 {/* Icon */}
-                <div className="w-16 h-16 mx-auto mb-4 mt-4 bg-accent -skew-x-6 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 mx-auto mb-4 mt-4 bg-accent -skew-x-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <step.icon className="text-primary skew-x-6" size={28} />
                 </div>
 
@@ -78,7 +80,7 @@ export const HowItWorksSection = () => {
               </div>
             </div>
           ))}
-        </div>
+        </StaggeredAnimation>
       </div>
     </section>
   );
