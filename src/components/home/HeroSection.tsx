@@ -36,7 +36,7 @@ export const HeroSection = () => {
       </div>
 
 
-      <div className="container-kl relative z-10 py-24 md:py-32">
+      <div className="container-kl relative z-10 py-16 md:py-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Content */}
           <div className="text-center lg:text-left order-2 lg:order-1">
