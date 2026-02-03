@@ -51,7 +51,7 @@ const Modus = () => {
                   auf die Route konzentrieren.
                 </p>
                 <div className="bg-primary-foreground/10 p-3 rounded mb-4">
-                  <span className="font-headline text-accent">Schwierigkeitsbereich: UIAA 5–9</span>
+                  <span className="font-headline text-accent text-sm md:text-base break-words">Schwierigkeitsbereich: UIAA 5–9</span>
                 </div>
                 <ul className="space-y-2 text-sm text-primary-foreground/70">
                   <li className="flex items-center gap-2">
@@ -84,7 +84,7 @@ const Modus = () => {
                   garantiert.
                 </p>
                 <div className="bg-secondary-foreground/10 p-3 rounded mb-4">
-                  <span className="font-headline text-accent">Schwierigkeitsbereich: UIAA 5–10</span>
+                  <span className="font-headline text-accent text-sm md:text-base break-words">Schwierigkeitsbereich: UIAA 5–10</span>
                 </div>
                 <ul className="space-y-2 text-sm text-secondary-foreground/70">
                   <li className="flex items-center gap-2">
