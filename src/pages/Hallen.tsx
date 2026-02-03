@@ -3,63 +3,56 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { MapPin, ExternalLink } from "lucide-react";
 
-// Placeholder gyms - will be replaced with real data
+// Confirmed participating gyms according to concept 2026
 const gyms = [
   { 
-    name: "Kletterhalle Köln", 
+    name: "Canyon Chorweiler", 
     city: "Köln",
-    address: "Musterstraße 1, 50667 Köln",
-    website: "https://example.com",
+    address: "Chorweiler, Köln",
+    website: "https://www.canyon-chorweiler.de",
     leagues: ["Toprope", "Vorstieg"],
   },
   { 
-    name: "Boulderbar Düsseldorf", 
-    city: "Düsseldorf",
-    address: "Beispielweg 12, 40210 Düsseldorf",
-    website: "https://example.com",
-    leagues: ["Vorstieg"],
-  },
-  { 
-    name: "Kletterzentrum Essen", 
-    city: "Essen",
-    address: "Kletterplatz 5, 45127 Essen",
-    website: "https://example.com",
+    name: "2T Lindlar", 
+    city: "Lindlar",
+    address: "Lindlar",
+    website: "https://www.2t-lindlar.de",
     leagues: ["Toprope", "Vorstieg"],
   },
   { 
-    name: "Boulderwelt Dortmund", 
-    city: "Dortmund",
-    address: "Sportstraße 23, 44135 Dortmund",
-    website: "https://example.com",
-    leagues: ["Toprope"],
-  },
-  { 
-    name: "Klettermax Münster", 
-    city: "Münster",
-    address: "Bergweg 7, 48143 Münster",
-    website: "https://example.com",
+    name: "DAV Alpinzentrum Bielefeld", 
+    city: "Bielefeld",
+    address: "Bielefeld",
+    website: "https://www.alpenverein-bielefeld.de",
     leagues: ["Toprope", "Vorstieg"],
   },
   { 
-    name: "DAV Kletterzentrum Bonn", 
-    city: "Bonn",
-    address: "Alpinstraße 15, 53111 Bonn",
-    website: "https://example.com",
-    leagues: ["Toprope", "Vorstieg"],
-  },
-  { 
-    name: "Kletterfabrik Wuppertal", 
+    name: "Wupperwände Wuppertal", 
     city: "Wuppertal",
-    address: "Industriestraße 88, 42103 Wuppertal",
-    website: "https://example.com",
-    leagues: ["Vorstieg"],
+    address: "Wuppertal",
+    website: "https://www.wupperwaende.de",
+    leagues: ["Toprope", "Vorstieg"],
   },
   { 
-    name: "Stuntwerk Köln", 
-    city: "Köln",
-    address: "Mediapark 6, 50670 Köln",
-    website: "https://example.com",
-    leagues: ["Toprope"],
+    name: "Chimpanzodrome Frechen", 
+    city: "Frechen",
+    address: "Frechen",
+    website: "https://www.chimpanzodrome.de",
+    leagues: ["Toprope", "Vorstieg"],
+  },
+  { 
+    name: "Kletterwelt Sauerland", 
+    city: "Sauerland",
+    address: "Sauerland",
+    website: "https://www.kletterwelt-sauerland.de",
+    leagues: ["Toprope", "Vorstieg"],
+  },
+  { 
+    name: "DAV Kletterzentrum Siegerland", 
+    city: "Siegen",
+    address: "Siegerland",
+    website: "https://www.dav-siegerland.de",
+    leagues: ["Toprope", "Vorstieg"],
   },
 ];
 

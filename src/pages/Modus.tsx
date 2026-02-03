@@ -1,49 +1,29 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-import { CheckCircle, Star, Users, Trophy, Calculator } from "lucide-react";
+import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target } from "lucide-react";
 
-const scoringRules = [
-  {
-    difficulty: "4 – 5",
-    points: "10 Punkte",
-    flash: "+2 Punkte",
-  },
-  {
-    difficulty: "5+ – 6a",
-    points: "15 Punkte",
-    flash: "+3 Punkte",
-  },
-  {
-    difficulty: "6a+ – 6c",
-    points: "25 Punkte",
-    flash: "+5 Punkte",
-  },
-  {
-    difficulty: "6c+ – 7a+",
-    points: "40 Punkte",
-    flash: "+8 Punkte",
-  },
-  {
-    difficulty: "7b – 7c+",
-    points: "60 Punkte",
-    flash: "+12 Punkte",
-  },
-  {
-    difficulty: "8a+",
-    points: "80+ Punkte",
-    flash: "+16 Punkte",
-  },
+// Zone-based scoring according to concept 2026
+const zoneScoring = [
+  { zone: "Zone 0", description: "Start / Nicht erreicht", points: "0 Punkte" },
+  { zone: "Zone 1", description: "Erste Zone erreicht", points: "2,5 Punkte" },
+  { zone: "Zone 2", description: "Zweite Zone erreicht", points: "5 Punkte" },
+  { zone: "Zone 3", description: "Dritte Zone erreicht", points: "7,5 Punkte" },
+  { zone: "Top", description: "Route beendet", points: "10 Punkte" },
 ];
 
-const categories = [
-  { name: "Damen U18", description: "Weiblich, unter 18 Jahre" },
-  { name: "Herren U18", description: "Männlich, unter 18 Jahre" },
-  { name: "Damen", description: "Weiblich, ab 18 Jahre" },
-  { name: "Herren", description: "Männlich, ab 18 Jahre" },
-  { name: "Damen Ü40", description: "Weiblich, ab 40 Jahre" },
-  { name: "Herren Ü40", description: "Männlich, ab 40 Jahre" },
+// Main categories (finalrelevant)
+const mainCategories = [
+  { name: "U16 weiblich", description: "Unter 16 Jahre", finalRelevant: true },
+  { name: "U16 männlich", description: "Unter 16 Jahre", finalRelevant: true },
+  { name: "Ü16 weiblich", description: "16–39 Jahre", finalRelevant: true },
+  { name: "Ü16 männlich", description: "16–39 Jahre", finalRelevant: true },
+  { name: "Ü40 weiblich", description: "Ab 40 Jahre", finalRelevant: true },
+  { name: "Ü40 männlich", description: "Ab 40 Jahre", finalRelevant: true },
 ];
+
+// Additional age group rankings
+const additionalCategories = ["U10", "U12", "U16", "Ü16", "Ü40", "Ü50"];
 
 const Modus = () => {
   return (
@@ -79,6 +59,9 @@ const Modus = () => {
                   Das Seil läuft bereits durch die Umlenkung – du kannst dich voll 
                   auf die Route konzentrieren.
                 </p>
+                <div className="bg-primary-foreground/10 p-3 rounded mb-4">
+                  <span className="font-headline text-accent">Schwierigkeitsbereich: UIAA 5–9</span>
+                </div>
                 <ul className="space-y-2 text-sm text-primary-foreground/70">
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
@@ -109,6 +92,9 @@ const Modus = () => {
                   bevorzugen. Du klippst das Seil selbst ein – echtes Kletterfeeling 
                   garantiert.
                 </p>
+                <div className="bg-secondary-foreground/10 p-3 rounded mb-4">
+                  <span className="font-headline text-accent">Schwierigkeitsbereich: UIAA 5–10</span>
+                </div>
                 <ul className="space-y-2 text-sm text-secondary-foreground/70">
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
@@ -116,7 +102,7 @@ const Modus = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
-                    Höhere Punktwertung
+                    Höhere Schwierigkeitsgrade
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
@@ -129,52 +115,86 @@ const Modus = () => {
         </div>
       </section>
 
-      {/* Scoring Section */}
+      {/* Zone Scoring Section */}
       <section className="section-padding bg-muted/50">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
-              PUNKTEVERGABE
+              ZONENWERTUNG
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Je schwieriger die Route, desto mehr Punkte. Flash-Bonus für Routen im ersten Versuch!
+              Punkte werden pro erreichter Zone vergeben – je höher du kommst, desto mehr Punkte!
             </p>
           </AnimatedSection>
 
-          <AnimatedSection animation="fade-up" delay={100}>
-            <div className="max-w-3xl mx-auto overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-primary text-primary-foreground">
-                    <th className="px-6 py-4 text-left font-headline">Schwierigkeit</th>
-                    <th className="px-6 py-4 text-left font-headline">Punkte</th>
-                    <th className="px-6 py-4 text-left font-headline">Flash-Bonus</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scoringRules.map((rule, index) => (
-                    <tr 
-                      key={rule.difficulty}
-                      className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
-                    >
-                      <td className="px-6 py-4 font-medium">{rule.difficulty}</td>
-                      <td className="px-6 py-4">{rule.points}</td>
-                      <td className="px-6 py-4 text-secondary font-medium">{rule.flash}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </AnimatedSection>
+          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-start">
+            {/* Zone Visualization */}
+            <AnimatedSection animation="slide-left" delay={100}>
+              <div className="bg-background p-8 rounded-lg">
+                <h3 className="font-headline text-xl text-primary mb-6 text-center">Zoneneinteilung einer Route</h3>
+                <div className="relative max-w-xs mx-auto">
+                  {/* Route visualization */}
+                  <div className="space-y-0">
+                    {[
+                      { label: "TOP", points: "10", color: "bg-secondary text-secondary-foreground" },
+                      { label: "Zone 3", points: "7,5", color: "bg-secondary/70 text-secondary-foreground" },
+                      { label: "Zone 2", points: "5", color: "bg-secondary/50 text-primary" },
+                      { label: "Zone 1", points: "2,5", color: "bg-secondary/30 text-primary" },
+                      { label: "Start", points: "0", color: "bg-muted text-muted-foreground" },
+                    ].map((zone, index) => (
+                      <div 
+                        key={zone.label}
+                        className={`${zone.color} p-4 flex justify-between items-center ${
+                          index === 0 ? 'rounded-t-lg' : ''
+                        } ${index === 4 ? 'rounded-b-lg' : ''}`}
+                      >
+                        <span className="font-headline">{zone.label}</span>
+                        <span className="font-bold">{zone.points} Pkt</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
 
+            {/* Points Table */}
+            <AnimatedSection animation="slide-right" delay={100}>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-primary text-primary-foreground">
+                      <th className="px-6 py-4 text-left font-headline">Zone</th>
+                      <th className="px-6 py-4 text-left font-headline">Beschreibung</th>
+                      <th className="px-6 py-4 text-right font-headline">Punkte</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {zoneScoring.map((zone, index) => (
+                      <tr 
+                        key={zone.zone}
+                        className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
+                      >
+                        <td className="px-6 py-4 font-headline text-primary">{zone.zone}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{zone.description}</td>
+                        <td className="px-6 py-4 text-right font-bold text-secondary">{zone.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AnimatedSection>
+          </div>
+
+          {/* Flash Bonus */}
           <AnimatedSection animation="fade-up" delay={200} className="mt-8 max-w-3xl mx-auto">
             <div className="bg-accent/50 p-6 rounded-lg flex items-start gap-4">
               <Star className="text-secondary flex-shrink-0 mt-1" size={24} />
               <div>
-                <h4 className="font-headline text-lg text-primary mb-2">Flash-Bonus</h4>
+                <h4 className="font-headline text-lg text-primary mb-2">Flash-Bonus: +1 Punkt</h4>
                 <p className="text-muted-foreground text-sm">
-                  Schaffst du eine Route im ersten Versuch, erhältst du automatisch den 
-                  Flash-Bonus obendrauf. Das macht strategisches Klettern noch spannender!
+                  Schaffst du eine Route im ersten Versuch (Flash), erhältst du pauschal 
+                  <strong className="text-secondary"> +1 Punkt</strong> obendrauf. Das belohnt sauberes, 
+                  überlegtes Klettern von Anfang an!
                 </p>
               </div>
             </div>
@@ -194,21 +214,197 @@ const Modus = () => {
             </p>
           </AnimatedSection>
 
+          {/* Main Categories */}
+          <AnimatedSection animation="fade-up" delay={100} className="mb-8">
+            <h3 className="font-headline text-xl text-primary mb-4 text-center">
+              Hauptwertungsklassen <span className="text-secondary">(finalrelevant)</span>
+            </h3>
+          </AnimatedSection>
+
           <StaggeredAnimation 
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto"
+            className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-12"
             staggerDelay={75}
             animation="scale"
           >
-            {categories.map((category) => (
+            {mainCategories.map((category) => (
               <div 
                 key={category.name}
-                className="card-kl text-center p-6"
+                className="card-kl text-center p-6 border-2 border-secondary/30"
               >
+                <Trophy className="mx-auto mb-2 text-secondary" size={20} />
                 <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
                 <p className="text-muted-foreground text-xs">{category.description}</p>
               </div>
             ))}
           </StaggeredAnimation>
+
+          {/* Additional Rankings */}
+          <AnimatedSection animation="fade-up" delay={200}>
+            <div className="max-w-3xl mx-auto bg-muted/50 p-6 rounded-lg">
+              <h3 className="font-headline text-lg text-primary mb-3 text-center">
+                Zusätzliche Altersklassenranglisten
+              </h3>
+              <p className="text-muted-foreground text-sm text-center mb-4">
+                Ohne Finalrelevanz – für detailliertere Vergleiche innerhalb der Altersgruppen
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                {additionalCategories.map((cat) => (
+                  <span 
+                    key={cat}
+                    className="inline-block bg-background text-muted-foreground text-sm px-4 py-2 -skew-x-6 border border-border"
+                  >
+                    <span className="skew-x-6 inline-block">{cat}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Stage/Monthly Ranking Section */}
+      <section className="section-padding bg-muted/50">
+        <div className="container-kl">
+          <AnimatedSection animation="fade-up" className="text-center mb-12">
+            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+              ETAPPENWERTUNG
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Monatliche Zwischenstände für noch mehr Spannung
+            </p>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <AnimatedSection animation="fade-up" delay={100}>
+              <div className="card-kl p-6 text-center h-full">
+                <Calendar className="mx-auto mb-4 text-secondary" size={32} />
+                <h3 className="font-headline text-lg text-primary mb-2">Monatliche Etappen</h3>
+                <p className="text-muted-foreground text-sm">
+                  Jeden Monat werden Zwischenstände ermittelt und veröffentlicht.
+                </p>
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection animation="fade-up" delay={150}>
+              <div className="card-kl p-6 text-center h-full">
+                <Award className="mx-auto mb-4 text-secondary" size={32} />
+                <h3 className="font-headline text-lg text-primary mb-2">Etappensieger</h3>
+                <p className="text-muted-foreground text-sm">
+                  Pro Liga und Wertungsklasse werden monatliche Etappensieger:innen gekürt.
+                </p>
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection animation="fade-up" delay={200}>
+              <div className="card-kl p-6 text-center h-full">
+                <Trophy className="mx-auto mb-4 text-secondary" size={32} />
+                <h3 className="font-headline text-lg text-primary mb-2">Kleine Preise</h3>
+                <p className="text-muted-foreground text-sm">
+                  Etappensieger:innen erhalten kleine Preise als Anerkennung.
+                </p>
+              </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* Finale Section */}
+      <section className="section-padding bg-background">
+        <div className="container-kl">
+          <AnimatedSection animation="fade-up" className="text-center mb-12">
+            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+              DAS FINALE
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Der Höhepunkt der Saison – <strong className="text-secondary">Samstag, 03.10.2026</strong>
+            </p>
+          </AnimatedSection>
+
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Qualification */}
+            <AnimatedSection animation="fade-up" delay={100}>
+              <div className="bg-gradient-kl rounded-lg p-6 text-primary-foreground">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center flex-shrink-0">
+                    <Target className="skew-x-6 text-primary" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-headline text-xl mb-2">Qualifikation</h3>
+                    <ul className="space-y-2 text-primary-foreground/80 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span>Die <strong className="text-accent">Top 30</strong> je Wertungsklasse qualifizieren sich</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span><strong className="text-accent">Wildcard-Plätze</strong> für alle, die alle teilnehmenden Hallen besucht haben</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span>Verbindliche Anmeldung bis <strong className="text-accent">27.09.2026</strong></span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Semi-Final */}
+            <AnimatedSection animation="fade-up" delay={150}>
+              <div className="bg-secondary rounded-lg p-6 text-secondary-foreground">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center flex-shrink-0">
+                    <Clock className="skew-x-6 text-primary" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-headline text-xl mb-2">Halbfinale</h3>
+                    <ul className="space-y-2 text-secondary-foreground/80 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span><strong className="text-accent">5 Routen</strong> müssen geklettert werden</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span>Maximal <strong className="text-accent">5 Minuten</strong> pro Route</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                        <span>Zeitfenster: <strong className="text-accent">10:00 – 16:00 Uhr</strong></span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Final */}
+            <AnimatedSection animation="fade-up" delay={200}>
+              <div className="bg-accent/50 rounded-lg p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 -skew-x-6 bg-secondary flex items-center justify-center flex-shrink-0">
+                    <Trophy className="skew-x-6 text-secondary-foreground" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-headline text-xl text-primary mb-2">Finale</h3>
+                    <ul className="space-y-2 text-muted-foreground text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-secondary mt-0.5 flex-shrink-0" />
+                        <span>Die <strong className="text-secondary">Top 6</strong> aus dem Halbfinale ziehen ins Finale ein</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-secondary mt-0.5 flex-shrink-0" />
+                        <span>Je <strong className="text-secondary">eine Finalroute</strong> pro Wertungsklasse</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-secondary mt-0.5 flex-shrink-0" />
+                        <span>Live-Wettkampf mit Publikum und Siegerehrung</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 
@@ -227,8 +423,20 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg">
                   <h3 className="font-headline text-xl text-primary mb-3">Anmeldung</h3>
                   <p className="text-muted-foreground">
-                    Die Registrierung erfolgt über den Teilnehmerbereich. Ein gültiger 
-                    Hallenausweis in mindestens einer der teilnehmenden Hallen ist erforderlich.
+                    Die Registrierung erfolgt über den Teilnehmerbereich. Du benötigst einen 
+                    Account und Zugang zu mindestens einer der teilnehmenden Hallen.
+                  </p>
+                </div>
+
+                <div className="bg-background p-6 rounded-lg border-2 border-secondary/30">
+                  <div className="flex items-center gap-3 mb-3">
+                    <MapPin className="text-secondary" size={24} />
+                    <h3 className="font-headline text-xl text-primary">Hallen-Code System</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Um Ergebnisse eintragen zu können, musst du zunächst einen <strong className="text-secondary">hallenspezifischen Code</strong> vor Ort 
+                    in der Halle erhalten. Diesen Code gibst du einmalig in deinem Account ein, um die 
+                    Halle freizuschalten. Erst dann kannst du Routen aus dieser Halle werten lassen.
                   </p>
                 </div>
 
@@ -244,16 +452,8 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg">
                   <h3 className="font-headline text-xl text-primary mb-3">Wertungszeitraum</h3>
                   <p className="text-muted-foreground">
-                    Die Qualifikationsphase läuft von März bis Oktober. Nur Routen, die 
-                    in diesem Zeitraum geklettert werden, zählen für die Rangliste.
-                  </p>
-                </div>
-
-                <div className="bg-background p-6 rounded-lg">
-                  <h3 className="font-headline text-xl text-primary mb-3">Finale</h3>
-                  <p className="text-muted-foreground">
-                    Die bestplatzierten Kletterer:innen jeder Wertungsklasse qualifizieren 
-                    sich für das Finale im November. Details werden rechtzeitig bekannt gegeben.
+                    Die Qualifikationsphase läuft vom <strong className="text-secondary">01.05.2026</strong> bis zum <strong className="text-secondary">13.09.2026</strong>. 
+                    Nur Routen, die in diesem Zeitraum geklettert werden, zählen für die Rangliste.
                   </p>
                 </div>
               </div>
