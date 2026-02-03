@@ -53,9 +53,9 @@ export const Header = () => {
             <img 
               src={logo} 
               alt="Kletterliga NRW" 
-              className="w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+              className="hidden sm:block w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
             />
-            <div className="hidden sm:block">
+            <div>
               <span className="font-headline text-lg md:text-xl text-primary tracking-wide">
                 KLETTERLIGA
               </span>
