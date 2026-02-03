@@ -180,13 +180,19 @@ const Ranglisten = () => {
           <AnimatedSection animation="fade-up" delay={50}>
             <div className="max-w-3xl mx-auto mb-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                {/* League Tabs */}
-                <Tabs value={league} onValueChange={(v) => setLeague(v as "toprope" | "vorstieg")}>
-                  <TabsList className="bg-background -skew-x-6">
-                    <TabsTrigger value="toprope" className="skew-x-6 font-headline">
+              {/* League Tabs */}
+              <Tabs value={league} onValueChange={(v) => setLeague(v as "toprope" | "vorstieg")}>
+                  <TabsList className="bg-background -skew-x-6 rounded-none p-0 h-auto">
+                    <TabsTrigger 
+                      value="toprope" 
+                      className="skew-x-6 font-headline rounded-none px-6 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    >
                       Toprope
                     </TabsTrigger>
-                    <TabsTrigger value="vorstieg" className="skew-x-6 font-headline">
+                    <TabsTrigger 
+                      value="vorstieg" 
+                      className="skew-x-6 font-headline rounded-none px-6 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    >
                       Vorstieg
                     </TabsTrigger>
                   </TabsList>
@@ -194,10 +200,10 @@ const Ranglisten = () => {
 
                 {/* Category Select */}
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-[180px] -skew-x-6 bg-background border-primary/20">
-                    <SelectValue placeholder="Wertungsklasse" className="skew-x-6" />
+                  <SelectTrigger className="w-[180px] -skew-x-6 bg-background border-primary/20 rounded-none">
+                    <span className="skew-x-6">{categories.find(c => c.value === category)?.label}</span>
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-primary/20">
+                  <SelectContent className="bg-background border-primary/20 rounded-none">
                     {categories.map((cat) => (
                       <SelectItem key={cat.value} value={cat.value}>
                         {cat.label}
