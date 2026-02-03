@@ -37,7 +37,7 @@ const Modus = () => {
           </AnimatedSection>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <AnimatedSection animation="slide-left">
+            <AnimatedSection animation="fade-up">
               <div className="bg-gradient-kl rounded-lg p-8 text-primary-foreground h-full">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
@@ -70,7 +70,7 @@ const Modus = () => {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection animation="slide-right">
+            <AnimatedSection animation="fade-up" delay={100}>
               <div className="bg-secondary rounded-lg p-8 text-secondary-foreground h-full">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
