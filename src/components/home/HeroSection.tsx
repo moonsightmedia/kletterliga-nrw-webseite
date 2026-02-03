@@ -40,9 +40,9 @@ export const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Content */}
           <div className="text-center lg:text-left order-2 lg:order-1">
-            {/* Badge */}
+            {/* Badge - hidden on mobile, shown on desktop */}
             <div 
-              className="inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
+              className="hidden lg:inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
             >
               <span className="w-2 h-2 bg-secondary mr-2 animate-pulse" />
               <span className="skew-x-6">SAISON 2026</span>
@@ -92,6 +92,14 @@ export const HeroSection = () => {
 
           {/* Right Content - Logo & Stats */}
           <div className="order-1 lg:order-2 flex flex-col items-center animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+            {/* Badge - shown on mobile above logo, hidden on desktop */}
+            <div 
+              className="lg:hidden inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-6 shadow-lg"
+            >
+              <span className="w-2 h-2 bg-secondary mr-2 animate-pulse" />
+              <span className="skew-x-6">SAISON 2026</span>
+            </div>
+
             {/* Logo with Glow Effect */}
             <div className="relative mb-10">
               <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl scale-110" />
