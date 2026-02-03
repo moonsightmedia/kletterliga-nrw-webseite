@@ -71,7 +71,7 @@ export const Header = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors duration-200 -skew-x-6"
+                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors duration-200 -skew-x-6 whitespace-nowrap"
               >
                 <span className="skew-x-6 inline-block">{item.label}</span>
               </Link>
