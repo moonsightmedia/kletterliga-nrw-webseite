@@ -203,9 +203,9 @@ const Ranglisten = () => {
                   <SelectTrigger className="w-[180px] -skew-x-6 bg-background border-primary/20 rounded-none">
                     <span className="skew-x-6">{categories.find(c => c.value === category)?.label}</span>
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-primary/20 rounded-none">
+                  <SelectContent className="bg-background border-primary/20 rounded-none p-0">
                     {categories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
+                      <SelectItem key={cat.value} value={cat.value} className="rounded-none">
                         {cat.label}
                       </SelectItem>
                     ))}
