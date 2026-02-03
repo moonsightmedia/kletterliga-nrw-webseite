@@ -77,9 +77,9 @@ export const Footer = () => {
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="text-primary-foreground/80 hover:text-accent transition-colors text-lg md:text-xl"
+                    className="block text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-lg md:text-xl px-3 py-2 -skew-x-6"
                   >
-                    {link.label}
+                    <span className="skew-x-6 inline-block">{link.label}</span>
                   </Link>
                 </li>
               ))}
