@@ -113,7 +113,7 @@ export const HeroSection = () => {
             {/* Stats Cards */}
             <div className="flex gap-4 md:gap-6">
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
-                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">6+</span>
+                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">6</span>
                 <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Hallen</p>
               </div>
               <div className="text-center bg-secondary -skew-x-6 px-6 py-4">
@@ -121,7 +121,7 @@ export const HeroSection = () => {
                 <p className="text-sm text-secondary-foreground/70 font-medium skew-x-6">Ligen</p>
               </div>
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
-                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">5+</span>
+                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">5</span>
                 <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Klassen</p>
               </div>
             </div>
