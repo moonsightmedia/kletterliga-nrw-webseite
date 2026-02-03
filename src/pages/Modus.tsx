@@ -3,15 +3,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target } from "lucide-react";
 
-// Zone-based scoring according to concept 2026
-const zoneScoring = [
-  { zone: "Zone 0", description: "Start / Nicht erreicht", points: "0 Punkte" },
-  { zone: "Zone 1", description: "Erste Zone erreicht", points: "2,5 Punkte" },
-  { zone: "Zone 2", description: "Zweite Zone erreicht", points: "5 Punkte" },
-  { zone: "Zone 3", description: "Dritte Zone erreicht", points: "7,5 Punkte" },
-  { zone: "Top", description: "Route beendet", points: "10 Punkte" },
-];
-
 // Main categories (finalrelevant)
 const mainCategories = [
   { name: "U16 weiblich", description: "Unter 16 Jahre", finalRelevant: true },
@@ -127,63 +118,33 @@ const Modus = () => {
             </p>
           </AnimatedSection>
 
-          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-start">
-            {/* Zone Visualization */}
-            <AnimatedSection animation="slide-left" delay={100}>
-              <div className="bg-background p-8 rounded-lg">
-                <h3 className="font-headline text-xl text-primary mb-6 text-center">Zoneneinteilung einer Route</h3>
-                <div className="relative max-w-xs mx-auto">
-                  {/* Route visualization */}
-                  <div className="space-y-0">
-                    {[
-                      { label: "TOP", points: "10", color: "bg-secondary text-secondary-foreground" },
-                      { label: "Zone 3", points: "7,5", color: "bg-secondary/70 text-secondary-foreground" },
-                      { label: "Zone 2", points: "5", color: "bg-secondary/50 text-primary" },
-                      { label: "Zone 1", points: "2,5", color: "bg-secondary/30 text-primary" },
-                      { label: "Start", points: "0", color: "bg-muted text-muted-foreground" },
-                    ].map((zone, index) => (
-                      <div 
-                        key={zone.label}
-                        className={`${zone.color} p-4 flex justify-between items-center ${
-                          index === 0 ? 'rounded-t-lg' : ''
-                        } ${index === 4 ? 'rounded-b-lg' : ''}`}
-                      >
-                        <span className="font-headline">{zone.label}</span>
-                        <span className="font-bold">{zone.points} Pkt</span>
-                      </div>
-                    ))}
-                  </div>
+          <AnimatedSection animation="fade-up" delay={100} className="max-w-md mx-auto">
+            <div className="bg-background p-8 rounded-lg">
+              <h3 className="font-headline text-xl text-primary mb-6 text-center">Zoneneinteilung einer Route</h3>
+              <div className="relative">
+                {/* Route visualization */}
+                <div className="space-y-0">
+                  {[
+                    { label: "TOP", points: "10", color: "bg-secondary text-secondary-foreground" },
+                    { label: "Zone 3", points: "7,5", color: "bg-secondary/70 text-secondary-foreground" },
+                    { label: "Zone 2", points: "5", color: "bg-secondary/50 text-primary" },
+                    { label: "Zone 1", points: "2,5", color: "bg-secondary/30 text-primary" },
+                    { label: "Start", points: "0", color: "bg-muted text-muted-foreground" },
+                  ].map((zone, index) => (
+                    <div 
+                      key={zone.label}
+                      className={`${zone.color} p-4 flex justify-between items-center ${
+                        index === 0 ? 'rounded-t-lg' : ''
+                      } ${index === 4 ? 'rounded-b-lg' : ''}`}
+                    >
+                      <span className="font-headline">{zone.label}</span>
+                      <span className="font-bold">{zone.points} Pkt</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </AnimatedSection>
-
-            {/* Points Table */}
-            <AnimatedSection animation="slide-right" delay={100}>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-primary text-primary-foreground">
-                      <th className="px-6 py-4 text-left font-headline">Zone</th>
-                      <th className="px-6 py-4 text-left font-headline">Beschreibung</th>
-                      <th className="px-6 py-4 text-right font-headline">Punkte</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {zoneScoring.map((zone, index) => (
-                      <tr 
-                        key={zone.zone}
-                        className={index % 2 === 0 ? "bg-background" : "bg-muted/30"}
-                      >
-                        <td className="px-6 py-4 font-headline text-primary">{zone.zone}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{zone.description}</td>
-                        <td className="px-6 py-4 text-right font-bold text-secondary">{zone.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </AnimatedSection>
-          </div>
+            </div>
+          </AnimatedSection>
 
           {/* Flash Bonus */}
           <AnimatedSection animation="fade-up" delay={200} className="mt-8 max-w-3xl mx-auto">
