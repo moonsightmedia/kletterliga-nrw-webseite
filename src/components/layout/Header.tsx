@@ -55,18 +55,13 @@ export const Header = () => {
               alt="Kletterliga NRW" 
               className="hidden sm:block w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
             />
-            <div className="flex flex-col">
-              <span className="sm:hidden text-xs font-headline text-secondary tracking-wide">
-                SAISON 2026
+            <div>
+              <span className="font-headline text-lg md:text-xl text-primary tracking-wide">
+                KLETTERLIGA
               </span>
-              <div>
-                <span className="font-headline text-lg md:text-xl text-primary tracking-wide">
-                  KLETTERLIGA
-                </span>
-                <span className="font-headline text-lg md:text-xl text-secondary ml-1 tracking-wide">
-                  NRW
-                </span>
-              </div>
+              <span className="font-headline text-lg md:text-xl text-secondary ml-1 tracking-wide">
+                NRW
+              </span>
             </div>
           </Link>
 
