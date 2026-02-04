@@ -1,17 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-
-// Placeholder gyms - will be replaced with real data
-const gyms = [
-  { name: "Kletterhalle Köln", city: "Köln" },
-  { name: "Boulderbar Düsseldorf", city: "Düsseldorf" },
-  { name: "Kletterzentrum Essen", city: "Essen" },
-  { name: "Boulderwelt Dortmund", city: "Dortmund" },
-  { name: "Klettermax Münster", city: "Münster" },
-  { name: "DAV Kletterzentrum Bonn", city: "Bonn" },
-  { name: "Kletterfabrik Wuppertal", city: "Wuppertal" },
-  { name: "Stuntwerk Köln", city: "Köln" },
-];
+import { gyms } from "@/data/gyms";
 
 export const GymsSection = () => {
   return (
@@ -41,7 +30,7 @@ export const GymsSection = () => {
               {/* Logo Placeholder */}
               <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300">
                 <span className="skew-x-6 font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                  {gym.name.charAt(0)}
+                  {gym.shortName ?? gym.name.charAt(0)}
                 </span>
               </div>
               

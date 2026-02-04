@@ -2,6 +2,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 // Main categories (finalrelevant)
 const mainCategories = [
@@ -17,6 +18,13 @@ const mainCategories = [
 const additionalCategories = ["U10", "U12", "U16", "Ü16", "Ü40", "Ü50"];
 
 const Modus = () => {
+  usePageMeta({
+    title: "Modus & Regeln",
+    description:
+      "Wertung, Punktevergabe, Wertungsklassen und Teilnahmebedingungen der Kletterliga NRW.",
+    canonicalPath: "/modus",
+  });
+
   return (
     <PageLayout>
       <PageHeader 

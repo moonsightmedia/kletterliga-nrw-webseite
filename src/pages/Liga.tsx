@@ -2,6 +2,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { Target, Users, MapPin, Trophy, Zap, Heart } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const values = [
   {
@@ -37,6 +38,13 @@ const values = [
 ];
 
 const Liga = () => {
+  usePageMeta({
+    title: "Die Liga",
+    description:
+      "Die Vision, Werte und das Team hinter der Kletterliga NRW.",
+    canonicalPath: "/liga",
+  });
+
   return (
     <PageLayout>
       <PageHeader 

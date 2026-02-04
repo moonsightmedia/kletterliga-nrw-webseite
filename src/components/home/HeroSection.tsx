@@ -1,6 +1,61 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
+import { gyms } from "@/data/gyms";
+
+const useCountUp = (
+  value: number,
+  {
+    duration = 1500,
+    respectReducedMotion = true,
+  }: { duration?: number; respectReducedMotion?: boolean } = {}
+) => {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (respectReducedMotion && typeof window !== "undefined") {
+      const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReduced) {
+        setDisplay(value);
+        return;
+      }
+    }
+
+    let startTime: number | null = null;
+    let raf = 0;
+    const step = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      if (progress >= 1) {
+        setDisplay(value);
+      } else {
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplay(Math.min(value, Math.floor(eased * value)));
+      }
+      if (progress < 1) {
+        raf = window.requestAnimationFrame(step);
+      }
+    };
+    raf = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(raf);
+  }, [value, duration, respectReducedMotion]);
+
+  return display;
+};
+
+const CountUp = ({
+  value,
+  className,
+  respectReducedMotion = true,
+}: {
+  value: number;
+  className?: string;
+  respectReducedMotion?: boolean;
+}) => {
+  const display = useCountUp(value, { respectReducedMotion });
+  return <span className={className}>{display}</span>;
+};
 
 export const HeroSection = () => {
   return (
@@ -113,15 +168,27 @@ export const HeroSection = () => {
             {/* Stats Cards */}
             <div className="flex gap-4 md:gap-6">
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
-                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">6</span>
+                <CountUp
+                  value={gyms.length}
+                  className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6"
+                  respectReducedMotion={false}
+                />
                 <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Hallen</p>
               </div>
               <div className="text-center bg-secondary -skew-x-6 px-6 py-4">
-                <span className="font-headline text-3xl md:text-4xl text-secondary-foreground block skew-x-6">2</span>
+                <CountUp
+                  value={2}
+                  className="font-headline text-3xl md:text-4xl text-secondary-foreground block skew-x-6"
+                  respectReducedMotion={false}
+                />
                 <p className="text-sm text-secondary-foreground/70 font-medium skew-x-6">Ligen</p>
               </div>
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
-                <span className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6">5</span>
+                <CountUp
+                  value={5}
+                  className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6"
+                  respectReducedMotion={false}
+                />
                 <p className="text-sm text-primary-foreground/70 font-medium skew-x-6">Klassen</p>
               </div>
             </div>
@@ -129,7 +196,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden md:block">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 animate-bounce hidden md:block">
           <a href="#so-funktionierts" className="text-primary/40 hover:text-primary transition-colors">
             <ChevronDown size={32} />
           </a>

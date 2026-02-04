@@ -5,6 +5,7 @@ import { AnimatedSection } from "@/hooks/useScrollAnimation";
 import { ExternalLink, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import {
   Select,
   SelectContent,
@@ -115,6 +116,13 @@ const categories = [
 ];
 
 const Ranglisten = () => {
+  usePageMeta({
+    title: "Ranglisten",
+    description:
+      "Aktuelle Platzierungen der Kletterliga NRW und Zugang zum Teilnehmerbereich.",
+    canonicalPath: "/ranglisten",
+  });
+
   const [league, setLeague] = useState<"toprope" | "vorstieg">("toprope");
   const [category, setCategory] = useState("ue16-m");
 

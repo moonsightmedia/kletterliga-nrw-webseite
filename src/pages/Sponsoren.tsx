@@ -2,23 +2,17 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { Heart, Mail } from "lucide-react";
-
-// Placeholder sponsors - will be replaced with real data
-const mainSponsors = [
-  { name: "Hauptsponsor 1", tier: "Gold" },
-  { name: "Hauptsponsor 2", tier: "Gold" },
-];
-
-const sponsors = [
-  { name: "Sponsor 1", tier: "Silber" },
-  { name: "Sponsor 2", tier: "Silber" },
-  { name: "Sponsor 3", tier: "Silber" },
-  { name: "Sponsor 4", tier: "Bronze" },
-  { name: "Sponsor 5", tier: "Bronze" },
-  { name: "Sponsor 6", tier: "Bronze" },
-];
+import { mainSponsors, partnerSponsors } from "@/data/sponsors";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Sponsoren = () => {
+  usePageMeta({
+    title: "Sponsoren & Partner",
+    description:
+      "Unsere Unterstützer der Kletterliga NRW – Sponsoren und Partner, die den Wettkampf möglich machen.",
+    canonicalPath: "/sponsoren",
+  });
+
   return (
     <PageLayout>
       <PageHeader 
@@ -40,22 +34,33 @@ const Sponsoren = () => {
             staggerDelay={150}
             animation="scale"
           >
-            {mainSponsors.map((sponsor) => (
-              <div 
-                key={sponsor.name}
-                className="card-kl flex flex-col items-center justify-center text-center p-8 md:p-12 group"
-              >
-                <div className="w-32 h-32 -skew-x-6 bg-accent/50 flex items-center justify-center mb-6 group-hover:bg-secondary transition-colors duration-300">
-                  <span className="skew-x-6 font-headline text-4xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                    {sponsor.name.charAt(0)}
+            {mainSponsors.map((sponsor) => {
+              const Wrapper = sponsor.website ? "a" : "div";
+              return (
+                <Wrapper
+                  key={sponsor.name}
+                  href={sponsor.website}
+                  target={sponsor.website ? "_blank" : undefined}
+                  rel={sponsor.website ? "noopener noreferrer" : undefined}
+                  className="card-kl flex flex-col items-center justify-center text-center p-8 md:p-12 group"
+                >
+                  <div className="w-32 h-32 -skew-x-6 bg-accent/50 flex items-center justify-center mb-6 group-hover:bg-secondary transition-colors duration-300">
+                    <span className="skew-x-6 font-headline text-4xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                      {sponsor.name.charAt(0)}
+                    </span>
+                  </div>
+                  <h3 className="font-headline text-xl text-primary mb-2">{sponsor.name}</h3>
+                  <span className="inline-block bg-secondary text-secondary-foreground text-xs px-3 py-1 -skew-x-6">
+                    <span className="skew-x-6 inline-block">{sponsor.tier}</span>
                   </span>
-                </div>
-                <h3 className="font-headline text-xl text-primary mb-2">{sponsor.name}</h3>
-                <span className="inline-block bg-secondary text-secondary-foreground text-xs px-3 py-1 -skew-x-6">
-                  <span className="skew-x-6 inline-block">{sponsor.tier}</span>
-                </span>
-              </div>
-            ))}
+                  {sponsor.isPlaceholder && (
+                    <span className="mt-3 text-xs text-muted-foreground">
+                      Platzhalter – Logo & Link folgen
+                    </span>
+                  )}
+                </Wrapper>
+              );
+            })}
           </StaggeredAnimation>
         </div>
       </section>
@@ -74,20 +79,31 @@ const Sponsoren = () => {
             staggerDelay={75}
             animation="fade-up"
           >
-            {sponsors.map((sponsor) => (
-              <div 
-                key={sponsor.name}
-                className="card-kl flex flex-col items-center justify-center text-center p-6 group"
-              >
-                <div className="w-20 h-20 -skew-x-6 bg-accent/30 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors duration-300">
-                  <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                    {sponsor.name.charAt(0)}
-                  </span>
-                </div>
-                <h3 className="font-medium text-primary mb-1">{sponsor.name}</h3>
-                <span className="text-xs text-muted-foreground">{sponsor.tier}</span>
-              </div>
-            ))}
+            {partnerSponsors.map((sponsor) => {
+              const Wrapper = sponsor.website ? "a" : "div";
+              return (
+                <Wrapper
+                  key={sponsor.name}
+                  href={sponsor.website}
+                  target={sponsor.website ? "_blank" : undefined}
+                  rel={sponsor.website ? "noopener noreferrer" : undefined}
+                  className="card-kl flex flex-col items-center justify-center text-center p-6 group"
+                >
+                  <div className="w-20 h-20 -skew-x-6 bg-accent/30 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors duration-300">
+                    <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                      {sponsor.name.charAt(0)}
+                    </span>
+                  </div>
+                  <h3 className="font-medium text-primary mb-1">{sponsor.name}</h3>
+                  <span className="text-xs text-muted-foreground">{sponsor.tier}</span>
+                  {sponsor.isPlaceholder && (
+                    <span className="mt-2 text-[11px] text-muted-foreground">
+                      Platzhalter
+                    </span>
+                  )}
+                </Wrapper>
+              );
+            })}
           </StaggeredAnimation>
         </div>
       </section>

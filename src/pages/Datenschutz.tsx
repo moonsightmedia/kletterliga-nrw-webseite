@@ -1,8 +1,16 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { legalInfo } from "@/data/legal";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Datenschutz = () => {
+  usePageMeta({
+    title: "Datenschutz",
+    description: "Datenschutzhinweise der Kletterliga NRW.",
+    canonicalPath: "/datenschutz",
+  });
+
   return (
     <PageLayout>
       <PageHeader title="DATENSCHUTZ" />
@@ -30,9 +38,7 @@ const Datenschutz = () => {
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">2. Hosting</h2>
               <p className="text-muted-foreground">
-                Wir hosten die Inhalte unserer Website bei folgendem Anbieter: 
-                Die Server des Hosters befinden sich in Deutschland. Details entnehmen 
-                Sie der Datenschutzerklärung des Hosters.
+                {legalInfo.hostingNote}
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">3. Allgemeine Hinweise und Pflichtinformationen</h2>
@@ -48,10 +54,10 @@ const Datenschutz = () => {
               <h3 className="font-headline text-xl text-primary mt-6 mb-3">Hinweis zur verantwortlichen Stelle</h3>
               <p className="text-muted-foreground">
                 Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br /><br />
-                Kletterliga NRW<br />
-                Musterstraße 123<br />
-                12345 Musterstadt<br /><br />
-                E-Mail: datenschutz@kletterliga-nrw.de
+                {legalInfo.organizationName}<br />
+                {legalInfo.addressLines[0]}<br />
+                {legalInfo.addressLines[1]}<br /><br />
+                E-Mail: {legalInfo.privacyEmail}
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">4. Datenerfassung auf dieser Website</h2>

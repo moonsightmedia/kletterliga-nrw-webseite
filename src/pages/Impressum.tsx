@@ -1,8 +1,16 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { legalInfo } from "@/data/legal";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Impressum = () => {
+  usePageMeta({
+    title: "Impressum",
+    description: "Rechtliche Angaben zur Kletterliga NRW.",
+    canonicalPath: "/impressum",
+  });
+
   return (
     <PageLayout>
       <PageHeader title="IMPRESSUM" />
@@ -13,21 +21,35 @@ const Impressum = () => {
             <div className="max-w-3xl mx-auto prose prose-lg">
               <h2 className="font-headline text-2xl text-primary mb-4">Angaben gemäß § 5 TMG</h2>
               <p className="text-muted-foreground">
-                Kletterliga NRW<br />
-                Musterstraße 123<br />
-                12345 Musterstadt
+                {legalInfo.organizationName}<br />
+                {legalInfo.addressLines[0]}<br />
+                {legalInfo.addressLines[1]}
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
-                E-Mail: info@kletterliga-nrw.de
+                E-Mail: {legalInfo.contactEmail}
+              </p>
+
+              <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Entwicklung</h2>
+              <p className="text-muted-foreground">
+                Diese Website und App wurden von{" "}
+                <a
+                  href="https://moonsight.media"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline"
+                >
+                  moonsight.media
+                </a>{" "}
+                entwickelt.
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
               <p className="text-muted-foreground">
-                Max Mustermann<br />
-                Musterstraße 123<br />
-                12345 Musterstadt
+                {legalInfo.responsiblePerson}<br />
+                {legalInfo.responsibleAddressLines[0]}<br />
+                {legalInfo.responsibleAddressLines[1]}
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Haftung für Inhalte</h2>

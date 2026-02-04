@@ -5,8 +5,16 @@ import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { SeasonSection } from "@/components/home/SeasonSection";
 import { GymsSection } from "@/components/home/GymsSection";
 import { CTASection } from "@/components/home/CTASection";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Index = () => {
+  usePageMeta({
+    title: "Kletterliga NRW",
+    description:
+      "Der landesweite Hallenkletter-Wettkampf in NRW. Mehrere Hallen. Eine Liga. Ein Finale.",
+    canonicalPath: "/",
+  });
+
   return (
     <PageLayout>
       <HeroSection />

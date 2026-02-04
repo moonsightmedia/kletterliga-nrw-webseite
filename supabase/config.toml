@@ -1,0 +1,6 @@
+# Projektweite Supabase-Konfiguration
+# Siehe https://supabase.com/docs/guides/functions/function-configuration
+
+# create-gym-admin: JWT-Check deaktivieren (Function prüft intern Liga-Admin)
+[functions.create-gym-admin]
+verify_jwt = false

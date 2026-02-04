@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**URL**: https://kletterliga-nrw.de
 
 ## How can I edit this code?
 
@@ -10,7 +10,7 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Simply visit the [Lovable Project](https://lovable.dev/projects/) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
 
@@ -60,9 +60,25 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Content sources
+
+- `src/data/gyms.ts` – teilnehmende Hallen (Konzeptliste, zu aktualisieren)
+- `src/data/sponsors.ts` – Sponsoren/Partner (Logos & Links ergänzen)
+- `src/data/legal.ts` – Impressum/Datenschutz (rechtlich prüfen)
+- `src/pages/Ranglisten.tsx` – Ranglisten-Vorschau, finale Daten aus Teilnehmerbereich-API
+
+## Implementation notes
+
+- Ranglisten: API-Integration aus Teilnehmerbereich definieren und `leaderboardData` ersetzen.
+- Sponsoren: Logos/Links liefern, `src/data/sponsors.ts` pflegen, Platzhalter entfernen.
+- Hallen: Liste in `src/data/gyms.ts` aktualisieren, optional Koordinaten ergänzen.
+- Rechtliches: `src/data/legal.ts` mit finalen Betreiberangaben befüllen.
+- Kontakt: Formular nutzt Mailto; für echtes Backend SMTP/API ergänzen.
+- SEO: `usePageMeta` verwenden, OG-Bild (`public/og-image.jpg`) bereitstellen.
+
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Simply open [Lovable](https://lovable.dev/projects/) and click on Share -> Publish.
 
 ## Can I connect a custom domain to my Lovable project?
 
