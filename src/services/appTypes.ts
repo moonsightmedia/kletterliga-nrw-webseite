@@ -20,6 +20,7 @@ export type Gym = {
   address: string | null;
   website: string | null;
   logo_url: string | null;
+  opening_hours: string | null;
 };
 
 export type Route = {
@@ -75,6 +76,13 @@ export type GymAdmin = {
   created_at: string;
 };
 
+export type Stage = {
+  key: string;
+  label: string;
+  start: string;
+  end: string;
+};
+
 export type AdminSettings = {
   id: string;
   season_year: string | null;
@@ -83,8 +91,16 @@ export type AdminSettings = {
   stage_months: string[] | null;
   age_u16_max: number | null;
   age_u40_min: number | null;
+  age_cutoff_date: string | null;
   class_labels: Record<string, string> | null;
   finale_enabled: boolean | null;
+  finale_date: string | null;
+  finale_registration_deadline: string | null;
+  top_30_per_class: number | null;
+  wildcards_per_class: number | null;
+  preparation_start: string | null;
+  preparation_end: string | null;
+  stages: Stage[] | null;
   updated_at: string;
 };
 
@@ -95,5 +111,11 @@ export type ProfileOverride = {
   override_gender: string | null;
   override_class: string | null;
   reason: string | null;
+  created_at: string;
+};
+
+export type FinaleRegistration = {
+  id: string;
+  profile_id: string;
   created_at: string;
 };

@@ -1,14 +1,35 @@
 import { Calendar, MapPin, Trophy } from "lucide-react";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { useSeasonSettings } from "@/services/seasonSettings";
 
 export const SeasonSection = () => {
+  const { getSeasonYear, getQualificationStart, getQualificationEnd, getFinaleDate } = useSeasonSettings();
+  const seasonYear = getSeasonYear();
+  const qualStart = getQualificationStart();
+  const qualEnd = getQualificationEnd();
+  const finaleDate = getFinaleDate();
+  
+  const formatDateRange = (start: string | null, end: string | null) => {
+    if (!start || !end) return "Termine folgen";
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    return `${startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} – ${endDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+  };
+  
+  const formatFinaleDate = (date: string | null) => {
+    if (!date) return "Termin folgt";
+    const d = new Date(date);
+    const dayName = d.toLocaleDateString("de-DE", { weekday: "long" });
+    return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}, ${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+  };
+  
   return (
     <section className="section-padding bg-background">
       <div className="container-kl">
         {/* Section Header */}
         <AnimatedSection animation="fade-up" className="text-center mb-16">
           <h2 className="font-headline text-3xl sm:text-4xl md:text-5xl text-primary mb-4">
-            SAISON 2026
+            SAISON {seasonYear}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Die kommende Saison steht in den Startlöchern
@@ -68,7 +89,7 @@ export const SeasonSection = () => {
                 </div>
 
                 <h3 className="font-headline text-3xl md:text-4xl mb-4">
-                  Samstag, 03.10.2026
+                  {formatFinaleDate(finaleDate)}
                 </h3>
 
                 <ul className="space-y-3 text-secondary-foreground/80">

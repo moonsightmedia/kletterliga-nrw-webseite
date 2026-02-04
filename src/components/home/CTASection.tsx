@@ -1,8 +1,12 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { useSeasonSettings } from "@/services/seasonSettings";
 
 export const CTASection = () => {
+  const { getSeasonYear } = useSeasonSettings();
+  const seasonYear = getSeasonYear();
+  
   return (
     <section className="section-padding bg-gradient-kl relative overflow-hidden">
       {/* Background Patterns - Diagonal stripes */}
@@ -29,7 +33,7 @@ export const CTASection = () => {
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 leading-relaxed">
               Werde Teil der Kletterliga NRW und erlebe Wettkampf-Atmosphäre 
               in deinem eigenen Tempo. Registriere dich jetzt und starte 
-              in die Saison 2026!
+              in die Saison {seasonYear}!
             </p>
           </AnimatedSection>
 

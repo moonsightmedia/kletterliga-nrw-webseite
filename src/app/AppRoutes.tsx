@@ -5,6 +5,7 @@ import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
 import Login from "@/app/pages/auth/Login";
 import Register from "@/app/pages/auth/Register";
+import GymInvite from "@/app/pages/auth/GymInvite";
 import Home from "@/app/pages/participant/Home";
 import Gyms from "@/app/pages/participant/Gyms";
 import GymDetail from "@/app/pages/participant/GymDetail";
@@ -26,6 +27,8 @@ import LeagueGyms from "@/app/pages/admin/LeagueGyms";
 import LeagueClasses from "@/app/pages/admin/LeagueClasses";
 import LeagueResults from "@/app/pages/admin/LeagueResults";
 import LeagueParticipants from "@/app/pages/admin/LeagueParticipants";
+import LeagueFinaleRegistrations from "@/app/pages/admin/LeagueFinaleRegistrations";
+import LeagueRoutes from "@/app/pages/admin/LeagueRoutes";
 import LeagueSettings from "@/app/pages/admin/LeagueSettings";
 
 export const appRoutes = (
@@ -33,6 +36,7 @@ export const appRoutes = (
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
+      <Route path="/app/invite/gym/:token" element={<GymInvite />} />
     </Route>
 
       <Route
@@ -146,10 +150,26 @@ export const appRoutes = (
           }
         />
         <Route
+          path="league/routes"
+          element={
+            <RoleGuard allow={["league_admin"]}>
+              <LeagueRoutes />
+            </RoleGuard>
+          }
+        />
+        <Route
           path="league/results"
           element={
             <RoleGuard allow={["league_admin"]}>
               <LeagueResults />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="league/finale"
+          element={
+            <RoleGuard allow={["league_admin"]}>
+              <LeagueFinaleRegistrations />
             </RoleGuard>
           }
         />

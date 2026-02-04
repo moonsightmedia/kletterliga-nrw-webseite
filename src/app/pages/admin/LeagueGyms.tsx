@@ -3,11 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { createGymAdmin, listGymAdminsByGym, listGyms, listProfiles, updateGym } from "@/services/appApi";
+import { createGymAdmin, listGymAdminsByGym, listGyms, listProfiles, updateGym, deleteGym, inviteGymAdmin } from "@/services/appApi";
 import type { Profile } from "@/services/appTypes";
 import { supabase } from "@/services/supabase";
 import type { Gym } from "@/services/appTypes";
+import { Building2, Plus, UserPlus, Edit2, Trash2, Mail } from "lucide-react";
 
 const LeagueGyms = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -16,6 +30,10 @@ const LeagueGyms = () => {
   const [selectedGym, setSelectedGym] = useState<string>("");
   const [selectedAdmin, setSelectedAdmin] = useState<string>("");
   const [creating, setCreating] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [editingGym, setEditingGym] = useState<Gym | null>(null);
+  const [deletingGym, setDeletingGym] = useState<Gym | null>(null);
+  const [createMode, setCreateMode] = useState<"direct" | "invite">("direct");
   const [form, setForm] = useState({
     name: "",
     city: "",
@@ -25,25 +43,40 @@ const LeagueGyms = () => {
     adminEmail: "",
     adminPassword: "",
   });
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [editForm, setEditForm] = useState({
+    name: "",
+    city: "",
+    address: "",
+    website: "",
+    logo_url: "",
+  });
 
   useEffect(() => {
     listGyms().then(({ data }) => setGyms(data ?? []));
     listProfiles().then(({ data }) => setProfiles(data ?? []));
   }, []);
 
-  useEffect(() => {
-    const loadAdmins = async () => {
-      const mapping: Record<string, string[]> = {};
-      await Promise.all(
-        gyms.map(async (gym) => {
-          const { data } = await listGymAdminsByGym(gym.id);
+  const loadAdmins = async (gymsToLoad: Gym[] = gyms) => {
+    if (gymsToLoad.length === 0) return;
+    const mapping: Record<string, string[]> = {};
+    await Promise.all(
+      gymsToLoad.map(async (gym) => {
+        const { data, error } = await listGymAdminsByGym(gym.id);
+        if (error) {
+          console.error(`Error loading admins for gym ${gym.id}:`, error);
+          mapping[gym.id] = [];
+        } else {
           mapping[gym.id] = (data ?? []).map((item) => item.profile_id);
-        })
-      );
-      setAdminsByGym(mapping);
-    };
-    if (gyms.length) {
-      loadAdmins();
+        }
+      })
+    );
+    setAdminsByGym(mapping);
+  };
+
+  useEffect(() => {
+    if (gyms.length > 0) {
+      loadAdmins(gyms);
     }
   }, [gyms]);
 
@@ -78,7 +111,13 @@ const LeagueGyms = () => {
       return;
     }
     if (data?.gym) {
-      setGyms((prev) => [data.gym as Gym, ...prev]);
+      const newGym = data.gym as Gym;
+      setGyms((prev) => {
+        const updated = [newGym, ...prev];
+        // Reload admins immediately with updated gyms list
+        loadAdmins(updated);
+        return updated;
+      });
     }
     setForm({
       name: "",
@@ -90,6 +129,25 @@ const LeagueGyms = () => {
       adminPassword: "",
     });
     toast({ title: "Halle erstellt", description: "Der Hallen-Admin kann sich jetzt anmelden." });
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail || !inviteEmail.includes("@")) {
+      toast({ title: "Ungültige E-Mail", description: "Bitte gib eine gültige E-Mail-Adresse ein." });
+      return;
+    }
+    setInviting(true);
+    const { data, error } = await inviteGymAdmin(inviteEmail);
+    setInviting(false);
+    if (error) {
+      toast({ title: "Fehler", description: error.message });
+      return;
+    }
+    setInviteEmail("");
+    toast({
+      title: "Einladung gesendet",
+      description: `Eine E-Mail wurde an ${inviteEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
+    });
   };
 
   const handleAssignAdmin = async () => {
@@ -109,86 +167,189 @@ const LeagueGyms = () => {
       ...prev,
       [selectedGym]: [...(prev[selectedGym] ?? []), selectedAdmin],
     }));
+    setSelectedGym("");
+    setSelectedAdmin("");
     toast({ title: "Zugeordnet", description: "Admin wurde der Halle zugeordnet." });
+    // Reload admins to ensure consistency
+    loadAdmins(gyms);
+  };
+
+  const handleEdit = (gym: Gym) => {
+    setEditingGym(gym);
+    setEditForm({
+      name: gym.name,
+      city: gym.city ?? "",
+      address: gym.address ?? "",
+      website: gym.website ?? "",
+      logo_url: gym.logo_url ?? "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingGym) return;
+    const { data, error } = await updateGym(editingGym.id, editForm);
+    if (error) {
+      toast({ title: "Fehler", description: error.message });
+      return;
+    }
+    if (data) {
+      setGyms((prev) => prev.map((gym) => (gym.id === editingGym.id ? data : gym)));
+      setEditingGym(null);
+      toast({ title: "Gespeichert", description: "Halle wurde aktualisiert." });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingGym) return;
+    const { error } = await deleteGym(deletingGym.id);
+    if (error) {
+      toast({ title: "Fehler", description: error.message });
+      return;
+    }
+    setGyms((prev) => {
+      const updated = prev.filter((gym) => gym.id !== deletingGym.id);
+      // Reload admins immediately with updated gyms list
+      loadAdmins(updated);
+      return updated;
+    });
+    setDeletingGym(null);
+    toast({ title: "Gelöscht", description: "Halle wurde gelöscht." });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-3xl text-primary">Hallenverwaltung</h1>
-          <p className="text-sm text-muted-foreground mt-2">Alle Partnerhallen im Überblick.</p>
+      {/* Hero Section */}
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat'
+          }}></div>
         </div>
-      </div>
-
-      <Card className="p-4 border-border/60 space-y-4">
-        <div className="text-xs uppercase tracking-widest text-secondary">Neue Halle + Login</div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="gymName">Hallenname</Label>
-            <Input
-              id="gymName"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gymCity">Stadt</Label>
-            <Input
-              id="gymCity"
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="gymAddress">Adresse</Label>
-            <Input
-              id="gymAddress"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gymWebsite">Webseite</Label>
-            <Input
-              id="gymWebsite"
-              value={form.website}
-              onChange={(e) => setForm({ ...form, website: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gymLogo">Logo URL</Label>
-            <Input
-              id="gymLogo"
-              value={form.logo_url}
-              onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="adminEmail">Admin E-Mail</Label>
-            <Input
-              id="adminEmail"
-              value={form.adminEmail}
-              onChange={(e) => setForm({ ...form, adminEmail: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="adminPassword">Admin Passwort</Label>
-            <Input
-              id="adminPassword"
-              type="password"
-              value={form.adminPassword}
-              onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
-            />
+        <div className="relative p-4 md:p-6 lg:p-8">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Hallenverwaltung</h1>
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+                  Liga
+                </Badge>
+              </div>
+              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+                Alle Partnerhallen im Überblick · {gyms.length} {gyms.length === 1 ? 'Halle' : 'Hallen'}
+              </p>
+            </div>
           </div>
         </div>
-        <Button onClick={handleCreate} disabled={creating}>
-          <span className="skew-x-6">{creating ? "Erstelle..." : "Halle anlegen"}</span>
-        </Button>
       </Card>
 
-      <Card className="p-4 border-border/60 space-y-4">
-        <div className="text-xs uppercase tracking-widest text-secondary">Admin zu Halle zuordnen</div>
+      {/* Neue Halle erstellen */}
+      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Plus className="h-5 w-5 text-primary flex-shrink-0" />
+          <h2 className="text-base md:text-lg font-headline text-primary">Neue Halle erstellen</h2>
+        </div>
+        <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as "direct" | "invite")}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="direct" className="text-xs md:text-sm">Direkt erstellen</TabsTrigger>
+            <TabsTrigger value="invite" className="text-xs md:text-sm">Per E-Mail einladen</TabsTrigger>
+          </TabsList>
+          <TabsContent value="direct" className="space-y-4 mt-4">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="gymName">Hallenname</Label>
+                <Input
+                  id="gymName"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gymCity">Stadt</Label>
+                <Input
+                  id="gymCity"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="gymAddress">Adresse</Label>
+                <Input
+                  id="gymAddress"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gymWebsite">Webseite</Label>
+                <Input
+                  id="gymWebsite"
+                  value={form.website}
+                  onChange={(e) => setForm({ ...form, website: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gymLogo">Logo URL</Label>
+                <Input
+                  id="gymLogo"
+                  value={form.logo_url}
+                  onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Admin E-Mail</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  value={form.adminEmail}
+                  onChange={(e) => setForm({ ...form, adminEmail: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminPassword">Admin Passwort</Label>
+                <Input
+                  id="adminPassword"
+                  type="password"
+                  value={form.adminPassword}
+                  onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button onClick={handleCreate} disabled={creating} className="w-full md:w-auto touch-manipulation">
+              <span className="skew-x-6">{creating ? "Erstelle..." : "Halle anlegen"}</span>
+            </Button>
+          </TabsContent>
+          <TabsContent value="invite" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="inviteEmail">E-Mail-Adresse der Halle</Label>
+              <Input
+                id="inviteEmail"
+                type="email"
+                placeholder="halle@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Die Halle erhält eine E-Mail mit einem Link zur Registrierung. Dort kann sie ihre Daten und ein Passwort eingeben.
+              </p>
+            </div>
+            <Button onClick={handleInvite} disabled={inviting} className="w-full md:w-auto touch-manipulation">
+              <Mail className="h-4 w-4 mr-2" />
+              <span className="skew-x-6">{inviting ? "Sende..." : "Einladung senden"}</span>
+            </Button>
+          </TabsContent>
+        </Tabs>
+      </Card>
+
+      {/* Admin zuordnen */}
+      <Card className="p-6 border-2 border-border/60 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <UserPlus className="h-5 w-5 text-secondary" />
+          <h2 className="text-lg font-semibold text-primary">Admin zu Halle zuordnen</h2>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="assignGym">Halle</Label>
@@ -225,56 +386,144 @@ const LeagueGyms = () => {
             </select>
           </div>
         </div>
-        <Button onClick={handleAssignAdmin}>
+        <Button onClick={handleAssignAdmin} className="touch-manipulation">
           <span className="skew-x-6">Zuordnen</span>
         </Button>
       </Card>
 
-      <div className="space-y-3">
-        {gyms.map((gym) => {
-          const admins = (adminsByGym[gym.id] ?? []).map(
-            (adminId) => profiles.find((p) => p.id === adminId)?.email ?? adminId
-          );
-          return (
-            <Card key={gym.id} className="p-4 border-border/60 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-primary">{gym.name}</div>
-                  <div className="text-xs text-muted-foreground">{gym.city}</div>
+      {/* Hallen-Liste */}
+      <div className="space-y-4">
+        <h2 className="text-base md:text-lg font-semibold text-primary">Alle Hallen</h2>
+        <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
+          {gyms.map((gym) => {
+            const admins = (adminsByGym[gym.id] ?? []).map(
+              (adminId) => profiles.find((p) => p.id === adminId)?.email ?? adminId
+            );
+            return (
+              <Card key={gym.id} className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-primary text-base md:text-lg mb-1 break-words">{gym.name}</div>
+                    <div className="text-sm text-muted-foreground">{gym.city}</div>
+                    {gym.address && (
+                      <div className="text-xs text-muted-foreground mt-1 break-words">{gym.address}</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                    {gym.logo_url && (
+                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg border border-border/60 overflow-hidden flex-shrink-0 hidden sm:block">
+                        <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(gym)}
+                      className="h-9 w-9 md:h-9 md:w-9 p-0 touch-manipulation"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletingGym(gym)}
+                      className="h-9 w-9 md:h-9 md:w-9 p-0 text-destructive hover:text-destructive touch-manipulation"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setSelectedGym(gym.id)}>
-                  <span className="skew-x-6">Auswählen</span>
-                </Button>
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <Input
-                  placeholder="Name"
-                  defaultValue={gym.name}
-                  onBlur={(e) => updateGym(gym.id, { name: e.target.value })}
-                />
-                <Input
-                  placeholder="Stadt"
-                  defaultValue={gym.city ?? ""}
-                  onBlur={(e) => updateGym(gym.id, { city: e.target.value })}
-                />
-                <Input
-                  placeholder="Adresse"
-                  defaultValue={gym.address ?? ""}
-                  onBlur={(e) => updateGym(gym.id, { address: e.target.value })}
-                />
-                <Input
-                  placeholder="Webseite"
-                  defaultValue={gym.website ?? ""}
-                  onBlur={(e) => updateGym(gym.id, { website: e.target.value })}
-                />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Admins: {admins.length ? admins.join(", ") : "Keine"}
-              </div>
-            </Card>
-          );
-        })}
+                <div className="pt-2 border-t border-border/60">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">Admins:</span> {admins.length ? admins.join(", ") : "Keine"}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Bearbeiten-Dialog */}
+      <Dialog open={editingGym !== null} onOpenChange={(open) => !open && setEditingGym(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Halle bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Hallenname</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">Stadt</Label>
+                <Input
+                  id="edit-city"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="edit-address">Adresse</Label>
+                <Input
+                  id="edit-address"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-website">Webseite</Label>
+                <Input
+                  id="edit-website"
+                  type="url"
+                  value={editForm.website}
+                  onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-logo">Logo URL</Label>
+                <Input
+                  id="edit-logo"
+                  type="url"
+                  value={editForm.logo_url}
+                  onChange={(e) => setEditForm({ ...editForm, logo_url: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingGym(null)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              <span className="skew-x-6">Speichern</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Löschen-Dialog */}
+      <AlertDialog open={deletingGym !== null} onOpenChange={(open) => !open && setDeletingGym(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Halle löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du die Halle "{deletingGym?.name}" wirklich löschen? Alle zugehörigen Routen, Codes und Ergebnisse werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto touch-manipulation">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto touch-manipulation">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

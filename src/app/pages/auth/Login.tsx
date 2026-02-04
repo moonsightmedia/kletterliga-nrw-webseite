@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,23 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/app/auth/AuthProvider";
 
 const Login = () => {
-  const { signIn } = useAuth();
+  const { signIn, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Redirect nach Login basierend auf Rolle
+  useEffect(() => {
+    if (!authLoading && profile) {
+      if (role === "gym_admin") {
+        navigate("/app/admin/gym", { replace: true });
+      } else if (role === "league_admin") {
+        navigate("/app/admin/league", { replace: true });
+      }
+    }
+  }, [profile, role, authLoading, navigate]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -21,9 +32,21 @@ const Login = () => {
       const result = await signIn(email, password);
       if (result.error) {
         setError(result.error);
+        setLoading(false);
         return;
       }
-      navigate("/app");
+      // Warte auf Profil-Load, dann navigiere basierend auf Rolle
+      // Die Navigation wird durch useEffect gehandhabt, sobald das Profil geladen ist
+      // Falls nach 2 Sekunden kein Profil geladen ist, navigiere zu /app
+      setTimeout(() => {
+        if (role === "gym_admin") {
+          navigate("/app/admin/gym", { replace: true });
+        } else if (role === "league_admin") {
+          navigate("/app/admin/league", { replace: true });
+        } else {
+          navigate("/app", { replace: true });
+        }
+      }, 1000);
     } finally {
       setLoading(false);
     }

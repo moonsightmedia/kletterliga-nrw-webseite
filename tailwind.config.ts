@@ -68,6 +68,9 @@ export default {
         headline: ["Heavitas", "Arial Black", "sans-serif"],
         body: ["Inter", "system-ui", "sans-serif"],
       },
+      textRendering: {
+        optimize: "optimizeLegibility",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

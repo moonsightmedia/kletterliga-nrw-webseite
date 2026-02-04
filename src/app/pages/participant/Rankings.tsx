@@ -1,48 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Award, Medal, Trophy } from "lucide-react";
+import { Award, Medal, Trophy, MapPin, ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { listProfiles, listResults, listRoutes } from "@/services/appApi";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { listProfiles, listResults, listRoutes, listGyms } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { useSeasonSettings } from "@/services/seasonSettings";
+import type { Result, Route, Gym } from "@/services/appTypes";
 
-type RankingRow = { rank: number; name: string; points: number };
+type RankingRow = { rank: number; name: string; points: number; profile_id: string };
 
-const seasonStart = new Date(Date.UTC(2026, 4, 1));
-const stages = [
-  { key: "2026-05", label: "Etappe 1 (Mai)", start: "2026-05-01", end: "2026-05-31" },
-  { key: "2026-06", label: "Etappe 2 (Juni)", start: "2026-06-01", end: "2026-06-30" },
-  { key: "2026-07", label: "Etappe 3 (Juli)", start: "2026-07-01", end: "2026-07-31" },
-  { key: "2026-08", label: "Etappe 4 (August)", start: "2026-08-01", end: "2026-08-31" },
-];
-
-const getStageRange = (stageKey: string) => {
+const getStageRange = (stageKey: string, stages: Array<{ key: string; start: string; end: string }>) => {
   const stage = stages.find((item) => item.key === stageKey);
   if (!stage) return null;
   return {
     start: new Date(`${stage.start}T00:00:00Z`),
     end: new Date(`${stage.end}T23:59:59Z`),
   };
-};
-
-const getAgeAt = (birthDate?: string | null) => {
-  if (!birthDate) return null;
-  const date = new Date(`${birthDate}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  let age = seasonStart.getUTCFullYear() - date.getUTCFullYear();
-  const monthDiff = seasonStart.getUTCMonth() - date.getUTCMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && seasonStart.getUTCDate() < date.getUTCDate())) {
-    age -= 1;
-  }
-  return age;
-};
-
-const getClassName = (birthDate?: string | null, gender?: "m" | "w" | null) => {
-  const age = getAgeAt(birthDate);
-  if (age === null || !gender) return null;
-  if (age < 16) return `U16-${gender}`;
-  if (age < 40) return `Ü16-${gender}`;
-  return `Ü40-${gender}`;
 };
 
 const getClassLabel = (value: string) => {
@@ -66,8 +41,12 @@ const getClassLabel = (value: string) => {
 
 const Rankings = () => {
   const { profile, user } = useAuth();
+  const { getClassName, getStages } = useSeasonSettings();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rankings, setRankings] = useState<RankingRow[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [gyms, setGyms] = useState<Gym[]>([]);
   const userLeague = (profile?.league || (user?.user_metadata?.league as string | undefined) || "toprope") as
     | "toprope"
     | "lead";
@@ -76,8 +55,9 @@ const Rankings = () => {
   const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
   const [ageFilter, setAgeFilter] = useState<"U16" | "Ü16" | "Ü40">("U16");
   const classInitializedRef = useRef(false);
+  const stages = getStages();
   const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
-  const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "2026-05");
+  const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "");
 
   useEffect(() => {
     const paramTab = searchParams.get("tab");
@@ -105,18 +85,22 @@ const Rankings = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: profiles }, { data: results }, { data: routes }] = await Promise.all([
+      const [{ data: profiles }, { data: resultsData }, { data: routesData }, { data: gymsData }] = await Promise.all([
         listProfiles(),
         listResults(),
         listRoutes(),
+        listGyms(),
       ]);
-      if (!profiles || !results || !routes) {
+      if (!profiles || !resultsData || !routesData) {
         setRankings([]);
         return;
       }
-      const routeMap = new Map(routes.map((route) => [route.id, route.discipline]));
-      const range = tab === "stage" ? getStageRange(stageKey) : null;
-      const totals = results.reduce<Record<string, number>>((acc, result) => {
+      setResults(resultsData);
+      setRoutes(routesData);
+      if (gymsData) setGyms(gymsData);
+      const routeMap = new Map(routesData.map((route) => [route.id, route.discipline]));
+      const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
+      const totals = resultsData.reduce<Record<string, number>>((acc, result) => {
         const discipline = routeMap.get(result.route_id);
         const normalized =
           discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
@@ -131,6 +115,10 @@ const Rankings = () => {
       }, {});
       const rows = profiles
         .filter((profile) => {
+          // Filtere Admin-Accounts heraus
+          if (profile.role === "gym_admin" || profile.role === "league_admin") {
+            return false;
+          }
           const league = profile.league ?? null;
           return league === null || league === leagueFilter;
         })
@@ -142,10 +130,10 @@ const Rankings = () => {
         }))
         .filter((row) => row.className === className);
       rows.sort((a, b) => b.points - a.points);
-      setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points })));
+      setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
     };
     load();
-  }, [className, leagueFilter, tab, stageKey]);
+  }, [className, leagueFilter, tab, stageKey, stages]);
 
   const userName = useMemo(() => {
     if (!profile) return "";
@@ -155,90 +143,193 @@ const Rankings = () => {
   const leagueLabel = leagueFilter === "lead" ? "Vorstieg" : "Toprope";
   const classLabel = getClassLabel(className);
 
-  const renderRankingList = () => (
-    <div className="space-y-3">
-      {rankings.length === 0 && (
-        <div className="p-4 text-sm text-muted-foreground">Noch keine Rangliste verfügbar.</div>
-      )}
-      {rankings.map((row) => {
-        const isUser = userName && row.name.includes(userName);
-        const palette =
-          row.rank === 1
-            ? {
-                barBg: "#234B61",
-                name: "#FFFFFF",
-                points: "#E7D4A8",
-                label: "#C7D0D8",
-                iconBg: "#F0DEB4",
-                icon: "#1F3E52",
-              }
-            : row.rank === 2
-            ? {
-                barBg: "#E3D6C9",
-                name: "#234B61",
-                points: "#9B6137",
-                label: "#2C5B73",
-                iconBg: "#8E5B34",
-                icon: "#FFFFFF",
-              }
-            : row.rank === 3
-            ? {
-                barBg: "#F0E6CC",
-                name: "#234B61",
-                points: "#A1693E",
-                label: "#2C5B73",
-                iconBg: "#234B61",
-                icon: "#FFFFFF",
-              }
-            : {
-                barBg: "#FFFFFF",
-                name: "#234B61",
-                points: "#9B6137",
-                label: "#2C5B73",
-                iconBg: "#F3F0E8",
-                icon: "#234B61",
-              };
-        const Icon =
-          row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
+  // Berechne Details für alle Teilnehmer
+  const getParticipantDetails = (profileId: string) => {
+    if (!results.length || !routes.length || !gyms.length) return null;
 
-        return (
-          <div key={`${row.rank}-${row.name}`} className={`${isUser ? "bg-accent/20" : "bg-transparent"}`}>
-            <div className="px-5 py-4" style={{ backgroundColor: palette.barBg }}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="w-16">
-                  <div
-                    className="h-12 w-12 flex items-center justify-center -skew-x-6"
-                    style={{ backgroundColor: palette.iconBg }}
-                  >
-                    <div className="skew-x-6">
-                      {Icon ? (
-                        <Icon className="h-5 w-5" style={{ color: palette.icon }} />
-                      ) : (
-                        <span className="text-sm font-semibold" style={{ color: palette.icon }}>
-                          {row.rank}
-                        </span>
-                      )}
+    const routeMap = new Map(routes.map((r) => [r.id, r]));
+    const gymMap = new Map(gyms.map((g) => [g.id, g]));
+    const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
+
+    // Filtere Ergebnisse für diesen Teilnehmer und die aktuelle Liga/Etappe
+    const participantResults = results.filter((result) => {
+      if (result.profile_id !== profileId) return false;
+      const route = routeMap.get(result.route_id);
+      if (!route) return false;
+      const normalized = route.discipline === "vorstieg" ? "lead" : route.discipline === "toprope" ? "toprope" : route.discipline;
+      if (normalized !== leagueFilter) return false;
+      if (range) {
+        const createdAt = result.created_at ? new Date(result.created_at) : null;
+        if (!createdAt || createdAt < range.start || createdAt > range.end) return false;
+      }
+      return true;
+    });
+
+    // Gruppiere nach Halle
+    const gymGroups = new Map<string, { gym: Gym; routes: Array<{ route: Route; result: Result; points: number }>; totalPoints: number }>();
+
+    participantResults.forEach((result) => {
+      const route = routeMap.get(result.route_id);
+      if (!route) return;
+      const gym = gymMap.get(route.gym_id);
+      if (!gym) return;
+
+      const points = result.points + (result.flash ? 1 : 0);
+      
+      if (!gymGroups.has(gym.id)) {
+        gymGroups.set(gym.id, { gym, routes: [], totalPoints: 0 });
+      }
+      const group = gymGroups.get(gym.id)!;
+      group.routes.push({ route, result, points });
+      group.totalPoints += points;
+    });
+
+    return Array.from(gymGroups.values()).sort((a, b) => b.totalPoints - a.totalPoints);
+  };
+
+  const renderRankingList = () => {
+    if (rankings.length === 0) {
+      return <div className="p-4 text-sm text-muted-foreground">Noch keine Rangliste verfügbar.</div>;
+    }
+
+    return (
+      <Accordion type="single" collapsible className="space-y-3">
+        {rankings.map((row) => {
+          const isUser = userName && row.name.includes(userName);
+          const palette =
+            row.rank === 1
+              ? {
+                  barBg: "#234B61",
+                  name: "#FFFFFF",
+                  points: "#E7D4A8",
+                  label: "#C7D0D8",
+                  iconBg: "#F0DEB4",
+                  icon: "#1F3E52",
+                }
+              : row.rank === 2
+              ? {
+                  barBg: "#E3D6C9",
+                  name: "#234B61",
+                  points: "#9B6137",
+                  label: "#2C5B73",
+                  iconBg: "#8E5B34",
+                  icon: "#FFFFFF",
+                }
+              : row.rank === 3
+              ? {
+                  barBg: "#F0E6CC",
+                  name: "#234B61",
+                  points: "#A1693E",
+                  label: "#2C5B73",
+                  iconBg: "#234B61",
+                  icon: "#FFFFFF",
+                }
+              : {
+                  barBg: "#FFFFFF",
+                  name: "#234B61",
+                  points: "#9B6137",
+                  label: "#2C5B73",
+                  iconBg: "#F3F0E8",
+                  icon: "#234B61",
+                };
+          const Icon =
+            row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
+          const participantDetails = getParticipantDetails(row.profile_id);
+
+          return (
+            <AccordionItem
+              key={`${row.rank}-${row.name}`}
+              value={row.profile_id}
+              className={`border-0 ${isUser ? "bg-accent/20" : "bg-transparent"}`}
+            >
+              <AccordionTrigger
+                className="px-5 py-4 hover:no-underline [&>svg]:text-muted-foreground [&>svg]:ml-4"
+                style={{ backgroundColor: palette.barBg }}
+              >
+                <div className="flex items-center justify-between gap-4 w-full">
+                  <div className="w-16">
+                    <div
+                      className="h-12 w-12 flex items-center justify-center -skew-x-6"
+                      style={{ backgroundColor: palette.iconBg }}
+                    >
+                      <div className="skew-x-6">
+                        {Icon ? (
+                          <Icon className="h-5 w-5" style={{ color: palette.icon }} />
+                        ) : (
+                          <span className="text-sm font-semibold" style={{ color: palette.icon }}>
+                            {row.rank}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 font-semibold uppercase tracking-wide" style={{ color: palette.name }}>
+                    {row.name}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-semibold" style={{ color: palette.points }}>
+                      {row.points}
+                    </div>
+                    <div className="text-xs" style={{ color: palette.label }}>
+                      Punkte
                     </div>
                   </div>
                 </div>
-                <div className="flex-1 font-semibold uppercase tracking-wide" style={{ color: palette.name }}>
-                  {row.name}
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-3 pt-0">
+                <div className="pt-3 border-t border-border/50">
+                  {participantDetails && participantDetails.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
+                      </div>
+                      {participantDetails.map((group) => (
+                        <div key={group.gym.id} className="border border-border/60 rounded p-2 bg-muted/30">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <h3 className="font-semibold text-sm text-primary truncate">{group.gym.name}</h3>
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-2">
+                              <div className="text-base font-bold text-primary">{group.totalPoints}</div>
+                              <div className="text-[10px] text-muted-foreground leading-none">Pkt</div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {group.routes.map(({ route, result, points }) => (
+                              <div
+                                key={result.id}
+                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs border ${
+                                  result.flash
+                                    ? "bg-yellow-500/20 border-yellow-500/40"
+                                    : "bg-background border-border/40"
+                                }`}
+                              >
+                                <span className={`font-medium text-[11px] ${result.flash ? "text-yellow-700" : ""}`}>
+                                  {route.code}
+                                </span>
+                                <span className={`font-semibold text-[11px] ${result.flash ? "text-yellow-700" : "text-primary"}`}>
+                                  {points}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2 text-xs text-muted-foreground text-center">
+                      Keine Ergebnisse gefunden.
+                    </div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-semibold" style={{ color: palette.points }}>
-                    {row.points}
-                  </div>
-                  <div className="text-xs" style={{ color: palette.label }}>
-                    Punkte
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    );
+  };
 
   return (
     <div className="space-y-6">

@@ -1,0 +1,17 @@
+-- Erstelle zuerst die Auth-Benutzer über das Supabase Dashboard
+-- ODER führe dieses Skript aus, um die Auth-Benutzer zu erstellen
+-- 
+-- Gehe zu: Supabase Dashboard → Authentication → Users → Add User
+-- Erstelle diese 10 Benutzer:
+-- 1. max.mustermann@example.com (Passwort: test123)
+-- 2. sarah.schmidt@example.com (Passwort: test123)
+-- 3. tom.weber@example.com (Passwort: test123)
+-- 4. lisa.mueller@example.com (Passwort: test123)
+-- 5. felix.bauer@example.com (Passwort: test123)
+-- 6. emma.fischer@example.com (Passwort: test123)
+-- 7. noah.klein@example.com (Passwort: test123)
+-- 8. sophia.hoffmann@example.com (Passwort: test123)
+-- 9. lukas.wagner@example.com (Passwort: test123)
+-- 10. mia.becker@example.com (Passwort: test123)
+--
+-- Dann führe insert_test_participants.sql aus, um die Profile zu erstellen

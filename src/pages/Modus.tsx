@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { useSeasonSettings } from "@/services/seasonSettings";
 
 // Main categories (finalrelevant)
 const mainCategories = [
@@ -18,6 +19,19 @@ const mainCategories = [
 const additionalCategories = ["U10", "U12", "U16", "Ü16", "Ü40", "Ü50"];
 
 const Modus = () => {
+  const { getQualificationStart, getQualificationEnd, getFinaleDate, getFinaleRegistrationDeadline, getTop30PerClass, getWildcardsPerClass } = useSeasonSettings();
+  const qualStart = getQualificationStart();
+  const qualEnd = getQualificationEnd();
+  const finaleDate = getFinaleDate();
+  const registrationDeadline = getFinaleRegistrationDeadline();
+  const top30 = getTop30PerClass();
+  const wildcards = getWildcardsPerClass();
+
+  const formatDate = (date: string | null) => {
+    if (!date) return "Termin folgt";
+    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
   usePageMeta({
     title: "Modus & Regeln",
     description:
@@ -285,7 +299,7 @@ const Modus = () => {
               DAS FINALE
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Der Höhepunkt der Saison – <strong className="text-secondary">Samstag, 03.10.2026</strong>
+              Der Höhepunkt der Saison – <strong className="text-secondary">{finaleDate ? new Date(finaleDate).toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }) : "Termin folgt"}</strong>
             </p>
           </AnimatedSection>
 
@@ -421,7 +435,7 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg">
                   <h3 className="font-headline text-xl text-primary mb-3">Wertungszeitraum</h3>
                   <p className="text-muted-foreground">
-                    Die Qualifikationsphase läuft vom <strong className="text-secondary">01.05.2026</strong> bis zum <strong className="text-secondary">13.09.2026</strong>. 
+                    Die Qualifikationsphase läuft vom <strong className="text-secondary">{formatDate(qualStart)}</strong> bis zum <strong className="text-secondary">{formatDate(qualEnd)}</strong>. 
                     Nur Routen, die in diesem Zeitraum geklettert werden, zählen für die Rangliste.
                   </p>
                 </div>

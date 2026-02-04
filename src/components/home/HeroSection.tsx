@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import { gyms } from "@/data/gyms";
+import { useSeasonSettings } from "@/services/seasonSettings";
 
 const useCountUp = (
   value: number,
@@ -100,7 +101,7 @@ export const HeroSection = () => {
               className="hidden lg:inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-8 animate-fade-in-up shadow-lg"
             >
               <span className="w-2 h-2 bg-secondary mr-2 animate-pulse" />
-              <span className="skew-x-6">SAISON 2026</span>
+              <span className="skew-x-6">SAISON {seasonYear}</span>
             </div>
 
             {/* Headline */}
@@ -152,7 +153,7 @@ export const HeroSection = () => {
               className="lg:hidden inline-flex items-center bg-primary text-primary-foreground px-5 py-2 -skew-x-6 text-sm font-bold mb-6 shadow-lg"
             >
               <span className="w-2 h-2 bg-secondary mr-2 animate-pulse" />
-              <span className="skew-x-6">SAISON 2026</span>
+              <span className="skew-x-6">SAISON {seasonYear}</span>
             </div>
 
             {/* Logo with Glow Effect */}

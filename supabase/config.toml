@@ -4,3 +4,11 @@
 # create-gym-admin: JWT-Check deaktivieren (Function prüft intern Liga-Admin)
 [functions.create-gym-admin]
 verify_jwt = false
+
+# invite-gym-admin: JWT-Check deaktivieren (Function prüft intern Liga-Admin)
+[functions.invite-gym-admin]
+verify_jwt = false
+
+# complete-gym-invite: JWT-Check deaktivieren (öffentlich zugänglich für Invite-Completion)
+[functions.complete-gym-invite]
+verify_jwt = false

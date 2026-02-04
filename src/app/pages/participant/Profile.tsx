@@ -18,31 +18,11 @@ import {
 } from "@/services/appApi";
 import { supabase } from "@/services/supabase";
 import type { Gym, Result, Route } from "@/services/appTypes";
-
-const seasonStart = new Date(Date.UTC(2026, 4, 1));
-
-const getAgeAt = (birthDate?: string | null) => {
-  if (!birthDate) return null;
-  const date = new Date(`${birthDate}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  let age = seasonStart.getUTCFullYear() - date.getUTCFullYear();
-  const monthDiff = seasonStart.getUTCMonth() - date.getUTCMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && seasonStart.getUTCDate() < date.getUTCDate())) {
-    age -= 1;
-  }
-  return age;
-};
-
-const getClassName = (birthDate?: string | null, gender?: "m" | "w" | null) => {
-  const age = getAgeAt(birthDate);
-  if (age === null) return "-";
-  if (age < 16) return `U16 (${gender ?? "-"})`;
-  if (age < 40) return `Ü16 (${gender ?? "-"})`;
-  return `Ü40 (${gender ?? "-"})`;
-};
+import { useSeasonSettings } from "@/services/seasonSettings";
 
 const Profile = () => {
   const { profile, signOut, user, refreshProfile } = useAuth();
+  const { getClassName } = useSeasonSettings();
   const firstName = profile?.first_name || (user?.user_metadata?.first_name as string | undefined);
   const lastName = profile?.last_name || (user?.user_metadata?.last_name as string | undefined);
   const birthDate = profile?.birth_date ?? (user?.user_metadata?.birth_date as string | undefined);
@@ -122,9 +102,16 @@ const Profile = () => {
         return acc;
       }, {});
       const rows = profiles
+        .filter((item) => {
+          // Filtere Admin-Accounts heraus
+          if (item.role === "gym_admin" || item.role === "league_admin") {
+            return false;
+          }
+          return true;
+        })
         .map((item) => ({
           id: item.id,
-          className: getClassName(item.birth_date, item.gender),
+          className: getClassName(item.birth_date, item.gender) || null,
           points: totals[item.id] ?? 0,
         }))
         .filter((row) => row.className === classKey)

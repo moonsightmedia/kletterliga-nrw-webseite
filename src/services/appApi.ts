@@ -2,6 +2,7 @@ import { supabase } from "@/services/supabase";
 import type {
   AdminSettings,
   ChangeRequest,
+  FinaleRegistration,
   Gym,
   GymAdmin,
   GymCode,
@@ -71,11 +72,35 @@ export async function listProfiles() {
 }
 
 export async function updateProfile(profileId: string, patch: Partial<Profile>) {
-  return supabase.from("profiles").update(patch).eq("id", profileId).select("*").single<Profile>();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(patch)
+    .eq("id", profileId)
+    .select("*")
+    .maybeSingle<Profile>();
+  if (error) return { data: null, error };
+  if (!data) {
+    return { data: null, error: { message: "Profil nicht gefunden oder keine Berechtigung", code: "PGRST116" } };
+  }
+  return { data, error: null };
 }
 
 export async function upsertResult(result: Omit<Result, "id" | "created_at"> & { id?: string }) {
   return supabase.from("results").upsert(result).select("*").single<Result>();
+}
+
+export async function updateResult(resultId: string, patch: Partial<Result>) {
+  const { data, error } = await supabase
+    .from("results")
+    .update(patch)
+    .eq("id", resultId)
+    .select("*")
+    .maybeSingle<Result>();
+  if (error) return { data: null, error };
+  if (!data) {
+    return { data: null, error: { message: "Ergebnis nicht gefunden oder keine Berechtigung", code: "PGRST116" } };
+  }
+  return { data, error: null };
 }
 
 export async function listRankings() {
@@ -98,8 +123,24 @@ export async function updateGymCode(codeId: string, patch: Partial<GymCode>) {
   return supabase.from("gym_codes").update(patch).eq("id", codeId).select("*").single<GymCode>();
 }
 
+export async function deleteGymCode(codeId: string) {
+  return supabase.from("gym_codes").delete().eq("id", codeId);
+}
+
 export async function getGymCodeByCode(code: string) {
-  return supabase.from("gym_codes").select("*").eq("code", code).maybeSingle<GymCode>();
+  // Normalisiere Code zu Großbuchstaben für case-insensitive Suche
+  const normalized = code.trim().toUpperCase();
+  return supabase.from("gym_codes").select("*").eq("code", normalized).maybeSingle<GymCode>();
+}
+
+export async function checkGymCodeRedeemed(gymId: string, profileId: string) {
+  return supabase
+    .from("gym_codes")
+    .select("*")
+    .eq("gym_id", gymId)
+    .eq("redeemed_by", profileId)
+    .not("redeemed_at", "is", null)
+    .maybeSingle<GymCode>();
 }
 
 export async function listGymAdminsByProfile(profileId: string) {
@@ -116,6 +157,24 @@ export async function updateGym(gymId: string, patch: Partial<Gym>) {
     .returns<Gym[]>();
   const single = data?.[0] ?? null;
   return { data: single, error };
+}
+
+export async function deleteGym(gymId: string) {
+  return supabase.from("gyms").delete().eq("id", gymId);
+}
+
+export async function inviteGymAdmin(email: string) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return supabase.functions.invoke("invite-gym-admin", {
+    body: { email },
+    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+  });
+}
+
+export async function getGymInviteByToken(token: string) {
+  return supabase.from("gym_invites").select("*").eq("token", token).maybeSingle();
 }
 
 export async function listGymAdminsByGym(gymId: string) {
@@ -148,4 +207,23 @@ export async function createProfileOverride(override: Omit<ProfileOverride, "id"
 
 export async function updateProfileOverride(id: string, patch: Partial<ProfileOverride>) {
   return supabase.from("profile_overrides").update(patch).eq("id", id).select("*").single<ProfileOverride>();
+}
+
+export async function registerForFinale(profileId: string) {
+  return supabase.from("finale_registrations").insert({ profile_id: profileId }).select("*").single<FinaleRegistration>();
+}
+
+export async function unregisterFromFinale(profileId: string) {
+  return supabase.from("finale_registrations").delete().eq("profile_id", profileId);
+}
+
+export async function getFinaleRegistration(profileId: string) {
+  return supabase.from("finale_registrations").select("*").eq("profile_id", profileId).maybeSingle<FinaleRegistration>();
+}
+
+export async function listFinaleRegistrations() {
+  return supabase
+    .from("finale_registrations")
+    .select("*, profiles!inner(*)")
+    .order("created_at", { ascending: false });
 }
