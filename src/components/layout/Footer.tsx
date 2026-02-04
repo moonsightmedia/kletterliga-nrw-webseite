@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Mail } from "lucide-react";
+import { Instagram, Mail } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const footerLinks = {
@@ -19,8 +19,7 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { icon: Instagram, href: "https://instagram.com/kletterliganrw", label: "Instagram" },
-  { icon: Facebook, href: "https://facebook.com/kletterliganrw", label: "Facebook" },
+  { icon: Instagram, href: "https://www.instagram.com/kletterliga_nrw/", label: "Instagram" },
   { icon: Mail, href: "mailto:info@kletterliga-nrw.de", label: "E-Mail" },
 ];
 

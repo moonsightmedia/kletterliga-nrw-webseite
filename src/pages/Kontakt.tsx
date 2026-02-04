@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
-import { Mail, Instagram, Facebook } from "lucide-react";
+import { Mail, Instagram } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,8 @@ const contactMethods = [
     icon: Instagram,
     title: "Instagram",
     description: "Folge uns für Updates",
-    value: "@kletterliganrw",
-    href: "https://instagram.com/kletterliganrw",
-  },
-  {
-    icon: Facebook,
-    title: "Facebook",
-    description: "Community & Events",
-    value: "Kletterliga NRW",
-    href: "https://facebook.com/kletterliganrw",
+    value: "@kletterliga_nrw",
+    href: "https://www.instagram.com/kletterliga_nrw/",
   },
 ];
 
