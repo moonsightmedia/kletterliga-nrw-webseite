@@ -157,9 +157,7 @@ const Ranglisten = () => {
                   className="px-8"
                 >
                   <a 
-                    href="https://app.kletterliga-nrw.de/ranglisten" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                    href="https://kletterliga-nrw.de/app/ranglisten" 
                     className="flex items-center gap-2"
                   >
                     <span className="skew-x-6">Zum Teilnehmerbereich</span>

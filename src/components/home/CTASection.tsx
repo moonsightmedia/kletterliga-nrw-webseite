@@ -45,7 +45,7 @@ export const CTASection = () => {
                 size="lg"
                 className="h-14 min-w-[200px] px-10 text-lg group"
               >
-                <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                <a href="https://kletterliga-nrw.de/app" className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt registrieren</span>
                   <ArrowRight className="ml-2 skew-x-6 group-hover:translate-x-1 transition-transform" size={20} />
                 </a>

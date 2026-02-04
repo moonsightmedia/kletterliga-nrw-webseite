@@ -131,7 +131,7 @@ export const HeroSection = () => {
                 size="lg"
                 className="h-14 min-w-[200px] px-8 text-lg shadow-lg hover:shadow-xl"
               >
-                <a href="https://app.kletterliga-nrw.de" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                <a href="https://kletterliga-nrw.de/app" className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt teilnehmen</span>
                   <ArrowRight className="ml-2 skew-x-6" size={20} />
                 </a>

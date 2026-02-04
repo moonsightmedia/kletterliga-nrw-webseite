@@ -104,9 +104,7 @@ export const Footer = () => {
             ))}
           </div>
           <a
-            href="https://app.kletterliga-nrw.de"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://kletterliga-nrw.de/app"
             className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
           >
             <span className="skew-x-6">Zum Teilnehmerbereich →</span>
