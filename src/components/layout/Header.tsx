@@ -84,7 +84,7 @@ export const Header = () => {
               asChild
               className="px-6"
             >
-              <a href="https://kletterliga-nrw.de/app">
+              <a href="/app">
                 <span className="skew-x-6">Teilnehmen</span>
               </a>
             </Button>
@@ -124,7 +124,7 @@ export const Header = () => {
                 variant="secondary"
                 className="w-full"
               >
-                <a href="https://kletterliga-nrw.de/app">
+                <a href="/app">
                   <span className="skew-x-6">Jetzt teilnehmen</span>
                 </a>
               </Button>
