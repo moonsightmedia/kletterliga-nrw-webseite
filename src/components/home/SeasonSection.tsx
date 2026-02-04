@@ -53,7 +53,7 @@ export const SeasonSection = () => {
                 </div>
 
                 <h3 className="font-headline text-3xl md:text-4xl mb-4">
-                  01.05. – 13.09.2026
+                  {formatDateRange(qualStart, qualEnd)}
                 </h3>
 
                 <ul className="space-y-3 text-primary-foreground/80">

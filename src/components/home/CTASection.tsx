@@ -1,12 +1,19 @@
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { listGyms } from "@/services/appApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
 export const CTASection = () => {
   const { getSeasonYear } = useSeasonSettings();
   const seasonYear = getSeasonYear();
-  
+  const [gymCount, setGymCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    listGyms().then(({ data }) => setGymCount(data?.length ?? null));
+  }, []);
+
   return (
     <section className="section-padding bg-gradient-kl relative overflow-hidden">
       {/* Background Patterns - Diagonal stripes */}
@@ -45,7 +52,7 @@ export const CTASection = () => {
                 size="lg"
                 className="h-14 min-w-[200px] px-10 text-lg group"
               >
-                <a href="https://kletterliga-nrw.de/app" className="flex items-center justify-center">
+                <a href="/app" className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt registrieren</span>
                   <ArrowRight className="ml-2 skew-x-6 group-hover:translate-x-1 transition-transform" size={20} />
                 </a>
@@ -68,7 +75,7 @@ export const CTASection = () => {
           <AnimatedSection animation="fade-in" delay={400}>
             <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-primary-foreground/60 text-sm">
               <div className="flex items-center gap-2">
-                <span className="font-headline text-2xl text-accent">6+</span>
+                <span className="font-headline text-2xl text-accent">{gymCount ?? "…"}</span>
                 <span>Hallen</span>
               </div>
               <div className="w-px h-6 bg-primary-foreground/20" />
@@ -78,7 +85,7 @@ export const CTASection = () => {
               </div>
               <div className="w-px h-6 bg-primary-foreground/20" />
               <div className="flex items-center gap-2">
-                <span className="font-headline text-2xl text-accent">5+</span>
+                <span className="font-headline text-2xl text-accent">6</span>
                 <span>Wertungsklassen</span>
               </div>
             </div>

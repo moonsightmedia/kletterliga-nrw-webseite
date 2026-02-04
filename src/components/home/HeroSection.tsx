@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { gyms } from "@/data/gyms";
+import { listGyms } from "@/services/appApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
 const useCountUp = (
@@ -58,10 +58,21 @@ const CountUp = ({
   return <span className={className}>{display}</span>;
 };
 
+const GYM_COUNT_FALLBACK = 7;
+const LEAGUE_COUNT = 2; // Toprope + Vorstieg
+const CLASS_COUNT = 6;   // U16 w/m, Ü16 w/m, Ü40 w/m
+
 export const HeroSection = () => {
   const { getSeasonYear } = useSeasonSettings();
   const seasonYear = getSeasonYear() || new Date().getFullYear().toString();
-  
+  const [gymCount, setGymCount] = useState(GYM_COUNT_FALLBACK);
+
+  useEffect(() => {
+    listGyms()
+      .then(({ data }) => setGymCount(data?.length ?? GYM_COUNT_FALLBACK))
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center bg-accent overflow-hidden pt-8">
       {/* Paper Texture Effect */}
@@ -173,7 +184,7 @@ export const HeroSection = () => {
             <div className="flex gap-4 md:gap-6">
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
                 <CountUp
-                  value={gyms.length}
+                  value={gymCount}
                   className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6"
                   respectReducedMotion={false}
                 />
@@ -181,7 +192,7 @@ export const HeroSection = () => {
               </div>
               <div className="text-center bg-secondary -skew-x-6 px-6 py-4">
                 <CountUp
-                  value={2}
+                  value={LEAGUE_COUNT}
                   className="font-headline text-3xl md:text-4xl text-secondary-foreground block skew-x-6"
                   respectReducedMotion={false}
                 />
@@ -189,7 +200,7 @@ export const HeroSection = () => {
               </div>
               <div className="text-center bg-primary -skew-x-6 px-6 py-4">
                 <CountUp
-                  value={5}
+                  value={CLASS_COUNT}
                   className="font-headline text-3xl md:text-4xl text-primary-foreground block skew-x-6"
                   respectReducedMotion={false}
                 />
