@@ -73,10 +73,14 @@ const Hallen = () => {
                   key={gym.id}
                   className="card-kl group flex gap-6"
                 >
-                  <div className="w-20 h-20 flex-shrink-0 -skew-x-6 bg-accent/50 flex items-center justify-center group-hover:bg-secondary transition-colors duration-300">
-                    <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                      {gym.name.charAt(0)}
-                    </span>
+                  <div className="w-20 h-20 flex-shrink-0 -skew-x-6 bg-accent/50 flex items-center justify-center group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
+                    {gym.logo_url ? (
+                      <img src={gym.logo_url} alt={gym.name} className="skew-x-6 h-full w-full object-contain p-1" />
+                    ) : (
+                      <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                        {gym.name.charAt(0)}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">

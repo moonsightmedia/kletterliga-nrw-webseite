@@ -40,10 +40,14 @@ export const GymsSection = () => {
                   key={gym.id}
                   className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer"
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300">
-                    <span className="skew-x-6 font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                      {gym.name.charAt(0)}
-                    </span>
+                  <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
+                    {gym.logo_url ? (
+                      <img src={gym.logo_url} alt={gym.name} className="skew-x-6 h-full w-full object-contain p-1" />
+                    ) : (
+                      <span className="skew-x-6 font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                        {gym.name.charAt(0)}
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="font-medium text-sm text-primary mb-1 line-clamp-2">
