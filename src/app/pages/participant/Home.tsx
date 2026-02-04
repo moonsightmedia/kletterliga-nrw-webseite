@@ -153,12 +153,11 @@ const Home = () => {
       avgRoutesAll: avgRoutes,
       avgFlashRate: flashRate,
     };
-  }, [allProfiles, allResults, routes, league, birthDate, gender]);
+  }, [allProfiles, allResults, routes, league, birthDate, gender, getClassName]);
 
   const totalGyms = gyms.length || 0;
   const progress = totalGyms ? Math.round((visitedGyms / totalGyms) * 100) : 0;
   const today = new Date();
-  const seasonYear = getSeasonYear();
   
   // Baue Etappen-Liste aus Settings
   const stagesFromSettings = getStages();
@@ -246,7 +245,7 @@ const Home = () => {
         <div className="grid gap-5 p-6 pt-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs uppercase tracking-widest text-secondary">Saison {seasonYear}</div>
+              <div className="text-xs uppercase tracking-widest text-secondary">Saison {getSeasonYear() || new Date().getFullYear().toString()}</div>
               <h2 className="font-headline text-2xl text-primary mt-2">
                 {firstName ? `Willkommen zurück, ${firstName}` : "Saisonüberblick"}
               </h2>

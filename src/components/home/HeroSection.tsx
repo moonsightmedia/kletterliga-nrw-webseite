@@ -59,6 +59,9 @@ const CountUp = ({
 };
 
 export const HeroSection = () => {
+  const { getSeasonYear } = useSeasonSettings();
+  const seasonYear = getSeasonYear() || new Date().getFullYear().toString();
+  
   return (
     <section className="relative min-h-screen flex items-center bg-accent overflow-hidden pt-8">
       {/* Paper Texture Effect */}
