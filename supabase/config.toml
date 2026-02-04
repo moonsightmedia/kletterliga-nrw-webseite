@@ -12,3 +12,7 @@ verify_jwt = false
 # complete-gym-invite: JWT-Check deaktivieren (öffentlich zugänglich für Invite-Completion)
 [functions.complete-gym-invite]
 verify_jwt = false
+
+# get-public-rankings: öffentlich (Ranglisten-Vorschau auf der Website ohne Login)
+[functions.get-public-rankings]
+verify_jwt = false

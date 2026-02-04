@@ -1,4 +1,4 @@
-import { supabase } from "@/services/supabase";
+import { supabase, supabaseConfig } from "@/services/supabase";
 import type {
   AdminSettings,
   ChangeRequest,
@@ -105,6 +105,27 @@ export async function updateResult(resultId: string, patch: Partial<Result>) {
 
 export async function listRankings() {
   return supabase.from("rankings").select("*").order("rank").returns<{ rank: number; name: string; points: number }[]>();
+}
+
+/** Public website: top N per league/class via Edge Function (bypasses RLS). */
+export async function getPublicRankings(league: "toprope" | "lead", className: string) {
+  const url = `${supabaseConfig.url}/functions/v1/get-public-rankings`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${supabaseConfig.anonKey}`,
+      apikey: supabaseConfig.anonKey,
+    },
+    body: JSON.stringify({ league, class: className }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Rangliste konnte nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+  const data = Array.isArray(body) ? body : (body as { data?: unknown[] })?.data ?? [];
+  return { data: data as { rank: number; display_name: string; points: number }[], error: null };
 }
 
 export async function createChangeRequest(request: Omit<ChangeRequest, "id" | "created_at">) {
