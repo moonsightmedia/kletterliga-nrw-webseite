@@ -235,24 +235,26 @@ const GymCodes = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header mit Titel und Buttons - auf Desktop nebeneinander */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">Code-Verwaltung</h1>
           <p className="text-sm text-muted-foreground mt-2">Hallen-Codes generieren und verwalten.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button variant="outline" onClick={exportToPDF} disabled={availableCount === 0} className="w-full sm:w-auto touch-manipulation">
+        {/* Buttons - auf Desktop hier, auf Mobile werden sie später angezeigt */}
+        <div className="hidden sm:flex flex-row items-center gap-2">
+          <Button variant="outline" onClick={exportToPDF} disabled={availableCount === 0} className="touch-manipulation">
             <Download className="h-4 w-4 mr-2" />
             <span className="skew-x-6">PDF Export</span>
           </Button>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)} className="w-full sm:w-auto touch-manipulation">
+          <Button onClick={() => setShowCreateForm(!showCreateForm)} className="touch-manipulation">
             <Plus className="h-4 w-4 mr-2" />
             <span className="skew-x-6">Neue Codes</span>
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - auf Mobile vor den Buttons */}
       <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-3">
         <Card className="p-4 border-border/60">
           <div className="text-xs uppercase tracking-widest text-secondary">Codes gesamt</div>
@@ -269,6 +271,18 @@ const GymCodes = () => {
           <div className="font-headline text-2xl text-secondary mt-2">{redeemedCount}</div>
           <p className="text-xs text-muted-foreground mt-1">Bereits verwendet</p>
         </Card>
+      </div>
+
+      {/* Buttons - nur auf Mobile sichtbar, nach den Statistiken */}
+      <div className="flex sm:hidden flex-col items-stretch gap-2">
+        <Button variant="outline" onClick={exportToPDF} disabled={availableCount === 0} className="w-full touch-manipulation">
+          <Download className="h-4 w-4 mr-2" />
+          <span className="skew-x-6">PDF Export</span>
+        </Button>
+        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="w-full touch-manipulation">
+          <Plus className="h-4 w-4 mr-2" />
+          <span className="skew-x-6">Neue Codes</span>
+        </Button>
       </div>
 
       {showCreateForm && (
