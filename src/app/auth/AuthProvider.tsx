@@ -176,10 +176,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     league: "toprope" | "lead" | null;
   }) => {
     const { email, password, firstName, lastName, birthDate, gender, homeGymId, league } = payload;
+    // Bestimme die Frontend-URL für redirectTo nach E-Mail-Bestätigung
+    const frontendUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : 'https://kletterliga-nrw.de';
+    const confirmUrl = `${frontendUrl}/app/auth/confirm`;
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: confirmUrl,
         data: {
           first_name: firstName,
           last_name: lastName,

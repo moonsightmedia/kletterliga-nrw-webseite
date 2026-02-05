@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +8,22 @@ import { useAuth } from "@/app/auth/AuthProvider";
 const Login = () => {
   const { signIn, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  // Prüfe auf confirmed Parameter
+  useEffect(() => {
+    const confirmedParam = searchParams.get("confirmed");
+    if (confirmedParam === "true") {
+      setConfirmed(true);
+      // Entferne den Parameter aus der URL
+      navigate("/app/login", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   // Redirect nach Login basierend auf Rolle
   useEffect(() => {
@@ -60,6 +72,13 @@ const Login = () => {
           Zugriff auf deine persönliche Liga-App.
         </p>
       </div>
+      {confirmed && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+          <p className="text-sm text-green-800 dark:text-green-200">
+            ✓ Deine E-Mail-Adresse wurde erfolgreich bestätigt! Du kannst dich jetzt einloggen.
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">E-Mail</Label>

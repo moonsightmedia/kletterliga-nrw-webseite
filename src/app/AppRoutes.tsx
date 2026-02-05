@@ -6,6 +6,7 @@ import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
 import Login from "@/app/pages/auth/Login";
 import Register from "@/app/pages/auth/Register";
 import GymInvite from "@/app/pages/auth/GymInvite";
+import EmailConfirm from "@/app/pages/auth/EmailConfirm";
 import Home from "@/app/pages/participant/Home";
 import Gyms from "@/app/pages/participant/Gyms";
 import GymDetail from "@/app/pages/participant/GymDetail";
@@ -36,6 +37,7 @@ export const appRoutes = (
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
+      <Route path="/app/auth/confirm" element={<EmailConfirm />} />
       <Route path="/app/invite/gym/:token" element={<GymInvite />} />
     </Route>
 
