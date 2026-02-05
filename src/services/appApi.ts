@@ -235,10 +235,51 @@ export async function updateGym(gymId: string, patch: Partial<Gym>) {
 }
 
 export async function deleteGym(gymId: string) {
-  return supabase.from("gyms").delete().eq("id", gymId);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  try {
+    // Use Edge Function to delete gym and associated auth users
+    const response = await fetch(`${supabaseUrl}/functions/v1/delete-gym`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({ gymId }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return {
+        data: null,
+        error: {
+          message: data.error || `HTTP ${response.status}: ${response.statusText}`,
+        },
+      };
+    }
+    
+    return {
+      data,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      data: null,
+      error: {
+        message: error instanceof Error ? error.message : "Failed to delete gym",
+      },
+    };
+  }
 }
 
-export async function inviteGymAdmin(email: string) {
+export async function inviteGymAdmin(email: string, skipEmail: boolean = false) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -255,7 +296,7 @@ export async function inviteGymAdmin(email: string) {
         Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${supabaseAnonKey}`,
         apikey: supabaseAnonKey,
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, skip_email: skipEmail }),
     });
 
     const data = await response.json();

@@ -56,10 +56,27 @@ const GymInvite = () => {
 
         if (!response.ok) {
           console.error("Failed to load invite:", response.status, response.statusText);
-          toast({
-            title: "Ungültiger Link",
-            description: "Der Einladungslink ist ungültig oder abgelaufen.",
-          });
+          let errorText = "";
+          try {
+            const errorData = await response.json();
+            errorText = errorData.message || errorData.error || "";
+          } catch {
+            errorText = response.statusText;
+          }
+          
+          if (response.status === 406) {
+            toast({
+              title: "Fehler beim Laden",
+              description: "Die Einladung konnte nicht geladen werden. Bitte kontaktiere einen Liga-Admin. (Fehler: RLS-Policy nicht konfiguriert)",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Ungültiger Link",
+              description: `Der Einladungslink ist ungültig oder abgelaufen. (Status: ${response.status})`,
+              variant: "destructive",
+            });
+          }
           navigate("/app/login");
           return;
         }
@@ -68,9 +85,11 @@ const GymInvite = () => {
         const invite = Array.isArray(data) ? data[0] : data;
 
         if (!invite) {
+          console.error("No invite data returned:", data);
           toast({
             title: "Ungültiger Link",
             description: "Der Einladungslink ist ungültig oder abgelaufen.",
+            variant: "destructive",
           });
           navigate("/app/login");
           return;
@@ -355,10 +374,10 @@ const GymInvite = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          {/* Hallenname */}
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          {/* Hallenname - Volle Breite */}
           <div className="space-y-2">
-            <Label htmlFor="name">
+            <Label htmlFor="name" className="text-sm font-medium">
               Hallenname <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -367,106 +386,109 @@ const GymInvite = () => {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              className="w-full"
+              className="w-full h-11"
             />
           </div>
 
           {/* Stadt und Adresse - Mobile: gestapelt, Desktop: nebeneinander */}
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="city">Stadt</Label>
+            <div className="space-y-2">
+              <Label htmlFor="city" className="text-sm font-medium">Stadt</Label>
               <Input
                 id="city"
                 placeholder="z. B. Essen"
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="w-full"
+                className="w-full h-11"
               />
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="address">Adresse</Label>
+              <Label htmlFor="address" className="text-sm font-medium">Adresse</Label>
               <Input
                 id="address"
                 placeholder="z. B. Hauptstraße 123"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full"
+                className="w-full h-11"
               />
             </div>
           </div>
 
-          {/* Webseite und Logo - Mobile: gestapelt, Desktop: nebeneinander */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="website">Webseite</Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://example.com"
-                value={form.website}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-                className="w-full"
-              />
-            </div>
+          {/* Webseite */}
+          <div className="space-y-2">
+            <Label htmlFor="website">Webseite</Label>
+            <Input
+              id="website"
+              type="url"
+              placeholder="https://example.com"
+              value={form.website}
+              onChange={(e) => setForm({ ...form, website: e.target.value })}
+              className="w-full"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="logo">Logo</Label>
-              <input
-                ref={logoInputRef}
-                id="logo"
-                type="file"
-                accept="image/*"
-                onChange={handleLogoSelect}
-                className="hidden"
-              />
-              {logoPreview ? (
-                <div className="relative">
-                  <div className="relative w-full h-32 sm:h-40 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted/50">
-                    <img
-                      src={logoPreview}
-                      alt="Logo Vorschau"
-                      className="w-full h-full object-contain"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveLogo}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                      aria-label="Logo entfernen"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
+          {/* Logo - Volle Breite für besseres Layout */}
+          <div className="space-y-2">
+            <Label htmlFor="logo">Logo</Label>
+            <input
+              ref={logoInputRef}
+              id="logo"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoSelect}
+              className="hidden"
+            />
+            {logoPreview ? (
+              <div className="relative">
+                <div className="relative w-full h-40 sm:h-48 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted/50">
+                  <img
+                    src={logoPreview}
+                    alt="Logo Vorschau"
+                    className="w-full h-full object-contain p-4"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-background/90 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors shadow-sm"
+                    aria-label="Logo entfernen"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => logoInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                  className="w-full h-32 sm:h-40 flex flex-col items-center justify-center gap-2 border-2 border-dashed hover:border-primary/50 transition-colors"
-                >
-                  {uploadingLogo ? (
-                    <>
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Wird verarbeitet...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Logo hochladen</span>
-                      <span className="text-xs text-muted-foreground">PNG, JPG (max. 5 MB)</span>
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={uploadingLogo}
+                className="w-full h-40 sm:h-48 flex flex-col items-center justify-center gap-3 border-2 border-dashed hover:border-primary/50 transition-colors bg-muted/30 hover:bg-muted/50"
+              >
+                {uploadingLogo ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Wird verarbeitet...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Upload className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">Logo hochladen</p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG (max. 5 MB)</p>
+                    </div>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* Passwort-Felder */}
-          <div className="pt-4 border-t border-border/60 space-y-4">
+          <div className="pt-5 border-t border-border space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">
+              <Label htmlFor="password" className="text-sm font-medium">
                 Passwort <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -477,12 +499,12 @@ const GymInvite = () => {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
                 minLength={6}
-                className="w-full"
+                className="w-full h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="passwordConfirm">
+              <Label htmlFor="passwordConfirm" className="text-sm font-medium">
                 Passwort bestätigen <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -493,14 +515,19 @@ const GymInvite = () => {
                 onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
                 required
                 minLength={6}
-                className="w-full"
+                className="w-full h-11"
               />
             </div>
           </div>
 
           {/* Buttons - Mobile: gestapelt, Desktop: nebeneinander */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button type="submit" disabled={submitting || uploadingLogo} className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 pt-6">
+            <Button 
+              type="submit" 
+              disabled={submitting || uploadingLogo} 
+              className="flex-1 h-11 text-base font-medium"
+              size="lg"
+            >
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -515,7 +542,7 @@ const GymInvite = () => {
               variant="outline"
               onClick={() => navigate("/app/login")}
               disabled={submitting || uploadingLogo}
-              className="sm:w-auto"
+              className="sm:w-auto h-11"
             >
               Abbrechen
             </Button>

@@ -44,6 +44,7 @@ const LeagueGyms = () => {
     adminPassword: "",
   });
   const [inviteEmail, setInviteEmail] = useState("");
+  const [skipEmail, setSkipEmail] = useState(false); // Für Testing: E-Mail-Versand überspringen
   const [editForm, setEditForm] = useState({
     name: "",
     city: "",
@@ -138,7 +139,7 @@ const LeagueGyms = () => {
     }
     setInviting(true);
     try {
-      const { data, error } = await inviteGymAdmin(inviteEmail);
+      const { data, error } = await inviteGymAdmin(inviteEmail, skipEmail);
       if (error) {
         console.error("Invite error:", error);
         
@@ -198,11 +199,38 @@ const LeagueGyms = () => {
         }
         return;
       }
+      // Zeige den Link an, auch wenn E-Mail-Versand fehlgeschlagen ist
+      const inviteUrl = data?.invite_url;
+      const emailSent = data?.email_sent !== false; // Default to true if not specified
+      const savedEmail = inviteEmail; // Speichere E-Mail vor dem Löschen
+      
       setInviteEmail("");
-      toast({
-        title: "Einladung gesendet",
-        description: `Eine E-Mail wurde an ${inviteEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
-      });
+      
+      if (inviteUrl) {
+        // Kopiere Link in Zwischenablage
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(inviteUrl).catch(() => {
+            // Ignoriere Fehler beim Kopieren
+          });
+        }
+        
+        toast({
+          title: emailSent ? "Einladung gesendet" : "Einladung erstellt",
+          description: emailSent 
+            ? `Eine E-Mail wurde an ${savedEmail} gesendet. Link: ${inviteUrl}`
+            : `Einladung erstellt. Link wurde kopiert: ${inviteUrl}`,
+          duration: 10000, // Länger anzeigen damit Link sichtbar ist
+        });
+        
+        // Zeige Link auch in Konsole für einfaches Kopieren
+        console.log("📧 Einladungslink:", inviteUrl);
+        console.log("📋 Link wurde in die Zwischenablage kopiert");
+      } else {
+        toast({
+          title: "Einladung gesendet",
+          description: `Eine E-Mail wurde an ${savedEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
+        });
+      }
     } catch (err) {
       console.error("Invite exception:", err);
       toast({ 
@@ -401,9 +429,21 @@ const LeagueGyms = () => {
                 Die Halle erhält eine E-Mail mit einem Link zur Registrierung. Dort kann sie ihre Daten und ein Passwort eingeben.
               </p>
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="skipEmail"
+                checked={skipEmail}
+                onChange={(e) => setSkipEmail(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="skipEmail" className="text-xs text-muted-foreground cursor-pointer">
+                E-Mail-Versand überspringen (nur Link generieren - für Testing)
+              </Label>
+            </div>
             <Button onClick={handleInvite} disabled={inviting} className="w-full md:w-auto touch-manipulation">
               <Mail className="h-4 w-4 mr-2" />
-              <span className="skew-x-6">{inviting ? "Sende..." : "Einladung senden"}</span>
+              <span className="skew-x-6">{inviting ? "Erstelle..." : (skipEmail ? "Link generieren" : "Einladung senden")}</span>
             </Button>
           </TabsContent>
         </Tabs>

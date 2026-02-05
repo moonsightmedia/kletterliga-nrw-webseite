@@ -3,13 +3,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type Payload = {
   email: string;
+  skip_email?: boolean; // Optional: Skip email sending for testing
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 // Frontend URL für Einladungslinks (z.B. https://kletterliga-nrw.de)
 // Falls nicht gesetzt, wird versucht, sie aus SUPABASE_URL abzuleiten
-const frontendUrl = Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL");
+// HARDCODED FALLBACK für Produktion
+const frontendUrlRaw = Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL") || "https://kletterliga-nrw.de";
+// Entferne alle trailing slashes
+const frontendUrl = frontendUrlRaw.replace(/\/+$/, "");
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -53,8 +57,9 @@ serve(async (req) => {
       );
     }
 
-    const { email } = payload;
+    const { email, skip_email } = payload;
     console.log("Received email:", email);
+    console.log("Skip email:", skip_email);
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       console.error("Invalid email:", email);
@@ -120,45 +125,55 @@ serve(async (req) => {
       );
     }
 
-    // Construct invite URL - verwende Frontend-URL falls verfügbar, sonst Supabase-URL
-    // Entferne trailing slash falls vorhanden, um doppelte Slashes zu vermeiden
-    const cleanFrontendUrl = frontendUrl ? frontendUrl.replace(/\/$/, "") : null;
-    const baseUrl = cleanFrontendUrl || supabaseUrl.replace("/rest/v1", "");
-    const inviteUrl = `${baseUrl}/app/invite/gym/${token}`;
+    // Construct invite URL - garantiert ohne doppelte Slashes
+    // frontendUrl wurde bereits oben bereinigt (keine trailing slashes)
+    const cleanBase = frontendUrl.replace(/\/+$/, ""); // Sicherstellen, dass kein trailing slash
+    const inviteUrl = `${cleanBase}/app/invite/gym/${token}`;
     
     // Log für Debugging
-    console.log("Frontend URL:", frontendUrl || "NOT SET - using Supabase URL");
-    console.log("Clean Frontend URL:", cleanFrontendUrl);
-    console.log("Base URL:", baseUrl);
-    console.log("Invite URL:", inviteUrl);
+    console.log("Frontend URL (raw env):", Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL") || "NOT SET");
+    console.log("Frontend URL (cleaned):", frontendUrl);
+    console.log("Clean Base:", cleanBase);
+    console.log("Invite URL (final):", inviteUrl);
 
-    // WICHTIG: Die redirectTo URL muss in der Supabase Auth-Konfiguration als erlaubte Redirect-URL eingetragen sein
-    // Gehe zu: Project Settings → Auth → URL Configuration → Redirect URLs
-    // Füge hinzu: https://kletterliga-nrw.de/app/invite/gym/*
+    // Send invitation email (optional, can be skipped for testing)
+    let emailSent = false;
+    let emailError = null;
     
-    // Send invitation email using Supabase Auth
-    // Note: Supabase verwendet die Site URL aus den Auth-Einstellungen als Basis für den Link
-    // Das E-Mail-Template muss angepasst werden, um unseren custom Link zu verwenden
-    const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      data: {
-        invite_url: inviteUrl,
-        token: token,
-        // Diese Daten werden im E-Mail-Template verfügbar sein
-      },
-      redirectTo: inviteUrl, // Wird verwendet, wenn die Site URL korrekt konfiguriert ist
-    });
+    if (!skip_email) {
+      // WICHTIG: Die redirectTo URL muss in der Supabase Auth-Konfiguration als erlaubte Redirect-URL eingetragen sein
+      // Gehe zu: Project Settings → Auth → URL Configuration → Redirect URLs
+      // Füge hinzu: https://kletterliga-nrw.de/app/invite/gym/*
+      
+      // Send invitation email using Supabase Auth
+      // Note: Supabase verwendet die Site URL aus den Auth-Einstellungen als Basis für den Link
+      // Das E-Mail-Template muss angepasst werden, um unseren custom Link zu verwenden
+      const emailResult = await supabase.auth.admin.inviteUserByEmail(email, {
+        data: {
+          invite_url: inviteUrl,
+          token: token,
+          // Diese Daten werden im E-Mail-Template verfügbar sein
+        },
+        redirectTo: inviteUrl, // Wird verwendet, wenn die Site URL korrekt konfiguriert ist
+      });
 
-    if (emailError) {
-      // If email sending fails, we still return success but log the error
-      // The invite token is still valid and can be used
-      console.error("Failed to send invite email:", emailError);
+      emailError = emailResult.error;
+      emailSent = !emailError;
+      
+      if (emailError) {
+        // If email sending fails, we still return success but log the error
+        // The invite token is still valid and can be used
+        console.error("Failed to send invite email:", emailError);
+      }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Invite sent successfully",
-        invite_url: inviteUrl, // Return URL for manual sharing if needed
+        message: skip_email ? "Invite created successfully (email skipped)" : (emailSent ? "Invite sent successfully" : "Invite created but email failed"),
+        invite_url: inviteUrl, // Always return URL for manual sharing
+        email_sent: emailSent,
+        email_error: emailError ? emailError.message : null,
       }),
       {
         status: 200,
