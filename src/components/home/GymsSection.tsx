@@ -3,10 +3,12 @@ import { ExternalLink } from "lucide-react";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
+import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 
 export const GymsSection = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
 
   useEffect(() => {
     listGyms()
@@ -38,9 +40,10 @@ export const GymsSection = () => {
               {gyms.map((gym) => (
                 <div
                   key={gym.id}
-                  className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer"
+                  className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer hover:shadow-lg transition-shadow h-full min-h-[160px] md:min-h-[180px]"
+                  onClick={() => setSelectedGym(gym)}
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
+                  <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300 overflow-hidden flex-shrink-0">
                     {gym.logo_url ? (
                       <img src={gym.logo_url} alt={gym.name} className="skew-x-6 h-full w-full object-contain p-1" />
                     ) : (
@@ -50,10 +53,10 @@ export const GymsSection = () => {
                     )}
                   </div>
 
-                  <h3 className="font-medium text-sm text-primary mb-1 line-clamp-2">
+                  <h3 className="font-medium text-sm text-primary mb-1 line-clamp-2 flex-shrink-0">
                     {gym.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground">{gym.city ?? ""}</p>
+                  <p className="text-xs text-muted-foreground flex-shrink-0">{gym.city ?? ""}</p>
                 </div>
               ))}
             </StaggeredAnimation>
@@ -69,6 +72,13 @@ export const GymsSection = () => {
             </AnimatedSection>
           </>
         )}
+
+        {/* Gym Detail Dialog */}
+        <GymDetailDialog
+          gym={selectedGym}
+          open={selectedGym !== null}
+          onOpenChange={(open) => !open && setSelectedGym(null)}
+        />
       </div>
     </section>
   );

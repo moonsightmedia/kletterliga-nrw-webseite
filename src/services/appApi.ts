@@ -6,6 +6,7 @@ import type {
   Gym,
   GymAdmin,
   GymCode,
+  InstagramPost,
   Profile,
   ProfileOverride,
   Result,
@@ -415,4 +416,49 @@ export async function listFinaleRegistrations() {
     .from("finale_registrations")
     .select("*, profiles!inner(*)")
     .order("created_at", { ascending: false });
+}
+
+export async function getInstagramFeed(limit: number = 6) {
+  const url = `${supabaseConfig.url}/functions/v1/get-instagram-feed`;
+  const res = await fetch(`${url}?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${supabaseConfig.anonKey}`,
+      apikey: supabaseConfig.anonKey,
+    },
+  });
+  
+  const body = await res.json().catch(() => ({}));
+  
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Instagram-Feed konnte nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+  
+  const data = Array.isArray(body) ? body : [];
+  return { data: data as InstagramPost[], error: null };
+}
+
+export async function getInstagramFeedByHashtag(hashtag: string, limit: number = 6) {
+  const url = `${supabaseConfig.url}/functions/v1/get-instagram-feed`;
+  const hashtagParam = hashtag.replace(/^#/, ""); // Remove # if present
+  const res = await fetch(`${url}?hashtag=${encodeURIComponent(hashtagParam)}&limit=${limit}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${supabaseConfig.anonKey}`,
+      apikey: supabaseConfig.anonKey,
+    },
+  });
+  
+  const body = await res.json().catch(() => ({}));
+  
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Hashtag-Feed konnte nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+  
+  const data = Array.isArray(body) ? body : [];
+  return { data: data as InstagramPost[], error: null };
 }

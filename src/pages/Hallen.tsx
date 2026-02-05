@@ -6,6 +6,7 @@ import { MapPin, ExternalLink } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
+import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 
 /** Link zu Google Maps Suche nach Adresse */
 const mapSearchUrl = (address: string) =>
@@ -22,6 +23,7 @@ const Hallen = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
 
   useEffect(() => {
     listGyms()
@@ -71,7 +73,8 @@ const Hallen = () => {
               {gyms.map((gym) => (
                 <div
                   key={gym.id}
-                  className="card-kl group flex gap-6"
+                  className="card-kl group flex gap-6 cursor-pointer hover:shadow-lg transition-shadow h-full min-h-[180px]"
+                  onClick={() => setSelectedGym(gym)}
                 >
                   <div className="w-20 h-20 flex-shrink-0 -skew-x-6 bg-accent/50 flex items-center justify-center group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
                     {gym.logo_url ? (
@@ -83,17 +86,19 @@ const Hallen = () => {
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col">
                     <h3 className="font-headline text-xl text-primary mb-1 truncate">
                       {gym.name}
                     </h3>
 
-                    {(gym.address ?? gym.city) && (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm mb-3">
-                        <MapPin size={14} />
-                        <span>{gym.address ?? gym.city ?? ""}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-3 min-h-[20px]">
+                      {(gym.address ?? gym.city) && (
+                        <>
+                          <MapPin size={14} className="flex-shrink-0" />
+                          <span className="truncate">{gym.address ?? gym.city ?? ""}</span>
+                        </>
+                      )}
+                    </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
                       <span className="inline-block bg-accent text-accent-foreground text-xs px-2 py-1 -skew-x-6">
@@ -104,13 +109,14 @@ const Hallen = () => {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3 mt-auto">
                       {(gym.address ?? gym.city) && (
                         <a
                           href={mapSearchUrl(gym.address ?? gym.city ?? "")}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Adresse in Karte anzeigen
                           <ExternalLink size={14} />
@@ -122,6 +128,7 @@ const Hallen = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Website besuchen
                           <ExternalLink size={14} />
@@ -135,6 +142,13 @@ const Hallen = () => {
           )}
         </div>
       </section>
+
+      {/* Gym Detail Dialog */}
+      <GymDetailDialog
+        gym={selectedGym}
+        open={selectedGym !== null}
+        onOpenChange={(open) => !open && setSelectedGym(null)}
+      />
 
       {/* Become Partner Section */}
       <section className="section-padding bg-muted/50">

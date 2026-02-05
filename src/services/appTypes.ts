@@ -119,3 +119,16 @@ export type FinaleRegistration = {
   profile_id: string;
   created_at: string;
 };
+
+export type InstagramPost = {
+  id: string;
+  caption: string | null;
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_url: string;
+  permalink: string;
+  thumbnail_url?: string;
+  timestamp: string;
+  like_count?: number;
+  comments_count?: number;
+  username?: string;
+};

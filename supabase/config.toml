@@ -24,3 +24,7 @@ verify_jwt = false
 # delete-gym: JWT-Check deaktivieren (Function prüft intern Liga-Admin)
 [functions.delete-gym]
 verify_jwt = false
+
+# get-instagram-feed: öffentlich (Instagram-Feed auf der Website ohne Login)
+[functions.get-instagram-feed]
+verify_jwt = false

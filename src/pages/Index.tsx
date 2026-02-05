@@ -4,6 +4,7 @@ import { AboutSection } from "@/components/home/AboutSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { SeasonSection } from "@/components/home/SeasonSection";
 import { GymsSection } from "@/components/home/GymsSection";
+import { InstagramSection } from "@/components/home/InstagramSection";
 import { CTASection } from "@/components/home/CTASection";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
@@ -22,6 +23,7 @@ const Index = () => {
       <HowItWorksSection />
       <SeasonSection />
       <GymsSection />
+      <InstagramSection />
       <CTASection />
     </PageLayout>
   );
