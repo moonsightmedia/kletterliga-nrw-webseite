@@ -255,21 +255,21 @@ const GymCodes = () => {
       </div>
 
       {/* Stats Cards - auf Mobile vor den Buttons */}
-      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-3">
-        <Card className="p-4 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary">Codes gesamt</div>
-          <div className="font-headline text-2xl text-primary mt-2">{codes.length}</div>
-          <p className="text-xs text-muted-foreground mt-1">Alle Codes</p>
+      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-3">
+        <Card className="p-3 sm:p-4 border-border/60">
+          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes gesamt</div>
+          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{codes.length}</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Alle Codes</p>
         </Card>
-        <Card className="p-4 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary">Codes verfügbar</div>
-          <div className="font-headline text-2xl text-primary mt-2">{availableCount}</div>
-          <p className="text-xs text-muted-foreground mt-1">Noch nicht eingelöst</p>
+        <Card className="p-3 sm:p-4 border-border/60">
+          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes verfügbar</div>
+          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{availableCount}</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Noch nicht eingelöst</p>
         </Card>
-        <Card className="p-4 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary">Codes eingelöst</div>
-          <div className="font-headline text-2xl text-secondary mt-2">{redeemedCount}</div>
-          <p className="text-xs text-muted-foreground mt-1">Bereits verwendet</p>
+        <Card className="p-3 sm:p-4 border-border/60">
+          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes eingelöst</div>
+          <div className="font-headline text-xl sm:text-2xl text-secondary mt-1 sm:mt-2">{redeemedCount}</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Bereits verwendet</p>
         </Card>
       </div>
 

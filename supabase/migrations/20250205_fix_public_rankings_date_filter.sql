@@ -1,0 +1,108 @@
+-- Fix: Public rankings zeigt keine Punkte wenn Ergebnisse außerhalb des Qualifikationszeitraums liegen
+-- Problem: qualification_start/end sind gesetzt, aber Test-Ergebnisse liegen außerhalb des Zeitraums
+-- Lösung: Wenn keine Ergebnisse im Qualifikationszeitraum vorhanden sind, alle Ergebnisse verwenden
+
+create or replace function public.get_public_rankings(
+  p_league text,  -- 'toprope' or 'lead'
+  p_class text   -- 'u16-w', 'u16-m', 'ue16-w', 'ue16-m', 'ue40-w', 'ue40-m'
+)
+returns table (
+  rank int,
+  display_name text,
+  points bigint
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_cutoff date;
+  v_u16_max int := 15;
+  v_u40_min int := 40;
+  v_start date;
+  v_end date;
+  v_results_in_period int;
+begin
+  -- Load season settings (single row)
+  select
+    coalesce(age_cutoff_date, qualification_start::date),
+    coalesce(age_u16_max, 15),
+    coalesce(age_u40_min, 40),
+    qualification_start::date,
+    qualification_end::date
+  into v_cutoff, v_u16_max, v_u40_min, v_start, v_end
+  from public.admin_settings
+  limit 1;
+
+  -- Fallback für cutoff
+  if v_cutoff is null then
+    v_cutoff := coalesce(v_start, current_date)::date;
+  end if;
+  
+  -- Prüfe, ob es Ergebnisse im Qualifikationszeitraum gibt
+  -- Wenn nicht, verwende alle Ergebnisse (für Test-Zwecke oder wenn Saison noch nicht gestartet)
+  if v_start is not null and v_end is not null then
+    select count(*) into v_results_in_period
+    from public.results r
+    join public.routes rt on rt.id = r.route_id
+    where rt.discipline = p_league
+      and r.created_at::date >= v_start
+      and r.created_at::date <= v_end;
+    
+    -- Wenn keine Ergebnisse im Zeitraum, verwende alle Ergebnisse
+    if v_results_in_period = 0 then
+      v_start := null;
+      v_end := null;
+    end if;
+  end if;
+  
+  return query
+  with
+  -- Points per profile in this league (mit optionaler Datumsfilterung)
+  points_per_profile as (
+    select
+      r.profile_id,
+      coalesce(sum(coalesce(r.points, 0)::bigint), 0)::bigint + 
+      coalesce(sum(case when r.flash then 1 else 0 end)::bigint, 0)::bigint as total
+    from public.results r
+    inner join public.routes rt on rt.id = r.route_id
+    where rt.discipline = p_league
+      -- Nur filtern wenn v_start und v_end gesetzt sind UND es Ergebnisse im Zeitraum gibt
+      and (v_start is null or v_end is null or (r.created_at::date >= v_start and r.created_at::date <= v_end))
+    group by r.profile_id
+  ),
+  -- Profile + computed class
+  profile_class as (
+    select
+      p.id,
+      trim(coalesce(p.first_name, '') || ' ' || coalesce(p.last_name, '')) as name,
+      case
+        when p.gender is null or p.birth_date is null then null
+        when extract(year from age(v_cutoff, p.birth_date::date))::int <= v_u16_max then 'u16-' || lower(p.gender)
+        when extract(year from age(v_cutoff, p.birth_date::date))::int < v_u40_min then 'ue16-' || lower(p.gender)
+        else 'ue40-' || lower(p.gender)
+      end as computed_class
+    from public.profiles p
+    where (p.role is null or p.role not in ('gym_admin', 'league_admin'))
+      and p.league = p_league
+      and p.gender is not null
+      and p.birth_date is not null
+  )
+  select
+    (row_number() over (order by coalesce(pp.total, 0) desc nulls last))::int as rank,
+    coalesce(nullif(trim(pc.name), ''), 'Unbekannt') as display_name,
+    coalesce(pp.total, 0)::bigint as points
+  from profile_class pc
+  left join points_per_profile pp on pp.profile_id = pc.id
+  where pc.computed_class = lower(p_class)
+  order by coalesce(pp.total, 0) desc nulls last
+  limit 50;
+end;
+$$;
+
+comment on function public.get_public_rankings(text, text) is
+  'Returns top 50 ranking rows for public website by league and class. If qualification_start/end are set but no results exist in that period, all results are included.';
+
+-- Only service role (Edge Function) and authenticated may call; anon uses Edge Function
+grant execute on function public.get_public_rankings(text, text) to authenticated;
+grant execute on function public.get_public_rankings(text, text) to service_role;
