@@ -137,17 +137,82 @@ const LeagueGyms = () => {
       return;
     }
     setInviting(true);
-    const { data, error } = await inviteGymAdmin(inviteEmail);
-    setInviting(false);
-    if (error) {
-      toast({ title: "Fehler", description: error.message });
-      return;
+    try {
+      const { data, error } = await inviteGymAdmin(inviteEmail);
+      if (error) {
+        console.error("Invite error:", error);
+        
+        // Prüfe auf spezifische Fehlermeldungen
+        const errorMessage = error.message || "";
+        const errorCode = (error as any)?.code || (data?.error as any)?.code;
+        
+        if (errorCode === "INVITE_ALREADY_EXISTS" ||
+            errorMessage.includes("active invite already exists") || 
+            errorMessage.includes("bereits eine aktive Einladung") ||
+            errorMessage.includes("Einladung bereits vorhanden")) {
+          toast({ 
+            title: "Einladung bereits vorhanden", 
+            description: `Für ${inviteEmail} existiert bereits eine aktive Einladung. Die E-Mail wurde bereits gesendet.`,
+            variant: "default",
+          });
+        } else if (errorMessage.includes("Valid email address is required") ||
+                   errorMessage.includes("gültige E-Mail")) {
+          toast({ 
+            title: "Ungültige E-Mail-Adresse", 
+            description: "Bitte gib eine gültige E-Mail-Adresse ein." 
+          });
+        } else {
+          toast({ 
+            title: "Fehler", 
+            description: errorMessage || "Einladung konnte nicht gesendet werden. Bitte versuche es erneut.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      if (data?.error) {
+        console.error("Invite data error:", data.error);
+        
+        // Prüfe auf spezifische Fehlermeldungen im data.error
+        const errorData = typeof data.error === "string" 
+          ? { message: data.error } 
+          : data.error || {};
+        const errorMessage = errorData.message || errorData.toString() || "";
+        const errorCode = errorData.code;
+        
+        if (errorCode === "INVITE_ALREADY_EXISTS" ||
+            errorMessage.includes("active invite already exists") || 
+            errorMessage.includes("bereits eine aktive Einladung") ||
+            errorMessage.includes("Einladung bereits vorhanden")) {
+          toast({ 
+            title: "Einladung bereits vorhanden", 
+            description: `Für ${inviteEmail} existiert bereits eine aktive Einladung. Die E-Mail wurde bereits gesendet.`,
+            variant: "default",
+          });
+        } else {
+          toast({ 
+            title: "Fehler", 
+            description: errorMessage || "Einladung konnte nicht gesendet werden.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      setInviteEmail("");
+      toast({
+        title: "Einladung gesendet",
+        description: `Eine E-Mail wurde an ${inviteEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
+      });
+    } catch (err) {
+      console.error("Invite exception:", err);
+      toast({ 
+        title: "Fehler", 
+        description: err instanceof Error ? err.message : "Einladung konnte nicht gesendet werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setInviting(false);
     }
-    setInviteEmail("");
-    toast({
-      title: "Einladung gesendet",
-      description: `Eine E-Mail wurde an ${inviteEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
-    });
   };
 
   const handleAssignAdmin = async () => {

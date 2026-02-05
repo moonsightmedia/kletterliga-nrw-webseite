@@ -10,6 +10,7 @@ type Payload = {
     address?: string | null;
     website?: string | null;
     logo_url?: string | null;
+    logo_base64?: string | null;
   };
 };
 
@@ -34,12 +35,29 @@ serve(async (req) => {
   }
 
   try {
-    const payload = (await req.json()) as Payload;
+    // Parse request body
+    let payload: Payload;
+    try {
+      const body = await req.json();
+      payload = typeof body === "object" && body !== null ? body : {};
+      console.log("Parsed payload:", { token: payload.token ? "***" : undefined, gym: payload.gym?.name });
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or missing JSON body", details: String(parseError) }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     const { token, password, gym } = payload;
 
     if (!token || !password || !gym?.name) {
+      console.error("Missing required fields:", { hasToken: !!token, hasPassword: !!password, hasGymName: !!gym?.name });
       return new Response(
-        JSON.stringify({ error: "Missing required fields: token, password, and gym name" }),
+        JSON.stringify({ error: "Fehlende Pflichtfelder: Token, Passwort und Hallenname sind erforderlich" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -56,8 +74,9 @@ serve(async (req) => {
       .single();
 
     if (inviteError || !invite) {
+      console.error("Invalid invite token:", inviteError);
       return new Response(
-        JSON.stringify({ error: "Invalid or expired invite token" }),
+        JSON.stringify({ error: "Ungültiger oder abgelaufener Einladungslink" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -69,8 +88,9 @@ serve(async (req) => {
     const now = new Date();
     const expiresAt = new Date(invite.expires_at);
     if (now > expiresAt) {
+      console.error("Invite token expired:", { now, expiresAt });
       return new Response(
-        JSON.stringify({ error: "Invite token has expired" }),
+        JSON.stringify({ error: "Der Einladungslink ist abgelaufen" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -83,8 +103,9 @@ serve(async (req) => {
     const userExists = existingUser?.users?.some((u) => u.email === invite.email);
 
     if (userExists) {
+      console.error("User already exists:", invite.email);
       return new Response(
-        JSON.stringify({ error: "A user with this email already exists" }),
+        JSON.stringify({ error: "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -92,7 +113,7 @@ serve(async (req) => {
       );
     }
 
-    // Create gym
+    // Create gym (without logo first, we'll update it after upload)
     const { data: gymRow, error: gymError } = await supabase
       .from("gyms")
       .insert({
@@ -100,14 +121,15 @@ serve(async (req) => {
         city: gym.city ?? null,
         address: gym.address ?? null,
         website: gym.website ?? null,
-        logo_url: gym.logo_url ?? null,
+        logo_url: gym.logo_url ?? null, // Will be updated if logo_base64 is provided
       })
       .select("*")
       .single();
 
     if (gymError || !gymRow) {
+      console.error("Failed to create gym:", gymError);
       return new Response(
-        JSON.stringify({ error: gymError?.message ?? "Failed to create gym" }),
+        JSON.stringify({ error: gymError?.message ?? "Fehler beim Erstellen der Halle" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -126,10 +148,11 @@ serve(async (req) => {
     });
 
     if (userError || !userData?.user) {
+      console.error("Failed to create user:", userError);
       // Rollback: delete gym if user creation fails
       await supabase.from("gyms").delete().eq("id", gymRow.id);
       return new Response(
-        JSON.stringify({ error: userError?.message ?? "Failed to create user" }),
+        JSON.stringify({ error: userError?.message ?? "Fehler beim Erstellen des Benutzers" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -145,6 +168,7 @@ serve(async (req) => {
     });
 
     if (profileError) {
+      console.error("Failed to create profile:", profileError);
       // Rollback: delete gym and user
       await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
@@ -164,6 +188,7 @@ serve(async (req) => {
     });
 
     if (mappingError) {
+      console.error("Failed to create gym_admin mapping:", mappingError);
       // Rollback: delete gym, user, and profile
       await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
@@ -177,16 +202,69 @@ serve(async (req) => {
       );
     }
 
+    // Upload logo if provided as base64
+    let finalLogoUrl = gym.logo_url;
+    if (gym.logo_base64) {
+      try {
+        // Convert base64 to blob
+        const base64Data = gym.logo_base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Determine file type
+        const isPng = gym.logo_base64.startsWith("data:image/png");
+        const extension = isPng ? "png" : "jpg";
+        const contentType = isPng ? "image/png" : "image/jpeg";
+        const filePath = `gyms/${gymRow.id}/${Date.now()}.${extension}`;
+        
+        // Upload to storage using service role (no auth needed)
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, bytes, {
+            contentType,
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error("Logo upload failed:", uploadError);
+          // Continue without logo - don't fail the registration
+        } else {
+          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+          finalLogoUrl = urlData.publicUrl;
+          
+          // Update gym with logo URL
+          await supabase
+            .from("gyms")
+            .update({ logo_url: finalLogoUrl })
+            .eq("id", gymRow.id);
+        }
+      } catch (logoError) {
+        console.error("Logo processing error:", logoError);
+        // Continue without logo - don't fail the registration
+      }
+    }
+
     // Mark invite as used
     await supabase
       .from("gym_invites")
       .update({ used_at: new Date().toISOString() })
       .eq("id", invite.id);
 
+    // Fetch updated gym with logo URL
+    const { data: updatedGym } = await supabase
+      .from("gyms")
+      .select("*")
+      .eq("id", gymRow.id)
+      .single();
+
     return new Response(
       JSON.stringify({
         success: true,
-        gym: gymRow,
+        gym: updatedGym || gymRow,
         user_id: userData.user.id,
       }),
       {
@@ -195,8 +273,12 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ 
+        error: (error as Error).message || "Ein unerwarteter Fehler ist aufgetreten",
+        details: String(error)
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -36,10 +36,28 @@ serve(async (req) => {
   }
 
   try {
-    const payload = (await req.json()) as Payload;
-    const { email } = payload;
+    // Parse request body
+    let payload: Payload;
+    try {
+      const body = await req.json();
+      payload = typeof body === "object" && body !== null ? body : {};
+      console.log("Parsed payload:", payload);
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or missing JSON body", details: String(parseError) }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
-    if (!email || !email.includes("@")) {
+    const { email } = payload;
+    console.log("Received email:", email);
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      console.error("Invalid email:", email);
       return new Response(
         JSON.stringify({ error: "Valid email address is required" }),
         {
@@ -50,7 +68,7 @@ serve(async (req) => {
     }
 
     // Check if email already has an invite
-    const { data: existingInvite } = await supabase
+    const { data: existingInvite, error: checkError } = await supabase
       .from("gym_invites")
       .select("*")
       .eq("email", email.toLowerCase())
@@ -58,9 +76,17 @@ serve(async (req) => {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
+    if (checkError) {
+      console.error("Error checking existing invite:", checkError);
+    }
+
     if (existingInvite) {
+      console.log("Active invite already exists for:", email);
       return new Response(
-        JSON.stringify({ error: "An active invite already exists for this email" }),
+        JSON.stringify({ 
+          error: "Für diese E-Mail-Adresse existiert bereits eine aktive Einladung. Die E-Mail wurde bereits gesendet.",
+          code: "INVITE_ALREADY_EXISTS"
+        }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -95,18 +121,31 @@ serve(async (req) => {
     }
 
     // Construct invite URL - verwende Frontend-URL falls verfügbar, sonst Supabase-URL
-    const baseUrl = frontendUrl || supabaseUrl.replace("/rest/v1", "");
+    // Entferne trailing slash falls vorhanden, um doppelte Slashes zu vermeiden
+    const cleanFrontendUrl = frontendUrl ? frontendUrl.replace(/\/$/, "") : null;
+    const baseUrl = cleanFrontendUrl || supabaseUrl.replace("/rest/v1", "");
     const inviteUrl = `${baseUrl}/app/invite/gym/${token}`;
+    
+    // Log für Debugging
+    console.log("Frontend URL:", frontendUrl || "NOT SET - using Supabase URL");
+    console.log("Clean Frontend URL:", cleanFrontendUrl);
+    console.log("Base URL:", baseUrl);
+    console.log("Invite URL:", inviteUrl);
 
+    // WICHTIG: Die redirectTo URL muss in der Supabase Auth-Konfiguration als erlaubte Redirect-URL eingetragen sein
+    // Gehe zu: Project Settings → Auth → URL Configuration → Redirect URLs
+    // Füge hinzu: https://kletterliga-nrw.de/app/invite/gym/*
+    
     // Send invitation email using Supabase Auth
-    // Note: This uses the admin API to send an invite email
-    // The email will contain a link to the invite page
+    // Note: Supabase verwendet die Site URL aus den Auth-Einstellungen als Basis für den Link
+    // Das E-Mail-Template muss angepasst werden, um unseren custom Link zu verwenden
     const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(email, {
       data: {
         invite_url: inviteUrl,
-        token,
+        token: token,
+        // Diese Daten werden im E-Mail-Template verfügbar sein
       },
-      redirectTo: inviteUrl,
+      redirectTo: inviteUrl, // Wird verwendet, wenn die Site URL korrekt konfiguriert ist
     });
 
     if (emailError) {

@@ -242,10 +242,48 @@ export async function inviteGymAdmin(email: string) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  return supabase.functions.invoke("invite-gym-admin", {
-    body: { email },
-    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
-  });
+  
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  try {
+    // Verwende fetch direkt, um bessere Fehlerbehandlung zu haben
+    const response = await fetch(`${supabaseUrl}/functions/v1/invite-gym-admin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${supabaseAnonKey}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error("inviteGymAdmin error response:", data);
+      return {
+        data: null,
+        error: {
+          message: data.error || `HTTP ${response.status}: ${response.statusText}`,
+        },
+      };
+    }
+    
+    console.log("inviteGymAdmin success:", data);
+    return {
+      data,
+      error: null,
+    };
+  } catch (error: any) {
+    console.error("inviteGymAdmin exception:", error);
+    return {
+      data: null,
+      error: {
+        message: error?.message || "Einladung konnte nicht gesendet werden",
+      },
+    };
+  }
 }
 
 export async function getGymInviteByToken(token: string) {
