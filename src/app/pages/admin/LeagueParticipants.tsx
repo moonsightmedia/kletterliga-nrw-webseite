@@ -7,9 +7,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { listGyms, listProfiles, updateProfile } from "@/services/appApi";
+import { listGyms, listProfiles, updateProfile, deleteProfile } from "@/services/appApi";
 import type { Gym, Profile } from "@/services/appTypes";
-import { Users, Search, Edit2, Shield, Building2, User } from "lucide-react";
+import { Users, Search, Edit2, Shield, Building2, User, Trash2 } from "lucide-react";
 
 const LeagueParticipants = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -17,6 +17,7 @@ const LeagueParticipants = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "participants" | "gym_admins" | "league_admins">("all");
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [deletingProfile, setDeletingProfile] = useState<Profile | null>(null);
   const [editForm, setEditForm] = useState({
     first_name: "",
     last_name: "",
@@ -108,6 +109,18 @@ const LeagueParticipants = () => {
       league: (editForm.league as "toprope" | "lead") || null,
     });
     setEditingProfile(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingProfile) return;
+    const { error } = await deleteProfile(deletingProfile.id);
+    if (error) {
+      toast({ title: "Fehler", description: error.message || "Fehler beim Löschen des Profils", variant: "destructive" });
+      return;
+    }
+    setProfiles((prev) => prev.filter((p) => p.id !== deletingProfile.id));
+    setDeletingProfile(null);
+    toast({ title: "Gelöscht", description: "Profil und alle zugehörigen Ergebnisse wurden gelöscht." });
   };
 
   const getRoleBadge = (role: Profile["role"]) => {
@@ -230,14 +243,24 @@ const LeagueParticipants = () => {
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(profile)}
-                  className="h-9 w-9 p-0 flex-shrink-0 touch-manipulation"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(profile)}
+                    className="h-9 w-9 p-0 touch-manipulation"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeletingProfile(profile)}
+                    className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="pt-2 border-t border-border/60 grid grid-cols-2 gap-2 text-xs">
                 {profile.birth_date && (
@@ -376,6 +399,38 @@ const LeagueParticipants = () => {
             </Button>
             <Button onClick={handleSaveEdit} className="w-full sm:w-auto touch-manipulation">
               <span className="skew-x-6">Speichern</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Löschen-Bestätigungs-Dialog */}
+      <Dialog open={deletingProfile !== null} onOpenChange={(open) => !open && setDeletingProfile(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Profil löschen</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Möchtest du das Profil von <strong>{deletingProfile?.first_name} {deletingProfile?.last_name}</strong> wirklich löschen?
+            </p>
+            <p className="text-sm text-destructive font-semibold">
+              ⚠️ Diese Aktion kann nicht rückgängig gemacht werden!
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Alle zugehörigen Ergebnisse werden ebenfalls gelöscht.
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDeletingProfile(null)} className="w-full sm:w-auto touch-manipulation">
+              Abbrechen
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete} 
+              className="w-full sm:w-auto touch-manipulation"
+            >
+              <span className="skew-x-6">Löschen</span>
             </Button>
           </DialogFooter>
         </DialogContent>

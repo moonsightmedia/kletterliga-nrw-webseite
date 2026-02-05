@@ -85,8 +85,62 @@ export async function updateProfile(profileId: string, patch: Partial<Profile>) 
   return { data, error: null };
 }
 
+export async function deleteProfile(profileId: string) {
+  // Delete auth user via Edge Function (this will cascade delete profile and results)
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  
+  const url = `${supabaseConfig.url}/functions/v1/delete-user`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      apikey: supabaseConfig.anonKey,
+    },
+    body: JSON.stringify({ userId: profileId }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Fehler beim Löschen des Benutzers";
+    return { error: { message } };
+  }
+
+  return { error: null };
+}
+
 export async function upsertResult(result: Omit<Result, "id" | "created_at"> & { id?: string }) {
-  return supabase.from("results").upsert(result).select("*").single<Result>();
+  // If id is provided, use it for upsert
+  if (result.id) {
+    return supabase.from("results").upsert(result).select("*").single<Result>();
+  }
+  
+  // Otherwise, find existing result by profile_id and route_id
+  const { data: existing } = await supabase
+    .from("results")
+    .select("id")
+    .eq("profile_id", result.profile_id)
+    .eq("route_id", result.route_id)
+    .maybeSingle<{ id: string }>();
+  
+  if (existing) {
+    // Update existing result
+    return supabase
+      .from("results")
+      .update({
+        points: result.points,
+        flash: result.flash,
+        status: result.status,
+      })
+      .eq("id", existing.id)
+      .select("*")
+      .single<Result>();
+  } else {
+    // Insert new result
+    return supabase.from("results").insert(result).select("*").single<Result>();
+  }
 }
 
 export async function updateResult(resultId: string, patch: Partial<Result>) {

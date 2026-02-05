@@ -1,4 +1,47 @@
--- Public rankings: RPC callable by anon, returns top N per league/class for website preview
+-- ============================================
+-- Kombiniertes Script für alle Fixes
+-- ============================================
+-- Dieses Script führt alle notwendigen Änderungen aus:
+-- 1. Entfernt doppelte Ergebnisse
+-- 2. Fügt Unique Constraint hinzu
+-- 3. Korrigiert die RPC-Funktion für öffentliche Ranglisten
+--
+-- Ausführung: Kopiere diesen Code in den Supabase SQL Editor und führe ihn aus
+-- ============================================
+
+-- ============================================
+-- 1. Entferne doppelte Ergebnisse
+-- ============================================
+-- Behält nur den neuesten Eintrag pro (profile_id, route_id)
+DELETE FROM public.results
+WHERE id IN (
+  SELECT id
+  FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (PARTITION BY profile_id, route_id ORDER BY created_at DESC) as rn
+    FROM public.results
+  ) t
+  WHERE rn > 1
+);
+
+-- ============================================
+-- 2. Füge Unique Constraint hinzu
+-- ============================================
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'results_profile_route_unique'
+  ) THEN
+    ALTER TABLE public.results
+      ADD CONSTRAINT results_profile_route_unique 
+      UNIQUE (profile_id, route_id);
+  END IF;
+END $$;
+
+-- ============================================
+-- 3. Korrigiere RPC-Funktion für öffentliche Ranglisten
+-- ============================================
 create or replace function public.get_public_rankings(
   p_league text,  -- 'toprope' or 'lead'
   p_class text   -- 'u16-w', 'u16-m', 'ue16-w', 'ue16-m', 'ue40-w', 'ue40-m'
@@ -84,3 +127,10 @@ comment on function public.get_public_rankings(text, text) is
 -- Only service role (Edge Function) and authenticated may call; anon uses Edge Function
 grant execute on function public.get_public_rankings(text, text) to authenticated;
 grant execute on function public.get_public_rankings(text, text) to service_role;
+
+-- ============================================
+-- Fertig!
+-- ============================================
+-- Die Änderungen wurden erfolgreich angewendet.
+-- Die Code-Änderungen in src/services/appApi.ts müssen ebenfalls deployed werden.
+-- ============================================

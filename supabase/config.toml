@@ -16,3 +16,7 @@ verify_jwt = false
 # get-public-rankings: öffentlich (Ranglisten-Vorschau auf der Website ohne Login)
 [functions.get-public-rankings]
 verify_jwt = false
+
+# delete-user: JWT-Check deaktivieren (Function prüft intern Liga-Admin)
+[functions.delete-user]
+verify_jwt = false

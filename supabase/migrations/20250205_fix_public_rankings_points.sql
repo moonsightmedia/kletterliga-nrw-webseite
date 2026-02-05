@@ -1,4 +1,4 @@
--- Public rankings: RPC callable by anon, returns top N per league/class for website preview
+-- Fix public rankings RPC function to properly handle NULL values in points calculation
 create or replace function public.get_public_rankings(
   p_league text,  -- 'toprope' or 'lead'
   p_class text   -- 'u16-w', 'u16-m', 'ue16-w', 'ue16-m', 'ue40-w', 'ue40-m'
