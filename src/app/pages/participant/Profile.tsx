@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import {
@@ -50,6 +51,12 @@ const Profile = () => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [currentRank, setCurrentRank] = useState<number | null>(null);
   const [requestingChange, setRequestingChange] = useState(false);
+  const [changeRequestOpen, setChangeRequestOpen] = useState(false);
+  const [changeRequestForm, setChangeRequestForm] = useState({
+    requested_league: "",
+    requested_gender: "",
+    message: "",
+  });
 
   useEffect(() => {
     listGyms().then(({ data }) => setGyms(data ?? []));
@@ -476,32 +483,16 @@ const Profile = () => {
                 variant="outline"
                 size="sm"
                 className="mt-3"
-                disabled={requestingChange}
-                onClick={async () => {
-                  if (!user?.id) return;
-                  setRequestingChange(true);
-                  const { error } = await createChangeRequest({
-                    profile_id: user.id,
-                    email: profile?.email ?? user.email ?? null,
-                    current_league: league ?? null,
-                    current_gender: gender ?? null,
-                    requested_league: (form.league as string) || null,
-                    requested_gender: (form.gender as string) || null,
-                    message: "Änderung der Wertungsklasse angefragt.",
-                    status: "open",
+                onClick={() => {
+                  setChangeRequestForm({
+                    requested_league: "",
+                    requested_gender: "",
+                    message: "",
                   });
-                  setRequestingChange(false);
-                  if (error) {
-                    toast({ title: "Fehler", description: error.message });
-                    return;
-                  }
-                  toast({
-                    title: "Anfrage gesendet",
-                    description: "Wir prüfen deine Änderung und melden uns per E-Mail.",
-                  });
+                  setChangeRequestOpen(true);
                 }}
               >
-                <span className="skew-x-6">{requestingChange ? "Sende..." : "Änderung anfragen"}</span>
+                <span className="skew-x-6">Änderung anfragen</span>
               </Button>
             </Card>
             <Button className="w-full" onClick={handleSave} disabled={saving}>
@@ -541,6 +532,201 @@ const Profile = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Request Dialog */}
+      <Dialog open={changeRequestOpen} onOpenChange={setChangeRequestOpen}>
+        <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg md:max-w-2xl sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
+          <DialogHeader>
+            <DialogTitle className="px-6 pt-6 text-center md:text-xl">Änderung der Wertungsklasse anfragen</DialogTitle>
+            <DialogDescription className="px-6 text-center md:text-base">
+              Bitte wähle die gewünschten Werte aus, die du ändern möchtest.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6 pt-4 space-y-4 md:space-y-6 overflow-y-auto max-h-[calc(100dvh-200px)]">
+            {/* Aktuelle Werte (nur lesend) */}
+            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+              <div className="text-xs uppercase tracking-widest text-secondary mb-2">Aktuelle Werte</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Aktuelle Liga</Label>
+                  <div className="text-sm font-semibold text-primary mt-1">
+                    {league === "toprope" ? "Toprope" : league === "lead" ? "Vorstieg" : "-"}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Aktuelles Geschlecht</Label>
+                  <div className="text-sm font-semibold text-primary mt-1">
+                    {gender === "m" ? "Männlich" : gender === "w" ? "Weiblich" : "-"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gewünschte Werte (auswählbar) */}
+            <div className="space-y-4">
+              <div className="text-xs uppercase tracking-widest text-secondary">Gewünschte Werte</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="requestedLeague" className="md:text-base">Gewünschte Liga</Label>
+                  <select
+                    id="requestedLeague"
+                    className="h-10 md:h-12 w-full rounded-md border border-input bg-background px-3 text-sm md:text-base"
+                    value={changeRequestForm.requested_league}
+                    onChange={(e) => setChangeRequestForm({ ...changeRequestForm, requested_league: e.target.value })}
+                  >
+                    <option value="">Keine Änderung</option>
+                    <option value="toprope">Toprope</option>
+                    <option value="lead">Vorstieg</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="requestedGender" className="md:text-base">Gewünschtes Geschlecht</Label>
+                  <select
+                    id="requestedGender"
+                    className="h-10 md:h-12 w-full rounded-md border border-input bg-background px-3 text-sm md:text-base"
+                    value={changeRequestForm.requested_gender}
+                    onChange={(e) => setChangeRequestForm({ ...changeRequestForm, requested_gender: e.target.value })}
+                  >
+                    <option value="">Keine Änderung</option>
+                    <option value="m">Männlich</option>
+                    <option value="w">Weiblich</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="changeMessage" className="md:text-base">Nachricht (optional)</Label>
+                <Textarea
+                  id="changeMessage"
+                  value={changeRequestForm.message}
+                  onChange={(e) => setChangeRequestForm({ ...changeRequestForm, message: e.target.value })}
+                  placeholder="Zusätzliche Informationen zu deiner Anfrage..."
+                  className="md:text-base min-h-[100px]"
+                />
+              </div>
+            </div>
+
+            {/* Validierung */}
+            {(() => {
+              const hasLeagueChange = changeRequestForm.requested_league && changeRequestForm.requested_league !== league;
+              const hasGenderChange = changeRequestForm.requested_gender && changeRequestForm.requested_gender !== gender;
+              const hasNoChange = !changeRequestForm.requested_league && !changeRequestForm.requested_gender;
+              const hasSameValues = 
+                (changeRequestForm.requested_league && changeRequestForm.requested_league === league) ||
+                (changeRequestForm.requested_gender && changeRequestForm.requested_gender === gender);
+
+              if (hasNoChange) {
+                return (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      Bitte wähle mindestens eine Änderung aus (Liga oder Geschlecht).
+                    </p>
+                  </div>
+                );
+              }
+
+              if (hasSameValues && !hasLeagueChange && !hasGenderChange) {
+                return (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      Die gewünschten Werte müssen sich von den aktuellen Werten unterscheiden.
+                    </p>
+                  </div>
+                );
+              }
+
+              return null;
+            })()}
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => setChangeRequestOpen(false)}
+                className="w-full sm:w-auto"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={async () => {
+                  // Validierung
+                  const hasLeagueChange = changeRequestForm.requested_league && changeRequestForm.requested_league !== league;
+                  const hasGenderChange = changeRequestForm.requested_gender && changeRequestForm.requested_gender !== gender;
+                  const hasNoChange = !changeRequestForm.requested_league && !changeRequestForm.requested_gender;
+                  const hasSameValues = 
+                    (changeRequestForm.requested_league && changeRequestForm.requested_league === league) ||
+                    (changeRequestForm.requested_gender && changeRequestForm.requested_gender === gender);
+
+                  if (hasNoChange) {
+                    toast({
+                      title: "Fehler",
+                      description: "Bitte wähle mindestens eine Änderung aus.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  if (hasSameValues && !hasLeagueChange && !hasGenderChange) {
+                    toast({
+                      title: "Fehler",
+                      description: "Die gewünschten Werte müssen sich von den aktuellen Werten unterscheiden.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  if (!user?.id) return;
+
+                  setRequestingChange(true);
+                  const message = changeRequestForm.message.trim() || "Änderung der Wertungsklasse angefragt.";
+                  
+                  const { error } = await createChangeRequest({
+                    profile_id: user.id,
+                    email: profile?.email ?? user.email ?? null,
+                    current_league: league ?? null,
+                    current_gender: gender ?? null,
+                    requested_league: changeRequestForm.requested_league || null,
+                    requested_gender: changeRequestForm.requested_gender || null,
+                    message: message,
+                    status: "open",
+                  });
+                  
+                  setRequestingChange(false);
+                  if (error) {
+                    toast({ title: "Fehler", description: error.message });
+                    return;
+                  }
+                  
+                  toast({
+                    title: "Anfrage gesendet",
+                    description: "Wir prüfen deine Änderung und melden uns per E-Mail.",
+                  });
+                  
+                  setChangeRequestOpen(false);
+                  setChangeRequestForm({
+                    requested_league: "",
+                    requested_gender: "",
+                    message: "",
+                  });
+                }}
+                disabled={(() => {
+                  const hasLeagueChange = changeRequestForm.requested_league && changeRequestForm.requested_league !== league;
+                  const hasGenderChange = changeRequestForm.requested_gender && changeRequestForm.requested_gender !== gender;
+                  const hasNoChange = !changeRequestForm.requested_league && !changeRequestForm.requested_gender;
+                  const hasSameValues = 
+                    (changeRequestForm.requested_league && changeRequestForm.requested_league === league) ||
+                    (changeRequestForm.requested_gender && changeRequestForm.requested_gender === gender);
+                  
+                  return requestingChange || hasNoChange || (hasSameValues && !hasLeagueChange && !hasGenderChange);
+                })()}
+                className="w-full sm:w-auto sm:ml-auto"
+              >
+                <span className="skew-x-6">{requestingChange ? "Sende..." : "Anfrage senden"}</span>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

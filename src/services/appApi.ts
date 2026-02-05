@@ -202,6 +202,29 @@ export async function listGymCodesByGym(gymId: string) {
   return supabase.from("gym_codes").select("*").eq("gym_id", gymId).order("created_at", { ascending: false }).returns<GymCode[]>();
 }
 
+export type GymCodeWithGym = GymCode & {
+  gyms: {
+    id: string;
+    name: string;
+    city: string | null;
+  } | null;
+};
+
+export async function listAllGymCodes() {
+  return supabase
+    .from("gym_codes")
+    .select(`
+      *,
+      gyms (
+        id,
+        name,
+        city
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .returns<GymCodeWithGym[]>();
+}
+
 export async function createGymCodes(codes: Omit<GymCode, "id" | "created_at">[]) {
   return supabase.from("gym_codes").insert(codes).select("*").returns<GymCode[]>();
 }
