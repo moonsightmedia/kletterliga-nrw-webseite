@@ -7,6 +7,9 @@ type Payload = {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+// Frontend URL für Einladungslinks (z.B. https://kletterliga-nrw.de)
+// Falls nicht gesetzt, wird versucht, sie aus SUPABASE_URL abzuleiten
+const frontendUrl = Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL");
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -91,8 +94,9 @@ serve(async (req) => {
       );
     }
 
-    // Construct invite URL
-    const inviteUrl = `${supabaseUrl.replace("/rest/v1", "")}/app/invite/gym/${token}`;
+    // Construct invite URL - verwende Frontend-URL falls verfügbar, sonst Supabase-URL
+    const baseUrl = frontendUrl || supabaseUrl.replace("/rest/v1", "");
+    const inviteUrl = `${baseUrl}/app/invite/gym/${token}`;
 
     // Send invitation email using Supabase Auth
     // Note: This uses the admin API to send an invite email
