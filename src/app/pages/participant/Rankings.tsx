@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Award, Medal, Trophy, MapPin, ChevronDown } from "lucide-react";
+import { Award, Medal, Trophy, MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listProfiles, listResults, listRoutes, listGyms } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { useSeasonSettings } from "@/services/seasonSettings";
@@ -58,6 +59,7 @@ const Rankings = () => {
   const stages = getStages();
   const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
   const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "");
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const paramTab = searchParams.get("tab");
@@ -192,8 +194,125 @@ const Rankings = () => {
       return <div className="p-4 text-sm text-muted-foreground">Noch keine Rangliste verfügbar.</div>;
     }
 
-    return (
-      <Accordion type="single" collapsible className="space-y-3">
+    const toggleRow = (profileId: string) => {
+      setExpandedRows((prev) => {
+        const next = new Set(prev);
+        if (next.has(profileId)) {
+          next.delete(profileId);
+        } else {
+          next.add(profileId);
+        }
+        return next;
+      });
+    };
+
+    // Desktop Table View with Expandable Rows
+    const renderDesktopTable = () => (
+      <div className="hidden md:block overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">Rang</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="text-right">Punkte</TableHead>
+              <TableHead className="w-12"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rankings.map((row) => {
+              const isUser = userName && row.name.includes(userName);
+              const Icon =
+                row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
+              const isExpanded = expandedRows.has(row.profile_id);
+              const participantDetails = getParticipantDetails(row.profile_id);
+              
+              return (
+                <>
+                  <TableRow
+                    key={`${row.rank}-${row.name}`}
+                    className={`cursor-pointer hover:bg-muted/50 ${isUser ? "bg-accent/20" : ""}`}
+                    onClick={() => toggleRow(row.profile_id)}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {Icon ? (
+                          <Icon className={`h-5 w-5 ${
+                            row.rank === 1 ? "text-yellow-600" :
+                            row.rank === 2 ? "text-gray-400" :
+                            row.rank === 3 ? "text-amber-600" : ""
+                          }`} />
+                        ) : (
+                          <span className="text-sm font-semibold text-muted-foreground">{row.rank}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-semibold">{row.name}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="text-lg font-semibold text-primary">{row.points}</div>
+                      <div className="text-xs text-muted-foreground">Punkte</div>
+                    </TableCell>
+                    <TableCell>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && participantDetails && participantDetails.length > 0 && (
+                    <TableRow key={`${row.profile_id}-details`} className="bg-muted/20">
+                      <TableCell colSpan={4} className="p-4">
+                        <div className="space-y-3">
+                          <div className="text-xs text-muted-foreground mb-2">
+                            Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
+                          </div>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {participantDetails.map((group) => (
+                              <div key={group.gym.id} className="border border-border/60 rounded-lg p-3 bg-background">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    <h3 className="font-semibold text-sm text-primary">{group.gym.name}</h3>
+                                  </div>
+                                  <div className="text-right flex-shrink-0 ml-2">
+                                    <div className="text-base font-bold text-primary">{group.totalPoints}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-none">Pkt</div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {group.routes.map(({ route, result, points }) => (
+                                    <div
+                                      key={result.id}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs border ${
+                                        result.flash
+                                          ? "bg-yellow-500/20 border-yellow-500/40"
+                                          : "bg-background border-border/40"
+                                      }`}
+                                    >
+                                      <span className={`font-medium ${result.flash ? "text-yellow-700" : ""}`}>
+                                        {route.code}
+                                      </span>
+                                      <span className={`font-semibold ${result.flash ? "text-yellow-700" : "text-primary"}`}>
+                                        {points}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    );
+
+    // Mobile Accordion View
+    const renderMobileAccordion = () => (
+      <div className="md:hidden">
+        <Accordion type="single" collapsible className="space-y-3">
         {rankings.map((row) => {
           const isUser = userName && row.name.includes(userName);
           const palette =
@@ -327,12 +446,20 @@ const Rankings = () => {
             </AccordionItem>
           );
         })}
-      </Accordion>
+        </Accordion>
+      </div>
+    );
+
+    return (
+      <>
+        {renderDesktopTable()}
+        {renderMobileAccordion()}
+      </>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex justify-center">
         <div className="inline-flex border border-border/60 bg-background -skew-x-6 overflow-hidden">
           <button

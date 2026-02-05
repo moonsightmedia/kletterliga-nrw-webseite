@@ -170,26 +170,26 @@ const ResultEntry = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 md:space-y-6 max-w-2xl mx-auto">
       {route && (
-        <Card className="p-5 border-border/60">
-          <div className="flex items-start gap-4">
+        <Card className="p-5 md:p-6 lg:p-8 border-border/60">
+          <div className="flex items-start gap-4 md:gap-6">
             {route.color && (
-              <div className={`h-6 w-6 rounded-full ${colorClass} border-2 border-border/50 flex-shrink-0 mt-1`} />
+              <div className={`h-6 w-6 md:h-8 md:w-8 rounded-full ${colorClass} border-2 border-border/50 flex-shrink-0 mt-1`} />
             )}
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-headline text-xl text-primary">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <div className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">
                   {route.code} {route.name && `· ${route.name}`}
                 </div>
                 <div className="text-right flex-shrink-0 ml-4">
-                  <div className="text-2xl font-bold text-secondary">
+                  <div className="text-2xl md:text-3xl font-bold text-secondary">
                     {existingResult ? (existingResult.points ?? 0) + (existingResult.flash ? 1 : 0) : 0}
                   </div>
-                  <div className="text-xs text-muted-foreground">Punkte</div>
+                  <div className="text-xs md:text-sm text-muted-foreground">Punkte</div>
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground space-y-1">
+              <div className="text-sm md:text-base text-muted-foreground space-y-1">
                 {route.color && <div>Farbe: {route.color}</div>}
                 {route.setter && <div>Routenschrauber: {route.setter}</div>}
                 {route.grade_range && <div>Schwierigkeit: {route.grade_range}</div>}
@@ -199,14 +199,15 @@ const ResultEntry = () => {
         </Card>
       )}
 
-      <Card className="p-4 border-border/60">
-        <div className="text-xs uppercase tracking-widest text-secondary mb-3">Ergebnis</div>
-        <div className="grid grid-cols-2 gap-3">
+      <Card className="p-4 md:p-6 lg:p-8 border-border/60">
+        <div className="text-xs md:text-sm uppercase tracking-widest text-secondary mb-3 md:mb-4">Ergebnis</div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
           {pointsOptions.map((value) => (
             <Button
               key={value}
               variant={points === value ? "default" : "outline"}
               size="sm"
+              className="md:text-base"
               onClick={() => {
                 setPoints(value);
                 // Wenn nicht Top, Flash zurücksetzen
@@ -222,11 +223,11 @@ const ResultEntry = () => {
         </div>
       </Card>
 
-      <Card className="p-4 border-border/60">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="font-semibold text-primary">Flash-Bonus</div>
-            <div className="text-xs text-muted-foreground">
+      <Card className="p-4 md:p-6 lg:p-8 border-border/60">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="font-semibold md:text-lg text-primary">Flash-Bonus</div>
+            <div className="text-xs md:text-sm text-muted-foreground mt-1">
               {points === 10 
                 ? "Ein Versuch, sofort Top." 
                 : "Nur verfügbar, wenn du Top (10 Punkte) erreicht hast."}
@@ -236,7 +237,7 @@ const ResultEntry = () => {
             type="button"
             onClick={() => setFlash((prev) => !prev)}
             disabled={points !== 10}
-            className={`px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
+            className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm font-semibold border transition-colors flex-shrink-0 ${
               points !== 10
                 ? "border-border text-foreground/30 cursor-not-allowed opacity-50"
                 : flash 
@@ -249,7 +250,7 @@ const ResultEntry = () => {
         </div>
       </Card>
 
-      <Button className="w-full" onClick={handleSave} disabled={loading}>
+      <Button className="w-full md:w-auto md:mx-auto md:block" size="lg" onClick={handleSave} disabled={loading}>
         {loading ? "Speichern..." : flash && points === 10 ? "Top mit Flash speichern" : "Ergebnis speichern"}
       </Button>
     </div>

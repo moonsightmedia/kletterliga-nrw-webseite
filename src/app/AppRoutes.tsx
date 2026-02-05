@@ -29,6 +29,7 @@ import LeagueClasses from "@/app/pages/admin/LeagueClasses";
 import LeagueResults from "@/app/pages/admin/LeagueResults";
 import LeagueParticipants from "@/app/pages/admin/LeagueParticipants";
 import LeagueFinaleRegistrations from "@/app/pages/admin/LeagueFinaleRegistrations";
+import LeagueChangeRequests from "@/app/pages/admin/LeagueChangeRequests";
 import LeagueRoutes from "@/app/pages/admin/LeagueRoutes";
 import LeagueSettings from "@/app/pages/admin/LeagueSettings";
 
@@ -172,6 +173,14 @@ export const appRoutes = (
           element={
             <RoleGuard allow={["league_admin"]}>
               <LeagueFinaleRegistrations />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="league/change-requests"
+          element={
+            <RoleGuard allow={["league_admin"]}>
+              <LeagueChangeRequests />
             </RoleGuard>
           }
         />

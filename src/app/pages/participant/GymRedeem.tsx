@@ -56,17 +56,23 @@ const GymRedeem = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 md:space-y-6 max-w-2xl mx-auto">
       <div>
-        <h2 className="font-headline text-2xl text-primary">Code einlösen</h2>
-        <p className="text-sm text-muted-foreground mt-1">Gib den Hallen-Code ein.</p>
+        <h2 className="font-headline text-2xl md:text-3xl lg:text-4xl text-primary">Code einlösen</h2>
+        <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">Gib den Hallen-Code ein.</p>
       </div>
-      <form onSubmit={handleRedeem} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="code">Hallen-Code</Label>
-          <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="z. B. KL-2026-XYZ" />
+      <form onSubmit={handleRedeem} className="space-y-4 md:space-y-6">
+        <div className="space-y-2 md:space-y-3">
+          <Label htmlFor="code" className="text-sm md:text-base">Hallen-Code</Label>
+          <Input 
+            id="code" 
+            value={code} 
+            onChange={(e) => setCode(e.target.value)} 
+            placeholder="z. B. KL-2026-XYZ"
+            className="md:text-base md:h-12"
+          />
         </div>
-        <Button type="submit" className="w-full" disabled={loading || !code}>
+        <Button type="submit" className="w-full md:w-auto md:px-8" size="lg" disabled={loading || !code}>
           {loading ? "Einlösen..." : "Code einlösen"}
         </Button>
       </form>

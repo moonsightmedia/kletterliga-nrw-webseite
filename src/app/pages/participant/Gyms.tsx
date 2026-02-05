@@ -58,7 +58,7 @@ const Gyms = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
         {gyms.map((gym) => {
           const gymRoutes = routeByGym[gym.id] ?? [];
           const completed = gymRoutes.filter((route) => resultMap[route.id]).length;
@@ -68,15 +68,15 @@ const Gyms = () => {
           
           return (
             <Link key={gym.id} to={`/app/gyms/${gym.id}`}>
-              <Card className={`relative p-4 border-2 transition-all h-full overflow-hidden ${
+              <Card className={`relative p-4 md:p-5 lg:p-6 border-2 transition-all h-full overflow-hidden ${
                 unlocked 
                   ? "border-secondary/40 hover:border-secondary hover:shadow-lg bg-gradient-to-br from-background to-secondary/5" 
                   : "border-border/60 hover:border-border hover:shadow-md bg-background"
               } ${!unlocked ? "opacity-90" : ""}`}>
-                <div className="space-y-3">
+                <div className="space-y-3 md:space-y-4">
                   {/* Logo und Lock Icon */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className={`h-14 w-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 ${
+                    <div className={`h-14 w-14 md:h-16 md:w-16 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 ${
                       unlocked 
                         ? "bg-secondary/10 border-2 border-secondary/30" 
                         : "bg-muted/50 border border-border/60"
@@ -84,26 +84,26 @@ const Gyms = () => {
                       {gym.logo_url ? (
                         <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-1.5" />
                       ) : (
-                        <span className={`text-sm font-bold ${unlocked ? "text-secondary" : "text-muted-foreground"}`}>
+                        <span className={`text-sm md:text-base font-bold ${unlocked ? "text-secondary" : "text-muted-foreground"}`}>
                           KL
                         </span>
                       )}
                     </div>
                     <div className="flex-shrink-0 pt-1">
                       {unlocked ? (
-                        <Unlock className="h-5 w-5 text-secondary" />
+                        <Unlock className="h-5 w-5 md:h-6 md:w-6 text-secondary" />
                       ) : (
-                        <Lock className="h-5 w-5 text-muted-foreground/60" />
+                        <Lock className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground/60" />
                       )}
                     </div>
                   </div>
 
                   {/* Gym Name und Stadt */}
                   <div>
-                    <div className={`text-sm leading-tight mb-1 font-medium ${unlocked ? "text-primary" : "text-muted-foreground"}`}>
+                    <div className={`text-sm md:text-base leading-tight mb-1 font-medium ${unlocked ? "text-primary" : "text-muted-foreground"}`}>
                       {gym.name}
                     </div>
-                    <div className="text-xs text-muted-foreground">{gym.city || ""}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">{gym.city || ""}</div>
                   </div>
 
                   {/* Progress Section */}

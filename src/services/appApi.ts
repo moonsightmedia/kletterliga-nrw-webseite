@@ -186,6 +186,18 @@ export async function createChangeRequest(request: Omit<ChangeRequest, "id" | "c
   return supabase.from("change_requests").insert(request).select("*").single<ChangeRequest>();
 }
 
+export async function listChangeRequests() {
+  return supabase
+    .from("change_requests")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .returns<ChangeRequest[]>();
+}
+
+export async function updateChangeRequest(requestId: string, patch: Partial<ChangeRequest>) {
+  return supabase.from("change_requests").update(patch).eq("id", requestId).select("*").single<ChangeRequest>();
+}
+
 export async function listGymCodesByGym(gymId: string) {
   return supabase.from("gym_codes").select("*").eq("gym_id", gymId).order("created_at", { ascending: false }).returns<GymCode[]>();
 }

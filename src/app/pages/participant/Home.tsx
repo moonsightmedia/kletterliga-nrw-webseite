@@ -278,9 +278,11 @@ const Home = () => {
                 <span className="skew-x-6 inline-block">Aktiv & als Nächstes</span>
               </div>
             </div>
+            
+            {/* Mobile: Horizontal Scroll */}
             <div
               ref={scrollRef}
-              className="-mx-6 pl-6 pr-0 overflow-x-auto overflow-y-visible scroll-smooth pt-3 snap-x snap-mandatory hide-scrollbar"
+              className="md:hidden -mx-6 pl-6 pr-0 overflow-x-auto overflow-y-visible scroll-smooth pt-3 snap-x snap-mandatory hide-scrollbar"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex pb-4 items-center" style={{ width: 'max-content' }}>
@@ -351,6 +353,64 @@ const Home = () => {
                 <div className="flex-none w-[160px] h-[1px] opacity-0" aria-hidden="true" />
               </div>
             </div>
+
+            {/* Desktop: Grid Layout */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-3">
+              {stages.map((stage, index) => {
+                const startDate = new Date(`${stage.start}T00:00:00`);
+                const endDate = new Date(`${stage.end}T23:59:59`);
+                const startsInMs = startDate.getTime() - today.getTime();
+                const endsInMs = endDate.getTime() - today.getTime();
+                const startsInDays = Math.max(0, Math.ceil(startsInMs / (1000 * 60 * 60 * 24)));
+                const daysLeft = Math.max(0, Math.ceil(endsInMs / (1000 * 60 * 60 * 24)));
+                const isUpcoming = today.getTime() < startDate.getTime();
+                const isCurrent = today.getTime() >= startDate.getTime() && today.getTime() <= endDate.getTime();
+                const currentIndex = stages.findIndex((s) => {
+                  const sStart = new Date(`${s.start}T00:00:00`).getTime();
+                  const sEnd = new Date(`${s.end}T23:59:59`).getTime();
+                  return today.getTime() >= sStart && today.getTime() <= sEnd;
+                });
+                const nextIndex = stages.findIndex((s) => new Date(`${s.start}T00:00:00`).getTime() > today.getTime());
+                const isNext = currentIndex === -1 && index === nextIndex;
+                const chipText = isUpcoming ? `Startet in ${startsInDays} Tagen` : `Läuft ${daysLeft} Tage`;
+                const isClickable = Boolean(stage.key);
+                return (
+                  <div
+                    key={stage.label}
+                    className={`relative border px-4 py-3 md:px-5 md:py-4 text-center transition-all -skew-x-6 ${
+                      isClickable ? "cursor-pointer hover:shadow-lg hover:scale-105" : ""
+                    } ${
+                      isCurrent || isNext
+                        ? "bg-accent/70 border-secondary text-primary shadow-md"
+                        : "bg-background border-primary/10 hover:border-primary/30"
+                    }`}
+                    role={isClickable ? "button" : undefined}
+                    tabIndex={isClickable ? 0 : -1}
+                    onClick={() => {
+                      if (!stage.key) return;
+                      navigate(`/app/rankings?tab=stage&stage=${stage.key}`);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!stage.key) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/app/rankings?tab=stage&stage=${stage.key}`);
+                      }
+                    }}
+                  >
+                    <div className="flex h-full flex-col gap-2 md:gap-3 skew-x-6">
+                      <div className="text-xs md:text-sm uppercase tracking-widest text-secondary">{stage.label}</div>
+                      <div className="text-sm md:text-base text-primary leading-tight">{stage.range}</div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-2">
+                        <Timer className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="font-semibold text-primary">{chipText}</span>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 pointer-events-none border border-border/40" />
+                  </div>
+                );
+              })}
+            </div>
             {getFinaleEnabled() && (
               <Button variant="secondary" className="w-full" asChild>
                 <Link to="/app/finale">
@@ -365,13 +425,13 @@ const Home = () => {
       </section>
 
       <section className="grid gap-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-4 border-border/60">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <Card className="p-4 md:p-5 lg:p-6 border-border/60">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs uppercase tracking-widest text-secondary">Punkte</div>
-              <Trophy className="h-5 w-5 text-primary" />
+              <Trophy className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
-            <div className="font-headline text-2xl text-primary">{points}</div>
+            <div className="font-headline text-2xl md:text-3xl text-primary">{points}</div>
             {avgPointsAll > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 Ø {Math.round(avgPointsAll)} · {points >= avgPointsAll ? (
@@ -383,24 +443,21 @@ const Home = () => {
             )}
           </Card>
           {currentRank && (
-            <Card className="p-4 border-border/60">
+            <Card className="p-4 md:p-5 lg:p-6 border-border/60">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-xs uppercase tracking-widest text-secondary">Rang</div>
-                <Award className="h-5 w-5 text-primary" />
+                <Award className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
-              <div className="font-headline text-2xl text-primary">#{currentRank}</div>
+              <div className="font-headline text-2xl md:text-3xl text-primary">#{currentRank}</div>
               <div className="text-xs text-muted-foreground mt-1">In deiner Klasse</div>
             </Card>
           )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-4 border-border/60">
+          <Card className="p-4 md:p-5 lg:p-6 border-border/60">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs uppercase tracking-widest text-secondary">Routen</div>
-              <Target className="h-5 w-5 text-primary" />
+              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
-            <div className="font-headline text-2xl text-primary">{routesClimbed}</div>
+            <div className="font-headline text-2xl md:text-3xl text-primary">{routesClimbed}</div>
             {avgRoutesAll > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 Ø {Math.round(avgRoutesAll)} · {routesClimbed >= avgRoutesAll ? (
@@ -411,12 +468,12 @@ const Home = () => {
               </div>
             )}
           </Card>
-          <Card className="p-4 border-border/60">
+          <Card className="p-4 md:p-5 lg:p-6 border-border/60">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs uppercase tracking-widest text-secondary">Flash</div>
-              <Zap className="h-5 w-5 text-primary" />
+              <Zap className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
-            <div className="font-headline text-2xl text-primary">{flashCount}</div>
+            <div className="font-headline text-2xl md:text-3xl text-primary">{flashCount}</div>
             {routesClimbed > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 {Math.round((flashCount / routesClimbed) * 100)}% Rate · Ø {Math.round(avgFlashRate)}%
@@ -425,54 +482,56 @@ const Home = () => {
           </Card>
         </div>
 
-        <Card className="p-4 border-border/60">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-xs uppercase tracking-widest text-secondary">Ø Punkte/Route</div>
-            <TrendingUp className="h-5 w-5 text-primary" />
-          </div>
-          <div className="font-headline text-2xl text-primary">
-            {routesClimbed > 0 ? avgPointsPerRoute.toFixed(1) : "0.0"}
-          </div>
-          {avgPointsAll > 0 && routesClimbed > 0 && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Ø {Math.round(avgPointsAll / Math.max(avgRoutesAll, 1) * 10) / 10} · {avgPointsPerRoute >= (avgPointsAll / Math.max(avgRoutesAll, 1)) ? (
-                <span className="text-green-600">Überdurchschnittlich</span>
-              ) : (
-                <span className="text-red-600">Unterdurchschnittlich</span>
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Card className="p-4 md:p-5 lg:p-6 border-border/60">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs uppercase tracking-widest text-secondary">Ø Punkte/Route</div>
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
-          )}
-        </Card>
-
-        <Card className="p-5 border-border/60">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-secondary">Wildcardqualifikation</div>
-              <div className="font-headline text-3xl text-primary mt-2">
-                {visitedGyms}/{totalGyms}
+            <div className="font-headline text-2xl md:text-3xl text-primary">
+              {routesClimbed > 0 ? avgPointsPerRoute.toFixed(1) : "0.0"}
+            </div>
+            {avgPointsAll > 0 && routesClimbed > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Ø {Math.round(avgPointsAll / Math.max(avgRoutesAll, 1) * 10) / 10} · {avgPointsPerRoute >= (avgPointsAll / Math.max(avgRoutesAll, 1)) ? (
+                  <span className="text-green-600">Überdurchschnittlich</span>
+                ) : (
+                  <span className="text-red-600">Unterdurchschnittlich</span>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Hallen besucht</p>
+            )}
+          </Card>
+
+          <Card className="p-5 md:p-6 lg:p-8 border-border/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-secondary">Wildcardqualifikation</div>
+                <div className="font-headline text-3xl md:text-4xl text-primary mt-2">
+                  {visitedGyms}/{totalGyms}
+                </div>
+                <p className="text-sm md:text-base text-muted-foreground mt-1">Hallen besucht</p>
+              </div>
+              <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-accent/70 flex items-center justify-center">
+                <Flag className="h-6 w-6 md:h-7 md:w-7 text-primary" />
+              </div>
             </div>
-            <div className="h-12 w-12 rounded-2xl bg-accent/70 flex items-center justify-center">
-              <Flag className="h-6 w-6 text-primary" />
+            <div className="mt-4">
+              <Progress value={progress} className="h-2" />
+              <div className="text-xs md:text-sm text-muted-foreground mt-2">{progress}% der Hallen abgeschlossen</div>
             </div>
-          </div>
-          <div className="mt-4">
-            <Progress value={progress} className="h-2" />
-            <div className="text-xs text-muted-foreground mt-2">{progress}% der Hallen abgeschlossen</div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </section>
 
-      <section className="grid gap-3">
-        <Card className="p-4 border-border/60 flex items-center justify-between">
+      <section className="grid gap-3 md:grid-cols-2">
+        <Card className="p-4 md:p-5 lg:p-6 border-border/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-accent/70 flex items-center justify-center">
-              <MapPinned className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-accent/70 flex items-center justify-center">
+              <MapPinned className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-primary">Code einlösen</div>
-              <div className="text-xs text-muted-foreground">Halle freischalten</div>
+              <div className="text-sm md:text-base font-semibold text-primary">Code einlösen</div>
+              <div className="text-xs md:text-sm text-muted-foreground">Halle freischalten</div>
             </div>
           </div>
           <Button size="sm" asChild>
@@ -483,14 +542,14 @@ const Home = () => {
             </Link>
           </Button>
         </Card>
-        <Card className="p-4 border-border/60 flex items-center justify-between">
+        <Card className="p-4 md:p-5 lg:p-6 border-border/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-accent/70 flex items-center justify-center">
-              <Trophy className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-accent/70 flex items-center justify-center">
+              <Trophy className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-primary">Ergebnisse eintragen</div>
-              <div className="text-xs text-muted-foreground">Routenpunkte erfassen</div>
+              <div className="text-sm md:text-base font-semibold text-primary">Ergebnisse eintragen</div>
+              <div className="text-xs md:text-sm text-muted-foreground">Routenpunkte erfassen</div>
             </div>
           </div>
           <Button variant="secondary" size="sm" asChild>

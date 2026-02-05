@@ -76,34 +76,34 @@ const GymRoutes = () => {
     const isLocked = codeRedeemed === false;
     
     return (
-      <Card key={route.id} className={`p-4 border-border/60 ${isLocked ? "opacity-60" : ""}`}>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="font-semibold text-primary">
+      <Card key={route.id} className={`p-4 md:p-5 lg:p-6 border-border/60 ${isLocked ? "opacity-60" : ""}`}>
+        <div className="flex items-center justify-between gap-4 md:gap-6">
+          <div className="flex-1">
+            <div className="font-semibold md:text-lg text-primary">
               {route.code} - {route.name || "Route"}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs md:text-sm text-muted-foreground mt-1">
               <span className="inline-flex items-center gap-2">
-                <span className={`h-3 w-3 rounded-full ${colorClass}`} aria-hidden="true" />
+                <span className={`h-3 w-3 md:h-4 md:w-4 rounded-full ${colorClass}`} aria-hidden="true" />
                 <span>Farbe: {route.color || "folgt"}</span>
               </span>
               <span> · Routenschrauber: {route.setter || "folgt"}</span>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Status</div>
-            <div className="text-sm font-semibold text-secondary">
+          <div className="text-right flex-shrink-0">
+            <div className="text-xs md:text-sm text-muted-foreground">Status</div>
+            <div className="text-sm md:text-base font-semibold text-secondary">
               {result ? `${(result.points ?? 0) + (result.flash ? 1 : 0)} Punkte` : "Nicht geklettert"}
             </div>
           </div>
         </div>
         {isLocked ? (
-          <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
-            <Lock className="h-3 w-3 mr-2" />
+          <Button variant="outline" size="sm" className="mt-3 md:mt-4 w-full md:w-auto" disabled>
+            <Lock className="h-3 w-3 md:h-4 md:w-4 mr-2" />
             Halle freischalten erforderlich
           </Button>
         ) : (
-          <Button variant="outline" size="sm" className="mt-3" asChild>
+          <Button variant="outline" size="sm" className="mt-3 md:mt-4" asChild>
             <Link to={`/app/gyms/${gymId}/routes/${route.id}/result`}>
               <span className="skew-x-6">Ergebnis eintragen</span>
             </Link>
@@ -114,30 +114,30 @@ const GymRoutes = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h2 className="font-headline text-2xl text-primary">{gym?.name ?? "Routen"}</h2>
-        <p className="text-sm text-muted-foreground">Toprope und Vorstieg im Überblick.</p>
+        <h2 className="font-headline text-2xl md:text-3xl lg:text-4xl text-primary">{gym?.name ?? "Routen"}</h2>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">Toprope und Vorstieg im Überblick.</p>
       </div>
 
       {codeRedeemed === false && (
-        <Card className="p-4 border-2 border-destructive/50 bg-destructive/5">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-3">
+        <Card className="p-4 md:p-6 lg:p-8 border-2 border-destructive/50 bg-destructive/5">
+          <div className="flex items-start gap-3 md:gap-4">
+            <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-3 md:space-y-4">
               <div>
-                <h3 className="font-semibold text-destructive mb-1">Halle nicht freigeschaltet</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold md:text-lg text-destructive mb-1 md:mb-2">Halle nicht freigeschaltet</h3>
+                <p className="text-sm md:text-base text-muted-foreground">
                   Du musst zuerst einen Hallen-Code einlösen, bevor du Ergebnisse für diese Halle eintragen kannst.
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button asChild variant="default" size="sm">
+              <div className="flex gap-2 md:gap-3">
+                <Button asChild variant="default" size="sm" className="md:text-base">
                   <Link to={`/app/gyms/${gymId}`}>
                     Zur Halle
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="sm" className="md:text-base">
                   <Link to="/app/gyms/redeem">
                     Code einlösen
                   </Link>
@@ -148,35 +148,35 @@ const GymRoutes = () => {
         </Card>
       )}
       {activeLeague === "toprope" ? (
-        <section className="space-y-3">
-          <div className="text-xs uppercase tracking-widest text-secondary">Toprope</div>
-          <div className="space-y-3">
+        <section className="space-y-3 md:space-y-4">
+          <div className="text-xs md:text-sm uppercase tracking-widest text-secondary">Toprope</div>
+          <div className="space-y-3 md:space-y-4">
             {toprope.map(renderRoute)}
-            {toprope.length === 0 && <div className="text-sm text-muted-foreground">Keine Toprope-Routen.</div>}
+            {toprope.length === 0 && <div className="text-sm md:text-base text-muted-foreground">Keine Toprope-Routen.</div>}
           </div>
         </section>
       ) : activeLeague === "lead" ? (
-        <section className="space-y-3">
-          <div className="text-xs uppercase tracking-widest text-secondary">Vorstieg</div>
-          <div className="space-y-3">
+        <section className="space-y-3 md:space-y-4">
+          <div className="text-xs md:text-sm uppercase tracking-widest text-secondary">Vorstieg</div>
+          <div className="space-y-3 md:space-y-4">
             {lead.map(renderRoute)}
-            {lead.length === 0 && <div className="text-sm text-muted-foreground">Keine Vorstiegsrouten.</div>}
+            {lead.length === 0 && <div className="text-sm md:text-base text-muted-foreground">Keine Vorstiegsrouten.</div>}
           </div>
         </section>
       ) : (
         <>
-          <section className="space-y-3">
-            <div className="text-xs uppercase tracking-widest text-secondary">Toprope</div>
-            <div className="space-y-3">
+          <section className="space-y-3 md:space-y-4">
+            <div className="text-xs md:text-sm uppercase tracking-widest text-secondary">Toprope</div>
+            <div className="space-y-3 md:space-y-4">
               {toprope.map(renderRoute)}
-              {toprope.length === 0 && <div className="text-sm text-muted-foreground">Keine Toprope-Routen.</div>}
+              {toprope.length === 0 && <div className="text-sm md:text-base text-muted-foreground">Keine Toprope-Routen.</div>}
             </div>
           </section>
-          <section className="space-y-3">
-            <div className="text-xs uppercase tracking-widest text-secondary">Vorstieg</div>
-            <div className="space-y-3">
+          <section className="space-y-3 md:space-y-4">
+            <div className="text-xs md:text-sm uppercase tracking-widest text-secondary">Vorstieg</div>
+            <div className="space-y-3 md:space-y-4">
               {lead.map(renderRoute)}
-              {lead.length === 0 && <div className="text-sm text-muted-foreground">Keine Vorstiegsrouten.</div>}
+              {lead.length === 0 && <div className="text-sm md:text-base text-muted-foreground">Keine Vorstiegsrouten.</div>}
             </div>
           </section>
         </>

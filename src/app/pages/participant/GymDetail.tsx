@@ -104,19 +104,19 @@ const GymDetail = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* Header mit Logo */}
-      <div className="flex items-start gap-4">
-        <div className="h-16 w-16 rounded-xl bg-background border-2 border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+      <div className="flex items-start gap-4 md:gap-6">
+        <div className="h-16 w-16 md:h-20 md:w-20 rounded-xl bg-background border-2 border-border flex items-center justify-center overflow-hidden flex-shrink-0">
           {gym.logo_url ? (
             <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
           ) : (
-            <span className="text-lg font-semibold text-muted-foreground">KL</span>
+            <span className="text-lg md:text-xl font-semibold text-muted-foreground">KL</span>
           )}
         </div>
         <div className="flex-1">
-          <h2 className="font-headline text-3xl text-primary">{gym.name}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{gym.city}</p>
+          <h2 className="font-headline text-3xl md:text-4xl lg:text-5xl text-primary">{gym.name}</h2>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">{gym.city}</p>
           {codeRedeemed && (
             <div className="flex items-center gap-2 mt-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -127,38 +127,38 @@ const GymDetail = () => {
       </div>
 
       {/* Halle-Informationen */}
-      <Card className="p-6 border-2 border-border/60 space-y-4">
-        <div className="space-y-3">
+      <Card className="p-6 md:p-8 lg:p-10 border-2 border-border/60 space-y-4 md:space-y-5">
+        <div className="space-y-3 md:space-y-4">
           {gym.address && (
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <MapPin className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Adresse</div>
-                <div className="text-sm text-foreground">{gym.address}</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-muted-foreground mb-1">Adresse</div>
+                <div className="text-sm md:text-base text-foreground">{gym.address}</div>
               </div>
             </div>
           )}
           
           {gym.opening_hours && (
-            <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <Clock className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Öffnungszeiten</div>
-                <div className="text-sm text-foreground">{gym.opening_hours}</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-muted-foreground mb-1">Öffnungszeiten</div>
+                <div className="text-sm md:text-base text-foreground">{gym.opening_hours}</div>
               </div>
             </div>
           )}
           
           {gym.website && (
-            <div className="flex items-start gap-3">
-              <Globe className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <Globe className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground flex-shrink-0 mt-0.5" />
               <div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Website</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-muted-foreground mb-1">Website</div>
                 <a 
                   href={gym.website} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-sm text-primary underline-offset-4 hover:underline"
+                  className="text-sm md:text-base text-primary underline-offset-4 hover:underline"
                 >
                   {gym.website.replace(/^https?:\/\//, '')}
                 </a>
@@ -170,20 +170,20 @@ const GymDetail = () => {
 
       {/* Code-Einlösung oder Routen-Button */}
       {!codeRedeemed ? (
-        <Card className="p-6 border-2 border-destructive/50 bg-destructive/5">
-          <div className="flex items-start gap-4">
-            <div className="p-2 rounded-full bg-destructive/10">
-              <Lock className="h-6 w-6 text-destructive" />
+        <Card className="p-6 md:p-8 lg:p-10 border-2 border-destructive/50 bg-destructive/5">
+          <div className="flex items-start gap-4 md:gap-6">
+            <div className="p-2 md:p-3 rounded-full bg-destructive/10">
+              <Lock className="h-6 w-6 md:h-7 md:w-7 text-destructive" />
             </div>
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-4 md:space-y-5">
               <div>
-                <h3 className="font-semibold text-destructive mb-2">Halle freischalten</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold md:text-lg text-destructive mb-2">Halle freischalten</h3>
+                <p className="text-sm md:text-base text-muted-foreground">
                   Um Ergebnisse für diese Halle eintragen zu können, musst du zuerst einen Hallen-Code einlösen.
                 </p>
               </div>
               
-              <form onSubmit={handleRedeem} className="space-y-3">
+              <form onSubmit={handleRedeem} className="space-y-3 md:space-y-4 max-w-md">
                 <div className="space-y-2">
                   <Label htmlFor="code">Hallen-Code</Label>
                   <Input 
@@ -192,9 +192,10 @@ const GymDetail = () => {
                     onChange={(e) => setCode(e.target.value.toUpperCase())} 
                     placeholder="z. B. KL-2026-XYZ"
                     disabled={loading}
+                    className="md:text-base"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading || !code.trim()}>
+                <Button type="submit" className="w-full md:w-auto" disabled={loading || !code.trim()}>
                   {loading ? "Einlösen..." : "Code einlösen"}
                 </Button>
               </form>

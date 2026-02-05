@@ -248,25 +248,25 @@ const Profile = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8 max-w-4xl mx-auto">
       <Card className="border-0 overflow-hidden">
         <div className="px-0 pt-0">
-          <div className="flex items-center justify-between bg-secondary px-5 py-3 text-white rounded-b-none rounded-t-2xl">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <span className="h-2.5 w-2.5 rounded-full bg-white/70" />
+          <div className="flex items-center justify-between bg-secondary px-5 md:px-8 py-3 md:py-4 text-white rounded-b-none rounded-t-2xl">
+            <div className="flex items-center gap-2 text-sm md:text-base font-semibold">
+              <span className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-full bg-white/70" />
               {currentRank ? `Platz ${currentRank}` : "Platz -"}
             </div>
-            <button type="button" className="text-sm font-semibold" onClick={() => setHistoryOpen(true)}>
-              Verlauf <ChevronRight className="inline h-4 w-4" />
+            <button type="button" className="text-sm md:text-base font-semibold" onClick={() => setHistoryOpen(true)}>
+              Verlauf <ChevronRight className="inline h-4 w-4 md:h-5 md:w-5" />
             </button>
           </div>
         </div>
-        <div className="rounded-b-xl bg-primary px-5 py-6 text-white">
+        <div className="rounded-b-xl bg-primary px-5 md:px-8 py-6 md:py-8 text-white">
           <div className="flex items-start justify-between">
             <div className="flex-1 text-center">
               <button
                 type="button"
-                className={`mx-auto h-24 w-24 overflow-hidden rounded-full border-4 border-white/70 ${
+                className={`mx-auto h-24 w-24 md:h-32 md:w-32 overflow-hidden rounded-full border-4 border-white/70 ${
                   uploading || savingAvatar ? "opacity-70" : ""
                 }`}
                 onClick={() => fileInputRef.current?.click()}
@@ -276,18 +276,18 @@ const Profile = () => {
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Profilbild" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full bg-white/10 flex items-center justify-center text-2xl font-semibold">
+                  <div className="h-full w-full bg-white/10 flex items-center justify-center text-2xl md:text-3xl font-semibold">
                     {(firstName?.[0] ?? "") + (lastName?.[0] ?? "")}
                   </div>
                 )}
               </button>
               {(uploading || savingAvatar) && (
-                <div className="mt-2 text-xs text-white/80">
+                <div className="mt-2 text-xs md:text-sm text-white/80">
                   {uploading ? "Lädt hoch..." : "Speichert..."}
                 </div>
               )}
-              <div className="mt-4 text-lg font-semibold">{firstName} {lastName}</div>
-              <div className="text-sm text-white/70">{profile?.email ?? user?.email ?? "-"}</div>
+              <div className="mt-4 text-lg md:text-xl lg:text-2xl font-semibold">{firstName} {lastName}</div>
+              <div className="text-sm md:text-base text-white/70">{profile?.email ?? user?.email ?? "-"}</div>
             </div>
             <input
               ref={fileInputRef}
@@ -378,47 +378,50 @@ const Profile = () => {
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
+        <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg md:max-w-2xl sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
           <DialogHeader>
-            <DialogTitle className="px-6 pt-6 text-center">Profil bearbeiten</DialogTitle>
-            <DialogDescription className="px-6 text-center">
+            <DialogTitle className="px-6 pt-6 text-center md:text-xl">Profil bearbeiten</DialogTitle>
+            <DialogDescription className="px-6 text-center md:text-base">
               Passe deine persönlichen Daten an.
             </DialogDescription>
           </DialogHeader>
-          <div className="px-6 pb-6 pt-4 space-y-4 overflow-y-auto max-h-[calc(100dvh-80px)]">
-            <div className="grid grid-cols-1 gap-4">
+          <div className="px-6 pb-6 pt-4 space-y-4 md:space-y-6 overflow-y-auto max-h-[calc(100dvh-80px)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="editFirstName">Vorname</Label>
+                <Label htmlFor="editFirstName" className="md:text-base">Vorname</Label>
                 <Input
                   id="editFirstName"
                   value={form.firstName}
                   onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                  className="md:text-base md:h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editLastName">Nachname</Label>
+                <Label htmlFor="editLastName" className="md:text-base">Nachname</Label>
                 <Input
                   id="editLastName"
                   value={form.lastName}
                   onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                  className="md:text-base md:h-12"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="editBirthDate">Geburtsdatum</Label>
+                <Label htmlFor="editBirthDate" className="md:text-base">Geburtsdatum</Label>
                 <Input
                   id="editBirthDate"
                   type="date"
                   value={form.birthDate}
                   onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+                  className="md:text-base md:h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editGender">Wertungsklasse (m/w)</Label>
+                <Label htmlFor="editGender" className="md:text-base">Wertungsklasse (m/w)</Label>
                 <select
                   id="editGender"
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 md:h-12 w-full rounded-md border border-input bg-background px-3 text-sm md:text-base"
                   value={form.gender}
                   onChange={(e) => setForm({ ...form, gender: e.target.value })}
                   disabled
@@ -427,12 +430,12 @@ const Profile = () => {
                   <option value="w">Weiblich</option>
                   <option value="m">Männlich</option>
                 </select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   Auswahl gemäß Wettkampf-Wertungsklassen (m/w).
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="editLeague">Liga</Label>
                 <select
