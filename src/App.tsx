@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "@/app/auth/AuthProvider";
+import { ClosedGate } from "@/app/ClosedGate";
 import { appRoutes } from "@/app/AppRoutes";
 import Index from "./pages/Index";
 import Liga from "./pages/Liga";
@@ -29,9 +30,10 @@ const App = () => (
       <Analytics />
       <SpeedInsights />
       <BrowserRouter>
-        <AuthProvider>
-          <ScrollToTop />
-          <Routes>
+        <ClosedGate>
+          <AuthProvider>
+            <ScrollToTop />
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/liga" element={<Liga />} />
             <Route path="/modus" element={<Modus />} />
@@ -44,8 +46,9 @@ const App = () => (
             {appRoutes}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+            </Routes>
+          </AuthProvider>
+        </ClosedGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
