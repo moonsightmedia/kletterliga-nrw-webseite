@@ -85,7 +85,7 @@ export const SeasonSection = () => {
                   <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
                     <Trophy className="skew-x-6 text-primary" size={24} />
                   </div>
-                  <span className="text-accent font-headline text-lg">DAS FINALE</span>
+                  <span className="text-accent font-headline text-lg">HALBFINALE & FINALE</span>
                 </div>
 
                 <h3 className="font-headline text-3xl md:text-4xl mb-4">
@@ -95,7 +95,7 @@ export const SeasonSection = () => {
                 <ul className="space-y-3 text-secondary-foreground/80">
                   <li className="flex items-start gap-2">
                     <Trophy size={18} className="mt-1 flex-shrink-0 text-accent" />
-                    <span>Die Top-Platzierten jeder Klasse</span>
+                    <span>Halbfinale und Finale am selben Tag</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Trophy size={18} className="mt-1 flex-shrink-0 text-accent" />

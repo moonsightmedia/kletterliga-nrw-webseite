@@ -125,7 +125,7 @@ const Home = () => {
     }
 
     const participantProfiles = allProfiles.filter(
-      (p) => p.role === "participant" && getClassName(p.birth_date, p.gender) === classKey
+      (p) => p.role === "participant" && p.participation_activated_at && getClassName(p.birth_date, p.gender) === classKey
     );
 
     const participantStats = participantProfiles.map((profile) => {

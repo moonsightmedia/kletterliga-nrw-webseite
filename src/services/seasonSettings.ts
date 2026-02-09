@@ -65,12 +65,29 @@ export const useSeasonSettings = () => {
     const age = getAgeAt(birthDate, cutoffDate);
     if (age === null || !gender) return null;
 
-    const u16Max = settings?.age_u16_max ?? 15;
+    const u15Max = settings?.age_u16_max ?? 14; // U15 max Alter (unter 15 = bis 14)
     const u40Min = settings?.age_u40_min ?? 40;
 
-    if (age <= u16Max) return `U16-${gender}`;
-    if (age < u40Min) return `Ü16-${gender}`;
+    if (age <= u15Max) return `U15-${gender}`;
+    if (age < u40Min) return `Ü15-${gender}`;
     return `Ü40-${gender}`;
+  };
+
+  const getAgeGroupRankingClass = (
+    birthDate: string | null | undefined,
+    gender: "m" | "w" | null | undefined,
+    cutoffDate?: string | null
+  ): string | null => {
+    const age = getAgeAt(birthDate, cutoffDate);
+    if (age === null || !gender) return null;
+
+    if (age <= 9) return `U9-${gender}`;
+    if (age <= 11) return `U11-${gender}`;
+    if (age <= 13) return `U13-${gender}`;
+    if (age <= 15) return `U15-${gender}`;
+    if (age < 40) return `Ü15-${gender}`;
+    if (age < 50) return `Ü40-${gender}`;
+    return `Ü50-${gender}`;
   };
 
   const getStages = (): Stage[] => {
@@ -157,8 +174,8 @@ export const useSeasonSettings = () => {
     return settings?.wildcards_per_class ?? 10;
   };
 
-  const getAgeU16Max = (): number => {
-    return settings?.age_u16_max ?? 15;
+  const getAgeU15Max = (): number => {
+    return settings?.age_u16_max ?? 14; // U15 max Alter (unter 15 = bis 14)
   };
 
   const getAgeU40Min = (): number => {
@@ -182,6 +199,7 @@ export const useSeasonSettings = () => {
     loading,
     getAgeAt,
     getClassName,
+    getAgeGroupRankingClass,
     getStages,
     isQualificationActive,
     getSeasonYear,
@@ -193,7 +211,7 @@ export const useSeasonSettings = () => {
     getPreparationEnd,
     getTop30PerClass,
     getWildcardsPerClass,
-    getAgeU16Max,
+    getAgeU15Max,
     getAgeU40Min,
     getFinaleEnabled,
     refreshSettings,

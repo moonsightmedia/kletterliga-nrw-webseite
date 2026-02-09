@@ -7,16 +7,24 @@ import { useSeasonSettings } from "@/services/seasonSettings";
 
 // Main categories (finalrelevant)
 const mainCategories = [
-  { name: "U16 weiblich", description: "Unter 16 Jahre", finalRelevant: true },
-  { name: "U16 männlich", description: "Unter 16 Jahre", finalRelevant: true },
-  { name: "Ü16 weiblich", description: "16–39 Jahre", finalRelevant: true },
-  { name: "Ü16 männlich", description: "16–39 Jahre", finalRelevant: true },
+  { name: "U15 weiblich", description: "Unter 15 Jahre", finalRelevant: true },
+  { name: "U15 männlich", description: "Unter 15 Jahre", finalRelevant: true },
+  { name: "Ü15 weiblich", description: "15–39 Jahre", finalRelevant: true },
+  { name: "Ü15 männlich", description: "15–39 Jahre", finalRelevant: true },
   { name: "Ü40 weiblich", description: "Ab 40 Jahre", finalRelevant: true },
   { name: "Ü40 männlich", description: "Ab 40 Jahre", finalRelevant: true },
 ];
 
 // Additional age group rankings
-const additionalCategories = ["U10", "U12", "U16", "Ü16", "Ü40", "Ü50"];
+const additionalCategories = [
+  { name: "U9", description: "Unter 9 Jahre" },
+  { name: "U11", description: "9-11 Jahre" },
+  { name: "U13", description: "12-13 Jahre" },
+  { name: "U15", description: "14-15 Jahre" },
+  { name: "Ü15", description: "15-39 Jahre" },
+  { name: "Ü40", description: "40-49 Jahre" },
+  { name: "Ü50", description: "Ab 50 Jahre" },
+];
 
 const Modus = () => {
   const { getQualificationStart, getQualificationEnd, getFinaleDate, getFinaleRegistrationDeadline, getTop30PerClass, getWildcardsPerClass } = useSeasonSettings();
@@ -82,11 +90,11 @@ const Modus = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
-                    Geringeres Sturzrisiko
+                    Fokus auf Technik
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-accent" />
-                    Fokus auf Technik
+                    Perfekt zum Erfahrungen sammeln
                   </li>
                 </ul>
               </div>
@@ -103,7 +111,7 @@ const Modus = () => {
                 <p className="text-secondary-foreground/80 mb-4">
                   Für erfahrene Kletterer:innen, die den klassischen Wettkampfstil 
                   bevorzugen. Du klippst das Seil selbst ein – echtes Kletterfeeling 
-                  garantiert.
+                  garantiert. Lead-Klettern (Vorstieg) im professionellen Wettkampfmodus.
                 </p>
                 <div className="bg-secondary-foreground/10 p-3 rounded mb-4">
                   <span className="font-headline text-accent text-sm md:text-base break-words">Schwierigkeitsbereich: UIAA 5–10</span>
@@ -204,22 +212,47 @@ const Modus = () => {
             </h3>
           </AnimatedSection>
 
-          <StaggeredAnimation 
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-12"
-            staggerDelay={75}
-            animation="scale"
-          >
-            {mainCategories.map((category) => (
-              <div 
-                key={category.name}
-                className="card-kl text-center p-6 border-2 border-secondary/30"
+          <div className="max-w-4xl mx-auto mb-12">
+            {/* Weibliche Kategorien */}
+            <div className="mb-6">
+              <StaggeredAnimation 
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                staggerDelay={75}
+                animation="scale"
               >
-                <Trophy className="mx-auto mb-2 text-secondary" size={20} />
-                <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
-                <p className="text-muted-foreground text-xs">{category.description}</p>
-              </div>
-            ))}
-          </StaggeredAnimation>
+                {mainCategories.filter(cat => cat.name.includes("weiblich")).map((category) => (
+                  <div 
+                    key={category.name}
+                    className="card-kl text-center p-6 border-2 border-secondary/30"
+                  >
+                    <Trophy className="mx-auto mb-2 text-secondary" size={20} />
+                    <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
+                    <p className="text-muted-foreground text-xs">{category.description}</p>
+                  </div>
+                ))}
+              </StaggeredAnimation>
+            </div>
+            
+            {/* Männliche Kategorien */}
+            <div>
+              <StaggeredAnimation 
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                staggerDelay={75}
+                animation="scale"
+              >
+                {mainCategories.filter(cat => cat.name.includes("männlich")).map((category) => (
+                  <div 
+                    key={category.name}
+                    className="card-kl text-center p-6 border-2 border-secondary/30"
+                  >
+                    <Trophy className="mx-auto mb-2 text-secondary" size={20} />
+                    <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
+                    <p className="text-muted-foreground text-xs">{category.description}</p>
+                  </div>
+                ))}
+              </StaggeredAnimation>
+            </div>
+          </div>
 
           {/* Additional Rankings */}
           <AnimatedSection animation="fade-up" delay={200}>
@@ -232,12 +265,15 @@ const Modus = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 {additionalCategories.map((cat) => (
-                  <span 
-                    key={cat}
-                    className="inline-block bg-background text-muted-foreground text-sm px-4 py-2 -skew-x-6 border border-border"
+                  <div 
+                    key={cat.name}
+                    className="inline-block bg-background text-muted-foreground text-sm px-4 py-2 -skew-x-6 border border-border text-center"
                   >
-                    <span className="skew-x-6 inline-block">{cat}</span>
-                  </span>
+                    <div className="skew-x-6">
+                      <div className="font-headline">{cat.name}</div>
+                      <div className="text-xs text-muted-foreground/70">{cat.description}</div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -291,15 +327,66 @@ const Modus = () => {
         </div>
       </section>
 
+      {/* Wildcard Section */}
+      <section className="section-padding bg-background">
+        <div className="container-kl">
+          <AnimatedSection animation="fade-up" className="text-center mb-12">
+            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+              WILDCARD-PLÄTZE
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Eine besondere Chance für alle fleißigen Kletterer:innen
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection animation="fade-up" delay={100} className="max-w-3xl mx-auto">
+            <div className="bg-gradient-kl rounded-lg p-8 text-primary-foreground">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center flex-shrink-0">
+                  <Award className="skew-x-6 text-primary" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl mb-4">Was ist eine Wildcard?</h3>
+                  <p className="text-primary-foreground/80 mb-4">
+                    Die Wildcard ist unsere Art, Engagement und Fleiß zu belohnen. Nicht nur die 
+                    besten Kletterer:innen haben eine Chance auf das Halbfinale – auch die fleißigsten!
+                  </p>
+                  <div className="bg-primary-foreground/10 p-4 rounded-lg mb-4">
+                    <h4 className="font-headline text-lg text-accent mb-2">Wie erhält man eine Wildcard?</h4>
+                    <p className="text-primary-foreground/80 text-sm">
+                      Pro Wertungsklasse und Geschlecht werden <strong className="text-accent">10 Wildcard-Plätze verlost</strong>. 
+                      Teilnahmeberechtigt sind alle Kletterer:innen, die:
+                    </p>
+                    <ul className="text-primary-foreground/80 text-sm mt-2 ml-4 list-disc space-y-1">
+                      <li>Es <strong className="text-accent">nicht unter die Top 30</strong> ihrer Wertungsklasse geschafft haben</li>
+                      <li>Aber trotzdem <strong className="text-accent">8 Hallen</strong> während der Qualifikationsphase besucht haben</li>
+                    </ul>
+                    <p className="text-primary-foreground/80 text-sm mt-3">
+                      Die Verlosung erfolgt fair und transparent unter allen berechtigten Teilnehmer:innen. 
+                      So haben auch die fleißigsten Kletterer:innen eine Chance, beim Halbfinale dabei zu sein!
+                    </p>
+                  </div>
+                  <p className="text-primary-foreground/80 text-sm">
+                    <strong className="text-accent">Fairness und Vielfalt:</strong> Die Wildcard belohnt nicht nur Leistung, 
+                    sondern auch die Bereitschaft, verschiedene Hallen zu erkunden. So schaffen wir eine inklusive 
+                    Wettkampfatmosphäre, in der Engagement genauso zählt wie Talent.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* Finale Section */}
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
-              DAS FINALE
+              HALBFINALE & FINALE
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Der Höhepunkt der Saison – <strong className="text-secondary">{finaleDate ? new Date(finaleDate).toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }) : "Termin folgt"}</strong>
+              Der Höhepunkt der Saison – Halbfinale und Finale am <strong className="text-secondary">{finaleDate ? new Date(finaleDate).toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }) : "Termin folgt"}</strong>
             </p>
           </AnimatedSection>
 
@@ -320,7 +407,7 @@ const Modus = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
-                        <span><strong className="text-accent">Wildcard-Plätze</strong> für alle, die alle teilnehmenden Hallen besucht haben</span>
+                        <span><strong className="text-accent">10 Wildcard-Plätze</strong> werden pro Wertungsklasse und Geschlecht verlost unter denen, die nicht Top 30 sind, aber <strong className="text-accent">8 Hallen</strong> besucht haben – <strong className="text-accent">nicht nur die besten, sondern auch die fleißigsten Kletterer haben eine Chance!</strong></span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />

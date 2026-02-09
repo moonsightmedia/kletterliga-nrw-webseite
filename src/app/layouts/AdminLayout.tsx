@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Building2, ChartLine, ClipboardList, Cog, Flag, Settings, Shield, Users, LogOut, Trophy, Menu, X, FileText, Key } from "lucide-react";
+import { Building2, ChartLine, ClipboardList, Cog, Flag, Settings, Shield, Users, LogOut, Trophy, Menu, X, FileText, Key, TicketCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ const adminNav = [
   { to: "/app/admin/gym/profile", label: "Hallenprofil", icon: Cog, role: "gym_admin" },
   { to: "/app/admin/gym/routes", label: "Routen", icon: ClipboardList, role: "gym_admin" },
   { to: "/app/admin/gym/codes", label: "Codes", icon: Flag, role: "gym_admin" },
+  { to: "/app/admin/gym/mastercodes", label: "Mastercodes", icon: TicketCheck, role: "gym_admin" },
   { to: "/app/admin/gym/stats", label: "Statistiken", icon: ChartLine, role: "gym_admin" },
   { to: "/app/admin/league", label: "Liga", icon: Shield, role: "league_admin" },
   { to: "/app/admin/league/season", label: "Saison", icon: Cog, role: "league_admin" },
@@ -21,6 +22,7 @@ const adminNav = [
   { to: "/app/admin/league/finale", label: "Finale-Anmeldungen", icon: Trophy, role: "league_admin" },
   { to: "/app/admin/league/change-requests", label: "Änderungsanfragen", icon: FileText, role: "league_admin" },
   { to: "/app/admin/league/codes", label: "Code-Verwaltung", icon: Key, role: "league_admin" },
+  { to: "/app/admin/league/mastercodes", label: "Mastercodes", icon: TicketCheck, role: "league_admin" },
   { to: "/app/admin/league/settings", label: "Einstellungen", icon: Settings, role: "league_admin" },
 ];
 

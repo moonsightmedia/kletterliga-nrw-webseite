@@ -16,10 +16,10 @@ import {
 import { getPublicRankings } from "@/services/appApi";
 
 const categories = [
-  { value: "u16-w", label: "U16 weiblich" },
-  { value: "u16-m", label: "U16 männlich" },
-  { value: "ue16-w", label: "Ü16 weiblich" },
-  { value: "ue16-m", label: "Ü16 männlich" },
+  { value: "u15-w", label: "U15 weiblich" },
+  { value: "u15-m", label: "U15 männlich" },
+  { value: "ue15-w", label: "Ü15 weiblich" },
+  { value: "ue15-m", label: "Ü15 männlich" },
   { value: "ue40-w", label: "Ü40 weiblich" },
   { value: "ue40-m", label: "Ü40 männlich" },
 ];
@@ -40,7 +40,7 @@ const Ranglisten = () => {
   });
 
   const [league, setLeague] = useState<"toprope" | "vorstieg">("toprope");
-  const [category, setCategory] = useState("ue16-m");
+  const [category, setCategory] = useState("ue15-m");
   const [currentData, setCurrentData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

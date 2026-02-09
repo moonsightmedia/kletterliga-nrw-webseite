@@ -22,13 +22,15 @@ const Impressum = () => {
               <h2 className="font-headline text-2xl text-primary mb-4">Angaben gemäß § 5 TMG</h2>
               <p className="text-muted-foreground">
                 {legalInfo.organizationName}<br />
+                {legalInfo.responsiblePerson}<br />
                 {legalInfo.addressLines[0]}<br />
                 {legalInfo.addressLines[1]}
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
-                E-Mail: {legalInfo.contactEmail}
+                E-Mail: <a href={`mailto:${legalInfo.contactEmail}`} className="text-primary underline">{legalInfo.contactEmail}</a><br />
+                Website: <a href="https://kletterliga-nrw.de" target="_blank" rel="noreferrer" className="text-primary underline">kletterliga-nrw.de</a>
               </p>
 
               <h2 className="font-headline text-2xl text-primary mt-8 mb-4">Entwicklung</h2>

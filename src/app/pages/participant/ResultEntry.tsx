@@ -21,19 +21,20 @@ const colorClassMap: Record<string, string> = {
   grau: "bg-gray-400",
 };
 
+type PointsOption = 0 | 2.5 | 5 | 7.5 | 10 | "flash";
+
+const POINTS_OPTIONS: PointsOption[] = [0, 2.5, 5, 7.5, 10, "flash"];
+
 const ResultEntry = () => {
   const { gymId, routeId } = useParams();
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [route, setRoute] = useState<Route | null>(null);
   const [existingResult, setExistingResult] = useState<Result | null>(null);
-  const [points, setPoints] = useState<number>(0);
-  const [flash, setFlash] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<PointsOption>(0);
   const [loading, setLoading] = useState(false);
   const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
   const [checkingCode, setCheckingCode] = useState(true);
-
-  const pointsOptions = [0, 2.5, 5, 7.5, 10];
 
   const colorClass = useMemo(() => {
     if (!route?.color) return "bg-muted";
@@ -65,8 +66,11 @@ const ResultEntry = () => {
       const result = data?.find((r) => r.route_id === routeId) ?? null;
       setExistingResult(result);
       if (result) {
-        setPoints(result.points ?? 0);
-        setFlash(result.flash || false);
+        if (result.flash && result.points === 10) {
+          setSelectedOption("flash");
+        } else {
+          setSelectedOption((result.points ?? 0) as PointsOption);
+        }
       }
     });
   }, [gymId, routeId, profile?.id]);
@@ -84,22 +88,15 @@ const ResultEntry = () => {
       return;
     }
 
-    // Flash kann nur aktiviert werden, wenn man Top (10 Punkte) erreicht hat
-    if (flash && points !== 10) {
-      toast({ 
-        title: "Flash nicht verfügbar", 
-        description: "Du musst zuerst Top (10 Punkte) erreichen, bevor du den Flash-Bonus aktivieren kannst.",
-        variant: "destructive"
-      });
-      return;
-    }
+    const points = selectedOption === "flash" ? 10 : selectedOption;
+    const flash = selectedOption === "flash";
 
     setLoading(true);
     const { error } = await upsertResult({
       profile_id: profile.id,
       route_id: routeId,
       points,
-      flash: flash && points === 10, // Flash nur wenn Top erreicht
+      flash,
       status: points === 0 ? "not_climbed" : "climbed",
     });
     setLoading(false);
@@ -107,7 +104,7 @@ const ResultEntry = () => {
       toast({ title: "Fehler", description: error.message });
       return;
     }
-    toast({ title: "Ergebnis gespeichert", description: flash && points === 10 ? "Top mit Flash-Bonus gespeichert!" : "Dein Punktestand wurde aktualisiert." });
+    toast({ title: "Ergebnis gespeichert", description: flash ? "Top mit Flash-Bonus gespeichert!" : "Dein Punktestand wurde aktualisiert." });
     navigate(`/app/gyms/${gymId}/routes`);
   };
 
@@ -184,7 +181,7 @@ const ResultEntry = () => {
                 </div>
                 <div className="text-right flex-shrink-0 ml-4">
                   <div className="text-2xl md:text-3xl font-bold text-secondary">
-                    {existingResult ? (existingResult.points ?? 0) + (existingResult.flash ? 1 : 0) : 0}
+                    {selectedOption === "flash" ? 11 : selectedOption}
                   </div>
                   <div className="text-xs md:text-sm text-muted-foreground">Punkte</div>
                 </div>
@@ -201,57 +198,26 @@ const ResultEntry = () => {
 
       <Card className="p-4 md:p-6 lg:p-8 border-border/60">
         <div className="text-xs md:text-sm uppercase tracking-widest text-secondary mb-3 md:mb-4">Ergebnis</div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-          {pointsOptions.map((value) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          {POINTS_OPTIONS.map((value) => (
             <Button
               key={value}
-              variant={points === value ? "default" : "outline"}
+              variant={selectedOption === value ? "default" : "outline"}
               size="sm"
               className="md:text-base"
-              onClick={() => {
-                setPoints(value);
-                // Wenn nicht Top, Flash zurücksetzen
-                if (value !== 10) {
-                  setFlash(false);
-                }
-              }}
+              onClick={() => setSelectedOption(value)}
               type="button"
             >
-              <span className="skew-x-6">{value} Punkte</span>
+              <span className="skew-x-6">
+                {value === "flash" ? "Flash (11 Pkt)" : `${value} Punkte`}
+              </span>
             </Button>
           ))}
         </div>
       </Card>
 
-      <Card className="p-4 md:p-6 lg:p-8 border-border/60">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="font-semibold md:text-lg text-primary">Flash-Bonus</div>
-            <div className="text-xs md:text-sm text-muted-foreground mt-1">
-              {points === 10 
-                ? "Ein Versuch, sofort Top." 
-                : "Nur verfügbar, wenn du Top (10 Punkte) erreicht hast."}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFlash((prev) => !prev)}
-            disabled={points !== 10}
-            className={`px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm font-semibold border transition-colors flex-shrink-0 ${
-              points !== 10
-                ? "border-border text-foreground/30 cursor-not-allowed opacity-50"
-                : flash 
-                  ? "bg-secondary text-secondary-foreground border-secondary" 
-                  : "border-border text-foreground/70 hover:border-primary/50"
-            }`}
-          >
-            {flash ? "Flash aktiviert" : "Flash?"}
-          </button>
-        </div>
-      </Card>
-
       <Button className="w-full md:w-auto md:mx-auto md:block" size="lg" onClick={handleSave} disabled={loading}>
-        {loading ? "Speichern..." : flash && points === 10 ? "Top mit Flash speichern" : "Ergebnis speichern"}
+        {loading ? "Speichern..." : selectedOption === "flash" ? "Top mit Flash speichern" : "Ergebnis speichern"}
       </Button>
     </div>
   );

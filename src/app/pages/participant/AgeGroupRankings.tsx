@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Award, Medal, Trophy, MapPin, ChevronDown, ChevronRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { useSearchParams } from "react-router-dom";
+import { Award, Medal, Trophy, MapPin, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,28 +20,35 @@ const getStageRange = (stageKey: string, stages: Array<{ key: string; start: str
   };
 };
 
-const getClassLabel = (value: string) => {
-  switch (value) {
-    case "U15-m":
-      return "U15 männlich";
-    case "U15-w":
-      return "U15 weiblich";
-    case "Ü15-m":
-      return "Ü15 männlich";
-    case "Ü15-w":
-      return "Ü15 weiblich";
-    case "Ü40-m":
-      return "Ü40 männlich";
-    case "Ü40-w":
-      return "Ü40 weiblich";
+const getAgeGroupClassLabel = (value: string) => {
+  const [ageGroup, gender] = value.split("-");
+  const genderLabel = gender === "m" ? "männlich" : "weiblich";
+  
+  switch (ageGroup) {
+    case "U9":
+      return `U9 ${genderLabel}`;
+    case "U11":
+      return `U11 ${genderLabel}`;
+    case "U13":
+      return `U13 ${genderLabel}`;
+    case "U15":
+      return `U15 ${genderLabel}`;
+    case "Ü15":
+      return `Ü15 ${genderLabel}`;
+    case "Ü40":
+      return `Ü40 ${genderLabel}`;
+    case "Ü50":
+      return `Ü50 ${genderLabel}`;
     default:
       return value;
   }
 };
 
-const Rankings = () => {
+const ageGroups = ["U9", "U11", "U13", "U15", "Ü15", "Ü40", "Ü50"] as const;
+
+const AgeGroupRankings = () => {
   const { profile, user } = useAuth();
-  const { getClassName, getStages } = useSeasonSettings();
+  const { getAgeGroupRankingClass, getStages } = useSeasonSettings();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rankings, setRankings] = useState<RankingRow[]>([]);
   const [results, setResults] = useState<Result[]>([]);
@@ -52,9 +58,9 @@ const Rankings = () => {
     | "toprope"
     | "lead";
   const [leagueFilter, setLeagueFilter] = useState<"toprope" | "lead">(userLeague);
-  const [className, setClassName] = useState("U15-m");
+  const [className, setClassName] = useState("U9-m");
   const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
-  const [ageFilter, setAgeFilter] = useState<"U15" | "Ü15" | "Ü40">("U15");
+  const [ageFilter, setAgeFilter] = useState<typeof ageGroups[number]>("U9");
   const classInitializedRef = useRef(false);
   const stages = getStages();
   const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
@@ -70,20 +76,20 @@ const Rankings = () => {
     if (paramStage && stages.some((stage) => stage.key === paramStage)) {
       setStageKey(paramStage);
     }
-  }, [searchParams]);
+  }, [searchParams, stages]);
 
   useEffect(() => {
     const birthDate = profile?.birth_date ?? (user?.user_metadata?.birth_date as string | undefined);
     const gender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as "m" | "w" | undefined;
-    const derived = getClassName(birthDate ?? null, gender ?? null);
+    const derived = getAgeGroupRankingClass(birthDate ?? null, gender ?? null);
     if (!classInitializedRef.current && derived) {
       setClassName(derived);
-      const [age, genderValue] = derived.split("-") as ["U15" | "Ü15" | "Ü40", "m" | "w"];
+      const [age, genderValue] = derived.split("-") as [typeof ageGroups[number], "m" | "w"];
       if (age) setAgeFilter(age);
       if (genderValue) setGenderFilter(genderValue);
       classInitializedRef.current = true;
     }
-  }, [profile, user]);
+  }, [profile, user, getAgeGroupRankingClass]);
 
   useEffect(() => {
     const load = async () => {
@@ -124,7 +130,7 @@ const Rankings = () => {
         })
         .map((profile) => ({
           id: profile.id,
-          className: getClassName(profile.birth_date, profile.gender),
+          className: getAgeGroupRankingClass(profile.birth_date, profile.gender),
           name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || "Unbekannt",
           points: totals[profile.id] ?? 0,
         }))
@@ -133,7 +139,7 @@ const Rankings = () => {
       setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
     };
     load();
-  }, [className, leagueFilter, tab, stageKey, stages]);
+  }, [className, leagueFilter, tab, stageKey, stages, getAgeGroupRankingClass]);
 
   const userName = useMemo(() => {
     if (!profile) return "";
@@ -141,7 +147,7 @@ const Rankings = () => {
   }, [profile]);
 
   const leagueLabel = leagueFilter === "lead" ? "Vorstieg" : "Toprope";
-  const classLabel = getClassLabel(className);
+  const classLabel = getAgeGroupClassLabel(className);
 
   // Berechne Details für alle Teilnehmer
   const getParticipantDetails = (profileId: string) => {
@@ -456,18 +462,8 @@ const Rankings = () => {
     );
   };
 
-  const participationInactive = profile?.role === "participant" && !profile?.participation_activated_at;
-
   return (
     <div className="space-y-6 md:space-y-8">
-      {participationInactive && (
-        <div className="p-4 rounded-lg border border-amber-500/50 bg-amber-500/10 text-sm">
-          Du erscheinst erst in den Ranglisten, wenn du deine Teilnahme freigeschaltet hast.{" "}
-          <Link to="/app/participation/redeem" className="font-semibold text-primary hover:underline">
-            Jetzt freischalten
-          </Link>
-        </div>
-      )}
       <div className="flex justify-center">
         <div className="inline-flex border border-border/60 bg-background -skew-x-6 overflow-hidden">
           <button
@@ -491,7 +487,7 @@ const Rankings = () => {
         </div>
       </div>
 
-      <div className="flex w-full justify-center gap-6">
+      <div className="flex w-full justify-center gap-6 flex-wrap">
         <div className="inline-flex w-fit justify-center border border-border/60 bg-background -skew-x-6 overflow-hidden">
           <button
             type="button"
@@ -518,12 +514,12 @@ const Rankings = () => {
             <span className="inline-block">W</span>
           </button>
         </div>
-        <div className="inline-flex w-fit justify-center border border-border/60 bg-background -skew-x-6 overflow-hidden">
-          {(["U15", "Ü15", "Ü40"] as const).map((age) => (
+        <div className="inline-flex w-fit justify-center border border-border/60 bg-background -skew-x-6 overflow-hidden flex-wrap">
+          {ageGroups.map((age) => (
             <button
               key={age}
               type="button"
-              className={`px-5 py-2 text-xs font-semibold uppercase tracking-wide skew-x-6 ${
+              className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide skew-x-6 ${
                 ageFilter === age ? "bg-primary text-white" : "text-muted-foreground"
               }`}
               onClick={() => {
@@ -586,4 +582,4 @@ const Rankings = () => {
   );
 };
 
-export default Rankings;
+export default AgeGroupRankings;

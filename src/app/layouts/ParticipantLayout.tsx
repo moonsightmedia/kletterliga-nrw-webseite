@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Outlet, useLocation, NavLink } from "react-router-dom";
+import { Outlet, useLocation, NavLink, Link } from "react-router-dom";
 import { BottomNav } from "@/app/components/BottomNav";
-import { Home, ListOrdered, MapPinned, User, Menu, X } from "lucide-react";
+import { Home, ListOrdered, MapPinned, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/auth/AuthProvider";
 
 const getPageTitle = (path: string) => {
+  if (path.startsWith("/app/participation/redeem")) return "Teilnahme freischalten";
   if (path.startsWith("/app/gyms/redeem")) return "Code einlösen";
   if (path.includes("/app/gyms/") && path.endsWith("/routes")) return "Routen & Ergebnisse";
   if (path.includes("/app/gyms/") && path.includes("/result")) return "Ergebnis eintragen";
   if (path.startsWith("/app/gyms/")) return "Hallen-Detail";
   if (path.startsWith("/app/gyms")) return "Hallen";
   if (path.startsWith("/app/rankings")) return "Ranglisten";
+  if (path.startsWith("/app/age-group-rankings")) return "Altersklassenranglisten";
   if (path.startsWith("/app/profile")) return "Profil";
   return "Home";
 };
@@ -25,8 +27,10 @@ const sidebarItems = [
 
 export const ParticipantLayout = () => {
   const location = useLocation();
+  const { profile } = useAuth();
   const title = getPageTitle(location.pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const participationInactive = profile && profile.role === "participant" && !profile.participation_activated_at;
 
   return (
     <div className="min-h-screen bg-accent/30 md:flex">
@@ -82,6 +86,19 @@ export const ParticipantLayout = () => {
 
         {/* Content */}
         <main className="flex-1 px-5 pt-6 pb-24 md:px-8 md:pt-8 md:pb-8 md:max-w-7xl md:mx-auto md:w-full">
+          {participationInactive && (
+            <div className="mb-4 p-4 rounded-lg border-2 border-amber-500/50 bg-amber-500/10">
+              <p className="text-sm font-medium text-foreground">
+                Deine Teilnahme ist noch nicht aktiv. Ergebnisse werden nicht in den Ranglisten gezählt.
+              </p>
+              <Link
+                to="/app/participation/redeem"
+                className="inline-block mt-2 text-sm font-semibold text-primary hover:underline"
+              >
+                Mastercode einlösen →
+              </Link>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

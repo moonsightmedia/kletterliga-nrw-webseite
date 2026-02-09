@@ -7,7 +7,7 @@ import type { Profile } from "@/services/appTypes";
 import { Award, Users, Calendar, Info } from "lucide-react";
 
 const LeagueClasses = () => {
-  const { settings, getAgeU16Max, getAgeU40Min, getClassName } = useSeasonSettings();
+  const { settings, getAgeU15Max, getAgeU40Min, getClassName } = useSeasonSettings();
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const LeagueClasses = () => {
   // Berechne Teilnehmeranzahl pro Klasse
   const classCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    const allClasses = ["U16-m", "U16-w", "Ü16-m", "Ü16-w", "Ü40-m", "Ü40-w"];
+    const allClasses = ["U15-m", "U15-w", "Ü15-m", "Ü15-w", "Ü40-m", "Ü40-w"];
 
     // Initialisiere alle Klassen mit 0
     allClasses.forEach((cls) => {
@@ -39,29 +39,29 @@ const LeagueClasses = () => {
     return counts;
   }, [profiles, getClassName]);
 
-  const u16Max = getAgeU16Max();
+  const u15Max = getAgeU15Max();
   const u40Min = getAgeU40Min();
   const cutoffDate = settings?.age_cutoff_date || settings?.qualification_start || null;
 
   const classes = [
     {
-      key: "U16",
-      label: "U16",
-      description: `Bis ${u16Max} Jahre`,
-      ageRange: `≤ ${u16Max} Jahre`,
+      key: "U15",
+      label: "U15",
+      description: `Bis ${u15Max} Jahre`,
+      ageRange: `≤ ${u15Max} Jahre`,
       classes: [
-        { key: "U16-m", label: "U16 männlich", count: classCounts["U16-m"] || 0 },
-        { key: "U16-w", label: "U16 weiblich", count: classCounts["U16-w"] || 0 },
+        { key: "U15-m", label: "U15 männlich", count: classCounts["U15-m"] || 0 },
+        { key: "U15-w", label: "U15 weiblich", count: classCounts["U15-w"] || 0 },
       ],
     },
     {
-      key: "Ü16",
-      label: "Ü16",
-      description: `${u16Max + 1}–${u40Min - 1} Jahre`,
-      ageRange: `${u16Max + 1}–${u40Min - 1} Jahre`,
+      key: "Ü15",
+      label: "Ü15",
+      description: `${u15Max + 1}–${u40Min - 1} Jahre`,
+      ageRange: `${u15Max + 1}–${u40Min - 1} Jahre`,
       classes: [
-        { key: "Ü16-m", label: "Ü16 männlich", count: classCounts["Ü16-m"] || 0 },
-        { key: "Ü16-w", label: "Ü16 weiblich", count: classCounts["Ü16-w"] || 0 },
+        { key: "Ü15-m", label: "Ü15 männlich", count: classCounts["Ü15-m"] || 0 },
+        { key: "Ü15-w", label: "Ü15 weiblich", count: classCounts["Ü15-w"] || 0 },
       ],
     },
     {
@@ -117,8 +117,8 @@ const LeagueClasses = () => {
             <h3 className="font-semibold text-primary text-sm md:text-base">Konfiguration</h3>
             <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 text-sm">
               <div>
-                <span className="text-muted-foreground">U16 max Alter:</span>{" "}
-                <span className="font-medium">{u16Max} Jahre</span>
+                <span className="text-muted-foreground">U15 max Alter:</span>{" "}
+                <span className="font-medium">{u15Max} Jahre</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Ü40 min Alter:</span>{" "}

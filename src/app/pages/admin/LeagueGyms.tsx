@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { createGymAdmin, listGymAdminsByGym, listGyms, listProfiles, updateGym, deleteGym, inviteGymAdmin } from "@/services/appApi";
+import { createGymAdmin, listGymAdminsByGym, listGyms, listProfiles, updateGym, deleteGym, inviteGymAdmin, updateProfile } from "@/services/appApi";
 import type { Profile } from "@/services/appTypes";
 import { supabase } from "@/services/supabase";
 import type { Gym } from "@/services/appTypes";
@@ -248,14 +248,32 @@ const LeagueGyms = () => {
       toast({ title: "Fehlende Auswahl", description: "Bitte Halle und Admin wählen." });
       return;
     }
-    const { error } = await createGymAdmin({
+    
+    // Erstelle gym_admins Eintrag
+    const { error: gymAdminError } = await createGymAdmin({
       gym_id: selectedGym,
       profile_id: selectedAdmin,
     });
-    if (error) {
-      toast({ title: "Fehler", description: error.message });
+    if (gymAdminError) {
+      toast({ title: "Fehler", description: gymAdminError.message });
       return;
     }
+    
+    // Setze die Rolle automatisch auf gym_admin, falls sie es noch nicht ist
+    const selectedProfile = profiles.find((p) => p.id === selectedAdmin);
+    if (selectedProfile && selectedProfile.role !== "gym_admin") {
+      const { error: roleError } = await updateProfile(selectedAdmin, { role: "gym_admin" });
+      if (roleError) {
+        console.warn("Rolle konnte nicht automatisch gesetzt werden:", roleError);
+        // Fortfahren, auch wenn die Rolle nicht gesetzt werden konnte
+      } else {
+        // Aktualisiere das lokale Profile-State
+        setProfiles((prev) =>
+          prev.map((p) => (p.id === selectedAdmin ? { ...p, role: "gym_admin" } : p))
+        );
+      }
+    }
+    
     setAdminsByGym((prev) => ({
       ...prev,
       [selectedGym]: [...(prev[selectedGym] ?? []), selectedAdmin],
@@ -265,6 +283,8 @@ const LeagueGyms = () => {
     toast({ title: "Zugeordnet", description: "Admin wurde der Halle zugeordnet." });
     // Reload admins to ensure consistency
     loadAdmins(gyms);
+    // Reload profiles to reflect role changes
+    listProfiles().then(({ data }) => setProfiles(data ?? []));
   };
 
   const handleEdit = (gym: Gym) => {
@@ -482,10 +502,20 @@ const LeagueGyms = () => {
             >
               <option value="">Bitte wählen</option>
               {profiles
-                .filter((p) => p.role === "gym_admin")
+                .filter((p) => {
+                  // Zeige alle Benutzer außer league_admins
+                  if (p.role === "league_admin") return false;
+                  // Optional: Filtere bereits zugewiesene Admins für die ausgewählte Halle heraus
+                  if (selectedGym) {
+                    const isAlreadyAdminForThisGym = (adminsByGym[selectedGym] ?? []).includes(p.id);
+                    return !isAlreadyAdminForThisGym;
+                  }
+                  return true;
+                })
                 .map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.email ?? profile.id}
+                    {profile.role === "gym_admin" ? " (bereits Admin)" : ""}
                   </option>
                 ))}
             </select>

@@ -7,13 +7,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { listGyms, listProfiles, updateProfile, deleteProfile } from "@/services/appApi";
+import { listGyms, listProfiles, updateProfile, deleteProfile, listGymAdminsByGym } from "@/services/appApi";
 import type { Gym, Profile } from "@/services/appTypes";
 import { Users, Search, Edit2, Shield, Building2, User, Trash2 } from "lucide-react";
 
 const LeagueParticipants = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [gymAdminProfileIds, setGymAdminProfileIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "participants" | "gym_admins" | "league_admins">("all");
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
@@ -34,13 +35,37 @@ const LeagueParticipants = () => {
     listGyms().then(({ data }) => setGyms(data ?? []));
   }, []);
 
-  // Gruppiere Profile nach Rollen
+  // Lade alle gym_admins Einträge, um Profile-IDs zu sammeln
+  useEffect(() => {
+    const loadGymAdmins = async () => {
+      if (gyms.length === 0) return;
+      const allAdminIds = new Set<string>();
+      await Promise.all(
+        gyms.map(async (gym) => {
+          const { data } = await listGymAdminsByGym(gym.id);
+          if (data) {
+            data.forEach((admin) => allAdminIds.add(admin.profile_id));
+          }
+        })
+      );
+      setGymAdminProfileIds(allAdminIds);
+    };
+    loadGymAdmins();
+  }, [gyms]);
+
+  // Gruppiere Profile nach Rollen (berücksichtigt auch gym_admins Einträge)
   const groupedProfiles = useMemo(() => {
-    const participants = profiles.filter((p) => p.role === "participant");
-    const gymAdmins = profiles.filter((p) => p.role === "gym_admin");
+    const participants = profiles.filter((p) => {
+      // Ein Teilnehmer ist jemand, der weder gym_admin noch league_admin ist UND nicht in gym_admins eingetragen ist
+      return p.role === "participant" && !gymAdminProfileIds.has(p.id);
+    });
+    const gymAdmins = profiles.filter((p) => {
+      // Ein Gym-Admin ist jemand mit role=gym_admin ODER jemand mit Eintrag in gym_admins
+      return p.role === "gym_admin" || gymAdminProfileIds.has(p.id);
+    });
     const leagueAdmins = profiles.filter((p) => p.role === "league_admin");
     return { participants, gymAdmins, leagueAdmins };
-  }, [profiles]);
+  }, [profiles, gymAdminProfileIds]);
 
   // Gefilterte Profile basierend auf Tab und Suche
   const filtered = useMemo(() => {

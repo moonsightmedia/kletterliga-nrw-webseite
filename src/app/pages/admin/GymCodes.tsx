@@ -9,7 +9,9 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { createGymCodes, listGymAdminsByProfile, listGymCodesByGym, updateGymCode, deleteGymCode, fetchProfile, listProfiles } from "@/services/appApi";
 import type { GymCode, Profile } from "@/services/appTypes";
-import { Download, QrCode, User, Calendar, RotateCcw, Plus, Filter, Trash2 } from "lucide-react";
+import { CodeQrDisplay } from "@/components/CodeQrDisplay";
+import QRCode from "qrcode";
+import { Download, User, Calendar, RotateCcw, Plus, Filter, Trash2 } from "lucide-react";
 
 const GymCodes = () => {
   const { profile } = useAuth();
@@ -132,32 +134,26 @@ const GymCodes = () => {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     const availableCodes = codes.filter((c) => !c.redeemed_by);
     if (availableCodes.length === 0) {
       toast({ title: "Keine Codes", description: "Es gibt keine freien Codes zum Exportieren." });
       return;
     }
-
-    // Erstelle HTML für PDF
+    toast({ title: "PDF wird vorbereitet…", description: "QR-Codes werden erzeugt." });
+    const qrDataUrls = await Promise.all(
+      availableCodes.map((code) => QRCode.toDataURL(code.code, { width: 120, margin: 1 }))
+    );
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <title>Hallen-Codes</title>
           <style>
-            @page {
-              size: A4;
-              margin: 1cm;
-            }
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-            }
+            @page { size: A4; margin: 1cm; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
             .code-card {
               border: 2px dashed #000;
               padding: 15px;
@@ -165,30 +161,16 @@ const GymCodes = () => {
               page-break-inside: avoid;
               width: 100%;
               box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
             }
-            .code-text {
-              font-size: 24px;
-              font-weight: bold;
-              text-align: center;
-              margin: 10px 0;
-              letter-spacing: 2px;
-            }
-            .code-label {
-              font-size: 12px;
-              text-align: center;
-              color: #666;
-              margin-top: 5px;
-            }
-            .grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 15px;
-            }
-            @media print {
-              .no-print {
-                display: none;
-              }
-            }
+            .code-text { font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; letter-spacing: 2px; }
+            .code-label { font-size: 12px; text-align: center; color: #666; margin-top: 5px; }
+            .qr-wrap { margin: 8px 0; }
+            .qr-wrap img { width: 100px; height: 100px; }
+            .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            @media print { .no-print { display: none; } }
           </style>
         </head>
         <body>
@@ -196,9 +178,10 @@ const GymCodes = () => {
           <div class="grid">
             ${availableCodes
               .map(
-                (code) => `
+                (code, i) => `
               <div class="code-card">
-                <div class="code-label">Hallen-Code</div>
+                <div class="code-label">Hallen-Code (scannbar)</div>
+                <div class="qr-wrap"><img src="${qrDataUrls[i]}" alt="QR" /></div>
                 <div class="code-text">${code.code}</div>
                 <div class="code-label">Zum Ausschneiden</div>
               </div>
@@ -209,12 +192,9 @@ const GymCodes = () => {
         </body>
       </html>
     `;
-
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    setTimeout(() => { printWindow.print(); }, 250);
   };
 
   const getRedeemerName = (profileId: string | null) => {
@@ -372,9 +352,12 @@ const GymCodes = () => {
                         Erstellt: {code.created_at ? new Date(code.created_at).toLocaleDateString("de-DE") : "-"}
                       </div>
                     </div>
-                    <Badge variant={isRedeemed ? "secondary" : "default"} className="flex-shrink-0">
-                      {isRedeemed ? "Eingelöst" : "Frei"}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <Badge variant={isRedeemed ? "secondary" : "default"}>
+                        {isRedeemed ? "Eingelöst" : "Frei"}
+                      </Badge>
+                      <CodeQrDisplay value={code.code} size={64} />
+                    </div>
                   </div>
 
                   {isRedeemed && redeemer ? (

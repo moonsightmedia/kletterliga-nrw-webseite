@@ -7,6 +7,7 @@ import type {
   GymAdmin,
   GymCode,
   InstagramPost,
+  MasterCode,
   Profile,
   ProfileOverride,
   Result,
@@ -252,6 +253,27 @@ export async function checkGymCodeRedeemed(gymId: string, profileId: string) {
     .eq("redeemed_by", profileId)
     .not("redeemed_at", "is", null)
     .maybeSingle<GymCode>();
+}
+
+export async function listMasterCodes(gymId?: string) {
+  let q = supabase.from("master_codes").select("*").order("created_at", { ascending: false });
+  if (gymId != null) {
+    q = q.eq("gym_id", gymId);
+  }
+  return q.returns<MasterCode[]>();
+}
+
+export async function createMasterCodes(codes: Omit<MasterCode, "id" | "created_at">[]) {
+  return supabase.from("master_codes").insert(codes).select("*").returns<MasterCode[]>();
+}
+
+export async function getMasterCodeByCode(code: string) {
+  const normalized = code.trim().toUpperCase();
+  return supabase.from("master_codes").select("*").eq("code", normalized).maybeSingle<MasterCode>();
+}
+
+export async function updateMasterCode(codeId: string, patch: Partial<MasterCode>) {
+  return supabase.from("master_codes").update(patch).eq("id", codeId).select("*").single<MasterCode>();
 }
 
 export async function listGymAdminsByProfile(profileId: string) {

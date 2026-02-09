@@ -25,7 +25,7 @@ const LeagueSeason = () => {
     age_cutoff_date: "",
     top_30_per_class: "30",
     wildcards_per_class: "10",
-    age_u16_max: "15",
+    age_u16_max: "14",
     age_u40_min: "40",
     finale_enabled: "false",
   });
@@ -47,7 +47,7 @@ const LeagueSeason = () => {
         age_cutoff_date: current.age_cutoff_date ?? "",
         top_30_per_class: current.top_30_per_class?.toString() ?? "30",
         wildcards_per_class: current.wildcards_per_class?.toString() ?? "10",
-        age_u16_max: current.age_u16_max?.toString() ?? "15",
+        age_u16_max: current.age_u16_max?.toString() ?? "14",
         age_u40_min: current.age_u40_min?.toString() ?? "40",
         finale_enabled: current.finale_enabled ? "true" : "false",
       });
@@ -168,7 +168,7 @@ const LeagueSeason = () => {
       wildcards_per_class: Number(form.wildcards_per_class) || 10,
       stage_months: stageMonths,
       stages: stages.length > 0 ? stages : [],
-      age_u16_max: Number(form.age_u16_max) || 15,
+      age_u16_max: Number(form.age_u16_max) || 14,
       age_u40_min: Number(form.age_u40_min) || 40,
       finale_enabled: form.finale_enabled === "true",
     };
@@ -410,9 +410,9 @@ const LeagueSeason = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="u16max">U16 max Alter</Label>
+            <Label htmlFor="u15max">U15 max Alter</Label>
             <Input
-              id="u16max"
+              id="u15max"
               type="number"
               min="1"
               max="20"
@@ -420,7 +420,7 @@ const LeagueSeason = () => {
               onChange={(e) => setForm({ ...form, age_u16_max: e.target.value })}
               className="touch-manipulation"
             />
-            <p className="text-xs text-muted-foreground">Maximales Alter für U16 (Standard: 15)</p>
+            <p className="text-xs text-muted-foreground">Maximales Alter für U15 / unter 15 Jahre (Standard: 14)</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="u40min">Ü40 min Alter</Label>
@@ -438,8 +438,8 @@ const LeagueSeason = () => {
         <div className="p-3 bg-accent/50 rounded-lg">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Hauptwertungsklassen (finalrelevant)</p>
           <div className="text-sm text-foreground space-y-1">
-            <p>• U16 (bis {form.age_u16_max} Jahre) - männlich & weiblich</p>
-            <p>• Ü16 ({Number(form.age_u16_max) + 1}–{Number(form.age_u40_min) - 1} Jahre) - männlich & weiblich</p>
+            <p>• U15 (bis {form.age_u16_max} Jahre) - männlich & weiblich</p>
+            <p>• Ü15 ({Number(form.age_u16_max) + 1}–{Number(form.age_u40_min) - 1} Jahre) - männlich & weiblich</p>
             <p>• Ü40 (ab {form.age_u40_min} Jahre) - männlich & weiblich</p>
           </div>
           {form.age_cutoff_date && (

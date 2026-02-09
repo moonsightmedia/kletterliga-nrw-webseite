@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { listAllGymCodes, createGymCodes, updateGymCode, deleteGymCode, fetchProfile, listGyms, listProfiles, type GymCodeWithGym } from "@/services/appApi";
 import type { Profile, Gym } from "@/services/appTypes";
-import { Download, QrCode, User, Calendar, RotateCcw, Plus, Filter, Trash2, Building2 } from "lucide-react";
+import { CodeQrDisplay } from "@/components/CodeQrDisplay";
+import QRCode from "qrcode";
+import { Download, User, Calendar, RotateCcw, Plus, Filter, Trash2, Building2 } from "lucide-react";
 
 const LeagueCodes = () => {
   const [codes, setCodes] = useState<GymCodeWithGym[]>([]);
@@ -151,12 +153,17 @@ const LeagueCodes = () => {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     const availableCodes = visibleCodes.filter((c) => !c.redeemed_by);
     if (availableCodes.length === 0) {
       toast({ title: "Keine Codes", description: "Es gibt keine freien Codes zum Exportieren." });
       return;
     }
+
+    toast({ title: "PDF wird vorbereitet…", description: "QR-Codes werden erzeugt." });
+    const qrDataUrls = await Promise.all(
+      availableCodes.map((code) => QRCode.toDataURL(code.code, { width: 120, margin: 1 }))
+    );
 
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -169,15 +176,8 @@ const LeagueCodes = () => {
         <head>
           <title>Hallen-Codes - ${gymName}</title>
           <style>
-            @page {
-              size: A4;
-              margin: 1cm;
-            }
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-            }
+            @page { size: A4; margin: 1cm; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
             .code-card {
               border: 2px dashed #000;
               padding: 15px;
@@ -185,36 +185,17 @@ const LeagueCodes = () => {
               page-break-inside: avoid;
               width: 100%;
               box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
             }
-            .code-text {
-              font-size: 24px;
-              font-weight: bold;
-              text-align: center;
-              margin: 10px 0;
-              letter-spacing: 2px;
-            }
-            .code-label {
-              font-size: 12px;
-              text-align: center;
-              color: #666;
-              margin-top: 5px;
-            }
-            .gym-name {
-              font-size: 10px;
-              text-align: center;
-              color: #999;
-              margin-top: 3px;
-            }
-            .grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 15px;
-            }
-            @media print {
-              .no-print {
-                display: none;
-              }
-            }
+            .code-text { font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; letter-spacing: 2px; }
+            .code-label { font-size: 12px; text-align: center; color: #666; margin-top: 5px; }
+            .gym-name { font-size: 10px; text-align: center; color: #999; margin-top: 3px; }
+            .qr-wrap { margin: 8px 0; }
+            .qr-wrap img { display: block; width: 100px; height: 100px; }
+            .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            @media print { .no-print { display: none; } }
           </style>
         </head>
         <body>
@@ -222,9 +203,10 @@ const LeagueCodes = () => {
           <div class="grid">
             ${availableCodes
               .map(
-                (code) => `
+                (code, i) => `
               <div class="code-card">
-                <div class="code-label">Hallen-Code</div>
+                <div class="code-label">Hallen-Code (scannbar)</div>
+                <div class="qr-wrap"><img src="${qrDataUrls[i]}" alt="QR" /></div>
                 <div class="code-text">${code.code}</div>
                 ${code.gyms ? `<div class="gym-name">${code.gyms.name}</div>` : ""}
                 <div class="code-label">Zum Ausschneiden</div>
@@ -457,9 +439,12 @@ const LeagueCodes = () => {
                         Erstellt: {code.created_at ? new Date(code.created_at).toLocaleDateString("de-DE") : "-"}
                       </div>
                     </div>
-                    <Badge variant={isRedeemed ? "secondary" : "default"} className="flex-shrink-0">
-                      {isRedeemed ? "Eingelöst" : "Frei"}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <Badge variant={isRedeemed ? "secondary" : "default"}>
+                        {isRedeemed ? "Eingelöst" : "Frei"}
+                      </Badge>
+                      <CodeQrDisplay value={code.code} size={64} />
+                    </div>
                   </div>
 
                   {isRedeemed && redeemer ? (

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Crown, HelpCircle, KeyRound, LogOut, UserSquare2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, Crown, HelpCircle, KeyRound, LogOut, Trophy, UserSquare2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ import type { Gym, Result, Route } from "@/services/appTypes";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { profile, signOut, user, refreshProfile } = useAuth();
   const { getClassName } = useSeasonSettings();
   const firstName = profile?.first_name || (user?.user_metadata?.first_name as string | undefined);
@@ -316,6 +318,17 @@ const Profile = () => {
             <div className="flex items-center gap-2 font-semibold skew-x-6">
               <UserSquare2 className="h-4 w-4 text-primary" />
               Profil bearbeiten
+            </div>
+            <ChevronRight className="inline h-3.5 w-3.5 text-muted-foreground skew-x-6" />
+          </button>
+          <button
+            type="button"
+            className="mt-3 w-full bg-white text-primary px-4 py-2 text-sm flex items-center justify-between -skew-x-6"
+            onClick={() => navigate("/app/age-group-rankings")}
+          >
+            <div className="flex items-center gap-2 font-semibold skew-x-6">
+              <Trophy className="h-4 w-4 text-primary" />
+              Altersklassenranglisten
             </div>
             <ChevronRight className="inline h-3.5 w-3.5 text-muted-foreground skew-x-6" />
           </button>

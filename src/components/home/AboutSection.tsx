@@ -15,7 +15,7 @@ const features = [
   {
     icon: Trophy,
     title: "Das Finale",
-    description: "Die Besten qualifizieren sich für das große Finale. Ein einzigartiges Event mit Live-Atmosphäre.",
+    description: "Die Besten und Fleißigsten qualifizieren sich für das große Finale. Ein einzigartiges Event mit Live-Atmosphäre.",
   },
 ];
 

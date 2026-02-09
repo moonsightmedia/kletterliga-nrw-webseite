@@ -60,7 +60,7 @@ const CountUp = ({
 
 const GYM_COUNT_FALLBACK = 7;
 const LEAGUE_COUNT = 2; // Toprope + Vorstieg
-const CLASS_COUNT = 6;   // U16 w/m, Ü16 w/m, Ü40 w/m
+const CLASS_COUNT = 6;   // U15 w/m, Ü15 w/m, Ü40 w/m
 
 export const HeroSection = () => {
   const { getSeasonYear } = useSeasonSettings();

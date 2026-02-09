@@ -14,13 +14,16 @@ import GymRedeem from "@/app/pages/participant/GymRedeem";
 import GymRoutes from "@/app/pages/participant/GymRoutes";
 import ResultEntry from "@/app/pages/participant/ResultEntry";
 import Rankings from "@/app/pages/participant/Rankings";
+import AgeGroupRankings from "@/app/pages/participant/AgeGroupRankings";
 import Profile from "@/app/pages/participant/Profile";
+import MastercodeRedeem from "@/app/pages/participant/MastercodeRedeem";
 import Finale from "@/app/pages/participant/Finale";
 import AdminHome from "@/app/pages/admin/AdminHome";
 import GymAdminDashboard from "@/app/pages/admin/GymAdminDashboard";
 import GymProfile from "@/app/pages/admin/GymProfile";
 import GymRoutesAdmin from "@/app/pages/admin/GymRoutesAdmin";
 import GymCodes from "@/app/pages/admin/GymCodes";
+import GymMastercodes from "@/app/pages/admin/GymMastercodes";
 import GymStats from "@/app/pages/admin/GymStats";
 import LeagueDashboard from "@/app/pages/admin/LeagueDashboard";
 import LeagueSeason from "@/app/pages/admin/LeagueSeason";
@@ -31,6 +34,7 @@ import LeagueParticipants from "@/app/pages/admin/LeagueParticipants";
 import LeagueFinaleRegistrations from "@/app/pages/admin/LeagueFinaleRegistrations";
 import LeagueChangeRequests from "@/app/pages/admin/LeagueChangeRequests";
 import LeagueCodes from "@/app/pages/admin/LeagueCodes";
+import LeagueMastercodes from "@/app/pages/admin/LeagueMastercodes";
 import LeagueRoutes from "@/app/pages/admin/LeagueRoutes";
 import LeagueSettings from "@/app/pages/admin/LeagueSettings";
 
@@ -54,10 +58,12 @@ export const appRoutes = (
         <Route index element={<Home />} />
         <Route path="gyms" element={<Gyms />} />
         <Route path="gyms/redeem" element={<GymRedeem />} />
+        <Route path="participation/redeem" element={<MastercodeRedeem />} />
         <Route path="gyms/:gymId" element={<GymDetail />} />
         <Route path="gyms/:gymId/routes" element={<GymRoutes />} />
         <Route path="gyms/:gymId/routes/:routeId/result" element={<ResultEntry />} />
         <Route path="rankings" element={<Rankings />} />
+        <Route path="age-group-rankings" element={<AgeGroupRankings />} />
         <Route path="finale" element={<Finale />} />
         <Route path="profile" element={<Profile />} />
       </Route>
@@ -102,6 +108,14 @@ export const appRoutes = (
           element={
             <RoleGuard allow={["gym_admin"]}>
               <GymCodes />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="gym/mastercodes"
+          element={
+            <RoleGuard allow={["gym_admin"]}>
+              <GymMastercodes />
             </RoleGuard>
           }
         />
@@ -190,6 +204,14 @@ export const appRoutes = (
           element={
             <RoleGuard allow={["league_admin"]}>
               <LeagueCodes />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="league/mastercodes"
+          element={
+            <RoleGuard allow={["league_admin"]}>
+              <LeagueMastercodes />
             </RoleGuard>
           }
         />

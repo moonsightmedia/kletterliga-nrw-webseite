@@ -11,6 +11,7 @@ export type Profile = {
   home_gym_id: string | null;
   league: "toprope" | "lead" | null;
   role: UserRole | null;
+  participation_activated_at?: string | null;
 };
 
 export type Gym = {
@@ -74,6 +75,17 @@ export type GymAdmin = {
   profile_id: string;
   gym_id: string;
   created_at: string;
+};
+
+export type MasterCode = {
+  id: string;
+  code: string;
+  gym_id: string | null;
+  created_at: string;
+  redeemed_by: string | null;
+  redeemed_at: string | null;
+  expires_at: string | null;
+  status: string | null;
 };
 
 export type Stage = {

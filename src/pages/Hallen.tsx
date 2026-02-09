@@ -100,12 +100,9 @@ const Hallen = () => {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="flex flex-wrap gap-2 mb-3 min-h-[20px]">
                       <span className="inline-block bg-accent text-accent-foreground text-xs px-2 py-1 -skew-x-6">
-                        <span className="skew-x-6 inline-block">Toprope</span>
-                      </span>
-                      <span className="inline-block bg-accent text-accent-foreground text-xs px-2 py-1 -skew-x-6">
-                        <span className="skew-x-6 inline-block">Vorstieg</span>
+                        <span className="skew-x-6 inline-block">Liga-Partner</span>
                       </span>
                     </div>
 
