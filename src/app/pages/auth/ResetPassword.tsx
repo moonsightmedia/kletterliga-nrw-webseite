@@ -6,6 +6,33 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/services/supabase";
 import { toast } from "@/components/ui/use-toast";
 
+// Übersetze Supabase-Fehlermeldungen ins Deutsche
+const translateAuthError = (errorMessage: string): string => {
+  const errorLower = errorMessage.toLowerCase();
+  
+  if (errorLower.includes("token") || errorLower.includes("expired") || errorLower.includes("invalid")) {
+    if (errorLower.includes("expired")) {
+      return "Der Link ist abgelaufen. Bitte fordere einen neuen Link an.";
+    }
+    return "Ungültiger Link. Bitte fordere einen neuen Link an.";
+  }
+  
+  if (errorLower.includes("password")) {
+    if (errorLower.includes("too short") || errorLower.includes("minimum")) {
+      return "Das Passwort ist zu kurz. Es muss mindestens 6 Zeichen lang sein.";
+    }
+    if (errorLower.includes("weak") || errorLower.includes("strength")) {
+      return "Das Passwort ist zu schwach. Bitte wähle ein stärkeres Passwort.";
+    }
+  }
+  
+  if (errorLower.includes("network") || errorLower.includes("fetch") || errorLower.includes("connection")) {
+    return "Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.";
+  }
+  
+  return errorMessage || "Fehler beim Zurücksetzen des Passworts.";
+};
+
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -55,9 +82,10 @@ const ResetPassword = () => {
       });
 
       if (error) {
+        const translatedError = translateAuthError(error.message);
         toast({
           title: "Fehler",
-          description: error.message || "Fehler beim Zurücksetzen des Passworts.",
+          description: translatedError,
           variant: "destructive",
         });
         setLoading(false);

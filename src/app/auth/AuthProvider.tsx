@@ -131,6 +131,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [loadProfile]);
 
+  // Übersetze Supabase-Fehlermeldungen ins Deutsche
+  const translateAuthError = (errorMessage: string): string => {
+    const errorLower = errorMessage.toLowerCase();
+    
+    // Login-Fehler
+    if (errorLower.includes("invalid login credentials") || 
+        errorLower.includes("invalid credentials") ||
+        errorLower.includes("email not confirmed")) {
+      return "Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail-Adresse und dein Passwort.";
+    }
+    
+    if (errorLower.includes("email not confirmed")) {
+      return "Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe dein Postfach.";
+    }
+    
+    if (errorLower.includes("user not found")) {
+      return "Kein Account mit dieser E-Mail-Adresse gefunden.";
+    }
+    
+    if (errorLower.includes("wrong password") || errorLower.includes("incorrect password")) {
+      return "Falsches Passwort. Bitte versuche es erneut.";
+    }
+    
+    // Registrierungs-Fehler
+    if (errorLower.includes("user already registered") || 
+        errorLower.includes("already registered") ||
+        errorLower.includes("email already exists") ||
+        errorLower.includes("user already exists")) {
+      return "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail-Adresse.";
+    }
+    
+    if (errorLower.includes("password")) {
+      if (errorLower.includes("too short") || errorLower.includes("minimum")) {
+        return "Das Passwort ist zu kurz. Es muss mindestens 6 Zeichen lang sein.";
+      }
+      if (errorLower.includes("weak") || errorLower.includes("strength")) {
+        return "Das Passwort ist zu schwach. Bitte wähle ein stärkeres Passwort.";
+      }
+    }
+    
+    // E-Mail-Fehler
+    if (errorLower.includes("invalid email") || errorLower.includes("email format")) {
+      return "Ungültige E-Mail-Adresse. Bitte überprüfe die Eingabe.";
+    }
+    
+    // Token-Fehler
+    if (errorLower.includes("token") || errorLower.includes("expired") || errorLower.includes("invalid")) {
+      if (errorLower.includes("expired")) {
+        return "Der Link ist abgelaufen. Bitte fordere einen neuen Link an.";
+      }
+      return "Ungültiger Link. Bitte fordere einen neuen Link an.";
+    }
+    
+    // Netzwerk-Fehler
+    if (errorLower.includes("network") || errorLower.includes("fetch") || errorLower.includes("connection")) {
+      return "Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.";
+    }
+    
+    // Rate Limiting
+    if (errorLower.includes("too many requests") || errorLower.includes("rate limit")) {
+      return "Zu viele Anfragen. Bitte warte einen Moment und versuche es erneut.";
+    }
+    
+    // Generische Fehlermeldung für unbekannte Fehler
+    return "Ein Fehler ist aufgetreten. Bitte versuche es erneut.";
+  };
+
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
       return { error: "Supabase nicht konfiguriert. Prüfe VITE_SUPABASE_URL/ANON_KEY." };
@@ -148,7 +215,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.warn("Login timeout", { url: supabaseConfig.url, anonKeySet: Boolean(supabaseConfig.anonKey) });
       }
       const error = "error" in result ? result.error : null;
-      if (error) return { error: error.message };
+      if (error) {
+        const translatedError = translateAuthError(error.message);
+        return { error: translatedError };
+      }
 
       if ("data" in result && result.data?.session) {
         setSession(result.data.session);
@@ -197,22 +267,71 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       },
     });
-    if (error) return { error: error.message };
-
-    if (data.user) {
-      await upsertProfile({
-        id: data.user.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        birth_date: birthDate,
-        gender,
-        home_gym_id: homeGymId,
-        league,
-        role: "participant",
-      });
-      await loadProfile(data.user.id, email);
+    
+    if (error) {
+      const translatedError = translateAuthError(error.message);
+      return { error: translatedError };
     }
+
+    // WICHTIG: Supabase gibt KEINEN Fehler zurück, wenn die E-Mail bereits existiert
+    // (aus Sicherheitsgründen - um nicht zu verraten, welche E-Mails registriert sind).
+    // Stattdessen gibt es einen "erfolgreichen" Response zurück, sendet aber KEINE E-Mail.
+    // 
+    // Wir müssen prüfen, ob wirklich ein NEUER User erstellt wurde:
+    // - Wenn die E-Mail bereits existiert, gibt Supabase den bestehenden User zurück
+    // - Der bestehende User hat ein älteres `created_at` Datum
+    // - Wir prüfen, ob der User gerade erst erstellt wurde (< 2 Sekunden alt)
+    
+    if (!data.user) {
+      // Kein User zurückgegeben - sollte eigentlich nicht passieren, aber sicherheitshalber prüfen
+      return { error: "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
+    }
+
+    // Prüfe, ob der User wirklich neu erstellt wurde
+    const userCreatedAt = data.user.created_at ? new Date(data.user.created_at).getTime() : 0;
+    const now = Date.now();
+    const userAge = now - userCreatedAt;
+    const isNewUser = userAge < 2000; // Weniger als 2 Sekunden alt = neuer User
+    
+    // Wenn der User nicht neu ist (älter als 2 Sekunden), existiert er bereits
+    if (!isNewUser) {
+      return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail-Adresse." };
+    }
+
+    // Wenn der User bereits bestätigt ist UND nicht gerade erst erstellt wurde, existiert er bereits
+    // (Dies ist ein zusätzlicher Check für den Fall, dass der User sehr schnell bestätigt wurde)
+    if (data.user.email_confirmed_at && userAge > 1000) {
+      return { error: "Diese E-Mail-Adresse ist bereits registriert und bestätigt. Bitte melde dich an." };
+    }
+
+    // Versuche, das Profil zu erstellen
+    const profileResult = await upsertProfile({
+      id: data.user.id,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      birth_date: birthDate,
+      gender,
+      home_gym_id: homeGymId,
+      league,
+      role: "participant",
+    });
+
+    // Wenn das Profil bereits existiert (z.B. durch unique constraint error), existiert der User bereits
+    if (profileResult.error) {
+      const errorMsg = profileResult.error.message?.toLowerCase() || "";
+      if (errorMsg.includes("already exists") ||
+          errorMsg.includes("bereits vorhanden") ||
+          errorMsg.includes("duplicate") ||
+          errorMsg.includes("unique") ||
+          errorMsg.includes("violates unique constraint")) {
+        return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an." };
+      }
+      // Andere Fehler beim Profil-Erstellen
+      console.warn("Profil-Erstellung fehlgeschlagen:", profileResult.error);
+    }
+
+    await loadProfile(data.user.id, email);
     return {};
   };
 
