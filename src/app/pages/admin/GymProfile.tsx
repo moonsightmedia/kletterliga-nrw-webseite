@@ -20,6 +20,7 @@ const GymProfile = () => {
   const [form, setForm] = useState({
     name: "",
     city: "",
+    postal_code: "",
     address: "",
     website: "",
     opening_hours: "",
@@ -40,6 +41,7 @@ const GymProfile = () => {
           setForm({
             name: gymData.name ?? "",
             city: gymData.city ?? "",
+            postal_code: gymData.postal_code ?? "",
             address: gymData.address ?? "",
             website: gymData.website ?? "",
             opening_hours: gymData.opening_hours ?? "",
@@ -141,6 +143,7 @@ const GymProfile = () => {
       const { data, error } = await updateGym(gymId, {
         name: form.name || null,
         city: form.city || null,
+        postal_code: form.postal_code?.trim() || null,
         address: form.address || null,
         website: form.website || null,
         opening_hours: form.opening_hours || null,
@@ -242,6 +245,15 @@ const GymProfile = () => {
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
               placeholder="Düsseldorf"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="postal_code">PLZ</Label>
+            <Input
+              id="postal_code"
+              value={form.postal_code}
+              onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+              placeholder="z. B. 45127"
             />
           </div>
         </div>

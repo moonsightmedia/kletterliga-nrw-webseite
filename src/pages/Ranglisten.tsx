@@ -6,23 +6,17 @@ import { ExternalLink, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { getPublicRankings } from "@/services/appApi";
 
-const categories = [
-  { value: "u15-w", label: "U15 weiblich" },
-  { value: "u15-m", label: "U15 männlich" },
-  { value: "ue15-w", label: "Ü15 weiblich" },
-  { value: "ue15-m", label: "Ü15 männlich" },
-  { value: "ue40-w", label: "Ü40 weiblich" },
-  { value: "ue40-m", label: "Ü40 männlich" },
-];
+const ageGroups = ["U15", "Ü15", "Ü40"] as const;
+const getCategoryFromFilters = (age: typeof ageGroups[number], gender: "m" | "w") => {
+  const ageApi = age === "U15" ? "u15" : age === "Ü15" ? "ue15" : "ue40";
+  return `${ageApi}-${gender}`;
+};
+const getCategoryLabel = (age: typeof ageGroups[number], gender: "m" | "w") => {
+  const g = gender === "m" ? "männlich" : "weiblich";
+  return `${age} ${g}`;
+};
 
 type LeaderboardEntry = {
   rank: number;
@@ -40,12 +34,14 @@ const Ranglisten = () => {
   });
 
   const [league, setLeague] = useState<"toprope" | "vorstieg">("toprope");
-  const [category, setCategory] = useState("ue15-m");
+  const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
+  const [ageFilter, setAgeFilter] = useState<typeof ageGroups[number]>("Ü15");
   const [currentData, setCurrentData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const apiLeague = league === "vorstieg" ? "lead" : "toprope";
+  const category = getCategoryFromFilters(ageFilter, genderFilter);
 
   useEffect(() => {
     setLoading(true);
@@ -68,7 +64,7 @@ const Ranglisten = () => {
       .finally(() => setLoading(false));
   }, [apiLeague, category]);
 
-  const categoryLabel = categories.find((c) => c.value === category)?.label ?? "";
+  const categoryLabel = getCategoryLabel(ageFilter, genderFilter);
 
   return (
     <PageLayout>
@@ -119,7 +115,7 @@ const Ranglisten = () => {
 
           <AnimatedSection animation="fade-up" delay={50}>
             <div className="max-w-3xl mx-auto mb-8">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <div className="flex flex-col gap-4 items-center justify-center">
                 <Tabs
                   value={league}
                   onValueChange={(v) => setLeague(v as "toprope" | "vorstieg")}
@@ -140,20 +136,42 @@ const Ranglisten = () => {
                   </TabsList>
                 </Tabs>
 
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-[180px] -skew-x-6 bg-background border-primary/20 rounded-none">
-                    <span className="skew-x-6">
-                      {categories.find((c) => c.value === category)?.label}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border-primary/20 rounded-none p-0">
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value} className="rounded-none">
-                        {cat.label}
-                      </SelectItem>
+                <div className="flex flex-wrap gap-4 items-center justify-center">
+                  <div className="inline-flex border border-border/60 bg-background -skew-x-6 overflow-hidden">
+                    <button
+                      type="button"
+                      className={`px-4 py-2 text-sm font-semibold uppercase tracking-wide skew-x-6 ${
+                        genderFilter === "m" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                      }`}
+                      onClick={() => setGenderFilter("m")}
+                    >
+                      <span className="inline-block">Männlich</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 text-sm font-semibold uppercase tracking-wide skew-x-6 ${
+                        genderFilter === "w" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                      }`}
+                      onClick={() => setGenderFilter("w")}
+                    >
+                      <span className="inline-block">Weiblich</span>
+                    </button>
+                  </div>
+                  <div className="inline-flex border border-border/60 bg-background -skew-x-6 overflow-hidden">
+                    {ageGroups.map((age) => (
+                      <button
+                        key={age}
+                        type="button"
+                        className={`px-5 py-2 text-sm font-semibold uppercase tracking-wide skew-x-6 ${
+                          ageFilter === age ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                        }`}
+                        onClick={() => setAgeFilter(age)}
+                      >
+                        <span className="inline-block">{age}</span>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
               </div>
             </div>
           </AnimatedSection>

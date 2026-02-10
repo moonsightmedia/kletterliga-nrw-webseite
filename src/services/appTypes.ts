@@ -18,6 +18,7 @@ export type Gym = {
   id: string;
   name: string;
   city: string | null;
+  postal_code: string | null;
   address: string | null;
   website: string | null;
   logo_url: string | null;

@@ -12,6 +12,7 @@ import { appRoutes } from "@/app/AppRoutes";
 import Index from "./pages/Index";
 import Liga from "./pages/Liga";
 import Modus from "./pages/Modus";
+import Regelwerk from "./pages/Regelwerk";
 import Hallen from "./pages/Hallen";
 import Ranglisten from "./pages/Ranglisten";
 import Sponsoren from "./pages/Sponsoren";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/liga" element={<Liga />} />
             <Route path="/modus" element={<Modus />} />
+            <Route path="/regelwerk" element={<Regelwerk />} />
             <Route path="/hallen" element={<Hallen />} />
             <Route path="/ranglisten" element={<Ranglisten />} />
             <Route path="/sponsoren" element={<Sponsoren />} />

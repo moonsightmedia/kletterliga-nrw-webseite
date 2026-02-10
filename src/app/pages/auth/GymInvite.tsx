@@ -21,6 +21,7 @@ const GymInvite = () => {
   const [form, setForm] = useState({
     name: "",
     city: "",
+    postal_code: "",
     address: "",
     website: "",
     password: "",
@@ -230,27 +231,24 @@ const GymInvite = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name || !form.password) {
-      toast({
-        title: "Fehlende Angaben",
-        description: "Bitte fülle alle Pflichtfelder aus.",
-      });
+    if (!form.name?.trim()) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib einen Hallennamen ein.", variant: "destructive" });
       return;
     }
-
+    if (!form.postal_code?.trim()) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib die Postleitzahl (PLZ) der Halle ein.", variant: "destructive" });
+      return;
+    }
+    if (!form.password) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib ein Passwort ein.", variant: "destructive" });
+      return;
+    }
     if (form.password !== form.passwordConfirm) {
-      toast({
-        title: "Passwörter stimmen nicht überein",
-        description: "Bitte überprüfe deine Passwort-Eingabe.",
-      });
+      toast({ title: "Passwörter stimmen nicht überein", description: "Bitte überprüfe deine Passwort-Eingabe.", variant: "destructive" });
       return;
     }
-
     if (form.password.length < 6) {
-      toast({
-        title: "Passwort zu kurz",
-        description: "Das Passwort muss mindestens 6 Zeichen lang sein.",
-      });
+      toast({ title: "Passwort zu kurz", description: "Das Passwort muss mindestens 6 Zeichen lang sein.", variant: "destructive" });
       return;
     }
 
@@ -295,33 +293,31 @@ const GymInvite = () => {
           token,
           password: form.password,
           gym: {
-            name: form.name,
-            city: form.city || null,
-            address: form.address || null,
-            website: form.website || null,
+            name: form.name.trim(),
+            city: form.city?.trim() || null,
+            postal_code: form.postal_code?.trim() || null,
+            address: form.address?.trim() || null,
+            website: form.website?.trim() || null,
             logo_base64: logoBase64,
           },
         }),
       });
 
       const data = await response.json();
+      const apiError = typeof data?.error === "string" ? data.error : "";
 
       if (!response.ok) {
         console.error("Complete gym invite error:", data);
-        const errorMessage = data?.error || `HTTP ${response.status}: ${response.statusText}`;
-        toast({
-          title: "Fehler",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        const title = response.status === 400 ? "Eingabe prüfen" : "Fehler";
+        const desc = apiError || (response.status === 400 ? "Bitte prüfe die Pflichtfelder (Hallenname, PLZ, Passwort)." : "Die Registrierung ist fehlgeschlagen. Bitte versuche es erneut.");
+        toast({ title, description: desc, variant: "destructive" });
         return;
       }
 
       if (!data?.success) {
-        const errorMessage = data?.error || "Unbekannter Fehler";
         toast({
           title: "Fehler",
-          description: errorMessage,
+          description: apiError || "Die Registrierung konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
           variant: "destructive",
         });
         return;
@@ -333,13 +329,14 @@ const GymInvite = () => {
         variant: "success",
       });
 
-      // Redirect to login
       navigate("/app/login", { state: { email: inviteEmail } });
     } catch (error) {
       console.error("Submit error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      const isNetwork = /fetch|network|Failed to fetch/i.test(msg);
       toast({
         title: "Fehler",
-        description: error instanceof Error ? error.message : "Registrierung fehlgeschlagen.",
+        description: isNetwork ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung und versuche es erneut." : (msg || "Registrierung fehlgeschlagen. Bitte versuche es erneut."),
         variant: "destructive",
       });
     } finally {
@@ -391,7 +388,7 @@ const GymInvite = () => {
             />
           </div>
 
-          {/* Stadt und Adresse - Mobile: gestapelt, Desktop: nebeneinander */}
+          {/* Stadt, PLZ, Adresse */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="city" className="text-sm font-medium">Stadt</Label>
@@ -403,7 +400,16 @@ const GymInvite = () => {
                 className="w-full h-11"
               />
             </div>
-
+            <div className="space-y-2">
+              <Label htmlFor="postal_code" className="text-sm font-medium">PLZ <span className="text-destructive">*</span></Label>
+              <Input
+                id="postal_code"
+                placeholder="z. B. 45127"
+                value={form.postal_code}
+                onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+                className="w-full h-11"
+              />
+            </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="address" className="text-sm font-medium">Adresse</Label>
               <Input
@@ -521,12 +527,12 @@ const GymInvite = () => {
             </div>
           </div>
 
-          {/* Buttons - Mobile: gestapelt, Desktop: nebeneinander */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button 
-              type="submit" 
-              disabled={submitting || uploadingLogo} 
-              className="flex-1 h-11 text-base font-medium"
+          {/* Buttons - umbrechen ohne Überstand */}
+          <div className="flex flex-wrap items-center gap-3 pt-6">
+            <Button
+              type="submit"
+              disabled={submitting || uploadingLogo}
+              className="min-w-0 flex-1 sm:flex-initial h-11 text-base font-medium"
               size="lg"
             >
               {submitting ? (
@@ -543,7 +549,7 @@ const GymInvite = () => {
               variant="outline"
               onClick={() => navigate("/app/login")}
               disabled={submitting || uploadingLogo}
-              className="sm:w-auto h-11"
+              className="min-w-0 flex-1 sm:flex-initial h-11"
             >
               Abbrechen
             </Button>

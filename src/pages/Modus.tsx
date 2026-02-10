@@ -1,9 +1,11 @@
+import { Link } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target } from "lucide-react";
+import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target, BookOpen } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { useSeasonSettings } from "@/services/seasonSettings";
+import { Button } from "@/components/ui/button";
 
 // Main categories (finalrelevant)
 const mainCategories = [
@@ -542,6 +544,28 @@ const Modus = () => {
                   </p>
                 </div>
               </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* Regelwerk-Abschnitt */}
+      <section className="section-padding bg-background border-t border-border/60">
+        <div className="container-kl">
+          <div className="max-w-4xl mx-auto text-center">
+            <AnimatedSection animation="fade-up">
+              <h2 className="font-headline text-xl md:text-2xl text-primary mb-3">
+                Vollständiges Regelwerk
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base mb-6 max-w-xl mx-auto">
+                Alle offiziellen Bestimmungen, Wertungsregeln und Teilnahmebedingungen im Detail.
+              </p>
+              <Button asChild className="-skew-x-6">
+                <Link to="/regelwerk" className="inline-flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 skew-x-6" />
+                  <span className="skew-x-6">Regelwerk ansehen</span>
+                </Link>
+              </Button>
             </AnimatedSection>
           </div>
         </div>

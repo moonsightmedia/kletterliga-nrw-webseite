@@ -37,6 +37,7 @@ const LeagueGyms = () => {
   const [form, setForm] = useState({
     name: "",
     city: "",
+    postal_code: "",
     address: "",
     website: "",
     logo_url: "",
@@ -48,6 +49,7 @@ const LeagueGyms = () => {
   const [editForm, setEditForm] = useState({
     name: "",
     city: "",
+    postal_code: "",
     address: "",
     website: "",
     logo_url: "",
@@ -81,55 +83,118 @@ const LeagueGyms = () => {
     }
   }, [gyms]);
 
+  const getCreateGymErrorDescription = (err: string): string => {
+    const msg = (err || "").toLowerCase();
+    if (msg.includes("missing required") || msg.includes("fehlende")) return "Name, PLZ, E-Mail und Passwort sind Pflicht.";
+    if (msg.includes("password") && (msg.includes("6") || msg.includes("least"))) return "Das Passwort muss mindestens 6 Zeichen lang sein.";
+    if (msg.includes("already") && (msg.includes("registered") || msg.includes("exist") || msg.includes("e-mail"))) return "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.";
+    if (msg.includes("invalid") && msg.includes("email")) return "Bitte gib eine gültige E-Mail-Adresse ein.";
+    if (msg.includes("gym create") || msg.includes("halle")) return "Die Halle konnte nicht angelegt werden. Bitte prüfe die Angaben.";
+    if (msg.includes("user create") || msg.includes("user create failed")) return "Der Hallen-Admin konnte nicht angelegt werden.";
+    if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already exists")) return "Eine Halle oder E-Mail mit diesen Daten existiert bereits.";
+    return err || "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.";
+  };
+
   const handleCreate = async () => {
-    if (!form.name || !form.adminEmail || !form.adminPassword) {
-      toast({ title: "Fehlende Angaben", description: "Name, E-Mail und Passwort sind Pflicht." });
+    const trimmedPlz = (form.postal_code || "").trim();
+    if (!form.name?.trim()) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib einen Hallennamen ein.", variant: "destructive" });
+      return;
+    }
+    if (!trimmedPlz) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib die Postleitzahl (PLZ) der Halle ein.", variant: "destructive" });
+      return;
+    }
+    if (!form.adminEmail?.trim()) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib die E-Mail-Adresse des Hallen-Admins ein.", variant: "destructive" });
+      return;
+    }
+    if (!form.adminPassword) {
+      toast({ title: "Fehlende Angaben", description: "Bitte gib ein Passwort für den Hallen-Admin ein.", variant: "destructive" });
+      return;
+    }
+    if (form.adminPassword.length < 6) {
+      toast({ title: "Ungültiges Passwort", description: "Das Passwort muss mindestens 6 Zeichen lang sein.", variant: "destructive" });
+      return;
+    }
+    if (!form.adminEmail.includes("@") || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) {
+      toast({ title: "Ungültige E-Mail", description: "Bitte gib eine gültige E-Mail-Adresse ein.", variant: "destructive" });
       return;
     }
     setCreating(true);
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const { data, error } = await supabase.functions.invoke("create-gym-admin", {
-      body: {
-        gym: {
-          name: form.name,
-          city: form.city || null,
-          address: form.address || null,
-          website: form.website || null,
-          logo_url: form.logo_url || null,
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("create-gym-admin", {
+        body: {
+          gym: {
+            name: form.name.trim(),
+            city: form.city?.trim() || null,
+            postal_code: trimmedPlz || null,
+            address: form.address?.trim() || null,
+            website: form.website?.trim() || null,
+            logo_url: form.logo_url?.trim() || null,
+          },
+          admin: {
+            email: form.adminEmail.trim(),
+            password: form.adminPassword,
+          },
         },
-        admin: {
-          email: form.adminEmail,
-          password: form.adminPassword,
-        },
-      },
-      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
-    });
-    setCreating(false);
-    if (error) {
-      toast({ title: "Fehler", description: error.message });
-      return;
-    }
-    if (data?.gym) {
-      const newGym = data.gym as Gym;
-      setGyms((prev) => {
-        const updated = [newGym, ...prev];
-        // Reload admins immediately with updated gyms list
-        loadAdmins(updated);
-        return updated;
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
+      if (error) {
+        toast({
+          title: "Fehler beim Anlegen",
+          description: getCreateGymErrorDescription(error.message),
+          variant: "destructive",
+        });
+        return;
+      }
+      const errMsg = typeof data?.error === "string" ? data.error : (data?.error as { message?: string })?.message;
+      if (errMsg) {
+        toast({
+          title: "Fehler beim Anlegen",
+          description: getCreateGymErrorDescription(errMsg),
+          variant: "destructive",
+        });
+        return;
+      }
+      if (data?.gym) {
+        const newGym = data.gym as Gym;
+        setGyms((prev) => {
+          const updated = [newGym, ...prev];
+          loadAdmins(updated);
+          return updated;
+        });
+        setForm({
+          name: "",
+          city: "",
+          postal_code: "",
+          address: "",
+          website: "",
+          logo_url: "",
+          adminEmail: "",
+          adminPassword: "",
+        });
+        toast({ title: "Halle erstellt", description: "Der Hallen-Admin kann sich jetzt anmelden." });
+        return;
+      }
+      toast({
+        title: "Fehler",
+        description: "Die Halle konnte nicht erstellt werden. Bitte versuche es erneut.",
+        variant: "destructive",
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Netzwerkfehler";
+      toast({
+        title: "Fehler",
+        description: msg.includes("fetch") || msg.includes("network") ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung." : msg,
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
     }
-    setForm({
-      name: "",
-      city: "",
-      address: "",
-      website: "",
-      logo_url: "",
-      adminEmail: "",
-      adminPassword: "",
-    });
-    toast({ title: "Halle erstellt", description: "Der Hallen-Admin kann sich jetzt anmelden." });
   };
 
   const handleInvite = async () => {
@@ -293,6 +358,7 @@ const LeagueGyms = () => {
     setEditForm({
       name: gym.name,
       city: gym.city ?? "",
+      postal_code: gym.postal_code ?? "",
       address: gym.address ?? "",
       website: gym.website ?? "",
       logo_url: gym.logo_url ?? "",
@@ -389,6 +455,15 @@ const LeagueGyms = () => {
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="gymPlz">PLZ <span className="text-destructive">*</span></Label>
+                <Input
+                  id="gymPlz"
+                  placeholder="z. B. 45127"
+                  value={form.postal_code}
+                  onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+                />
+              </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="gymAddress">Adresse</Label>
                 <Input
@@ -432,9 +507,11 @@ const LeagueGyms = () => {
                 />
               </div>
             </div>
-            <Button onClick={handleCreate} disabled={creating} className="w-full md:w-auto touch-manipulation">
-              <span className="skew-x-6">{creating ? "Erstelle..." : "Halle anlegen"}</span>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button onClick={handleCreate} disabled={creating} className="min-w-0 touch-manipulation">
+                <span className="skew-x-6">{creating ? "Erstelle..." : "Halle anlegen"}</span>
+              </Button>
+            </div>
           </TabsContent>
           <TabsContent value="invite" className="space-y-4 mt-4">
             <div className="space-y-2">
@@ -462,10 +539,12 @@ const LeagueGyms = () => {
                 E-Mail-Versand überspringen (nur Link generieren - für Testing)
               </Label>
             </div>
-            <Button onClick={handleInvite} disabled={inviting} className="w-full md:w-auto touch-manipulation">
-              <Mail className="h-4 w-4 mr-2" />
-              <span className="skew-x-6">{inviting ? "Erstelle..." : (skipEmail ? "Link generieren" : "Einladung senden")}</span>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button onClick={handleInvite} disabled={inviting} className="min-w-0 touch-manipulation">
+                <Mail className="h-4 w-4 mr-2" />
+                <span className="skew-x-6">{inviting ? "Erstelle..." : (skipEmail ? "Link generieren" : "Einladung senden")}</span>
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </Card>
@@ -540,7 +619,9 @@ const LeagueGyms = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-primary text-base md:text-lg mb-1 break-words">{gym.name}</div>
-                    <div className="text-sm text-muted-foreground">{gym.city}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {[gym.postal_code, gym.city].filter(Boolean).join(" ")}
+                    </div>
                     {gym.address && (
                       <div className="text-xs text-muted-foreground mt-1 break-words">{gym.address}</div>
                     )}
@@ -604,6 +685,15 @@ const LeagueGyms = () => {
                   onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-postal_code">PLZ</Label>
+                <Input
+                  id="edit-postal_code"
+                  placeholder="z. B. 45127"
+                  value={editForm.postal_code}
+                  onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
+                />
+              </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="edit-address">Adresse</Label>
                 <Input
@@ -632,11 +722,11 @@ const LeagueGyms = () => {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingGym(null)}>
+          <DialogFooter className="flex flex-wrap gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEditingGym(null)} className="min-w-0 flex-1 sm:flex-initial">
               Abbrechen
             </Button>
-            <Button onClick={handleSaveEdit}>
+            <Button onClick={handleSaveEdit} className="min-w-0 flex-1 sm:flex-initial">
               <span className="skew-x-6">Speichern</span>
             </Button>
           </DialogFooter>

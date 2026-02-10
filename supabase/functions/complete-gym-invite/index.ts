@@ -7,6 +7,7 @@ type Payload = {
   gym: {
     name: string;
     city?: string | null;
+    postal_code?: string | null;
     address?: string | null;
     website?: string | null;
     logo_url?: string | null;
@@ -54,14 +55,17 @@ serve(async (req) => {
 
     const { token, password, gym } = payload;
 
-    if (!token || !password || !gym?.name) {
-      console.error("Missing required fields:", { hasToken: !!token, hasPassword: !!password, hasGymName: !!gym?.name });
+    const plz = gym?.postal_code != null ? String(gym.postal_code).trim() : "";
+    if (!token || !password || !gym?.name?.trim()) {
       return new Response(
-        JSON.stringify({ error: "Fehlende Pflichtfelder: Token, Passwort und Hallenname sind erforderlich" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: "Fehlende Pflichtfelder: Passwort und Hallenname sind erforderlich." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    if (!plz) {
+      return new Response(
+        JSON.stringify({ error: "Bitte gib die Postleitzahl (PLZ) der Halle ein." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -117,11 +121,12 @@ serve(async (req) => {
     const { data: gymRow, error: gymError } = await supabase
       .from("gyms")
       .insert({
-        name: gym.name,
-        city: gym.city ?? null,
-        address: gym.address ?? null,
-        website: gym.website ?? null,
-        logo_url: gym.logo_url ?? null, // Will be updated if logo_base64 is provided
+        name: gym.name.trim(),
+        city: gym.city ? String(gym.city).trim() || null : null,
+        postal_code: plz || null,
+        address: gym.address ? String(gym.address).trim() || null : null,
+        website: gym.website ? String(gym.website).trim() || null : null,
+        logo_url: gym.logo_url ?? null,
       })
       .select("*")
       .single();
@@ -129,11 +134,8 @@ serve(async (req) => {
     if (gymError || !gymRow) {
       console.error("Failed to create gym:", gymError);
       return new Response(
-        JSON.stringify({ error: gymError?.message ?? "Fehler beim Erstellen der Halle" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: gymError?.message ?? "Fehler beim Erstellen der Halle. Bitte prüfe die Angaben." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -149,15 +151,10 @@ serve(async (req) => {
 
     if (userError || !userData?.user) {
       console.error("Failed to create user:", userError);
-      // Rollback: delete gym if user creation fails
       await supabase.from("gyms").delete().eq("id", gymRow.id);
-      return new Response(
-        JSON.stringify({ error: userError?.message ?? "Fehler beim Erstellen des Benutzers" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      const err = (userError?.message ?? "").toLowerCase();
+      const msg = err.includes("already") || err.includes("exist") ? "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits." : (userError?.message ?? "Fehler beim Erstellen des Benutzers.");
+      return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
     // Create profile
@@ -169,15 +166,11 @@ serve(async (req) => {
 
     if (profileError) {
       console.error("Failed to create profile:", profileError);
-      // Rollback: delete gym and user
       await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
       return new Response(
-        JSON.stringify({ error: profileError.message }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: "Fehler beim Anlegen des Profils. Bitte versuche es erneut." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -189,16 +182,12 @@ serve(async (req) => {
 
     if (mappingError) {
       console.error("Failed to create gym_admin mapping:", mappingError);
-      // Rollback: delete gym, user, and profile
       await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
       await supabase.from("profiles").delete().eq("id", userData.user.id);
       return new Response(
-        JSON.stringify({ error: mappingError.message }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: "Fehler beim Zuordnen der Halle. Bitte versuche es erneut." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -275,10 +264,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ 
-        error: (error as Error).message || "Ein unerwarteter Fehler ist aufgetreten",
-        details: String(error)
-      }),
+      JSON.stringify({ error: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

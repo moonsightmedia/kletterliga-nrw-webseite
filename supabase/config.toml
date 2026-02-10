@@ -28,3 +28,7 @@ verify_jwt = false
 # get-instagram-feed: öffentlich (Instagram-Feed auf der Website ohne Login)
 [functions.get-instagram-feed]
 verify_jwt = false
+
+# send-contact-email: öffentlich (Kontaktformular ohne Login)
+[functions.send-contact-email]
+verify_jwt = false

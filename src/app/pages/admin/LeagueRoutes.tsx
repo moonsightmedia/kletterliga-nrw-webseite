@@ -399,7 +399,7 @@ const LeagueRoutes = () => {
                   >
                     <option value="">Bitte wählen</option>
                     {form.discipline === "toprope"
-                      ? Array.from({ length: 20 }, (_, i) => `T${i + 1}`).map((code) => {
+                      ? Array.from({ length: 10 }, (_, i) => `T${i + 1}`).map((code) => {
                           const isUsed = usedCodes.has(code);
                           return (
                             <option key={code} value={code} disabled={isUsed && form.code !== code}>
@@ -407,7 +407,7 @@ const LeagueRoutes = () => {
                             </option>
                           );
                         })
-                      : Array.from({ length: 20 }, (_, i) => `V${i + 1}`).map((code) => {
+                      : Array.from({ length: 10 }, (_, i) => `V${i + 1}`).map((code) => {
                           const isUsed = usedCodes.has(code);
                           return (
                             <option key={code} value={code} disabled={isUsed && form.code !== code}>
