@@ -2,11 +2,16 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { StarRating } from "@/components/ui/star-rating";
 import { listRoutesByGym, upsertResult, checkGymCodeRedeemed, listResultsForUser } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
 import type { Route, Result } from "@/services/appTypes";
-import { Lock, AlertCircle } from "lucide-react";
+import { Lock, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 const colorClassMap: Record<string, string> = {
   rot: "bg-red-500",
@@ -32,6 +37,9 @@ const ResultEntry = () => {
   const [route, setRoute] = useState<Route | null>(null);
   const [existingResult, setExistingResult] = useState<Result | null>(null);
   const [selectedOption, setSelectedOption] = useState<PointsOption>(0);
+  const [rating, setRating] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<string>("");
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
   const [checkingCode, setCheckingCode] = useState(true);
@@ -71,6 +79,8 @@ const ResultEntry = () => {
         } else {
           setSelectedOption((result.points ?? 0) as PointsOption);
         }
+        setRating(result.rating ?? null);
+        setFeedback(result.feedback ?? "");
       }
     });
   }, [gymId, routeId, profile?.id]);
@@ -98,6 +108,8 @@ const ResultEntry = () => {
       points,
       flash,
       status: points === 0 ? "not_climbed" : "climbed",
+      rating: rating,
+      feedback: feedback || null,
     });
     setLoading(false);
     if (error) {
@@ -108,11 +120,13 @@ const ResultEntry = () => {
     navigate(`/app/gyms/${gymId}/routes`);
   };
 
+  const pageTitle = existingResult ? "Ergebnis bearbeiten" : "Ergebnis eintragen";
+
   if (checkingCode) {
     return (
       <div className="space-y-5">
         <div>
-          <h2 className="font-headline text-2xl text-primary">Ergebnis eintragen</h2>
+          <h2 className="font-headline text-2xl text-primary">{pageTitle}</h2>
           <p className="text-sm text-muted-foreground">Lade...</p>
         </div>
       </div>
@@ -214,11 +228,98 @@ const ResultEntry = () => {
             </Button>
           ))}
         </div>
+        <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-border/60">
+          <div className="text-xs md:text-sm uppercase tracking-widest text-secondary mb-3">Bewertung</div>
+          <StarRating value={rating} onChange={setRating} size="md" />
+        </div>
+        {existingResult?.feedback && (
+          <div className="mt-4 pt-4 border-t border-border/60">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <span>Feedback bereits eingereicht</span>
+            </div>
+          </div>
+        )}
       </Card>
 
-      <Button className="w-full md:w-auto md:mx-auto md:block" size="lg" onClick={handleSave} disabled={loading}>
-        {loading ? "Speichern..." : selectedOption === "flash" ? "Top mit Flash speichern" : "Ergebnis speichern"}
-      </Button>
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <Button className="w-full sm:flex-1" size="lg" onClick={handleSave} disabled={loading}>
+          {loading 
+            ? "Speichern..." 
+            : existingResult 
+              ? "Änderungen speichern"
+              : selectedOption === "flash" 
+                ? "Top mit Flash speichern" 
+                : "Ergebnis speichern"}
+        </Button>
+        <Button 
+          variant="outline" 
+          size="lg" 
+          onClick={() => setShowFeedbackDialog(true)}
+          className="w-full sm:w-auto relative"
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          {existingResult?.feedback ? "Feedback bearbeiten" : "Feedback geben"}
+          {existingResult?.feedback && (
+            <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+              Vorhanden
+            </Badge>
+          )}
+        </Button>
+      </div>
+
+      <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
+        <DialogContent className="max-w-2xl flex flex-col p-4 sm:p-6">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">Feedback zur Route</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Hast du ein Problem mit dieser Route bemerkt oder etwas, das gestört hat? Teile uns dein Feedback mit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 py-4 min-h-0">
+            <div className="space-y-2">
+              <Label htmlFor="feedback" className="text-sm">Dein Feedback</Label>
+              <Textarea
+                id="feedback"
+                placeholder="Beschreibe das Problem oder was dich gestört hat..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={6}
+                className="resize-none text-sm sm:text-base min-h-[120px] sm:min-h-[140px] focus-visible:ring-offset-0 focus-visible:ring-inset"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-shrink-0 flex-col gap-2 sm:flex-row sm:gap-2 pt-2 sm:pt-0 pb-safe sm:pb-0">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowFeedbackDialog(false);
+                // Setze Feedback zurück auf den ursprünglichen Wert, falls vorhanden
+                if (existingResult?.feedback) {
+                  setFeedback(existingResult.feedback);
+                } else {
+                  setFeedback("");
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowFeedbackDialog(false);
+                toast({
+                  title: "Feedback gespeichert",
+                  description: "Dein Feedback wird zusammen mit dem Ergebnis gespeichert.",
+                });
+              }}
+              className="w-full sm:w-auto"
+            >
+              Feedback speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

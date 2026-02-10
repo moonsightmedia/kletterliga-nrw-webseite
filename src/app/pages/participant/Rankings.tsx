@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Award, Medal, Trophy, MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { Award, Medal, Trophy, MapPin, ChevronDown, ChevronRight, Zap, Target, Route } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -10,7 +10,20 @@ import { useAuth } from "@/app/auth/AuthProvider";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import type { Result, Route, Gym } from "@/services/appTypes";
 
-type RankingRow = { rank: number; name: string; points: number; profile_id: string };
+type RankingRow = {
+  rank: number;
+  name: string;
+  points: number;
+  profile_id: string;
+  visitedGyms: number;
+  flashes: number;
+  tops: number;
+  points_7_5: number;
+  points_5: number;
+  points_2_5: number;
+  points_0: number;
+  totalRoutes: number;
+};
 
 const getStageRange = (stageKey: string, stages: Array<{ key: string; start: string; end: string }>) => {
   const stage = stages.find((item) => item.key === stageKey);
@@ -100,10 +113,14 @@ const Rankings = () => {
       setResults(resultsData);
       setRoutes(routesData);
       if (gymsData) setGyms(gymsData);
-      const routeMap = new Map(routesData.map((route) => [route.id, route.discipline]));
+      const routeMap = new Map(routesData.map((route) => [route.id, route]));
       const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
+      
+      // Berechne Punkte und Statistiken
       const totals = resultsData.reduce<Record<string, number>>((acc, result) => {
-        const discipline = routeMap.get(result.route_id);
+        const route = routeMap.get(result.route_id);
+        if (!route) return acc;
+        const discipline = route.discipline;
         const normalized =
           discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
         if (normalized !== leagueFilter) return acc;
@@ -115,6 +132,55 @@ const Rankings = () => {
           (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
         return acc;
       }, {});
+
+      // Berechne detaillierte Statistiken
+      const stats = resultsData.reduce<Record<string, {
+        visitedGyms: Set<string>;
+        flashes: number;
+        tops: number;
+        points_7_5: number;
+        points_5: number;
+        points_2_5: number;
+        points_0: number;
+        totalRoutes: number;
+      }>>((acc, result) => {
+        const route = routeMap.get(result.route_id);
+        if (!route) return acc;
+        const discipline = route.discipline;
+        const normalized =
+          discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
+        if (normalized !== leagueFilter) return acc;
+        if (range) {
+          const createdAt = result.created_at ? new Date(result.created_at) : null;
+          if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
+        }
+
+        if (!acc[result.profile_id]) {
+          acc[result.profile_id] = {
+            visitedGyms: new Set(),
+            flashes: 0,
+            tops: 0,
+            points_7_5: 0,
+            points_5: 0,
+            points_2_5: 0,
+            points_0: 0,
+            totalRoutes: 0,
+          };
+        }
+
+        const stat = acc[result.profile_id];
+        stat.visitedGyms.add(route.gym_id);
+        if (result.flash) stat.flashes++;
+        if (result.points === 10) stat.tops++;
+        if (result.points === 7.5) stat.points_7_5++;
+        if (result.points === 5) stat.points_5++;
+        if (result.points === 2.5) stat.points_2_5++;
+        if (result.points === 0) stat.points_0++;
+        stat.totalRoutes++;
+
+        return acc;
+      }, {});
+
       const rows = profiles
         .filter((profile) => {
           if (profile.role === "gym_admin" || profile.role === "league_admin") return false;
@@ -122,15 +188,48 @@ const Rankings = () => {
           const league = profile.league ?? null;
           return league === null || league === leagueFilter;
         })
-        .map((profile) => ({
-          id: profile.id,
-          className: getClassName(profile.birth_date, profile.gender),
-          name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || "Unbekannt",
-          points: totals[profile.id] ?? 0,
-        }))
+        .map((profile) => {
+          const stat = stats[profile.id] || {
+            visitedGyms: new Set<string>(),
+            flashes: 0,
+            tops: 0,
+            points_7_5: 0,
+            points_5: 0,
+            points_2_5: 0,
+            points_0: 0,
+            totalRoutes: 0,
+          };
+          return {
+            id: profile.id,
+            className: getClassName(profile.birth_date, profile.gender),
+            name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || "Unbekannt",
+            points: totals[profile.id] ?? 0,
+            visitedGyms: stat.visitedGyms.size,
+            flashes: stat.flashes,
+            tops: stat.tops,
+            points_7_5: stat.points_7_5,
+            points_5: stat.points_5,
+            points_2_5: stat.points_2_5,
+            points_0: stat.points_0,
+            totalRoutes: stat.totalRoutes,
+          };
+        })
         .filter((row) => row.className === className);
       rows.sort((a, b) => b.points - a.points);
-      setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
+      setRankings(rows.map((row, index) => ({
+        rank: index + 1,
+        name: row.name,
+        points: row.points,
+        profile_id: row.id,
+        visitedGyms: row.visitedGyms,
+        flashes: row.flashes,
+        tops: row.tops,
+        points_7_5: row.points_7_5,
+        points_5: row.points_5,
+        points_2_5: row.points_2_5,
+        points_0: row.points_0,
+        totalRoutes: row.totalRoutes,
+      })));
     };
     load();
   }, [className, leagueFilter, tab, stageKey, stages]);
@@ -213,6 +312,10 @@ const Rankings = () => {
               <TableHead className="w-16">Rang</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="text-right">Punkte</TableHead>
+              <TableHead className="text-center">Hallen</TableHead>
+              <TableHead className="text-center">Routen</TableHead>
+              <TableHead className="text-center">Flashes</TableHead>
+              <TableHead className="text-center">Tops</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -225,7 +328,7 @@ const Rankings = () => {
               const participantDetails = getParticipantDetails(row.profile_id);
               
               return (
-                <>
+                <Fragment key={row.profile_id}>
                   <TableRow
                     key={`${row.rank}-${row.name}`}
                     className={`cursor-pointer hover:bg-muted/50 ${isUser ? "bg-accent/20" : ""}`}
@@ -249,14 +352,76 @@ const Rankings = () => {
                       <div className="text-lg font-semibold text-primary">{row.points}</div>
                       <div className="text-xs text-muted-foreground">Punkte</div>
                     </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm font-semibold">{row.visitedGyms}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Route className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm font-semibold">{row.totalRoutes}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Zap className="h-3.5 w-3.5 text-yellow-600" />
+                        <span className="text-sm font-semibold">{row.flashes}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Target className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-sm font-semibold">{row.tops}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                     </TableCell>
                   </TableRow>
                   {isExpanded && participantDetails && participantDetails.length > 0 && (
                     <TableRow key={`${row.profile_id}-details`} className="bg-muted/20">
-                      <TableCell colSpan={4} className="p-4">
-                        <div className="space-y-3">
+                      <TableCell colSpan={8} className="p-4">
+                        <div className="space-y-4">
+                          {/* Statistiken Card */}
+                          <Card className="p-4 bg-background border-border/60">
+                            <div className="text-xs uppercase tracking-widest text-secondary mb-3">Statistiken</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                              <div className="flex flex-col items-center gap-1">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <div className="text-lg font-bold text-primary">{row.visitedGyms}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">Hallen</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <Route className="h-4 w-4 text-muted-foreground" />
+                                <div className="text-lg font-bold text-primary">{row.totalRoutes}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">Routen</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <Zap className="h-4 w-4 text-yellow-600" />
+                                <div className="text-lg font-bold text-yellow-600">{row.flashes}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">Flashes</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <Target className="h-4 w-4 text-primary" />
+                                <div className="text-lg font-bold text-primary">{row.tops}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">Tops (10)</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="text-lg font-bold text-primary">{row.points_7_5}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">7,5 Pkt</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="text-lg font-bold text-primary">{row.points_5}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">5 Pkt</div>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="text-lg font-bold text-primary">{row.points_2_5}</div>
+                                <div className="text-[10px] text-muted-foreground text-center">2,5 Pkt</div>
+                              </div>
+                            </div>
+                          </Card>
                           <div className="text-xs text-muted-foreground mb-2">
                             Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
                           </div>
@@ -299,7 +464,7 @@ const Rankings = () => {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>
@@ -380,8 +545,39 @@ const Rankings = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-1 font-semibold uppercase tracking-wide" style={{ color: palette.name }}>
-                    {row.name}
+                  <div className="flex-1">
+                    <div className="font-semibold uppercase tracking-wide" style={{ color: palette.name }}>
+                      {row.name}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" style={{ color: palette.label }} />
+                        <span className="text-[10px]" style={{ color: palette.label }}>{row.visitedGyms}</span>
+                      </div>
+                      <span className="text-[10px]" style={{ color: palette.label }}>•</span>
+                      <div className="flex items-center gap-1">
+                        <Route className="h-3 w-3" style={{ color: palette.label }} />
+                        <span className="text-[10px]" style={{ color: palette.label }}>{row.totalRoutes}</span>
+                      </div>
+                      {row.flashes > 0 && (
+                        <>
+                          <span className="text-[10px]" style={{ color: palette.label }}>•</span>
+                          <div className="flex items-center gap-1">
+                            <Zap className="h-3 w-3 text-yellow-600" />
+                            <span className="text-[10px]" style={{ color: palette.label }}>{row.flashes}</span>
+                          </div>
+                        </>
+                      )}
+                      {row.tops > 0 && (
+                        <>
+                          <span className="text-[10px]" style={{ color: palette.label }}>•</span>
+                          <div className="flex items-center gap-1">
+                            <Target className="h-3 w-3" style={{ color: palette.points }} />
+                            <span className="text-[10px]" style={{ color: palette.label }}>{row.tops}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-semibold" style={{ color: palette.points }}>
@@ -396,7 +592,47 @@ const Rankings = () => {
               <AccordionContent className="px-5 pb-3 pt-0">
                 <div className="pt-3 border-t border-border/50">
                   {participantDetails && participantDetails.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                      {/* Statistiken Card für Mobile */}
+                      <Card className="p-3 bg-background border-border/60">
+                        <div className="text-xs uppercase tracking-widest text-secondary mb-2">Statistiken</div>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                            <div className="text-base font-bold text-primary">{row.visitedGyms}</div>
+                            <div className="text-[9px] text-muted-foreground">Hallen</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Route className="h-3.5 w-3.5 text-muted-foreground" />
+                            <div className="text-base font-bold text-primary">{row.totalRoutes}</div>
+                            <div className="text-[9px] text-muted-foreground">Routen</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Zap className="h-3.5 w-3.5 text-yellow-600" />
+                            <div className="text-base font-bold text-yellow-600">{row.flashes}</div>
+                            <div className="text-[9px] text-muted-foreground">Flashes</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Target className="h-3.5 w-3.5 text-primary" />
+                            <div className="text-base font-bold text-primary">{row.tops}</div>
+                            <div className="text-[9px] text-muted-foreground">Tops</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-border/40">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <div className="text-sm font-bold text-primary">{row.points_7_5}</div>
+                            <div className="text-[9px] text-muted-foreground">7,5 Pkt</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <div className="text-sm font-bold text-primary">{row.points_5}</div>
+                            <div className="text-[9px] text-muted-foreground">5 Pkt</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <div className="text-sm font-bold text-primary">{row.points_2_5}</div>
+                            <div className="text-[9px] text-muted-foreground">2,5 Pkt</div>
+                          </div>
+                        </div>
+                      </Card>
                       <div className="text-xs text-muted-foreground mb-1">
                         Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
                       </div>

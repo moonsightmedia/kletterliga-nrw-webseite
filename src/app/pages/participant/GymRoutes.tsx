@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { StarRating } from "@/components/ui/star-rating";
 import { getGym, listResultsForUser, listRoutesByGym, checkGymCodeRedeemed } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
 import type { Gym, Result, Route } from "@/services/appTypes";
-import { Lock, AlertCircle } from "lucide-react";
+import { Lock, AlertCircle, Edit } from "lucide-react";
 
 const GymRoutes = () => {
   const { gymId } = useParams();
@@ -95,6 +96,11 @@ const GymRoutes = () => {
             <div className="text-sm md:text-base font-semibold text-secondary">
               {result ? `${(result.points ?? 0) + (result.flash ? 1 : 0)} Punkte` : "Nicht geklettert"}
             </div>
+            {result && result.rating !== null && (
+              <div className="mt-2 flex justify-end">
+                <StarRating value={result.rating} readonly size="sm" />
+              </div>
+            )}
           </div>
         </div>
         {isLocked ? (
@@ -105,7 +111,14 @@ const GymRoutes = () => {
         ) : (
           <Button variant="outline" size="sm" className="mt-3 md:mt-4" asChild>
             <Link to={`/app/gyms/${gymId}/routes/${route.id}/result`}>
-              <span className="skew-x-6">Ergebnis eintragen</span>
+              {result ? (
+                <>
+                  <Edit className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                  <span className="skew-x-6">Ergebnis bearbeiten</span>
+                </>
+              ) : (
+                <span className="skew-x-6">Ergebnis eintragen</span>
+              )}
             </Link>
           </Button>
         )}

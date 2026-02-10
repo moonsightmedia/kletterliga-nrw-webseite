@@ -11,7 +11,7 @@ const items = [
 
 export const BottomNav = () => {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t border-border">
+    <nav className="mobile-nav-visible fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t border-border">
       <div className="grid grid-cols-4 max-w-md mx-auto">
         {items.map((item) => {
           const Icon = item.icon;

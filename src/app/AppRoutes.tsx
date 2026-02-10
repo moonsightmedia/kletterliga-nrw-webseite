@@ -7,6 +7,7 @@ import Login from "@/app/pages/auth/Login";
 import Register from "@/app/pages/auth/Register";
 import GymInvite from "@/app/pages/auth/GymInvite";
 import EmailConfirm from "@/app/pages/auth/EmailConfirm";
+import ResetPassword from "@/app/pages/auth/ResetPassword";
 import Home from "@/app/pages/participant/Home";
 import Gyms from "@/app/pages/participant/Gyms";
 import GymDetail from "@/app/pages/participant/GymDetail";
@@ -37,6 +38,7 @@ import LeagueCodes from "@/app/pages/admin/LeagueCodes";
 import LeagueMastercodes from "@/app/pages/admin/LeagueMastercodes";
 import LeagueRoutes from "@/app/pages/admin/LeagueRoutes";
 import LeagueSettings from "@/app/pages/admin/LeagueSettings";
+import LeagueRouteFeedback from "@/app/pages/admin/LeagueRouteFeedback";
 
 export const appRoutes = (
   <>
@@ -44,6 +46,7 @@ export const appRoutes = (
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
       <Route path="/app/auth/confirm" element={<EmailConfirm />} />
+      <Route path="/app/auth/reset-password" element={<ResetPassword />} />
       <Route path="/app/invite/gym/:token" element={<GymInvite />} />
     </Route>
 
@@ -180,6 +183,14 @@ export const appRoutes = (
           element={
             <RoleGuard allow={["league_admin"]}>
               <LeagueResults />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="league/route-feedback"
+          element={
+            <RoleGuard allow={["league_admin"]}>
+              <LeagueRouteFeedback />
             </RoleGuard>
           }
         />

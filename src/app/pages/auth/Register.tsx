@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
@@ -21,7 +22,6 @@ const Register = () => {
     homeGymId: "",
     league: "",
   });
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,23 +31,47 @@ const Register = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setError(null);
-    const result = await signUp({
-      email: form.email,
-      password: form.password,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      birthDate: form.birthDate || null,
-      gender: (form.gender as "m" | "w") || null,
-      homeGymId: form.homeGymId || null,
-      league: (form.league as "toprope" | "lead") || null,
-    });
-    setLoading(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    
+    try {
+      const result = await signUp({
+        email: form.email,
+        password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        birthDate: form.birthDate || null,
+        gender: (form.gender as "m" | "w") || null,
+        homeGymId: form.homeGymId || null,
+        league: (form.league as "toprope" | "lead") || null,
+      });
+      
+      if (result.error) {
+        toast({
+          title: "Registrierung fehlgeschlagen",
+          description: result.error,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Erfolgsmeldung
+      toast({
+        title: "Registrierung erfolgreich!",
+        description: "Wir haben dir eine E-Mail zur Bestätigung gesendet. Bitte prüfe dein Postfach und klicke auf den Bestätigungslink.",
+        variant: "success",
+      });
+
+      // Navigiere zur Home-Seite
+      navigate("/app");
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Fehler",
+        description: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten.",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
-    navigate("/app");
   };
 
   return (
@@ -160,7 +184,6 @@ const Register = () => {
             ))}
           </select>
         </div>
-        {error && <div className="text-sm text-destructive">{error}</div>}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Registrieren..." : "Account erstellen"}
         </Button>

@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { listResults, listProfiles, listRoutes, listGyms } from "@/services/appApi";
 import type { Result, Profile, Route, Gym } from "@/services/appTypes";
-import { ClipboardList, Search, X } from "lucide-react";
+import { ClipboardList, Search, X, MessageSquare, AlertTriangle, MessageCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type ResultWithDetails = Result & {
   profile: Profile | null;
@@ -19,6 +20,7 @@ const LeagueResults = () => {
   const [gyms, setGyms] = useState<Map<string, Gym>>(new Map());
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedFeedback, setSelectedFeedback] = useState<{ text: string; route: string; profile: string } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -77,15 +79,18 @@ const LeagueResults = () => {
         const email = (r.profile?.email ?? "").toLowerCase();
         const gymName = (r.gym?.name ?? "").toLowerCase();
         const routeCode = (r.route?.code ?? "").toLowerCase();
-        return profileName.includes(query) || email.includes(query) || gymName.includes(query) || routeCode.includes(query);
+        const feedback = (r.feedback ?? "").toLowerCase();
+        return profileName.includes(query) || email.includes(query) || gymName.includes(query) || routeCode.includes(query) || feedback.includes(query);
       });
     }
 
-    // Sortiere nach Datum (neueste zuerst)
+    // Sortiere nach updated_at oder created_at (neueste zuerst)
     return filteredResults.sort((a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return dateB - dateA;
+      const dateA = a.updated_at || a.created_at;
+      const dateB = b.updated_at || b.created_at;
+      const timeA = dateA ? new Date(dateA).getTime() : 0;
+      const timeB = dateB ? new Date(dateB).getTime() : 0;
+      return timeB - timeA;
     });
   }, [resultsWithDetails, search]);
 
@@ -166,7 +171,9 @@ const LeagueResults = () => {
                 : "Unbekannt";
               const gymName = result.gym?.name ?? "Unbekannte Halle";
               const routeCode = result.route?.code ?? "Unbekannte Route";
-              const date = result.created_at ? new Date(result.created_at).toLocaleDateString("de-DE") : "-";
+              const displayDate = result.updated_at || result.created_at;
+              const date = displayDate ? new Date(displayDate).toLocaleDateString("de-DE") : "-";
+              const isEdited = result.updated_at && result.updated_at !== result.created_at;
 
               return (
                 <Card
@@ -182,14 +189,47 @@ const LeagueResults = () => {
                             Flash
                           </Badge>
                         )}
+                        {isEdited && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
+                            Bearbeitet
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground break-words">
                         {gymName} · Route {routeCode} · {date}
+                        {isEdited && (
+                          <span className="ml-1 text-xs">(bearbeitet)</span>
+                        )}
                       </div>
+                      {result.feedback && (
+                        <button
+                          onClick={() => setSelectedFeedback({
+                            text: result.feedback!,
+                            route: `${gymName} · Route ${routeCode}`,
+                            profile: profileName
+                          })}
+                          className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>Feedback anzeigen</span>
+                        </button>
+                      )}
                     </div>
                     <div className="text-left md:text-right flex-shrink-0">
                       <div className="text-lg font-semibold text-secondary">{result.points}</div>
                       <div className="text-xs text-muted-foreground">Punkte</div>
+                      {result.rating !== null && result.rating !== undefined && (
+                        <div className="mt-1 flex items-center justify-end gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <div
+                              key={star}
+                              className={`h-3 w-3 ${star <= result.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                            >
+                              ★
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -198,6 +238,28 @@ const LeagueResults = () => {
           </div>
         )}
       </div>
+
+      {/* Feedback Dialog */}
+      <Dialog open={!!selectedFeedback} onOpenChange={(open) => !open && setSelectedFeedback(null)}>
+        <DialogContent className="max-w-2xl p-6">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="flex items-center gap-2 text-left">
+              <MessageCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              Feedback zur Route
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              {selectedFeedback?.route} · von {selectedFeedback?.profile}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6">
+            <Card className="p-5 bg-muted/50 border-border/60">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                {selectedFeedback?.text}
+              </p>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

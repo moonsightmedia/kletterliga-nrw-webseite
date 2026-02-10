@@ -8,9 +8,14 @@ const EmailConfirm = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isMagicLink, setIsMagicLink] = useState(false);
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
+      // Prüfe, ob es ein Magic Link ist (type=magiclink) oder E-Mail-Bestätigung (type=signup)
+      const type = searchParams.get("type");
+      setIsMagicLink(type === "magiclink");
+
       // Supabase fügt die Token-Parameter automatisch zur URL hinzu
       // Wir müssen die Session aktualisieren, nachdem der Token verarbeitet wurde
       try {
@@ -24,7 +29,7 @@ const EmailConfirm = () => {
         }
 
         if (data.session) {
-          // Session wurde erfolgreich erstellt - E-Mail wurde bestätigt
+          // Session wurde erfolgreich erstellt - E-Mail wurde bestätigt oder Magic Link wurde verwendet
           setStatus("success");
           // Weiterleitung zum Login mit Bestätigungsnachricht
           setTimeout(() => {
@@ -48,19 +53,23 @@ const EmailConfirm = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-headline text-3xl text-primary">E-Mail-Bestätigung</h1>
+        <h1 className="font-headline text-3xl text-primary">
+          {isMagicLink ? "Magic Link Login" : "E-Mail-Bestätigung"}
+        </h1>
         {status === "loading" && (
           <p className="text-sm text-muted-foreground mt-2">
-            Bestätige deine E-Mail-Adresse...
+            {isMagicLink ? "Melde dich an..." : "Bestätige deine E-Mail-Adresse..."}
           </p>
         )}
         {status === "success" && (
           <div className="mt-4">
             <p className="text-sm text-green-600 dark:text-green-400">
-              ✓ Deine E-Mail-Adresse wurde erfolgreich bestätigt!
+              {isMagicLink 
+                ? "✓ Du wurdest erfolgreich angemeldet!" 
+                : "✓ Deine E-Mail-Adresse wurde erfolgreich bestätigt!"}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Du wirst zum Login weitergeleitet...
+              Du wirst weitergeleitet...
             </p>
           </div>
         )}

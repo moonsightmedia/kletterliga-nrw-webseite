@@ -43,7 +43,10 @@ export type Result = {
   points: number;
   flash: boolean;
   status: string | null;
+  rating: number | null;
+  feedback: string | null;
   created_at: string;
+  updated_at: string | null;
 };
 
 export type ChangeRequest = {

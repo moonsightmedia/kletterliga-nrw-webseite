@@ -493,8 +493,22 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg">
                   <h3 className="font-headline text-xl text-primary mb-3">Anmeldung</h3>
                   <p className="text-muted-foreground">
-                    Die Registrierung erfolgt über den Teilnehmerbereich. Du benötigst einen 
-                    Account und Zugang zu mindestens einer der teilnehmenden Hallen.
+                    Die Registrierung erfolgt über den Teilnehmerbereich. Du erstellst einen 
+                    Account mit deinen persönlichen Daten (Name, Geburtsdatum, Geschlecht, Liga).
+                  </p>
+                </div>
+
+                <div className="bg-background p-6 rounded-lg border-2 border-accent/30">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Award className="text-accent" size={24} />
+                    <h3 className="font-headline text-xl text-primary">Teilnahmegebühr & Mastercode</h3>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Um an der Liga teilzunehmen und in den Ranglisten zu erscheinen, musst du zunächst 
+                    deine <strong className="text-accent">Teilnahme freischalten</strong>. Dafür benötigst du einen 
+                    <strong className="text-accent"> Mastercode</strong>, den du nach Zahlung der Teilnahmegebühr 
+                    (15 €) in einer der teilnehmenden Hallen erhältst. Den Mastercode löst du einmalig in deinem 
+                    Account ein. Erst danach werden deine Ergebnisse in den Ranglisten gezählt.
                   </p>
                 </div>
 
@@ -504,9 +518,10 @@ const Modus = () => {
                     <h3 className="font-headline text-xl text-primary">Hallen-Code System</h3>
                   </div>
                   <p className="text-muted-foreground">
-                    Um Ergebnisse eintragen zu können, musst du zunächst einen <strong className="text-secondary">hallenspezifischen Code</strong> vor Ort 
-                    in der Halle erhalten. Diesen Code gibst du einmalig in deinem Account ein, um die 
-                    Halle freizuschalten. Erst dann kannst du Routen aus dieser Halle werten lassen.
+                    Um Ergebnisse für eine Halle eintragen zu können, musst du zunächst den jeweiligen 
+                    <strong className="text-secondary"> hallenspezifischen Code</strong> vor Ort in der Halle erhalten 
+                    (kostenfrei). Diesen Code gibst du einmalig in deinem Account ein, um die Halle freizuschalten. 
+                    Erst dann kannst du Routen aus dieser Halle werten lassen.
                   </p>
                 </div>
 

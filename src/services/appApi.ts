@@ -135,6 +135,8 @@ export async function upsertResult(result: Omit<Result, "id" | "created_at"> & {
         points: result.points,
         flash: result.flash,
         status: result.status,
+        rating: result.rating,
+        feedback: result.feedback,
       })
       .eq("id", existing.id)
       .select("*")

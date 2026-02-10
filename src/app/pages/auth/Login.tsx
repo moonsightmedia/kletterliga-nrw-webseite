@@ -14,12 +14,23 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [passwordReset, setPasswordReset] = useState(false);
 
   // Prüfe auf confirmed Parameter
   useEffect(() => {
     const confirmedParam = searchParams.get("confirmed");
     if (confirmedParam === "true") {
       setConfirmed(true);
+      // Entferne den Parameter aus der URL
+      navigate("/app/login", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
+  // Prüfe auf password_reset Parameter
+  useEffect(() => {
+    const passwordResetParam = searchParams.get("password_reset");
+    if (passwordResetParam === "true") {
+      setPasswordReset(true);
       // Entferne den Parameter aus der URL
       navigate("/app/login", { replace: true });
     }
@@ -76,6 +87,13 @@ const Login = () => {
         <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
           <p className="text-sm text-green-800 dark:text-green-200">
             ✓ Deine E-Mail-Adresse wurde erfolgreich bestätigt! Du kannst dich jetzt einloggen.
+          </p>
+        </div>
+      )}
+      {passwordReset && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+          <p className="text-sm text-green-800 dark:text-green-200">
+            ✓ Dein Passwort wurde erfolgreich zurückgesetzt! Du kannst dich jetzt mit deinem neuen Passwort einloggen.
           </p>
         </div>
       )}

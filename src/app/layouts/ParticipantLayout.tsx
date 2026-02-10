@@ -33,9 +33,9 @@ export const ParticipantLayout = () => {
   const participationInactive = profile && profile.role === "participant" && !profile.participation_activated_at;
 
   return (
-    <div className="min-h-screen bg-accent/30 md:flex">
+    <div className="min-h-screen bg-accent/30 desktop-layout-flex">
       {/* Mobile Header */}
-      <div className="md:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+      <div className="mobile-header-visible sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
         <div className="px-5 py-4 text-center">
           <div className="text-xs uppercase tracking-widest text-secondary">Kletterliga NRW</div>
           <div className="font-headline text-2xl text-primary">{title}</div>
@@ -43,7 +43,7 @@ export const ParticipantLayout = () => {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-border md:bg-background">
+      <aside className="desktop-sidebar sticky top-0 h-screen w-64 flex-col border-r border-border bg-background overflow-y-auto">
         <div className="px-6 py-5 border-b border-border">
           <div className="text-xs uppercase tracking-widest text-secondary">Kletterliga NRW</div>
           <div className="font-headline text-xl text-primary mt-1">Teilnehmer</div>
@@ -78,14 +78,14 @@ export const ParticipantLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop Header */}
-        <header className="hidden md:block sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+        <header className="desktop-header sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
           <div className="px-8 py-4">
             <div className="font-headline text-3xl text-primary">{title}</div>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 px-5 pt-6 pb-24 md:px-8 md:pt-8 md:pb-8 md:max-w-7xl md:mx-auto md:w-full">
+        <main className="flex-1 px-5 pt-6 pb-24 lg:px-8 lg:pt-8 lg:pb-8 lg:max-w-7xl lg:mx-auto lg:w-full">
           {participationInactive && (
             <div className="mb-4 p-4 rounded-lg border-2 border-amber-500/50 bg-amber-500/10">
               <p className="text-sm font-medium text-foreground">

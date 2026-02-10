@@ -220,6 +220,7 @@ const LeagueGyms = () => {
             ? `Eine E-Mail wurde an ${savedEmail} gesendet. Link: ${inviteUrl}`
             : `Einladung erstellt. Link wurde kopiert: ${inviteUrl}`,
           duration: 10000, // Länger anzeigen damit Link sichtbar ist
+          variant: "success",
         });
         
         // Zeige Link auch in Konsole für einfaches Kopieren

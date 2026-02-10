@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { StarRating } from "@/components/ui/star-rating";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import {
@@ -147,7 +148,12 @@ const Profile = () => {
     const routeMap = new Map(routes.map((route) => [route.id, route]));
     const gymMap = new Map(gyms.map((gym) => [gym.id, gym]));
     return [...results]
-      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
+      .sort((a, b) => {
+        // Sortiere nach updated_at oder created_at (was neuer ist)
+        const dateA = a.updated_at || a.created_at || "";
+        const dateB = b.updated_at || b.created_at || "";
+        return dateB.localeCompare(dateA);
+      })
       .map((result) => {
         const route = routeMap.get(result.route_id);
         const gym = route ? gymMap.get(route.gym_id) : null;
@@ -158,6 +164,7 @@ const Profile = () => {
           gymName: gym?.name || "Halle",
           points: (result.points ?? 0) + (result.flash ? 1 : 0),
           flash: result.flash,
+          rating: result.rating,
         };
       });
   }, [results, routes, gyms]);
@@ -355,12 +362,24 @@ const Profile = () => {
               toast({ title: "Nicht möglich", description: "Keine E-Mail vorhanden." });
               return;
             }
-            const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+            // Bestimme die Frontend-URL für redirectTo nach Passwort-Reset
+            const frontendUrl = typeof window !== 'undefined' 
+              ? window.location.origin 
+              : 'https://kletterliga-nrw.de';
+            const resetUrl = `${frontendUrl}/app/auth/reset-password`;
+            
+            const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+              redirectTo: resetUrl,
+            });
             if (error) {
               toast({ title: "Fehler", description: error.message });
               return;
             }
-            toast({ title: "E-Mail gesendet", description: "Bitte prüfe dein Postfach." });
+            toast({ 
+              title: "E-Mail gesendet", 
+              description: "Bitte prüfe dein Postfach.",
+              variant: "success",
+            });
           }}
         >
           <span className="flex items-center gap-3">
@@ -544,6 +563,11 @@ const Profile = () => {
                   <div>
                     <div className="text-sm font-semibold text-primary">{item.routeName}</div>
                     <div className="text-xs text-muted-foreground">{item.gymName}</div>
+                    {item.rating !== null && item.rating !== undefined && (
+                      <div className="mt-1">
+                        <StarRating value={item.rating} readonly size="sm" />
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-secondary">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -68,13 +68,21 @@ export const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
-              <Link
+              <NavLink
                 key={item.href}
                 to={item.href}
-                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors duration-200 -skew-x-6 whitespace-nowrap"
+                end={item.href === "/"}
+                className={({ isActive }) =>
+                  cn(
+                    "px-4 py-2 text-sm font-medium transition-colors duration-200 -skew-x-6 whitespace-nowrap",
+                    isActive
+                      ? "text-primary bg-accent/90"
+                      : "text-foreground/80 hover:text-primary hover:bg-accent/90"
+                  )
+                }
               >
                 <span className="skew-x-6 inline-block">{item.label}</span>
-              </Link>
+              </NavLink>
             ))}
           </nav>
 
@@ -109,14 +117,22 @@ export const Header = () => {
         >
           <nav className="container-kl py-4 flex flex-col gap-1">
             {navItems.map((item) => (
-              <Link
+              <NavLink
                 key={item.href}
                 to={item.href}
+                end={item.href === "/"}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 text-base font-medium text-foreground hover:text-primary hover:bg-accent/90 transition-colors -skew-x-6"
+                className={({ isActive }) =>
+                  cn(
+                    "px-4 py-3 text-base font-medium transition-colors -skew-x-6",
+                    isActive
+                      ? "text-primary bg-accent/90"
+                      : "text-foreground hover:text-primary hover:bg-accent/90"
+                  )
+                }
               >
                 <span className="skew-x-6 inline-block">{item.label}</span>
-              </Link>
+              </NavLink>
             ))}
             <div className="pt-4 mt-2 border-t border-border">
               <Button

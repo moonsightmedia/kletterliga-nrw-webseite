@@ -330,6 +330,7 @@ const GymInvite = () => {
       toast({
         title: "Erfolgreich registriert!",
         description: "Deine Halle wurde erstellt. Du kannst dich jetzt anmelden.",
+        variant: "success",
       });
 
       // Redirect to login
