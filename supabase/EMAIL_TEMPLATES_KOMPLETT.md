@@ -135,7 +135,8 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
 **Wo einfügen:** Authentication → Email Templates → **Confirm signup**
 
 **Verwendete Links:**
-- `{{ .ConfirmationURL }}` - Link zur Bestätigung: `https://kletterliga-nrw.de/app/auth/confirm`
+- **Proxy-Link** (zeigt auf unsere Domain): `https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=signup&redirect_to=https://kletterliga-nrw.de/app/auth/confirm`
+- Verwendet `{{ .Token }}` statt `{{ .ConfirmationURL }}` für professionelle Links auf unserer Domain
 
 ```html
 <!DOCTYPE html>
@@ -179,7 +180,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
               <table role="presentation" style="width: 100%; margin: 30px 0;">
                 <tr>
                   <td align="center" style="padding: 0;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
+                    <a href="https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=signup&redirect_to=https://kletterliga-nrw.de/app/auth/confirm" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
                       E-Mail-Adresse bestätigen
                     </a>
                   </td>
@@ -191,7 +192,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
                 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
               </p>
               <p style="margin: 0 0 30px; padding: 12px; background-color: #f5f5f5; border-radius: 6px; word-break: break-all; color: #003D55; font-size: 14px; font-family: monospace;">
-                {{ .ConfirmationURL }}
+                https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=signup&redirect_to=https://kletterliga-nrw.de/app/auth/confirm
               </p>
               
               <!-- Info Box -->
@@ -234,7 +235,8 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
 **Wo einfügen:** Authentication → Email Templates → **Reset Password**
 
 **Verwendete Links:**
-- `{{ .ConfirmationURL }}` - Link zum Passwort-Reset: `https://kletterliga-nrw.de/app/auth/reset-password`
+- **Proxy-Link** (zeigt auf unsere Domain): `https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=recovery&redirect_to=https://kletterliga-nrw.de/app/auth/reset-password`
+- Verwendet `{{ .Token }}` statt `{{ .ConfirmationURL }}` für professionelle Links auf unserer Domain
 
 ```html
 <!DOCTYPE html>
@@ -278,7 +280,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
               <table role="presentation" style="width: 100%; margin: 30px 0;">
                 <tr>
                   <td align="center" style="padding: 0;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
+                    <a href="https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=recovery&redirect_to=https://kletterliga-nrw.de/app/auth/reset-password" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
                       Passwort zurücksetzen
                     </a>
                   </td>
@@ -290,7 +292,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
                 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
               </p>
               <p style="margin: 0 0 30px; padding: 12px; background-color: #f5f5f5; border-radius: 6px; word-break: break-all; color: #003D55; font-size: 14px; font-family: monospace;">
-                {{ .ConfirmationURL }}
+                https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=recovery&redirect_to=https://kletterliga-nrw.de/app/auth/reset-password
               </p>
               
               <!-- Info Box -->
@@ -333,7 +335,8 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
 **Wo einfügen:** Authentication → Email Templates → **Magic Link**
 
 **Verwendete Links:**
-- `{{ .ConfirmationURL }}` - Link zum Login: `https://kletterliga-nrw.de/app/auth/confirm`
+- **Proxy-Link** (zeigt auf unsere Domain): `https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=magiclink&redirect_to=https://kletterliga-nrw.de/app/auth/confirm`
+- Verwendet `{{ .Token }}` statt `{{ .ConfirmationURL }}` für professionelle Links auf unserer Domain
 
 **Hinweis:** Magic Link wird aktuell nicht aktiv verwendet, aber das Template sollte trotzdem konfiguriert sein für zukünftige Nutzung.
 
@@ -379,7 +382,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
               <table role="presentation" style="width: 100%; margin: 30px 0;">
                 <tr>
                   <td align="center" style="padding: 0;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
+                    <a href="https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=magiclink&redirect_to=https://kletterliga-nrw.de/app/auth/confirm" style="display: inline-block; padding: 16px 32px; background-color: #003D55; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 2px 4px rgba(0, 61, 85, 0.2);">
                       Jetzt anmelden
                     </a>
                   </td>
@@ -391,7 +394,7 @@ Stelle sicher, dass in **Supabase Dashboard** → **Project Settings** → **Aut
                 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
               </p>
               <p style="margin: 0 0 30px; padding: 12px; background-color: #f5f5f5; border-radius: 6px; word-break: break-all; color: #003D55; font-size: 14px; font-family: monospace;">
-                {{ .ConfirmationURL }}
+                https://kletterliga-nrw.de/api/auth/verify?token={{ .Token }}&type=magiclink&redirect_to=https://kletterliga-nrw.de/app/auth/confirm
               </p>
               
               <!-- Info Box -->
@@ -461,11 +464,21 @@ Alle Templates verwenden die Kletterliga-Farben:
 ## 🔗 Link-Struktur
 
 Alle Links zeigen auf die eigene Domain (`kletterliga-nrw.de`) statt auf Supabase-Domains:
+
+**Auth-Verifizierungs-Links (über Proxy):**
+- ✅ `https://kletterliga-nrw.de/api/auth/verify?token=...&type=signup&redirect_to=...` - E-Mail-Bestätigung
+- ✅ `https://kletterliga-nrw.de/api/auth/verify?token=...&type=recovery&redirect_to=...` - Passwort-Reset
+- ✅ `https://kletterliga-nrw.de/api/auth/verify?token=...&type=magiclink&redirect_to=...` - Magic Link Login
+
+**Weiterleitungs-URLs:**
 - ✅ `https://kletterliga-nrw.de/app/auth/confirm` - E-Mail-Bestätigung & Magic Link
 - ✅ `https://kletterliga-nrw.de/app/auth/reset-password` - Passwort-Reset
 - ✅ `https://kletterliga-nrw.de/app/invite/gym/[token]` - Halle-Einladung
 
-Dies stellt sicher, dass E-Mail-Provider die Links nicht als "unsicher" markieren.
+**Technik:** Die Links verwenden einen Vercel Serverless Function Proxy (`/api/auth/verify`), der die Anfragen an Supabase weiterleitet. Dies stellt sicher, dass:
+- ✅ Links auf unsere eigene Domain zeigen (professionell)
+- ✅ E-Mail-Provider die Links nicht als "unsicher" markieren
+- ✅ Komplett kostenlos (Vercel Free Tier)
 
 ## 💡 Magic Link aktivieren (optional)
 

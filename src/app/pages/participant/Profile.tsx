@@ -429,9 +429,9 @@ const Profile = () => {
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg md:max-w-2xl sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
-          <DialogHeader>
-            <DialogTitle className="px-6 pt-6 text-center md:text-xl">Profil bearbeiten</DialogTitle>
-            <DialogDescription className="px-6 text-center md:text-base">
+          <DialogHeader className="!px-6 !pt-6">
+            <DialogTitle className="text-center md:text-xl">Profil bearbeiten</DialogTitle>
+            <DialogDescription className="text-center md:text-base">
               Passe deine persönlichen Daten an.
             </DialogDescription>
           </DialogHeader>
@@ -547,9 +547,9 @@ const Profile = () => {
 
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
-          <DialogHeader>
-            <DialogTitle className="px-6 pt-6 text-center">Verlauf</DialogTitle>
-            <DialogDescription className="px-6 text-center">
+          <DialogHeader className="!px-6 !pt-6">
+            <DialogTitle className="text-center">Verlauf</DialogTitle>
+            <DialogDescription className="text-center">
               Deine eingetragenen Routen und Punkte.
             </DialogDescription>
           </DialogHeader>
@@ -587,9 +587,9 @@ const Profile = () => {
       {/* Change Request Dialog */}
       <Dialog open={changeRequestOpen} onOpenChange={setChangeRequestOpen}>
         <DialogContent className="h-[100dvh] w-[100dvw] max-w-none rounded-none sm:h-auto sm:w-full sm:max-w-lg md:max-w-2xl sm:rounded-lg p-0 [&>button]:right-6 [&>button]:top-6">
-          <DialogHeader>
-            <DialogTitle className="px-6 pt-6 text-center md:text-xl">Änderung der Wertungsklasse anfragen</DialogTitle>
-            <DialogDescription className="px-6 text-center md:text-base">
+          <DialogHeader className="!px-6 !pt-6">
+            <DialogTitle className="text-center md:text-xl">Änderung der Wertungsklasse anfragen</DialogTitle>
+            <DialogDescription className="text-center md:text-base">
               Bitte wähle die gewünschten Werte aus, die du ändern möchtest.
             </DialogDescription>
           </DialogHeader>
