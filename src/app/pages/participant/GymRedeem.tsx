@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -96,8 +97,8 @@ const GymRedeem = () => {
               <DialogContent className="max-w-[95vw] sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Code scannen</DialogTitle>
+                  <DialogDescription>Halte den QR-Code oder Barcode vor die Kamera.</DialogDescription>
                 </DialogHeader>
-                <p className="text-sm text-muted-foreground">Halte den QR-Code oder Barcode vor die Kamera.</p>
                 <CodeQrScanner
                   onScan={(value) => {
                     setCode(value.trim().toUpperCase());

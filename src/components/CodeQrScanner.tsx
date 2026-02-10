@@ -13,8 +13,12 @@ interface CodeQrScannerProps {
  * On success, calls onScan(decodedText). Use inside a Dialog; cleanup runs on unmount.
  */
 export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
-  const id = useId().replace(/:/g, "-");
+  // Generate a valid HTML ID (remove colons and ensure it doesn't start/end with hyphen)
+  const baseId = useId().replace(/:/g, "");
+  const id = `qr-scanner-${baseId}`;
+  const containerRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerStartedRef = useRef(false);
   const onScanRef = useRef(onScan);
   const onErrorRef = useRef(onError);
   const [loading, setLoading] = useState(true);
@@ -24,11 +28,22 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
   onErrorRef.current = onError;
 
   useEffect(() => {
+    // Wait for the container element to be rendered
+    if (!containerRef.current) return;
+
     let isMounted = true;
+    scannerStartedRef.current = false;
     const scanner = new Html5Qrcode(id);
 
     const startScanning = async () => {
       try {
+        // Wait a tick to ensure the element is in the DOM
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        
+        // Verify element exists before starting
+        const element = document.getElementById(id);
+        if (!element || !isMounted) return;
+
         // Get available cameras
         const cameras = await Html5Qrcode.getCameras();
         if (!isMounted) return;
@@ -59,16 +74,24 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
           config,
           (decodedText) => {
             // Success callback - stop scanner and call onScan
-            scanner.stop().then(() => {
+            if (scannerStartedRef.current) {
+              scannerStartedRef.current = false; // Mark as stopped immediately
+              scanner.stop().then(() => {
+                if (isMounted) {
+                  onScanRef.current(decodedText);
+                }
+              }).catch(() => {
+                // Ignore stop errors, still call onScan
+                if (isMounted) {
+                  onScanRef.current(decodedText);
+                }
+              });
+            } else {
+              // Scanner already stopped, just call onScan
               if (isMounted) {
                 onScanRef.current(decodedText);
               }
-            }).catch(() => {
-              // Ignore stop errors, still call onScan
-              if (isMounted) {
-                onScanRef.current(decodedText);
-              }
-            });
+            }
           },
           () => {
             // Ignore repeated "No QR code found" errors while scanning
@@ -76,6 +99,7 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
         );
 
         if (isMounted) {
+          scannerStartedRef.current = true;
           scannerRef.current = scanner;
           setLoading(false);
           setError(null);
@@ -86,6 +110,7 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
         setError(errorMsg);
         setLoading(false);
         onErrorRef.current?.(errorMsg);
+        scannerStartedRef.current = false;
       }
     };
 
@@ -93,40 +118,64 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
 
     return () => {
       isMounted = false;
+      
+      // Clean up scanner instance
       if (scannerRef.current) {
-        scannerRef.current
-          .stop()
-          .then(() => {
-            scannerRef.current?.clear();
-          })
-          .catch(() => {
-            // Ignore cleanup errors
-            scannerRef.current?.clear();
-          });
+        const scannerInstance = scannerRef.current;
+        const wasStarted = scannerStartedRef.current;
         scannerRef.current = null;
+        scannerStartedRef.current = false;
+        
+        // Only try to stop if scanner was actually started
+        if (wasStarted) {
+          scannerInstance
+            .stop()
+            .then(() => {
+              scannerInstance.clear();
+            })
+            .catch(() => {
+              // Scanner might already be stopped (e.g., by success callback)
+              // Just clear it anyway
+              try {
+                scannerInstance.clear();
+              } catch {
+                // Ignore clear errors too
+              }
+            });
+        } else {
+          // Scanner was never started, just clear
+          try {
+            scannerInstance.clear();
+          } catch {
+            // Ignore clear errors
+          }
+        }
       }
     };
   }, [id]);
 
-  if (error) {
-    return (
-      <div className="min-h-[280px] w-full flex flex-col items-center justify-center p-4 border border-destructive rounded-md bg-destructive/10">
-        <p className="text-sm text-destructive font-medium mb-2">Fehler beim Starten der Kamera</p>
-        <p className="text-xs text-muted-foreground text-center">{error}</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-[280px] w-full flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Kamera wird gestartet...</p>
+  return (
+    <div className="min-h-[280px] w-full relative">
+      {/* Always render the container element so Html5Qrcode can find it */}
+      <div ref={containerRef} id={id} className="min-h-[280px] w-full rounded-md overflow-hidden" />
+      
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-md">
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Kamera wird gestartet...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  return <div id={id} className="min-h-[280px] w-full rounded-md overflow-hidden" />;
+      )}
+      
+      {/* Error overlay */}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 border border-destructive rounded-md bg-destructive/10">
+          <p className="text-sm text-destructive font-medium mb-2">Fehler beim Starten der Kamera</p>
+          <p className="text-xs text-muted-foreground text-center">{error}</p>
+        </div>
+      )}
+    </div>
+  );
 }
