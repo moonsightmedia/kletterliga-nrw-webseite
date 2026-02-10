@@ -1,5 +1,7 @@
 # Send Contact Email (Kontaktformular)
 
+**Damit E-Mails an info@ ankommen:** `RESEND_API_KEY` in den Supabase Edge Function Secrets setzen (siehe Projektroot: `KONTAKTFORMULAR_EMAIL_SETUP.md`). Ohne diesen Key wird **keine Mail versendet**, nur in `contact_requests` gespeichert.
+
 Diese Edge Function verarbeitet das Kontaktformular **ohne zwingend ein externes Tool**:
 
 - **Mit Resend:** Wenn `RESEND_API_KEY` gesetzt ist, wird die Nachricht per E-Mail an euch versendet.

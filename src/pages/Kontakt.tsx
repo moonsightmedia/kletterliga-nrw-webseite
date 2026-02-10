@@ -112,7 +112,7 @@ const Kontakt = () => {
                     <img
                       src="/images/rene-brehm.png"
                       alt="René Brehm"
-                      className="absolute inset-0 size-full object-cover object-[50%_10%]"
+                      className="absolute inset-0 size-full object-cover object-[50%_-15%]"
                     />
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-1">René Brehm</h3>
