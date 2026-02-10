@@ -53,65 +53,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Create a minimal profile if missing
-      // Verwende try-catch, um 409 Fehler abzufangen (Race Conditions)
-      try {
-        const upsertResult = await withTimeout(
-          upsertProfile({
-            id: userId,
-            email: email ?? null,
-            role: "participant",
-          }),
-          4000,
-          "Profile upsert",
-        );
-        
-        // Wenn das Profil erfolgreich erstellt wurde
-        if (upsertResult && upsertResult.data) {
-          setProfile(upsertResult.data);
-          return;
-        }
-
-        // Wenn es einen Fehler gab, prüfe ob es ein Conflict-Fehler ist (409)
-        // Das bedeutet, dass das Profil bereits existiert (z.B. durch Race Condition)
-        if (upsertResult?.error) {
-          const errorMsg = upsertResult.error.message?.toLowerCase() || "";
-          const statusCode = upsertResult.error.status || upsertResult.error.code;
-          
-          // 409 Conflict bedeutet, dass das Profil bereits existiert
-          // In diesem Fall versuchen wir es nochmal zu laden
-          if (statusCode === 409 || statusCode === '409' || 
-              errorMsg.includes('conflict') || 
-              errorMsg.includes('already exists') ||
-              errorMsg.includes('duplicate') ||
-              errorMsg.includes('unique constraint')) {
-            // Profil existiert bereits, versuche es nochmal zu laden
-            const fresh = await withTimeout(fetchProfile(userId), 4000, "Profile refetch after conflict");
-            if (fresh && !fresh.error && fresh.data) {
-              setProfile(fresh.data);
-              return;
-            }
-          }
-        }
-      } catch (error: any) {
-        // Ignoriere 409 Conflict Fehler (Race Conditions sind normal)
-        const errorMsg = error?.message?.toLowerCase() || "";
-        const statusCode = error?.status || error?.code || error?.statusCode;
-        
-        if (statusCode === 409 || statusCode === '409' || errorMsg.includes('conflict')) {
-          // Profil existiert bereits - versuche es zu laden
-          const fresh = await withTimeout(fetchProfile(userId), 4000, "Profile refetch after conflict");
-          if (fresh && !fresh.error && fresh.data) {
-            setProfile(fresh.data);
-            return;
-          }
-        } else {
-          // Andere Fehler loggen
-          // eslint-disable-next-line no-console
-          console.warn("Profile upsert error:", error);
-        }
+      const upsertResult = await withTimeout(
+        upsertProfile({
+          id: userId,
+          email: email ?? null,
+          role: "participant",
+        }),
+        4000,
+        "Profile upsert",
+      );
+      if (upsertResult && upsertResult.data) {
+        setProfile(upsertResult.data);
+        return;
       }
 
-      // Finaler Versuch, das Profil zu laden
       const fresh = await withTimeout(fetchProfile(userId), 4000, "Profile refetch");
       setProfile(fresh?.data ?? null);
     } catch (error) {
@@ -362,37 +317,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       role: "participant",
     });
 
-    // Wenn das Profil erfolgreich erstellt wurde, lade es
-    if (profileResult.data) {
-      setProfile(profileResult.data);
-      await loadProfile(data.user.id, email);
-      return {};
-    }
-
-    // Wenn es einen Fehler gab, prüfe die Art des Fehlers
+    // Wenn das Profil bereits existiert (z.B. durch unique constraint error), existiert der User bereits
     if (profileResult.error) {
       const errorMsg = profileResult.error.message?.toLowerCase() || "";
-      const statusCode = profileResult.error.status || profileResult.error.code;
-      
-      // 409 Conflict bedeutet, dass das Profil bereits existiert (Race Condition)
-      // Das ist OK - das Profil wurde wahrscheinlich bereits erstellt
-      if (statusCode === 409 || statusCode === '409' || 
-          errorMsg.includes('conflict') ||
-          errorMsg.includes("already exists") ||
+      if (errorMsg.includes("already exists") ||
           errorMsg.includes("bereits vorhanden") ||
           errorMsg.includes("duplicate") ||
           errorMsg.includes("unique") ||
           errorMsg.includes("violates unique constraint")) {
-        // Profil existiert bereits - versuche es zu laden
-        await loadProfile(data.user.id, email);
-        return {};
+        return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an." };
       }
-      
       // Andere Fehler beim Profil-Erstellen
       console.warn("Profil-Erstellung fehlgeschlagen:", profileResult.error);
     }
 
-    // Finaler Versuch, das Profil zu laden
     await loadProfile(data.user.id, email);
     return {};
   };

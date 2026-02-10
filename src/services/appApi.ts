@@ -19,13 +19,7 @@ export async function fetchProfile(profileId: string) {
 }
 
 export async function upsertProfile(profile: Partial<Profile> & { id: string }) {
-  // Verwende upsert mit onConflict auf 'id' (Primary Key)
-  // Das stellt sicher, dass bei Konflikten das bestehende Profil aktualisiert wird
-  return supabase
-    .from("profiles")
-    .upsert(profile, { onConflict: "id" })
-    .select("*")
-    .single<Profile>();
+  return supabase.from("profiles").upsert(profile).select("*").single<Profile>();
 }
 
 export async function listGyms() {
