@@ -108,11 +108,11 @@ const Kontakt = () => {
             <AnimatedSection animation="fade-up" delay={100}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
                 <div className="card-kl p-6 flex flex-col items-center text-center w-full min-w-0">
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4 flex-shrink-0 shrink-0">
+                  <div className="relative w-24 h-24 mb-4 flex-shrink-0 shrink-0 -skew-x-6 overflow-hidden">
                     <img
                       src="/images/rene-brehm.png"
                       alt="René Brehm"
-                      className="absolute inset-0 size-full object-cover object-[50%_-15%]"
+                      className="absolute inset-0 size-full min-w-full min-h-full object-cover object-[20%_30%] skew-x-6 scale-125"
                     />
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-1">René Brehm</h3>
@@ -122,11 +122,11 @@ const Kontakt = () => {
                 </div>
 
                 <div className="card-kl p-6 flex flex-col items-center text-center w-full min-w-0">
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4 flex-shrink-0 shrink-0">
+                  <div className="relative w-24 h-24 mb-4 flex-shrink-0 shrink-0 -skew-x-6 overflow-hidden">
                     <img
                       src="/images/janosch-althoff.png"
                       alt="Janosch Althoff"
-                      className="absolute inset-0 size-full object-cover object-center"
+                      className="absolute inset-0 size-full min-w-full min-h-full object-cover object-[45%_30%] skew-x-6 scale-125"
                     />
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-1">Janosch Althoff</h3>
