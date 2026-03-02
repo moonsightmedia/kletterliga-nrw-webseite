@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import logo from "@/assets/logo.png";
 
 const PREVIEW_UNLOCK_KEY = "kl_preview_unlocked";
-const LAUNCH_DATE = new Date(2026, 2, 1, 0, 0, 0); // March 1, 2026 00:00
+const LAUNCH_DATE = new Date(2026, 2, 7, 0, 0, 0); // 7. März 2026 00:00
 
 const PAPER_TEXTURE_STYLE = {
   backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
