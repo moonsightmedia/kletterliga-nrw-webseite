@@ -98,7 +98,7 @@ export const ComingSoonPage = () => {
         ) : (
           <div className="card-kl py-8 px-6 md:py-10 md:px-10 mb-10">
             <p className="text-sm uppercase tracking-widest text-muted-foreground text-center mb-6">
-              Start am 1. März 2026
+              Start am 7. März 2026
             </p>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
               <div className="bg-primary -skew-x-6 px-5 py-4 min-w-[4.5rem] md:min-w-[5rem] text-center">
