@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/app/auth/AuthProvider";
 
 const Login = () => {
-  const { signIn, resetPassword, profile, role, loading: authLoading } = useAuth();
+  const { signIn, resetPassword, resendConfirmation, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
@@ -15,10 +15,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const [showResetRequest, setShowResetRequest] = useState(false);
   const [resetRequestEmail, setResetRequestEmail] = useState("");
   const [resetRequestLoading, setResetRequestLoading] = useState(false);
   const [resetRequestMessage, setResetRequestMessage] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   // Prüfe auf confirmed Parameter
   useEffect(() => {
@@ -36,6 +39,15 @@ const Login = () => {
     if (passwordResetParam === "true") {
       setPasswordReset(true);
       // Entferne den Parameter aus der URL
+      navigate("/app/login", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
+  // Hinweis nach Registrierung
+  useEffect(() => {
+    const registeredParam = searchParams.get("registered");
+    if (registeredParam === "true") {
+      setRegistered(true);
       navigate("/app/login", { replace: true });
     }
   }, [searchParams, navigate]);
@@ -93,6 +105,23 @@ const Login = () => {
     setResetRequestLoading(false);
   };
 
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setResendMessage("Bitte zuerst deine E-Mail eingeben.");
+      return;
+    }
+    setResendLoading(true);
+    setResendMessage(null);
+    const result = await resendConfirmation(email);
+    if (result.error) {
+      setResendMessage(result.error);
+      setResendLoading(false);
+      return;
+    }
+    setResendMessage("Wenn ein unbestätigter Account existiert, wurde ein neuer Bestätigungslink gesendet.");
+    setResendLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -112,6 +141,13 @@ const Login = () => {
         <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
           <p className="text-sm text-green-800 dark:text-green-200">
             ✓ Dein Passwort wurde erfolgreich zurückgesetzt! Du kannst dich jetzt mit deinem neuen Passwort einloggen.
+          </p>
+        </div>
+      )}
+      {registered && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            ✓ Registrierung erfolgreich. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach.
           </p>
         </div>
       )}
@@ -150,6 +186,15 @@ const Login = () => {
           )}
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
+        {error?.toLowerCase().includes("bestätigt") && (
+          <div className="rounded-md border p-3 bg-muted/20 space-y-2">
+            <p className="text-xs text-muted-foreground">Keine Bestätigungsmail erhalten?</p>
+            <Button type="button" variant="secondary" className="w-full" onClick={handleResendConfirmation} disabled={resendLoading}>
+              {resendLoading ? "Wird gesendet..." : "Bestätigungslink erneut senden"}
+            </Button>
+            {resendMessage && <p className="text-xs text-muted-foreground">{resendMessage}</p>}
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Einloggen..." : "Einloggen"}
         </Button>

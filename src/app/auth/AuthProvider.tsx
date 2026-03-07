@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supabase";
 import { fetchProfile, upsertProfile } from "@/services/appApi";
 import type { Profile, UserRole } from "@/services/appTypes";
+import { trackAuthEvent } from "@/services/authTelemetry";
 
 type AuthContextValue = {
   session: Session | null;
@@ -23,6 +24,7 @@ type AuthContextValue = {
   }) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
+  resendConfirmation: (email: string) => Promise<{ error?: string }>;
   refreshProfile: () => Promise<void>;
 };
 
@@ -214,6 +216,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!isSupabaseConfigured) {
       return { error: "Supabase nicht konfiguriert. Prüfe VITE_SUPABASE_URL/ANON_KEY." };
     }
+    trackAuthEvent("signin_start", { email, context: "login_form" });
     try {
       const timeout = new Promise<{ error: { message: string } }>((resolve) => {
         setTimeout(() => resolve({ error: { message: "Login timeout. Prüfe Supabase URL/Key." } }), 5000);
@@ -229,6 +232,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const error = "error" in result ? result.error : null;
       if (error) {
         const translatedError = translateAuthError(error.message);
+        trackAuthEvent("signin_error", { email, error: error.message, context: "supabase_signin" });
         return { error: translatedError };
       }
 
@@ -239,10 +243,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           void loadProfile(result.data.session.user.id, result.data.session.user.email);
         }
       }
+      trackAuthEvent("signin_success", { email, context: "login_form" });
       return {};
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
       console.warn("Sign in failed", error);
+      trackAuthEvent("signin_error", { email, error: String(error?.message || error), context: "exception" });
       return { error: "Login fehlgeschlagen. Bitte erneut versuchen." };
     }
   };
@@ -258,6 +264,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     league: "toprope" | "lead" | null;
   }) => {
     const { email, password, firstName, lastName, birthDate, gender, homeGymId, league } = payload;
+    trackAuthEvent("signup_start", { email, context: "register_form" });
     // Bestimme die Frontend-URL für redirectTo nach E-Mail-Bestätigung
     const frontendUrl = typeof window !== 'undefined' 
       ? window.location.origin 
@@ -282,6 +289,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (error) {
       const translatedError = translateAuthError(error.message);
+      trackAuthEvent("signup_error", { email, error: error.message, context: "supabase_signup" });
       return { error: translatedError };
     }
 
@@ -296,6 +304,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (!data.user) {
       // Kein User zurückgegeben - sollte eigentlich nicht passieren, aber sicherheitshalber prüfen
+      trackAuthEvent("signup_error", { email, error: "missing_user_after_signup", context: "signup_response" });
       return { error: "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
     }
 
@@ -307,12 +316,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Wenn der User nicht neu ist (älter als 2 Sekunden), existiert er bereits
     if (!isNewUser) {
+      trackAuthEvent("signup_error", { email, error: "email_already_registered", context: "signup_existing_user_age" });
       return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail-Adresse." };
     }
 
     // Wenn der User bereits bestätigt ist UND nicht gerade erst erstellt wurde, existiert er bereits
     // (Dies ist ein zusätzlicher Check für den Fall, dass der User sehr schnell bestätigt wurde)
     if (data.user.email_confirmed_at && userAge > 1000) {
+      trackAuthEvent("signup_error", { email, error: "email_already_confirmed", context: "signup_existing_confirmed" });
       return { error: "Diese E-Mail-Adresse ist bereits registriert und bestätigt. Bitte melde dich an." };
     }
 
@@ -337,6 +348,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           errorMsg.includes("duplicate") ||
           errorMsg.includes("unique") ||
           errorMsg.includes("violates unique constraint")) {
+        trackAuthEvent("signup_error", { email, error: "profile_unique_violation", context: "profile_upsert" });
         return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an." };
       }
       // Andere Fehler beim Profil-Erstellen
@@ -344,6 +356,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     await loadProfile(data.user.id, email);
+    trackAuthEvent("signup_success", { email, context: "register_form" });
     return {};
   };
 
@@ -352,6 +365,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
+    trackAuthEvent("reset_start", { email, context: "login_reset" });
     try {
       const frontendUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kletterliga-nrw.de';
       const resetUrl = `${frontendUrl}/app/auth/reset-password`;
@@ -359,11 +373,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         redirectTo: resetUrl,
       }));
       if (error) {
+        trackAuthEvent("reset_error", { email, error: error.message, context: "supabase_reset" });
         return { error: translateAuthError(error.message) };
       }
+      trackAuthEvent("reset_success", { email, context: "login_reset" });
       return {};
     } catch (error: any) {
+      trackAuthEvent("reset_error", { email, error: String(error?.message || error), context: "exception" });
       return { error: translateAuthError(String(error?.message || 'Fehler beim Senden des Passwort-Links')) };
+    }
+  };
+
+  const resendConfirmation = async (email: string) => {
+    trackAuthEvent("resend_start", { email, context: "login_resend_confirmation" });
+    try {
+      const { error } = await withSingleRetry(() => supabase.auth.resend({
+        type: "signup",
+        email,
+      }));
+      if (error) {
+        trackAuthEvent("resend_error", { email, error: error.message, context: "supabase_resend" });
+        return { error: translateAuthError(error.message) };
+      }
+      trackAuthEvent("resend_success", { email, context: "login_resend_confirmation" });
+      return {};
+    } catch (error: any) {
+      trackAuthEvent("resend_error", { email, error: String(error?.message || error), context: "exception" });
+      return { error: translateAuthError(String(error?.message || 'Fehler beim Senden der Bestätigung')) };
     }
   };
 
@@ -390,6 +426,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signUp,
       signOut,
       resetPassword,
+      resendConfirmation,
       refreshProfile,
     }),
     [session, user, profile, role, loading],
