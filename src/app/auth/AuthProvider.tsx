@@ -22,6 +22,7 @@ type AuthContextValue = {
     league: "toprope" | "lead" | null;
   }) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
   refreshProfile: () => Promise<void>;
 };
 
@@ -131,19 +132,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [loadProfile]);
 
+  async function withSingleRetry<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error: any) {
+      const msg = String(error?.message || '').toLowerCase();
+      const looksTransient = msg.includes('network') || msg.includes('fetch') || msg.includes('timeout') || msg.includes('connection');
+      if (!looksTransient) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      return await operation();
+    }
+  }
+
   // Übersetze Supabase-Fehlermeldungen ins Deutsche
   const translateAuthError = (errorMessage: string): string => {
     const errorLower = errorMessage.toLowerCase();
     
     // Login-Fehler
-    if (errorLower.includes("invalid login credentials") || 
-        errorLower.includes("invalid credentials") ||
-        errorLower.includes("email not confirmed")) {
-      return "Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail-Adresse und dein Passwort.";
-    }
-    
     if (errorLower.includes("email not confirmed")) {
-      return "Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe dein Postfach.";
+      return "Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe dein Postfach oder fordere einen neuen Bestätigungslink an.";
+    }
+
+    if (errorLower.includes("invalid login credentials") || 
+        errorLower.includes("invalid credentials")) {
+      return "Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail-Adresse und dein Passwort.";
     }
     
     if (errorLower.includes("user not found")) {
@@ -206,10 +218,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const timeout = new Promise<{ error: { message: string } }>((resolve) => {
         setTimeout(() => resolve({ error: { message: "Login timeout. Prüfe Supabase URL/Key." } }), 5000);
       });
-      const result = await Promise.race([
+      const result = await withSingleRetry(() => Promise.race([
         supabase.auth.signInWithPassword({ email, password }),
         timeout,
-      ]);
+      ]));
       if ("error" in result && result.error?.message === "Login timeout. Prüfe Supabase URL/Key.") {
         // eslint-disable-next-line no-console
         console.warn("Login timeout", { url: supabaseConfig.url, anonKeySet: Boolean(supabaseConfig.anonKey) });
@@ -252,7 +264,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       : 'https://kletterliga-nrw.de';
     const confirmUrl = `${frontendUrl}/app/auth/confirm`;
     
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await withSingleRetry(() => supabase.auth.signUp({
       email,
       password,
       options: {
@@ -266,7 +278,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           league,
         },
       },
-    });
+    }));
     
     if (error) {
       const translatedError = translateAuthError(error.message);
@@ -339,6 +351,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const frontendUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kletterliga-nrw.de';
+      const resetUrl = `${frontendUrl}/app/auth/reset-password`;
+      const { error } = await withSingleRetry(() => supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: resetUrl,
+      }));
+      if (error) {
+        return { error: translateAuthError(error.message) };
+      }
+      return {};
+    } catch (error: any) {
+      return { error: translateAuthError(String(error?.message || 'Fehler beim Senden des Passwort-Links')) };
+    }
+  };
+
   const refreshProfile = async () => {
     if (!user) return;
     await loadProfile(user.id);
@@ -361,6 +389,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signIn,
       signUp,
       signOut,
+      resetPassword,
       refreshProfile,
     }),
     [session, user, profile, role, loading],

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/app/auth/AuthProvider";
 
 const Login = () => {
-  const { signIn, profile, role, loading: authLoading } = useAuth();
+  const { signIn, resetPassword, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
@@ -15,6 +15,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
+  const [showResetRequest, setShowResetRequest] = useState(false);
+  const [resetRequestEmail, setResetRequestEmail] = useState("");
+  const [resetRequestLoading, setResetRequestLoading] = useState(false);
+  const [resetRequestMessage, setResetRequestMessage] = useState<string | null>(null);
 
   // Prüfe auf confirmed Parameter
   useEffect(() => {
@@ -75,6 +79,20 @@ const Login = () => {
     }
   };
 
+  const handleResetRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setResetRequestLoading(true);
+    setResetRequestMessage(null);
+    const result = await resetPassword(resetRequestEmail);
+    if (result.error) {
+      setResetRequestMessage(result.error);
+      setResetRequestLoading(false);
+      return;
+    }
+    setResetRequestMessage("Wenn ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet.");
+    setResetRequestLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -105,6 +123,31 @@ const Login = () => {
         <div className="space-y-2">
           <Label htmlFor="password">Passwort</Label>
           <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button
+            type="button"
+            onClick={() => setShowResetRequest((prev) => !prev)}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            aria-label="Passwort vergessen"
+          >
+            Passwort vergessen?
+          </button>
+          {showResetRequest && (
+            <div className="mt-2 rounded-md border p-3 space-y-2 bg-muted/20">
+              <Label htmlFor="reset-email">Reset-E-Mail</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetRequestEmail}
+                onChange={(e) => setResetRequestEmail(e.target.value)}
+                placeholder="deine@email.de"
+                required
+              />
+              <Button type="button" variant="secondary" className="w-full" onClick={handleResetRequest} disabled={resetRequestLoading || !resetRequestEmail}>
+                {resetRequestLoading ? "Wird gesendet..." : "Reset-Link senden"}
+              </Button>
+              {resetRequestMessage && <p className="text-xs text-muted-foreground">{resetRequestMessage}</p>}
+            </div>
+          )}
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
         <Button type="submit" className="w-full" disabled={loading}>
