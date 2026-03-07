@@ -34,6 +34,10 @@ const contactMethods = [
 ];
 
 const Kontakt = () => {
+  const SUBMIT_COOLDOWN_MS = 60_000;
+  const MIN_FILL_TIME_MS = 4_000;
+  const CONTACT_COOLDOWN_KEY = "kl_contact_last_sent_at";
+
   usePageMeta({
     title: "Kontakt",
     description:
@@ -50,10 +54,46 @@ const Kontakt = () => {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const [submittedAt] = useState(() => Date.now());
+
+  const getRemainingCooldownMs = () => {
+    if (typeof window === "undefined") return 0;
+    const lastSentAt = Number(window.localStorage.getItem(CONTACT_COOLDOWN_KEY) ?? "0");
+    if (!lastSentAt) return 0;
+    return Math.max(0, lastSentAt + SUBMIT_COOLDOWN_MS - Date.now());
+  };
+
+  const formatCooldown = (remainingMs: number) => {
+    const seconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const restSeconds = seconds % 60;
+    return minutes > 0
+      ? `${minutes}:${restSeconds.toString().padStart(2, "0")} Minuten`
+      : `${restSeconds} Sekunden`;
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+
+    if (honeypot.trim()) {
+      setError("Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.");
+      return;
+    }
+
+    const fillTimeMs = Date.now() - submittedAt;
+    if (fillTimeMs < MIN_FILL_TIME_MS) {
+      setError("Bitte nimm dir einen kurzen Moment Zeit und sende das Formular danach erneut.");
+      return;
+    }
+
+    const remainingCooldownMs = getRemainingCooldownMs();
+    if (remainingCooldownMs > 0) {
+      setError(`Bitte warte ${formatCooldown(remainingCooldownMs)}, bevor du eine weitere Nachricht sendest.`);
+      return;
+    }
+
     setSending(true);
 
     try {
@@ -63,6 +103,8 @@ const Kontakt = () => {
           email: formData.email,
           subject: formData.subject || "Kontaktanfrage",
           message: formData.message,
+          website: honeypot,
+          fill_time_ms: fillTimeMs,
         },
       });
 
@@ -77,7 +119,11 @@ const Kontakt = () => {
       }
 
       setSent(true);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(CONTACT_COOLDOWN_KEY, Date.now().toString());
+      }
       setFormData({ name: "", email: "", subject: "", message: "" });
+      setHoneypot("");
     } catch (e) {
       setError("Nachricht konnte nicht gesendet werden. Bitte versuche es per E-Mail (info@kletterliga-nrw.de).");
     } finally {
@@ -195,6 +241,17 @@ const Kontakt = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="card-kl space-y-4">
+                  <div className="hidden" aria-hidden="true">
+                    <label htmlFor="contact-website">Website</label>
+                    <Input
+                      id="contact-website"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(event) => setHoneypot(event.target.value)}
+                    />
+                  </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-primary" htmlFor="contact-name">
@@ -253,6 +310,13 @@ const Kontakt = () => {
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>
                   )}
+                  <p className="text-xs text-muted-foreground leading-5">
+                    Bitte nur einmal senden. Bei technischen Problemen antworte direkt per E-Mail an{" "}
+                    <a href="mailto:info@kletterliga-nrw.de" className="underline underline-offset-2">
+                      info@kletterliga-nrw.de
+                    </a>
+                    .
+                  </p>
                   <div className="flex flex-col items-end gap-2">
                     <Button type="submit" variant="secondary" disabled={sending}>
                       {sending ? "Wird gesendet …" : "Nachricht senden"}

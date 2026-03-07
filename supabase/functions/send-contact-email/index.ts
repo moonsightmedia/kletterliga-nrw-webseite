@@ -6,6 +6,8 @@ type Payload = {
   email: string;
   subject?: string;
   message: string;
+  website?: string;
+  fill_time_ms?: number;
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -23,6 +25,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const MIN_FILL_TIME_MS = 4_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const MAX_REQUESTS_PER_WINDOW = 3;
+const requestLog = new Map<string, number[]>();
+
+function getClientKey(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const recent = (requestLog.get(key) ?? []).filter((entry) => now - entry < RATE_LIMIT_WINDOW_MS);
+  recent.push(now);
+  requestLog.set(key, recent);
+  return recent.length > MAX_REQUESTS_PER_WINDOW;
+}
 
 function escapeHtml(s: string): string {
   return s
@@ -61,6 +85,22 @@ serve(async (req) => {
     const email = (payload.email ?? "").toString().trim();
     const subject = (payload.subject ?? "Kontaktanfrage").toString().trim() || "Kontaktanfrage";
     const message = (payload.message ?? "").toString().trim();
+    const website = (payload.website ?? "").toString().trim();
+    const fillTimeMs = Number(payload.fill_time_ms ?? 0);
+
+    if (website) {
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!Number.isFinite(fillTimeMs) || fillTimeMs < MIN_FILL_TIME_MS) {
+      return new Response(
+        JSON.stringify({ error: "Bitte fülle das Formular in Ruhe aus und versuche es erneut." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     if (!name || !email || !message) {
       return new Response(
@@ -74,6 +114,21 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Bitte gib eine gültige E-Mail-Adresse ein." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (message.length < 10) {
+      return new Response(
+        JSON.stringify({ error: "Bitte formuliere deine Nachricht etwas ausführlicher." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const clientKey = getClientKey(req);
+    if (isRateLimited(clientKey)) {
+      return new Response(
+        JSON.stringify({ error: "Zu viele Anfragen in kurzer Zeit. Bitte warte kurz und versuche es erneut." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 

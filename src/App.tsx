@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,19 +10,20 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "@/app/auth/AuthProvider";
 import { ClosedGate } from "@/app/ClosedGate";
 import { appRoutes } from "@/app/AppRoutes";
-import Index from "./pages/Index";
-import Liga from "./pages/Liga";
-import Modus from "./pages/Modus";
-import Regelwerk from "./pages/Regelwerk";
-import Hallen from "./pages/Hallen";
-import Ranglisten from "./pages/Ranglisten";
-import Sponsoren from "./pages/Sponsoren";
-import Impressum from "./pages/Impressum";
-import Datenschutz from "./pages/Datenschutz";
-import Kontakt from "./pages/Kontakt";
-import NotFound from "./pages/NotFound";
+const Index = lazy(() => import("./pages/Index"));
+const Liga = lazy(() => import("./pages/Liga"));
+const Modus = lazy(() => import("./pages/Modus"));
+const Regelwerk = lazy(() => import("./pages/Regelwerk"));
+const Hallen = lazy(() => import("./pages/Hallen"));
+const Ranglisten = lazy(() => import("./pages/Ranglisten"));
+const Sponsoren = lazy(() => import("./pages/Sponsoren"));
+const Impressum = lazy(() => import("./pages/Impressum"));
+const Datenschutz = lazy(() => import("./pages/Datenschutz"));
+const Kontakt = lazy(() => import("./pages/Kontakt"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+const RouteFallback = () => <div className="min-h-screen bg-background" aria-hidden="true" />;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,21 +36,22 @@ const App = () => (
         <ClosedGate>
           <AuthProvider>
             <ScrollToTop />
-            <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/liga" element={<Liga />} />
-            <Route path="/modus" element={<Modus />} />
-            <Route path="/regelwerk" element={<Regelwerk />} />
-            <Route path="/hallen" element={<Hallen />} />
-            <Route path="/ranglisten" element={<Ranglisten />} />
-            <Route path="/sponsoren" element={<Sponsoren />} />
-            <Route path="/impressum" element={<Impressum />} />
-            <Route path="/datenschutz" element={<Datenschutz />} />
-            <Route path="/kontakt" element={<Kontakt />} />
-            {appRoutes}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/liga" element={<Liga />} />
+                <Route path="/modus" element={<Modus />} />
+                <Route path="/regelwerk" element={<Regelwerk />} />
+                <Route path="/hallen" element={<Hallen />} />
+                <Route path="/ranglisten" element={<Ranglisten />} />
+                <Route path="/sponsoren" element={<Sponsoren />} />
+                <Route path="/impressum" element={<Impressum />} />
+                <Route path="/datenschutz" element={<Datenschutz />} />
+                <Route path="/kontakt" element={<Kontakt />} />
+                {appRoutes}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </ClosedGate>
       </BrowserRouter>
