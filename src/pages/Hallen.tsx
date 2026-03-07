@@ -112,7 +112,7 @@ const Hallen = () => {
                           href={mapSearchUrl(gym.address ?? gym.city ?? "")}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
+                          className="inline-flex min-h-11 items-center gap-1 py-2 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Adresse in Karte anzeigen
@@ -124,7 +124,7 @@ const Hallen = () => {
                           href={gym.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
+                          className="inline-flex min-h-11 items-center gap-1 py-2 text-secondary hover:text-secondary/80 text-sm font-medium transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Website besuchen
@@ -161,7 +161,7 @@ const Hallen = () => {
               </p>
               <a
                 href="mailto:hallen@kletterliga-nrw.de"
-                className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-8 py-4 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
+                className="inline-flex min-h-12 items-center gap-2 bg-secondary text-secondary-foreground px-8 py-4 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
               >
                 <span className="skew-x-6">Halle anmelden →</span>
               </a>

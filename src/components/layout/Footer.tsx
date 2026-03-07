@@ -26,15 +26,13 @@ const socialLinks = [
 export const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
-      {/* Main Footer Content */}
       <div className="container-kl py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
-          {/* Brand Column */}
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] gap-12 md:gap-10">
           <div>
             <Link to="/" className="inline-flex items-center gap-4 mb-6">
-              <img 
-                src={logo} 
-                alt="Kletterliga NRW" 
+              <img
+                src={logo}
+                alt="Kletterliga NRW"
                 className="w-16 h-16 md:w-20 md:h-20 object-contain flex-shrink-0"
               />
               <div className="flex items-baseline gap-2 flex-wrap">
@@ -51,7 +49,6 @@ export const Footer = () => {
               Mehrere Hallen. Eine Liga. Ein Finale.
             </p>
 
-            {/* Social Links */}
             <div className="flex gap-3 mt-8">
               {socialLinks.map((social) => (
                 <a
@@ -59,7 +56,7 @@ export const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 -skew-x-6 bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors"
+                  className="w-11 h-11 -skew-x-6 bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors"
                   aria-label={social.label}
                 >
                   <social.icon size={18} className="skew-x-6" />
@@ -68,7 +65,6 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Navigation Column */}
           <div className="md:text-right">
             <h4 className="font-headline text-xl md:text-2xl mb-6 text-accent">NAVIGATION</h4>
             <ul className="space-y-3">
@@ -76,7 +72,23 @@ export const Footer = () => {
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="block text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-lg md:text-xl px-3 py-2 -skew-x-6"
+                    className="block text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-lg md:text-xl px-3 py-3 -skew-x-6"
+                  >
+                    <span className="skew-x-6 inline-block">{link.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="md:text-right">
+            <h4 className="font-headline text-xl md:text-2xl mb-6 text-accent">RECHTLICHES</h4>
+            <ul className="space-y-3">
+              {footerLinks.legal.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="inline-flex min-h-11 items-center text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-base px-3 py-3 -skew-x-6"
                   >
                     <span className="skew-x-6 inline-block">{link.label}</span>
                   </Link>
@@ -87,25 +99,16 @@ export const Footer = () => {
         </div>
       </div>
 
-      {/* Bottom Bar */}
       <div className="border-t border-primary-foreground/10">
         <div className="container-kl py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex flex-wrap items-center gap-4 text-primary-foreground/50">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-primary-foreground/50 text-center md:text-left">
             <p>© {new Date().getFullYear()} Kletterliga NRW</p>
             <span className="hidden md:inline">·</span>
-            {footerLinks.legal.map((link, index) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="hover:text-accent transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <p>Mehrere Hallen. Eine Liga. Ein Finale.</p>
           </div>
           <a
             href="/app"
-            className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
+            className="inline-flex min-h-11 items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
           >
             <span className="skew-x-6">Zum Teilnehmerbereich →</span>
           </a>

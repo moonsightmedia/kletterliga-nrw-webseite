@@ -100,7 +100,7 @@ const Kontakt = () => {
               <h2 className="font-headline text-3xl md:text-4xl text-primary mb-2">
                 DIE GESICHTER HINTER DER KLETTERLIGA
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-base leading-7">
                 Organisation, Technik und Ansprechpartner für alle Fragen rund um die Liga
               </p>
             </AnimatedSection>
@@ -116,7 +116,7 @@ const Kontakt = () => {
                     />
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-1">René Brehm</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-sm leading-6">
                     Organisation, Technik und Ansprechpartner für alle Fragen rund um die Liga.
                   </p>
                 </div>
@@ -130,7 +130,7 @@ const Kontakt = () => {
                     />
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-1">Janosch Althoff</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-sm leading-6">
                     Organisation, Technik und Ansprechpartner für alle Fragen rund um die Liga.
                   </p>
                 </div>
@@ -172,7 +172,7 @@ const Kontakt = () => {
               <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
                 SCHREIB UNS
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-base leading-7">
                 Nutze das Formular und wir melden uns so schnell wie möglich.
               </p>
             </AnimatedSection>

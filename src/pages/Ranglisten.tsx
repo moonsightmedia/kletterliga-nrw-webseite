@@ -77,12 +77,12 @@ const Ranglisten = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up">
-            <div className="max-w-4xl mx-auto bg-accent/30 p-8 text-center -skew-x-3">
+            <div className="max-w-4xl mx-auto bg-accent/30 p-6 md:p-8 text-center -skew-x-3">
               <div className="skew-x-3">
                 <h2 className="font-headline text-2xl md:text-3xl text-primary mb-4">
                   VOLLSTÄNDIGE RANGLISTEN IM TEILNEHMERBEREICH
                 </h2>
-                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                <p className="text-base leading-7 text-muted-foreground mb-6 max-w-2xl mx-auto">
                   Die detaillierten Ranglisten mit allen Teilnehmer:innen, Filter-Optionen
                   nach Wertungsklasse und Halle sowie deine persönlichen Statistiken
                   findest du im Teilnehmerbereich.

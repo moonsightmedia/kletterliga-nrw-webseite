@@ -65,20 +65,20 @@ export default function Liga() {
             </AnimatedSection>
             
             <AnimatedSection animation="fade-up" delay={100}>
-              <div className="prose prose-lg text-muted-foreground">
-                <p className="text-lg leading-relaxed mb-6">
+              <div className="prose prose-lg max-w-none text-muted-foreground">
+                <p className="text-base leading-7 md:text-lg md:leading-relaxed mb-6">
                   Die Kletterliga NRW wurde gegründet, um die vielfältige Kletterszene 
                   Nordrhein-Westfalens zu vereinen. Unser Ziel ist es, einen inklusiven 
                   Wettkampf zu schaffen, bei dem Kletterer:innen aller Leistungsstufen 
                   teilnehmen können – vom ambitionierten Anfänger bis zum erfahrenen 
                   Sportkletterer.
                 </p>
-                <p className="text-lg leading-relaxed mb-6">
+                <p className="text-base leading-7 md:text-lg md:leading-relaxed mb-6">
                   Mit der digitalen Ergebniswertung ermöglichen wir flexibles Klettern: 
                   Du entscheidest, wann und wo du kletterst. Keine festen Wettkampftermine, 
                   keine Startgebühren pro Event – einfach in die Halle gehen und Punkte sammeln.
                 </p>
-                <p className="text-lg leading-relaxed">
+                <p className="text-base leading-7 md:text-lg md:leading-relaxed">
                   Das große Finale bringt dann die besten Kletterer:innen zusammen – 
                   ein echtes Community-Event mit Live-Atmosphäre, Siegerehrung und 
                   der Chance, Teil von etwas Besonderem zu sein.
@@ -127,7 +127,7 @@ export default function Liga() {
               <h2 className="font-headline text-3xl md:text-4xl text-primary mb-6">
                 DAS TEAM
               </h2>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-base leading-7 md:text-lg md:leading-relaxed text-muted-foreground mb-8">
                 Die Kletterliga NRW wird von einem engagierten Team aus Kletterbegeisterten 
                 organisiert. Wir arbeiten ehrenamtlich daran, die Liga weiterzuentwickeln 
                 und das beste Erlebnis für alle Teilnehmer:innen zu schaffen.

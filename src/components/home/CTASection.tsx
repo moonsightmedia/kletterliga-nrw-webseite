@@ -31,13 +31,13 @@ export const CTASection = () => {
       <div className="container-kl relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           <AnimatedSection animation="scale">
-            <h2 className="font-headline text-3xl sm:text-4xl md:text-5xl text-primary-foreground mb-6">
+            <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl text-primary-foreground mb-5 md:mb-6 text-balance">
               BEREIT FÜR DIE CHALLENGE?
             </h2>
           </AnimatedSection>
           
           <AnimatedSection animation="fade-up" delay={100}>
-            <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 leading-relaxed">
+            <p className="text-base leading-7 md:text-xl md:leading-8 text-primary-foreground/80 mb-8 md:mb-10 max-w-2xl mx-auto text-balance">
               Werde Teil der Kletterliga NRW und erlebe Wettkampf-Atmosphäre 
               in deinem eigenen Tempo. Registriere dich jetzt und starte 
               in die Saison {seasonYear}!
@@ -73,18 +73,18 @@ export const CTASection = () => {
 
           {/* Trust indicators */}
           <AnimatedSection animation="fade-in" delay={400}>
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-primary-foreground/60 text-sm">
-              <div className="flex items-center gap-2">
+            <div className="mt-10 md:mt-12 grid grid-cols-1 sm:flex sm:flex-wrap items-center justify-center gap-4 sm:gap-8 text-primary-foreground/60 text-sm max-w-xl mx-auto">
+              <div className="flex items-center justify-center gap-2">
                 <span className="font-headline text-2xl text-accent">{gymCount ?? "…"}</span>
                 <span>Hallen</span>
               </div>
-              <div className="w-px h-6 bg-primary-foreground/20" />
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:block w-px h-6 bg-primary-foreground/20" />
+              <div className="flex items-center justify-center gap-2">
                 <span className="font-headline text-2xl text-accent">2</span>
                 <span>Ligen</span>
               </div>
-              <div className="w-px h-6 bg-primary-foreground/20" />
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:block w-px h-6 bg-primary-foreground/20" />
+              <div className="flex items-center justify-center gap-2">
                 <span className="font-headline text-2xl text-accent">6</span>
                 <span>Wertungsklassen</span>
               </div>

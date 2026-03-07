@@ -64,7 +64,7 @@ export const GymsSection = () => {
             <AnimatedSection animation="fade-in" delay={400} className="text-center">
               <a
                 href="/hallen"
-                className="inline-flex items-center gap-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
+                className="inline-flex min-h-11 items-center gap-2 px-4 py-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
               >
                 Alle Hallen anzeigen
                 <ExternalLink size={16} />

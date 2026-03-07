@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export const PageHeader = ({ title, subtitle, children }: PageHeaderProps) => {
   return (
-    <section className="bg-accent relative overflow-hidden pt-32 pb-16 md:pt-40 md:pb-20">
+    <section className="bg-accent relative overflow-hidden pt-28 pb-12 md:pt-40 md:pb-20">
       {/* Paper Texture Effect */}
       <div 
         className="absolute inset-0 opacity-[0.4]"
@@ -28,11 +28,11 @@ export const PageHeader = ({ title, subtitle, children }: PageHeaderProps) => {
 
       <div className="container-kl relative z-10">
         <AnimatedSection animation="fade-up">
-          <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl text-primary mb-4">
+          <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl text-primary mb-3 md:mb-4 text-balance">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-lg md:text-xl text-primary/70 max-w-2xl">
+            <p className="text-base leading-7 md:text-xl md:leading-8 text-primary/70 max-w-xl md:max-w-2xl text-balance">
               {subtitle}
             </p>
           )}

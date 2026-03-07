@@ -58,7 +58,7 @@ export const InstagramSection = () => {
                 href="https://www.instagram.com/kletterliga_nrw/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
+                className="inline-flex min-h-11 items-center gap-2 px-4 py-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
               >
                 @kletterliga_nrw besuchen
                 <ExternalLink size={16} />
@@ -137,7 +137,7 @@ export const InstagramSection = () => {
                 href="https://www.instagram.com/kletterliga_nrw/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
+                className="inline-flex min-h-11 items-center gap-2 px-4 py-2 text-secondary hover:text-secondary/80 font-medium transition-colors"
               >
                 Mehr auf Instagram sehen
                 <ExternalLink size={16} />

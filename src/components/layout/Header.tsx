@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ const navItems = [
 ];
 
 export const Header = () => {
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -26,6 +27,17 @@ export const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <>
@@ -101,7 +113,7 @@ export const Header = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+            className="lg:hidden min-h-11 min-w-11 p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
             aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -109,44 +121,51 @@ export const Header = () => {
         </div>
 
         {/* Mobile Navigation */}
-        <div
-          className={cn(
-            "lg:hidden absolute top-full left-0 right-0 bg-background border-b border-border shadow-lg transition-all duration-300 overflow-hidden",
-            isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          )}
-        >
-          <nav className="container-kl py-4 flex flex-col gap-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                end={item.href === "/"}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    "px-4 py-3 text-base font-medium transition-colors -skew-x-6",
-                    isActive
-                      ? "text-primary bg-accent/90"
-                      : "text-foreground hover:text-primary hover:bg-accent/90"
-                  )
-                }
-              >
-                <span className="skew-x-6 inline-block">{item.label}</span>
-              </NavLink>
-            ))}
-            <div className="pt-4 mt-2 border-t border-border">
-              <Button
-                asChild
-                variant="secondary"
-                className="w-full"
-              >
-                <a href="/app">
-                  <span className="skew-x-6">Jetzt teilnehmen</span>
-                </a>
-              </Button>
-            </div>
-          </nav>
-        </div>
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-40 bg-primary/15 backdrop-blur-sm pt-24 px-4 pb-4">
+            <div
+              className="absolute inset-0"
+              aria-hidden="true"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <nav className="relative z-10 container-kl max-w-md ml-auto bg-background rounded-2xl border border-border shadow-2xl p-4 flex flex-col gap-2 max-h-[calc(100vh-7rem)] overflow-y-auto">
+              <div className="px-2 pb-2 border-b border-border/70">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Navigation
+                </p>
+              </div>
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  end={item.href === "/"}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "min-h-12 px-4 py-3 text-base font-medium transition-colors -skew-x-6 flex items-center rounded-sm",
+                      isActive
+                        ? "text-primary bg-accent/90"
+                        : "text-foreground hover:text-primary hover:bg-accent/90"
+                    )
+                  }
+                >
+                  <span className="skew-x-6 inline-block">{item.label}</span>
+                </NavLink>
+              ))}
+              <div className="pt-4 mt-2 border-t border-border">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="w-full min-h-12"
+                >
+                  <a href="/app">
+                    <span className="skew-x-6">Jetzt teilnehmen</span>
+                  </a>
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
     </>
   );
