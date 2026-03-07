@@ -20,18 +20,5 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 900,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("react-dom")) return "vendor-react";
-            if (id.includes("react-router")) return "vendor-router";
-            if (id.includes("@supabase")) return "vendor-supabase";
-            if (id.includes("leaflet")) return "vendor-map";
-            return "vendor-misc";
-          }
-        },
-      },
-    },
   },
 }));
