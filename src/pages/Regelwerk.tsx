@@ -41,7 +41,7 @@ const Regelwerk = () => {
                 <Scale className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 1 Geltungsbereich und Zweck
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -70,7 +70,7 @@ const Regelwerk = () => {
                 <BookOpen className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 2 Begriffsbestimmungen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -114,7 +114,7 @@ const Regelwerk = () => {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 3 Ligen und Disziplinen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -157,7 +157,7 @@ const Regelwerk = () => {
                 <Target className="h-5 w-5 text-secondary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 4 Wertungssystem
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -202,7 +202,7 @@ const Regelwerk = () => {
                 <Trophy className="h-5 w-5 text-secondary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 5 Wertungsklassen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -245,7 +245,7 @@ const Regelwerk = () => {
                 <Award className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 6 Qualifikation, Wildcards, Halbfinale und Finale
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -298,7 +298,7 @@ const Regelwerk = () => {
                 <FileCheck className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 7 Teilnahme, Anmeldung, Mastercode und Hallen-Codes
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -347,7 +347,7 @@ const Regelwerk = () => {
                 <Calendar className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 8 Ergebniseintragung und Fristen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -382,7 +382,7 @@ const Regelwerk = () => {
                 <ShieldCheck className="h-5 w-5 text-secondary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 9 Fair Play und Integrität
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -416,7 +416,7 @@ const Regelwerk = () => {
                 <AlertCircle className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 10 Ausschluss, Nachmeldungen, Änderungen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
@@ -450,7 +450,7 @@ const Regelwerk = () => {
                 <BookOpen className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
                   § 11 Schlussbestimmungen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">

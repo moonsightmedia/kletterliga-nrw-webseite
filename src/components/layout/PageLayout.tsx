@@ -9,7 +9,7 @@ interface PageLayoutProps {
 
 export const PageLayout = ({ children }: PageLayoutProps) => {
   return (
-    <div className="min-h-screen pt-8">
+    <div className="min-h-screen overflow-x-hidden pt-8">
       <SponsorBanner />
       <Header />
       <main>{children}</main>

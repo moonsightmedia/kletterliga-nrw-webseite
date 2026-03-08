@@ -60,7 +60,7 @@ const Modus = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               ZWEI LIGEN
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -75,7 +75,7 @@ const Modus = () => {
                   <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
                     <Users className="skew-x-6 text-primary" size={24} />
                   </div>
-                  <span className="font-headline text-2xl">TOPROPE</span>
+                  <span className="font-headline text-xl sm:text-2xl leading-tight [overflow-wrap:anywhere]">TOPROPE</span>
                 </div>
                 <p className="text-primary-foreground/80 mb-4">
                   Ideal für Einsteiger und alle, die entspannt klettern möchten. 
@@ -108,7 +108,7 @@ const Modus = () => {
                   <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center">
                     <Trophy className="skew-x-6 text-primary" size={24} />
                   </div>
-                  <span className="font-headline text-2xl">VORSTIEG</span>
+                  <span className="font-headline text-xl sm:text-2xl leading-tight [overflow-wrap:anywhere]">VORSTIEG</span>
                 </div>
                 <p className="text-secondary-foreground/80 mb-4">
                   Für erfahrene Kletterer:innen, die den klassischen Wettkampfstil 
@@ -142,7 +142,7 @@ const Modus = () => {
       <section className="section-padding bg-muted/50">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               ZONENWERTUNG
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -152,7 +152,7 @@ const Modus = () => {
 
           <AnimatedSection animation="fade-up" delay={100} className="max-w-md mx-auto">
             <div className="bg-background p-8 rounded-lg">
-              <h3 className="font-headline text-xl text-primary mb-6 text-center">Zoneneinteilung einer Route</h3>
+              <h3 className="font-headline text-lg sm:text-xl leading-tight text-primary mb-6 text-center [overflow-wrap:anywhere]">Zoneneinteilung einer Route</h3>
               <div className="relative">
                 {/* Route visualization */}
                 <div className="space-y-0">
@@ -183,7 +183,7 @@ const Modus = () => {
             <div className="bg-accent/50 p-6 rounded-lg flex items-start gap-4">
               <Star className="text-secondary flex-shrink-0 mt-1" size={24} />
               <div>
-                <h4 className="font-headline text-lg text-primary mb-2">Flash-Bonus: +1 Punkt</h4>
+                <h4 className="font-headline text-lg leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Flash-Bonus: +1 Punkt</h4>
                 <p className="text-muted-foreground text-sm">
                   Schaffst du eine Route im ersten Versuch (Flash), erhältst du pauschal 
                   <strong className="text-secondary"> +1 Punkt</strong> obendrauf. Das belohnt sauberes, 
@@ -199,7 +199,7 @@ const Modus = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               WERTUNGSKLASSEN
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -209,7 +209,7 @@ const Modus = () => {
 
           {/* Main Categories */}
           <AnimatedSection animation="fade-up" delay={100} className="mb-8">
-            <h3 className="font-headline text-xl text-primary mb-4 text-center">
+            <h3 className="font-headline text-lg sm:text-xl leading-tight text-primary mb-4 text-center [overflow-wrap:anywhere]">
               Hauptwertungsklassen <span className="text-secondary">(finalrelevant)</span>
             </h3>
           </AnimatedSection>
@@ -228,7 +228,7 @@ const Modus = () => {
                     className="card-kl text-center p-6 border-2 border-secondary/30"
                   >
                     <Trophy className="mx-auto mb-2 text-secondary" size={20} />
-                    <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
+                    <h3 className="font-headline text-base sm:text-lg leading-tight text-primary mb-1 [overflow-wrap:anywhere]">{category.name}</h3>
                     <p className="text-muted-foreground text-xs">{category.description}</p>
                   </div>
                 ))}
@@ -248,7 +248,7 @@ const Modus = () => {
                     className="card-kl text-center p-6 border-2 border-secondary/30"
                   >
                     <Trophy className="mx-auto mb-2 text-secondary" size={20} />
-                    <h3 className="font-headline text-lg text-primary mb-1">{category.name}</h3>
+                    <h3 className="font-headline text-base sm:text-lg leading-tight text-primary mb-1 [overflow-wrap:anywhere]">{category.name}</h3>
                     <p className="text-muted-foreground text-xs">{category.description}</p>
                   </div>
                 ))}
@@ -259,7 +259,7 @@ const Modus = () => {
           {/* Additional Rankings */}
           <AnimatedSection animation="fade-up" delay={200}>
             <div className="max-w-3xl mx-auto bg-muted/50 p-6 rounded-lg">
-              <h3 className="font-headline text-lg text-primary mb-3 text-center">
+              <h3 className="font-headline text-lg leading-tight text-primary mb-3 text-center [overflow-wrap:anywhere]">
                 Zusätzliche Altersklassenranglisten
               </h3>
               <p className="text-muted-foreground text-sm text-center mb-4">
@@ -287,7 +287,7 @@ const Modus = () => {
       <section className="section-padding bg-muted/50">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               ETAPPENWERTUNG
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -299,7 +299,7 @@ const Modus = () => {
             <AnimatedSection animation="fade-up" delay={100}>
               <div className="card-kl p-6 text-center h-full">
                 <Calendar className="mx-auto mb-4 text-secondary" size={32} />
-                <h3 className="font-headline text-lg text-primary mb-2">Monatliche Etappen</h3>
+                <h3 className="font-headline text-lg leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Monatliche Etappen</h3>
                 <p className="text-muted-foreground text-sm">
                   Jeden Monat werden Zwischenstände ermittelt und veröffentlicht.
                 </p>
@@ -309,7 +309,7 @@ const Modus = () => {
             <AnimatedSection animation="fade-up" delay={150}>
               <div className="card-kl p-6 text-center h-full">
                 <Award className="mx-auto mb-4 text-secondary" size={32} />
-                <h3 className="font-headline text-lg text-primary mb-2">Etappensieger</h3>
+                <h3 className="font-headline text-lg leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Etappensieger</h3>
                 <p className="text-muted-foreground text-sm">
                   Pro Liga und Wertungsklasse werden monatliche Etappensieger:innen gekürt.
                 </p>
@@ -319,7 +319,7 @@ const Modus = () => {
             <AnimatedSection animation="fade-up" delay={200}>
               <div className="card-kl p-6 text-center h-full">
                 <Trophy className="mx-auto mb-4 text-secondary" size={32} />
-                <h3 className="font-headline text-lg text-primary mb-2">Kleine Preise</h3>
+                <h3 className="font-headline text-lg leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Kleine Preise</h3>
                 <p className="text-muted-foreground text-sm">
                   Etappensieger:innen erhalten kleine Preise als Anerkennung.
                 </p>
@@ -333,7 +333,7 @@ const Modus = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               WILDCARD-PLÄTZE
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -348,13 +348,13 @@ const Modus = () => {
                   <Award className="skew-x-6 text-primary" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-headline text-xl mb-4">Was ist eine Wildcard?</h3>
+                  <h3 className="font-headline text-xl leading-tight mb-4 [overflow-wrap:anywhere]">Was ist eine Wildcard?</h3>
                   <p className="text-primary-foreground/80 mb-4">
                     Die Wildcard ist unsere Art, Engagement und Fleiß zu belohnen. Nicht nur die 
                     besten Kletterer:innen haben eine Chance auf das Halbfinale – auch die fleißigsten!
                   </p>
                   <div className="bg-primary-foreground/10 p-4 rounded-lg mb-4">
-                    <h4 className="font-headline text-lg text-accent mb-2">Wie erhält man eine Wildcard?</h4>
+                    <h4 className="font-headline text-lg leading-tight text-accent mb-2 [overflow-wrap:anywhere]">Wie erhält man eine Wildcard?</h4>
                     <p className="text-primary-foreground/80 text-sm">
                       Pro Wertungsklasse und Geschlecht werden <strong className="text-accent">10 Wildcard-Plätze verlost</strong>. 
                       Teilnahmeberechtigt sind alle Kletterer:innen, die:
@@ -384,7 +384,7 @@ const Modus = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+            <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-4 [overflow-wrap:anywhere]">
               HALBFINALE & FINALE
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -401,7 +401,7 @@ const Modus = () => {
                     <Target className="skew-x-6 text-primary" size={24} />
                   </div>
                   <div>
-                    <h3 className="font-headline text-xl mb-2">Qualifikation</h3>
+                    <h3 className="font-headline text-xl leading-tight mb-2 [overflow-wrap:anywhere]">Qualifikation</h3>
                     <ul className="space-y-2 text-primary-foreground/80 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
@@ -429,7 +429,7 @@ const Modus = () => {
                     <Clock className="skew-x-6 text-primary" size={24} />
                   </div>
                   <div>
-                    <h3 className="font-headline text-xl mb-2">Halbfinale</h3>
+                    <h3 className="font-headline text-xl leading-tight mb-2 [overflow-wrap:anywhere]">Halbfinale</h3>
                     <ul className="space-y-2 text-secondary-foreground/80 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
@@ -457,7 +457,7 @@ const Modus = () => {
                     <Trophy className="skew-x-6 text-secondary-foreground" size={24} />
                   </div>
                   <div>
-                    <h3 className="font-headline text-xl text-primary mb-2">Finale</h3>
+                    <h3 className="font-headline text-xl leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Finale</h3>
                     <ul className="space-y-2 text-muted-foreground text-sm">
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-secondary mt-0.5 flex-shrink-0" />
@@ -485,7 +485,7 @@ const Modus = () => {
         <div className="container-kl">
           <div className="max-w-4xl mx-auto">
             <AnimatedSection animation="fade-up">
-              <h2 className="font-headline text-3xl md:text-4xl text-primary mb-8 text-center">
+              <h2 className="font-headline text-2xl sm:text-3xl md:text-4xl leading-tight text-primary mb-8 text-center [overflow-wrap:anywhere]">
                 TEILNAHMEBEDINGUNGEN
               </h2>
             </AnimatedSection>
@@ -493,7 +493,7 @@ const Modus = () => {
             <AnimatedSection animation="fade-up" delay={100}>
               <div className="space-y-6">
                 <div className="bg-background p-6 rounded-lg">
-                  <h3 className="font-headline text-xl text-primary mb-3">Anmeldung</h3>
+                  <h3 className="font-headline text-xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">Anmeldung</h3>
                   <p className="text-muted-foreground">
                     Die Registrierung erfolgt über den Teilnehmerbereich. Du erstellst einen 
                     Account mit deinen persönlichen Daten (Name, Geburtsdatum, Geschlecht, Liga).
@@ -503,7 +503,7 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg border-2 border-accent/30">
                   <div className="flex items-center gap-3 mb-3">
                     <Award className="text-accent" size={24} />
-                    <h3 className="font-headline text-xl text-primary">Teilnahmegebühr & Mastercode</h3>
+                    <h3 className="font-headline text-xl leading-tight text-primary [overflow-wrap:anywhere]">Teilnahmegebühr & Mastercode</h3>
                   </div>
                   <p className="text-muted-foreground">
                     Um an der Liga teilzunehmen und in den Ranglisten zu erscheinen, musst du zunächst 
@@ -517,7 +517,7 @@ const Modus = () => {
                 <div className="bg-background p-6 rounded-lg border-2 border-secondary/30">
                   <div className="flex items-center gap-3 mb-3">
                     <MapPin className="text-secondary" size={24} />
-                    <h3 className="font-headline text-xl text-primary">Hallen-Code System</h3>
+                    <h3 className="font-headline text-xl leading-tight text-primary [overflow-wrap:anywhere]">Hallen-Code System</h3>
                   </div>
                   <p className="text-muted-foreground">
                     Um Ergebnisse für eine Halle eintragen zu können, musst du zunächst den jeweiligen 
@@ -528,7 +528,7 @@ const Modus = () => {
                 </div>
 
                 <div className="bg-background p-6 rounded-lg">
-                  <h3 className="font-headline text-xl text-primary mb-3">Ergebniseintragung</h3>
+                  <h3 className="font-headline text-xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">Ergebniseintragung</h3>
                   <p className="text-muted-foreground">
                     Routen werden selbstständig über die App eingetragen. Fairness und 
                     Ehrlichkeit sind die Grundlage der Liga – wir vertrauen auf die 
@@ -537,7 +537,7 @@ const Modus = () => {
                 </div>
 
                 <div className="bg-background p-6 rounded-lg">
-                  <h3 className="font-headline text-xl text-primary mb-3">Wertungszeitraum</h3>
+                  <h3 className="font-headline text-xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">Wertungszeitraum</h3>
                   <p className="text-muted-foreground">
                     Die Qualifikationsphase läuft vom <strong className="text-secondary">{formatDate(qualStart)}</strong> bis zum <strong className="text-secondary">{formatDate(qualEnd)}</strong>. 
                     Nur Routen, die in diesem Zeitraum geklettert werden, zählen für die Rangliste.
@@ -554,7 +554,7 @@ const Modus = () => {
         <div className="container-kl">
           <div className="max-w-4xl mx-auto text-center">
             <AnimatedSection animation="fade-up">
-              <h2 className="font-headline text-xl md:text-2xl text-primary mb-3">
+              <h2 className="font-headline text-lg sm:text-xl md:text-2xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">
                 Vollständiges Regelwerk
               </h2>
               <p className="text-muted-foreground text-sm md:text-base mb-6 max-w-xl mx-auto">

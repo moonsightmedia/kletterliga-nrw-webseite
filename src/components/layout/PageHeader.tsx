@@ -28,11 +28,11 @@ export const PageHeader = ({ title, subtitle, children }: PageHeaderProps) => {
 
       <div className="container-kl relative z-10">
         <AnimatedSection animation="fade-up">
-          <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl text-primary mb-3 md:mb-4 text-balance">
+          <h1 className="font-headline text-2xl sm:text-4xl md:text-6xl leading-tight text-primary mb-3 md:mb-4 text-balance [overflow-wrap:anywhere]">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-base leading-7 md:text-xl md:leading-8 text-primary/70 max-w-xl md:max-w-2xl text-balance">
+            <p className="text-base leading-7 md:text-xl md:leading-8 text-primary/70 max-w-xl md:max-w-2xl text-balance [overflow-wrap:anywhere]">
               {subtitle}
             </p>
           )}
