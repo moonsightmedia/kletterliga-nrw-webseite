@@ -48,11 +48,11 @@ serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
+    const authToken = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await supabase.auth.getUser(authToken);
 
     if (authError || !user) {
       return new Response(
@@ -128,7 +128,7 @@ serve(async (req) => {
     }
 
     // Generate token
-    const token = generateToken();
+    const inviteToken = generateToken();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 
@@ -137,7 +137,7 @@ serve(async (req) => {
       .from("gym_invites")
       .insert({
         email: email.toLowerCase(),
-        token,
+        token: inviteToken,
         expires_at: expiresAt.toISOString(),
       })
       .select("*")
@@ -156,7 +156,7 @@ serve(async (req) => {
     // Construct invite URL - garantiert ohne doppelte Slashes
     // frontendUrl wurde bereits oben bereinigt (keine trailing slashes)
     const cleanBase = frontendUrl.replace(/\/+$/, ""); // Sicherstellen, dass kein trailing slash
-    const inviteUrl = `${cleanBase}/app/invite/gym/${token}`;
+    const inviteUrl = `${cleanBase}/app/invite/gym/${inviteToken}`;
     
     // Log für Debugging
     console.log("Frontend URL (raw env):", Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL") || "NOT SET");
@@ -179,7 +179,7 @@ serve(async (req) => {
       const emailResult = await supabase.auth.admin.inviteUserByEmail(email, {
         data: {
           invite_url: inviteUrl,
-          token: token,
+          token: inviteToken,
           // Diese Daten werden im E-Mail-Template verfügbar sein
         },
         redirectTo: inviteUrl, // Wird verwendet, wenn die Site URL korrekt konfiguriert ist
