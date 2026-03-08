@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { getMasterCodeByCode, updateMasterCode } from "@/services/appApi";
+import { redeemMasterCode } from "@/services/appApi";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
 import { CheckCircle, Scan } from "lucide-react";
 
@@ -27,42 +27,20 @@ const MastercodeRedeem = () => {
 
   const handleRedeem = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!profile?.id) return;
-    if (isActivated) return;
+    if (!profile?.id || isActivated) return;
+
     const normalized = code.trim().toUpperCase();
     if (!normalized) return;
+
     setLoading(true);
-    const { data, error } = await getMasterCodeByCode(normalized);
+    const { error } = await redeemMasterCode(normalized);
+    setLoading(false);
+
     if (error) {
-      setLoading(false);
       toast({ title: "Fehler", description: error.message });
       return;
     }
-    if (!data) {
-      setLoading(false);
-      toast({ title: "Ungültiger Code", description: "Dieser Mastercode wurde nicht gefunden." });
-      return;
-    }
-    if (data.redeemed_by) {
-      setLoading(false);
-      toast({ title: "Bereits eingelöst", description: "Dieser Code wurde schon verwendet." });
-      return;
-    }
-    if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      setLoading(false);
-      toast({ title: "Abgelaufen", description: "Dieser Code ist nicht mehr gültig." });
-      return;
-    }
-    const { error: redeemError } = await updateMasterCode(data.id, {
-      redeemed_by: profile.id,
-      redeemed_at: new Date().toISOString(),
-      status: "redeemed",
-    });
-    setLoading(false);
-    if (redeemError) {
-      toast({ title: "Fehler", description: redeemError.message });
-      return;
-    }
+
     await refreshProfile();
     toast({ title: "Teilnahme freigeschaltet", description: "Deine Ergebnisse werden jetzt in den Ranglisten gezählt." });
     setCode("");
@@ -91,7 +69,7 @@ const MastercodeRedeem = () => {
       <div>
         <h2 className="font-headline text-2xl md:text-3xl lg:text-4xl text-primary">Teilnahme freischalten</h2>
         <p className="text-sm md:text-base text-muted-foreground mt-1 md:mt-2">
-          Löse deinen Mastercode ein (z. B. nach Zahlung der Teilnahmegebühr in einer Halle). Nur einmal nötig.
+          Löse deinen Mastercode ein (z. B. nach Zahlung der Teilnahmegebühr in einer Halle). Nur einmal nötig.
         </p>
       </div>
       <form onSubmit={handleRedeem} className="space-y-4 md:space-y-6">

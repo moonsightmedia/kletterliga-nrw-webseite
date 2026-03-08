@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/services/supabase";
-import { Building2, Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
+import { fetchGymInvite } from "@/services/appApi";
+import { Building2, Loader2, Upload, X } from "lucide-react";
 
 const GymInvite = () => {
   const { token } = useParams<{ token: string }>();
@@ -35,61 +35,14 @@ const GymInvite = () => {
       return;
     }
 
-    // Load invite data
     const loadInvite = async () => {
       try {
-        // Use fetch directly to ensure proper headers
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const { data: invite, error } = await fetchGymInvite(token);
 
-        const response = await fetch(
-          `${supabaseUrl}/rest/v1/gym_invites?select=email,expires_at,used_at&token=eq.${encodeURIComponent(token)}`,
-          {
-            method: "GET",
-            headers: {
-              "apikey": supabaseAnonKey,
-              "Authorization": `Bearer ${supabaseAnonKey}`,
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          console.error("Failed to load invite:", response.status, response.statusText);
-          let errorText = "";
-          try {
-            const errorData = await response.json();
-            errorText = errorData.message || errorData.error || "";
-          } catch {
-            errorText = response.statusText;
-          }
-          
-          if (response.status === 406) {
-            toast({
-              title: "Fehler beim Laden",
-              description: "Die Einladung konnte nicht geladen werden. Bitte kontaktiere einen Liga-Admin. (Fehler: RLS-Policy nicht konfiguriert)",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Ungültiger Link",
-              description: `Der Einladungslink ist ungültig oder abgelaufen. (Status: ${response.status})`,
-              variant: "destructive",
-            });
-          }
-          navigate("/app/login");
-          return;
-        }
-
-        const data = await response.json();
-        const invite = Array.isArray(data) ? data[0] : data;
-
-        if (!invite) {
-          console.error("No invite data returned:", data);
+        if (error || !invite) {
           toast({
             title: "Ungültiger Link",
-            description: "Der Einladungslink ist ungültig oder abgelaufen.",
+            description: error?.message || "Der Einladungslink ist ungültig oder abgelaufen.",
             variant: "destructive",
           });
           navigate("/app/login");
@@ -117,7 +70,7 @@ const GymInvite = () => {
 
         setInviteEmail(invite.email);
         setLoading(false);
-      } catch (error) {
+      } catch {
         toast({
           title: "Fehler",
           description: "Fehler beim Laden der Einladung.",
@@ -146,10 +99,10 @@ const GymInvite = () => {
         }
         ctx.clearRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         const isPng = file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
         const mimeType = isPng ? "image/png" : "image/jpeg";
-        
+
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -213,21 +166,6 @@ const GymInvite = () => {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("Failed to convert file to base64"));
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -255,12 +193,10 @@ const GymInvite = () => {
     setSubmitting(true);
 
     try {
-      // Convert logo to base64 if present
       let logoBase64: string | null = null;
       if (logoFile) {
         try {
           const optimized = await resizeImage(logoFile, 800, 0.85);
-          const blob = optimized;
           logoBase64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {
@@ -271,18 +207,16 @@ const GymInvite = () => {
               }
             };
             reader.onerror = reject;
-            reader.readAsDataURL(blob);
+            reader.readAsDataURL(optimized);
           });
         } catch (error) {
           console.error("Logo conversion error:", error);
-          // Continue without logo if conversion fails
         }
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Use fetch directly for better error handling
       const response = await fetch(`${supabaseUrl}/functions/v1/complete-gym-invite`, {
         method: "POST",
         headers: {
@@ -307,7 +241,6 @@ const GymInvite = () => {
       const apiError = typeof data?.error === "string" ? data.error : "";
 
       if (!response.ok) {
-        console.error("Complete gym invite error:", data);
         const title = response.status === 400 ? "Eingabe prüfen" : "Fehler";
         const desc = apiError || (response.status === 400 ? "Bitte prüfe die Pflichtfelder (Hallenname, PLZ, Passwort)." : "Die Registrierung ist fehlgeschlagen. Bitte versuche es erneut.");
         toast({ title, description: desc, variant: "destructive" });
@@ -331,7 +264,6 @@ const GymInvite = () => {
 
       navigate("/app/login", { state: { email: inviteEmail } });
     } catch (error) {
-      console.error("Submit error:", error);
       const msg = error instanceof Error ? error.message : "";
       const isNetwork = /fetch|network|Failed to fetch/i.test(msg);
       toast({
@@ -373,7 +305,6 @@ const GymInvite = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-          {/* Hallenname - Volle Breite */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">
               Hallenname <span className="text-destructive">*</span>
@@ -388,7 +319,6 @@ const GymInvite = () => {
             />
           </div>
 
-          {/* Stadt, PLZ, Adresse */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="city" className="text-sm font-medium">Stadt</Label>
@@ -422,7 +352,6 @@ const GymInvite = () => {
             </div>
           </div>
 
-          {/* Webseite */}
           <div className="space-y-2">
             <Label htmlFor="website">Webseite</Label>
             <Input
@@ -435,7 +364,6 @@ const GymInvite = () => {
             />
           </div>
 
-          {/* Logo - Volle Breite für besseres Layout */}
           <div className="space-y-2">
             <Label htmlFor="logo">Logo</Label>
             <input
@@ -492,7 +420,6 @@ const GymInvite = () => {
             )}
           </div>
 
-          {/* Passwort-Felder */}
           <div className="pt-5 border-t border-border space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
@@ -527,7 +454,6 @@ const GymInvite = () => {
             </div>
           </div>
 
-          {/* Buttons - umbrechen ohne Überstand */}
           <div className="flex flex-wrap items-center gap-3 pt-6">
             <Button
               type="submit"

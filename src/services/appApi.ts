@@ -257,6 +257,34 @@ export async function checkGymCodeRedeemed(gymId: string, profileId: string) {
     .maybeSingle<GymCode>();
 }
 
+export async function redeemGymCode(code: string) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const url = `${supabaseConfig.url}/functions/v1/redeem-gym-code`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      apikey: supabaseConfig.anonKey,
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Code konnte nicht eingelöst werden.";
+    return { data: null, error: { message } };
+  }
+
+  return {
+    data: body as { success: true; gym_id: string; gym_name: string | null },
+    error: null,
+  };
+}
+
 export async function listMasterCodes(gymId?: string) {
   let q = supabase.from("master_codes").select("*").order("created_at", { ascending: false });
   if (gymId != null) {
@@ -276,6 +304,31 @@ export async function getMasterCodeByCode(code: string) {
 
 export async function updateMasterCode(codeId: string, patch: Partial<MasterCode>) {
   return supabase.from("master_codes").update(patch).eq("id", codeId).select("*").single<MasterCode>();
+}
+
+export async function redeemMasterCode(code: string) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const url = `${supabaseConfig.url}/functions/v1/redeem-master-code`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      apikey: supabaseConfig.anonKey,
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Mastercode konnte nicht eingelöst werden.";
+    return { data: null, error: { message } };
+  }
+
+  return { data: body as { success: true }, error: null };
 }
 
 export async function listGymAdminsByProfile(profileId: string) {
@@ -389,6 +442,30 @@ export async function inviteGymAdmin(email: string, skipEmail: boolean = false) 
 
 export async function getGymInviteByToken(token: string) {
   return supabase.from("gym_invites").select("*").eq("token", token).maybeSingle();
+}
+
+export async function fetchGymInvite(token: string) {
+  const url = `${supabaseConfig.url}/functions/v1/get-gym-invite`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: supabaseConfig.anonKey,
+      Authorization: `Bearer ${supabaseConfig.anonKey}`,
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Einladung konnte nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+
+  return {
+    data: body as { email: string; expires_at: string; used_at: string | null },
+    error: null,
+  };
 }
 
 export async function listGymAdminsByGym(gymId: string) {

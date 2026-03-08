@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { getGymCodeByCode, updateGymCode, getGym } from "@/services/appApi";
+import { redeemGymCode } from "@/services/appApi";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
 import { Scan } from "lucide-react";
 
@@ -25,46 +25,28 @@ const GymRedeem = () => {
   const handleRedeem = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!profile?.id) return;
+
     const normalized = code.trim().toUpperCase();
     if (!normalized) return;
+
     setLoading(true);
-    const { data, error } = await getGymCodeByCode(normalized);
+    const { data, error } = await redeemGymCode(normalized);
+    setLoading(false);
+
     if (error) {
-      setLoading(false);
       toast({ title: "Fehler", description: error.message });
       return;
     }
+
     if (!data) {
-      setLoading(false);
-      toast({ title: "Ungültiger Code", description: "Dieser Code wurde nicht gefunden." });
+      toast({ title: "Fehler", description: "Code konnte nicht eingelöst werden." });
       return;
     }
-    if (data.redeemed_by) {
-      setLoading(false);
-      toast({ title: "Bereits eingelöst", description: "Dieser Code wurde schon verwendet." });
-      return;
-    }
-    if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      setLoading(false);
-      toast({ title: "Abgelaufen", description: "Dieser Code ist nicht mehr gültig." });
-      return;
-    }
-    const { error: redeemError } = await updateGymCode(data.id, {
-      redeemed_by: profile.id,
-      redeemed_at: new Date().toISOString(),
-      status: "redeemed",
-    });
-    setLoading(false);
-    if (redeemError) {
-      toast({ title: "Fehler", description: redeemError.message });
-      return;
-    }
-    const { data: gym } = await getGym(data.gym_id);
-    const hallName = gym?.name;
+
     toast({
       title: "Code eingelöst",
-      description: hallName
-        ? `Halle „${hallName}" wurde freigeschaltet.`
+      description: data.gym_name
+        ? `Halle "${data.gym_name}" wurde freigeschaltet.`
         : "Die Halle wurde freigeschaltet.",
     });
     setCode("");

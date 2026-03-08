@@ -206,6 +206,39 @@ select
   ]'::jsonb
 where not exists (select 1 from public.admin_settings);
 
+create or replace function public.protect_profile_privileged_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor_role text := coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '');
+begin
+  if auth.uid() = old.id and actor_role <> 'league_admin' then
+    if new.role is distinct from old.role then
+      raise exception 'role cannot be changed by the user';
+    end if;
+
+    if new.participation_activated_at is distinct from old.participation_activated_at then
+      raise exception 'participation_activated_at cannot be changed by the user';
+    end if;
+
+    if new.email is distinct from old.email then
+      raise exception 'email cannot be changed by the user';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_profile_privileged_fields_trigger on public.profiles;
+create trigger protect_profile_privileged_fields_trigger
+  before update on public.profiles
+  for each row
+  execute function public.protect_profile_privileged_fields();
+
 -- Profile overrides (manual class/league)
 create table if not exists public.profile_overrides (
   id uuid primary key default gen_random_uuid(),
@@ -236,8 +269,9 @@ create policy "Profiles read own" on public.profiles
   for select using (auth.uid() = id);
 
 drop policy if exists "Profiles read authenticated" on public.profiles;
-create policy "Profiles read authenticated" on public.profiles
-  for select using (auth.role() = 'authenticated');
+drop policy if exists "Profiles read league admin" on public.profiles;
+create policy "Profiles read league admin" on public.profiles
+  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
 
 drop policy if exists "Profiles insert own" on public.profiles;
 create policy "Profiles insert own" on public.profiles
@@ -245,7 +279,9 @@ create policy "Profiles insert own" on public.profiles
 
 drop policy if exists "Profiles update own" on public.profiles;
 create policy "Profiles update own" on public.profiles
-  for update using (auth.uid() = id);
+  for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
 drop policy if exists "Profiles update league admin" on public.profiles;
 create policy "Profiles update league admin" on public.profiles
@@ -342,8 +378,9 @@ create policy "Results read own" on public.results
   for select using (auth.uid() = profile_id);
 
 drop policy if exists "Results read authenticated" on public.results;
-create policy "Results read authenticated" on public.results
-  for select using (auth.role() = 'authenticated');
+drop policy if exists "Results read league admin" on public.results;
+create policy "Results read league admin" on public.results
+  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
 
 drop policy if exists "Results insert own" on public.results;
 create policy "Results insert own" on public.results
@@ -386,8 +423,9 @@ create policy "Change requests read own" on public.change_requests
   for select using (auth.uid() = profile_id);
 
 drop policy if exists "Change requests read authenticated" on public.change_requests;
-create policy "Change requests read authenticated" on public.change_requests
-  for select using (auth.role() = 'authenticated');
+drop policy if exists "Change requests read league admin" on public.change_requests;
+create policy "Change requests read league admin" on public.change_requests
+  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
 
 drop policy if exists "Change requests insert own" on public.change_requests;
 create policy "Change requests insert own" on public.change_requests
@@ -407,9 +445,6 @@ create policy "Gym codes read own" on public.gym_codes
 
 -- Allow participants to read codes for redemption (by code string)
 drop policy if exists "Gym codes read for redemption" on public.gym_codes;
-create policy "Gym codes read for redemption" on public.gym_codes
-  for select
-  using (auth.role() = 'authenticated');
 
 drop policy if exists "Gym codes insert own" on public.gym_codes;
 create policy "Gym codes insert own" on public.gym_codes
@@ -527,8 +562,6 @@ create policy "Gym invites update league" on public.gym_invites
 
 -- Policy: gym_invites read by token (for public invite completion)
 drop policy if exists "Gym invites read by token" on public.gym_invites;
-create policy "Gym invites read by token" on public.gym_invites
-  for select using (true);
 
 create index if not exists gym_invites_token_idx on public.gym_invites (token);
 create index if not exists gym_invites_email_idx on public.gym_invites (email);

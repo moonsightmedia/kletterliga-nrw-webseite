@@ -45,14 +45,7 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is league admin
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profile?.role !== "league_admin") {
+    if (user.user_metadata?.role !== "league_admin") {
       return new Response(
         JSON.stringify({ error: "Unauthorized: Only league admins can delete gyms" }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
