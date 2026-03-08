@@ -61,8 +61,8 @@ const Register = () => {
         variant: "success",
       });
 
-      // Navigiere zur Home-Seite
-      navigate("/app");
+      // Navigiere zum Login mit Hinweis zur E-Mail-Bestätigung
+      navigate("/app/login?registered=true");
     } catch (error) {
       console.error("Registration error:", error);
       toast({

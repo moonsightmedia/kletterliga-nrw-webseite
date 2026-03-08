@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/app/auth/AuthProvider";
 
 const Login = () => {
-  const { signIn, profile, role, loading: authLoading } = useAuth();
+  const { signIn, resetPassword, resendConfirmation, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
@@ -15,6 +15,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [showResetRequest, setShowResetRequest] = useState(false);
+  const [resetRequestEmail, setResetRequestEmail] = useState("");
+  const [resetRequestLoading, setResetRequestLoading] = useState(false);
+  const [resetRequestMessage, setResetRequestMessage] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   // Prüfe auf confirmed Parameter
   useEffect(() => {
@@ -32,6 +39,15 @@ const Login = () => {
     if (passwordResetParam === "true") {
       setPasswordReset(true);
       // Entferne den Parameter aus der URL
+      navigate("/app/login", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
+  // Hinweis nach Registrierung
+  useEffect(() => {
+    const registeredParam = searchParams.get("registered");
+    if (registeredParam === "true") {
+      setRegistered(true);
       navigate("/app/login", { replace: true });
     }
   }, [searchParams, navigate]);
@@ -75,6 +91,37 @@ const Login = () => {
     }
   };
 
+  const handleResetRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setResetRequestLoading(true);
+    setResetRequestMessage(null);
+    const result = await resetPassword(resetRequestEmail);
+    if (result.error) {
+      setResetRequestMessage(result.error);
+      setResetRequestLoading(false);
+      return;
+    }
+    setResetRequestMessage("Wenn ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet.");
+    setResetRequestLoading(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setResendMessage("Bitte zuerst deine E-Mail eingeben.");
+      return;
+    }
+    setResendLoading(true);
+    setResendMessage(null);
+    const result = await resendConfirmation(email);
+    if (result.error) {
+      setResendMessage(result.error);
+      setResendLoading(false);
+      return;
+    }
+    setResendMessage("Wenn ein unbestätigter Account existiert, wurde ein neuer Bestätigungslink gesendet.");
+    setResendLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -97,6 +144,13 @@ const Login = () => {
           </p>
         </div>
       )}
+      {registered && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            ✓ Registrierung erfolgreich. Bitte bestätige jetzt deine E-Mail-Adresse über den Link in deinem Postfach.
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">E-Mail</Label>
@@ -105,8 +159,42 @@ const Login = () => {
         <div className="space-y-2">
           <Label htmlFor="password">Passwort</Label>
           <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button
+            type="button"
+            onClick={() => setShowResetRequest((prev) => !prev)}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            aria-label="Passwort vergessen"
+          >
+            Passwort vergessen?
+          </button>
+          {showResetRequest && (
+            <div className="mt-2 rounded-md border p-3 space-y-2 bg-muted/20">
+              <Label htmlFor="reset-email">Reset-E-Mail</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetRequestEmail}
+                onChange={(e) => setResetRequestEmail(e.target.value)}
+                placeholder="deine@email.de"
+                required
+              />
+              <Button type="button" variant="secondary" className="w-full" onClick={handleResetRequest} disabled={resetRequestLoading || !resetRequestEmail}>
+                {resetRequestLoading ? "Wird gesendet..." : "Reset-Link senden"}
+              </Button>
+              {resetRequestMessage && <p className="text-xs text-muted-foreground">{resetRequestMessage}</p>}
+            </div>
+          )}
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
+        {error?.toLowerCase().includes("bestätigt") && (
+          <div className="rounded-md border p-3 bg-muted/20 space-y-2">
+            <p className="text-xs text-muted-foreground">Keine Bestätigungsmail erhalten?</p>
+            <Button type="button" variant="secondary" className="w-full" onClick={handleResendConfirmation} disabled={resendLoading}>
+              {resendLoading ? "Wird gesendet..." : "Bestätigungslink erneut senden"}
+            </Button>
+            {resendMessage && <p className="text-xs text-muted-foreground">{resendMessage}</p>}
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Einloggen..." : "Einloggen"}
         </Button>
