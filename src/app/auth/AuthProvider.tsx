@@ -36,6 +36,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const buildProfileSeed = useCallback((user: User, email?: string | null) => {
+    const metadata = user.user_metadata ?? {};
+    return {
+      id: user.id,
+      email: email ?? user.email ?? null,
+      first_name: typeof metadata.first_name === "string" ? metadata.first_name : null,
+      last_name: typeof metadata.last_name === "string" ? metadata.last_name : null,
+      birth_date: typeof metadata.birth_date === "string" ? metadata.birth_date : null,
+      gender: metadata.gender === "m" || metadata.gender === "w" ? metadata.gender : null,
+      home_gym_id: typeof metadata.home_gym_id === "string" ? metadata.home_gym_id : null,
+      league: metadata.league === "toprope" || metadata.league === "lead" ? metadata.league : null,
+      role: (typeof metadata.role === "string" ? metadata.role : "participant") as UserRole,
+    } satisfies Partial<Profile> & { id: string };
+  }, []);
+
   const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T | null> => {
     const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
     const result = await Promise.race([promise, timeout]);
@@ -47,21 +62,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return result as T;
   };
 
-  const loadProfile = useCallback(async (userId: string, email?: string | null) => {
+  const loadProfile = useCallback(async (user: User, email?: string | null) => {
     try {
-      const profileResult = await withTimeout(fetchProfile(userId), 4000, "Profile fetch");
+      const profileResult = await withTimeout(fetchProfile(user.id), 4000, "Profile fetch");
       if (profileResult && !profileResult.error && profileResult.data) {
         setProfile(profileResult.data);
         return;
       }
 
-      // Create a minimal profile if missing
+      // Create the profile from auth metadata once a real session exists.
       const upsertResult = await withTimeout(
-        upsertProfile({
-          id: userId,
-          email: email ?? null,
-          role: "participant",
-        }),
+        upsertProfile(buildProfileSeed(user, email)),
         4000,
         "Profile upsert",
       );
@@ -70,14 +81,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const fresh = await withTimeout(fetchProfile(userId), 4000, "Profile refetch");
+      const fresh = await withTimeout(fetchProfile(user.id), 4000, "Profile refetch");
       setProfile(fresh?.data ?? null);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn("Profile load failed", error);
       setProfile(null);
     }
-  }, []);
+  }, [buildProfileSeed]);
 
   useEffect(() => {
     let mounted = true;
@@ -102,7 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(sessionUser);
         if (sessionUser) {
           // Warte auf Profil-Laden, bevor loading auf false gesetzt wird
-          await loadProfile(sessionUser.id, sessionUser.email);
+          await loadProfile(sessionUser, sessionUser.email);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -122,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const nextUser = nextSession?.user ?? null;
       setUser(nextUser);
       if (nextUser) {
-        void loadProfile(nextUser.id, nextUser.email);
+        void loadProfile(nextUser, nextUser.email);
       } else {
         setProfile(null);
       }
@@ -240,7 +251,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(result.data.session);
         setUser(result.data.session.user ?? null);
         if (result.data.session.user) {
-          void loadProfile(result.data.session.user.id, result.data.session.user.email);
+          void loadProfile(result.data.session.user, result.data.session.user.email);
         }
       }
       trackAuthEvent("signin_success", { email, context: "login_form" });
@@ -327,35 +338,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: "Diese E-Mail-Adresse ist bereits registriert und bestätigt. Bitte melde dich an." };
     }
 
-    // Versuche, das Profil zu erstellen
-    const profileResult = await upsertProfile({
-      id: data.user.id,
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      birth_date: birthDate,
-      gender,
-      home_gym_id: homeGymId,
-      league,
-      role: "participant",
-    });
-
-    // Wenn das Profil bereits existiert (z.B. durch unique constraint error), existiert der User bereits
-    if (profileResult.error) {
-      const errorMsg = profileResult.error.message?.toLowerCase() || "";
-      if (errorMsg.includes("already exists") ||
-          errorMsg.includes("bereits vorhanden") ||
-          errorMsg.includes("duplicate") ||
-          errorMsg.includes("unique") ||
-          errorMsg.includes("violates unique constraint")) {
-        trackAuthEvent("signup_error", { email, error: "profile_unique_violation", context: "profile_upsert" });
-        return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an." };
-      }
-      // Andere Fehler beim Profil-Erstellen
-      console.warn("Profil-Erstellung fehlgeschlagen:", profileResult.error);
+    if (data.session?.user) {
+      await loadProfile(data.session.user, email);
     }
-
-    await loadProfile(data.user.id, email);
     trackAuthEvent("signup_success", { email, context: "register_form" });
     return {};
   };
@@ -405,7 +390,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshProfile = async () => {
     if (!user) return;
-    await loadProfile(user.id);
+    await loadProfile(user);
   };
 
   // Priorisiere user_metadata.role über profile.role, da user_metadata die autoritative Quelle ist
