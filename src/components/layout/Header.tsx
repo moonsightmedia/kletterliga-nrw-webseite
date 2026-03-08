@@ -59,19 +59,19 @@ export const Header = () => {
             : "bg-transparent py-4"
         )}
       >
-        <div className="container-kl flex items-center justify-between gap-3">
+        <div className="container-kl max-[380px]:px-3 flex items-center justify-between gap-2">
           {/* Logo */}
-          <Link to="/" className="flex min-w-0 items-center gap-3 group">
+          <Link to="/" className="flex min-w-0 items-center gap-2 group">
             <img 
               src={logo} 
               alt="Kletterliga NRW" 
               className="hidden sm:block w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
             />
             <div className="min-w-0">
-              <span className="font-headline text-base sm:text-lg md:text-xl text-primary tracking-wide max-[380px]:text-[1.45rem]">
+              <span className="font-headline text-base sm:text-lg md:text-xl text-primary tracking-wide max-[420px]:text-[1.35rem] max-[380px]:text-[1.12rem]">
                 KLETTERLIGA
               </span>
-              <span className="font-headline text-base sm:text-lg md:text-xl text-secondary ml-1 tracking-wide max-[380px]:text-[1.45rem]">
+              <span className="font-headline text-base sm:text-lg md:text-xl text-secondary ml-0.5 tracking-wide max-[420px]:text-[1.35rem] max-[380px]:text-[1.12rem]">
                 NRW
               </span>
             </div>
@@ -113,7 +113,7 @@ export const Header = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden min-h-11 min-w-11 flex-shrink-0 p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+            className="lg:hidden min-h-10 min-w-10 flex-shrink-0 p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
             aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

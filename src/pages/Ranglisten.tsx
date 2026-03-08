@@ -91,7 +91,7 @@ const Ranglisten = () => {
                   asChild
                   variant="secondary"
                   size="lg"
-                  className="w-full max-w-[22rem] px-4 sm:px-8 text-base sm:text-lg"
+                  className="w-full max-w-[20rem] max-[380px]:max-w-[18rem] px-3 sm:px-8 text-sm sm:text-lg"
                 >
                   <a href="/app/ranglisten" className="flex w-full items-center justify-center gap-2 text-center">
                     <span className="skew-x-6">Zum Teilnehmerbereich</span>
