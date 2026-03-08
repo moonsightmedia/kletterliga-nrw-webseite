@@ -73,18 +73,18 @@ export const CTASection = () => {
 
           {/* Trust indicators */}
           <AnimatedSection animation="fade-in" delay={400}>
-            <div className="mt-10 md:mt-12 grid grid-cols-1 sm:flex sm:flex-wrap items-center justify-center gap-4 sm:gap-8 text-primary-foreground/60 text-sm max-w-xl mx-auto">
-              <div className="flex items-center justify-center gap-2">
+            <div className="mt-10 md:mt-12 grid grid-cols-2 gap-x-6 gap-y-4 sm:flex sm:flex-wrap items-center justify-center text-primary-foreground/60 text-sm max-w-xl mx-auto">
+              <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <span className="font-headline text-2xl text-accent">{gymCount ?? "…"}</span>
                 <span>Hallen</span>
               </div>
               <div className="hidden sm:block w-px h-6 bg-primary-foreground/20" />
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <span className="font-headline text-2xl text-accent">2</span>
                 <span>Ligen</span>
               </div>
               <div className="hidden sm:block w-px h-6 bg-primary-foreground/20" />
-              <div className="flex items-center justify-center gap-2">
+              <div className="col-span-2 flex items-center justify-center gap-2 whitespace-nowrap">
                 <span className="font-headline text-2xl text-accent">6</span>
                 <span>Wertungsklassen</span>
               </div>

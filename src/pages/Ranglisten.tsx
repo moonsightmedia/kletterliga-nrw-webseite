@@ -77,7 +77,7 @@ const Ranglisten = () => {
       <section className="section-padding bg-background">
         <div className="container-kl">
           <AnimatedSection animation="fade-up">
-            <div className="max-w-4xl mx-auto bg-accent/30 p-6 md:p-8 text-center -skew-x-3">
+            <div className="max-w-4xl mx-auto bg-accent/30 px-4 py-6 md:p-8 text-center -skew-x-3 overflow-hidden">
               <div className="skew-x-3">
                 <h2 className="font-headline text-2xl md:text-3xl text-primary mb-4">
                   VOLLSTÄNDIGE RANGLISTEN IM TEILNEHMERBEREICH
@@ -87,8 +87,13 @@ const Ranglisten = () => {
                   nach Wertungsklasse und Halle sowie deine persönlichen Statistiken
                   findest du im Teilnehmerbereich.
                 </p>
-                <Button asChild variant="secondary" size="lg" className="px-8">
-                  <a href="/app/ranglisten" className="flex items-center gap-2">
+                <Button
+                  asChild
+                  variant="secondary"
+                  size="lg"
+                  className="w-full max-w-[22rem] px-4 sm:px-8 text-base sm:text-lg"
+                >
+                  <a href="/app/ranglisten" className="flex w-full items-center justify-center gap-2 text-center">
                     <span className="skew-x-6">Zum Teilnehmerbereich</span>
                     <ExternalLink className="skew-x-6" size={18} />
                   </a>

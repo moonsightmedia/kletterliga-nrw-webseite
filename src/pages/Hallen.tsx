@@ -87,7 +87,7 @@ const Hallen = () => {
                   </div>
 
                   <div className="flex-1 min-w-0 flex flex-col">
-                    <h3 className="font-headline text-xl text-primary mb-1 truncate">
+                    <h3 className="font-headline text-lg sm:text-xl leading-tight text-primary mb-2 [overflow-wrap:anywhere]">
                       {gym.name}
                     </h3>
 

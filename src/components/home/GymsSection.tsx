@@ -53,7 +53,7 @@ export const GymsSection = () => {
                     )}
                   </div>
 
-                  <h3 className="font-medium text-sm text-primary mb-1 line-clamp-2 flex-shrink-0">
+                  <h3 className="font-medium text-sm leading-tight text-primary mb-1 flex-shrink-0 min-h-[2.75rem] [overflow-wrap:anywhere]">
                     {gym.name}
                   </h3>
                   <p className="text-xs text-muted-foreground flex-shrink-0">{gym.city ?? ""}</p>
