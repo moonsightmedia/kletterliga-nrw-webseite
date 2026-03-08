@@ -342,37 +342,57 @@ const Modus = () => {
           </AnimatedSection>
 
           <AnimatedSection animation="fade-up" delay={100} className="max-w-3xl mx-auto">
-            <div className="bg-gradient-kl rounded-lg p-8 text-primary-foreground">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center flex-shrink-0">
-                  <Award className="skew-x-6 text-primary" size={24} />
+            <div className="bg-gradient-kl rounded-lg px-5 py-6 sm:p-8 text-primary-foreground">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-4">
+                <div className="flex items-center justify-center sm:block">
+                  <div className="w-12 h-12 -skew-x-6 bg-accent flex items-center justify-center flex-shrink-0">
+                    <Award className="skew-x-6 text-primary" size={24} />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-headline text-xl leading-tight mb-4 [overflow-wrap:anywhere]">Was ist eine Wildcard?</h3>
-                  <p className="text-primary-foreground/80 mb-4">
-                    Die Wildcard ist unsere Art, Engagement und Fleiß zu belohnen. Nicht nur die 
-                    besten Kletterer:innen haben eine Chance auf das Halbfinale – auch die fleißigsten!
-                  </p>
-                  <div className="bg-primary-foreground/10 p-4 rounded-lg mb-4">
-                    <h4 className="font-headline text-lg leading-tight text-accent mb-2 [overflow-wrap:anywhere]">Wie erhält man eine Wildcard?</h4>
-                    <p className="text-primary-foreground/80 text-sm">
-                      Pro Wertungsklasse und Geschlecht werden <strong className="text-accent">10 Wildcard-Plätze verlost</strong>. 
-                      Teilnahmeberechtigt sind alle Kletterer:innen, die:
-                    </p>
-                    <ul className="text-primary-foreground/80 text-sm mt-2 ml-4 list-disc space-y-1">
-                      <li>Es <strong className="text-accent">nicht unter die Top 30</strong> ihrer Wertungsklasse geschafft haben</li>
-                      <li>Aber trotzdem <strong className="text-accent">8 Hallen</strong> während der Qualifikationsphase besucht haben</li>
-                    </ul>
-                    <p className="text-primary-foreground/80 text-sm mt-3">
-                      Die Verlosung erfolgt fair und transparent unter allen berechtigten Teilnehmer:innen. 
-                      So haben auch die fleißigsten Kletterer:innen eine Chance, beim Halbfinale dabei zu sein!
+
+                <div className="space-y-4">
+                  <div className="text-center sm:text-left">
+                    <h3 className="font-headline text-xl sm:text-2xl leading-tight mb-3 [overflow-wrap:anywhere]">Was ist eine Wildcard?</h3>
+                    <p className="text-base sm:text-lg leading-7 text-primary-foreground/85">
+                      Die Wildcard ist unsere Art, Engagement und Fleiß zu belohnen. Nicht nur die
+                      besten Kletterer:innen haben eine Chance auf das Halbfinale, sondern auch die,
+                      die die Liga konstant und aktiv mittragen.
                     </p>
                   </div>
-                  <p className="text-primary-foreground/80 text-sm">
-                    <strong className="text-accent">Fairness und Vielfalt:</strong> Die Wildcard belohnt nicht nur Leistung, 
-                    sondern auch die Bereitschaft, verschiedene Hallen zu erkunden. So schaffen wir eine inklusive 
-                    Wettkampfatmosphäre, in der Engagement genauso zählt wie Talent.
-                  </p>
+
+                  <div className="bg-primary-foreground/10 rounded-lg p-4 sm:p-5">
+                    <h4 className="font-headline text-lg leading-tight text-accent mb-4 text-center sm:text-left [overflow-wrap:anywhere]">Wie erhält man eine Wildcard?</h4>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-lg bg-primary-foreground/10 p-4 text-center sm:text-left">
+                        <p className="font-headline text-2xl text-accent mb-1">10</p>
+                        <p className="text-sm leading-6 text-primary-foreground/80">
+                          Wildcard-Plätze pro Wertungsklasse und Geschlecht
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-primary-foreground/10 p-4 text-center sm:text-left">
+                        <p className="font-headline text-2xl text-accent mb-1">8</p>
+                        <p className="text-sm leading-6 text-primary-foreground/80">
+                          besuchte Hallen während der Qualifikationsphase
+                        </p>
+                      </div>
+                    </div>
+
+                    <ul className="mt-4 space-y-2 text-sm sm:text-base leading-7 text-primary-foreground/80">
+                      <li>Du bist <strong className="text-accent">nicht unter den Top 30</strong> deiner Wertungsklasse.</li>
+                      <li>Du hast trotzdem <strong className="text-accent">mindestens 8 Hallen</strong> besucht.</li>
+                      <li>Die Plätze werden anschließend <strong className="text-accent">fair ausgelost</strong>.</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 p-4 sm:p-5">
+                    <p className="text-sm sm:text-base leading-7 text-primary-foreground/80">
+                      <strong className="text-accent">Fairness und Vielfalt:</strong> Die Wildcard belohnt nicht nur Leistung,
+                      sondern auch Einsatz und die Bereitschaft, verschiedene Hallen kennenzulernen. So bleibt die Liga
+                      offen für engagierte Kletterer:innen, auch wenn der direkte Weg über die Top-Platzierungen knapp verpasst wird.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
