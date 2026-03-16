@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { AppIndexability } from "./components/AppIndexability";
 import { AuthProvider } from "@/app/auth/AuthProvider";
 import { ClosedGate } from "@/app/ClosedGate";
 import { appRoutes } from "@/app/AppRoutes";
@@ -33,6 +34,7 @@ const App = () => (
       <Analytics />
       <SpeedInsights />
       <BrowserRouter>
+        <AppIndexability />
         <ClosedGate>
           <AuthProvider>
             <ScrollToTop />

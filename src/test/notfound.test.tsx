@@ -10,10 +10,8 @@ describe("NotFound", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("404")).toBeInTheDocument();
-    expect(
-      screen.getByText("Diese Seite wurde nicht gefunden.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Fehler 404")).toBeInTheDocument();
+    expect(screen.getByText("DIESE SEITE GIBT ES NICHT")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Zur Startseite" })).toHaveAttribute(
       "href",
       "/"

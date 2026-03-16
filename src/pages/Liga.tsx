@@ -43,7 +43,7 @@ export default function Liga() {
   usePageMeta({
     title: "Die Liga",
     description:
-      "Die Vision, Werte und das Team hinter der Kletterliga NRW.",
+      "Die Kletterliga NRW ist ein landesweiter Kletterwettkampf in Nordrhein-Westfalen. Hier findest du Vision, Werte und Hintergründe der Liga.",
     canonicalPath: "/liga",
   });
 

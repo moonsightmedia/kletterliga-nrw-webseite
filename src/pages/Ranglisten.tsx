@@ -29,7 +29,7 @@ const Ranglisten = () => {
   usePageMeta({
     title: "Ranglisten",
     description:
-      "Aktuelle Platzierungen der Kletterliga NRW und Zugang zum Teilnehmerbereich.",
+      "Aktuelle Ranglisten der Kletterliga NRW mit Vorschau auf Spitzenplätze und Zugang zum Teilnehmerbereich für die vollständige Auswertung.",
     canonicalPath: "/ranglisten",
   });
 

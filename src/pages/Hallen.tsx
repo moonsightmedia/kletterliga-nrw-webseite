@@ -8,7 +8,6 @@ import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 
-/** Link zu Google Maps Suche nach Adresse */
 const mapSearchUrl = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -16,8 +15,16 @@ const Hallen = () => {
   usePageMeta({
     title: "Teilnehmende Hallen",
     description:
-      "Alle Kletterhallen, in denen du Punkte für die Kletterliga NRW sammeln kannst.",
+      "Alle teilnehmenden Kletterhallen der Kletterliga NRW in Nordrhein-Westfalen mit Adressen, Partnerinfos und direktem Einstieg.",
     canonicalPath: "/hallen",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Teilnehmende Hallen der Kletterliga NRW",
+      url: "https://kletterliga-nrw.de/hallen",
+      description:
+        "Übersicht aller teilnehmenden Kletterhallen der Kletterliga NRW in Nordrhein-Westfalen.",
+    },
   });
 
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -42,7 +49,7 @@ const Hallen = () => {
     <PageLayout>
       <PageHeader
         title="TEILNEHMENDE HALLEN"
-        subtitle="Alle Kletterhallen, in denen du Punkte für die Liga sammeln kannst."
+        subtitle="Alle Kletterhallen in Nordrhein-Westfalen, in denen du Punkte für die Kletterliga NRW sammeln kannst."
       />
 
       <section className="section-padding bg-background">
@@ -140,14 +147,12 @@ const Hallen = () => {
         </div>
       </section>
 
-      {/* Gym Detail Dialog */}
       <GymDetailDialog
         gym={selectedGym}
         open={selectedGym !== null}
         onOpenChange={(open) => !open && setSelectedGym(null)}
       />
 
-      {/* Become Partner Section */}
       <section className="section-padding bg-muted/50">
         <div className="container-kl">
           <div className="max-w-3xl mx-auto text-center">
@@ -156,7 +161,7 @@ const Hallen = () => {
                 DEINE HALLE IST NOCH NICHT DABEI?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Wir freuen uns über weitere Partner-Hallen! Wenn deine Lieblingshalle
+                Wir freuen uns über weitere Partner-Hallen. Wenn deine Lieblingshalle
                 noch nicht teilnimmt, sprich sie gerne an oder kontaktiere uns direkt.
               </p>
               <a

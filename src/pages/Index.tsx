@@ -12,8 +12,21 @@ const Index = () => {
   usePageMeta({
     title: "Kletterliga NRW",
     description:
-      "Der landesweite Hallenkletter-Wettkampf in NRW. Mehrere Hallen. Eine Liga. Ein Finale.",
+      "Kletterliga NRW: der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen mit mehreren Hallen, digitaler Wertung und großem Finale.",
     canonicalPath: "/",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "SportsOrganization",
+      name: "Kletterliga NRW",
+      url: "https://kletterliga-nrw.de/",
+      logo: "https://kletterliga-nrw.de/logo.png",
+      description:
+        "Die Kletterliga NRW ist ein landesweiter Hallenkletter-Wettkampf in Nordrhein-Westfalen mit mehreren Hallen, digitaler Wertung und Finale.",
+      sport: "Klettern",
+      sameAs: [
+        "https://www.instagram.com/kletterliga_nrw/",
+      ],
+    },
   });
 
   return (

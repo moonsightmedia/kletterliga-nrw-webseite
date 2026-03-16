@@ -45,7 +45,7 @@ const Modus = () => {
   usePageMeta({
     title: "Modus & Regeln",
     description:
-      "Wertung, Punktevergabe, Wertungsklassen und Teilnahmebedingungen der Kletterliga NRW.",
+      "Alle Regeln der Kletterliga NRW: Wertung, Punktevergabe, Wertungsklassen, Qualifikation, Wildcards und Finale im Überblick.",
     canonicalPath: "/modus",
   });
 

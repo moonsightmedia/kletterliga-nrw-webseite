@@ -1,15 +1,19 @@
 import { useEffect } from "react";
 
+type StructuredData = Record<string, unknown> | Record<string, unknown>[];
+
 type PageMetaOptions = {
   title: string;
   description?: string;
   canonicalPath?: string;
   image?: string;
   noindex?: boolean;
+  ogType?: string;
+  structuredData?: StructuredData;
 };
 
 const SITE_NAME = "Kletterliga NRW";
-const DEFAULT_IMAGE = "https://kletterliga-nrw.de/og-image.jpg";
+const DEFAULT_IMAGE = "https://kletterliga-nrw.de/og-image.png";
 
 const upsertMeta = (
   selector: string,
@@ -39,12 +43,33 @@ const upsertLink = (rel: string, href: string) => {
   element.setAttribute("href", href);
 };
 
+const upsertStructuredData = (data?: StructuredData) => {
+  const selector = 'script[data-kl-schema="page"]';
+  const existing = document.querySelector(selector);
+
+  if (!data) {
+    existing?.parentNode?.removeChild(existing);
+    return;
+  }
+
+  const element = existing ?? document.createElement("script");
+  element.setAttribute("type", "application/ld+json");
+  element.setAttribute("data-kl-schema", "page");
+  element.textContent = JSON.stringify(data);
+
+  if (!existing) {
+    document.head.appendChild(element);
+  }
+};
+
 export const usePageMeta = ({
   title,
   description,
   canonicalPath,
   image,
   noindex,
+  ogType,
+  structuredData,
 }: PageMetaOptions) => {
   useEffect(() => {
     const fullTitle = title.includes(SITE_NAME)
@@ -70,6 +95,10 @@ export const usePageMeta = ({
     upsertMeta('meta[property="og:title"]', {
       property: "og:title",
       content: fullTitle,
+    });
+    upsertMeta('meta[property="og:type"]', {
+      property: "og:type",
+      content: ogType || "website",
     });
     upsertMeta('meta[name="twitter:title"]', {
       name: "twitter:title",
@@ -103,5 +132,7 @@ export const usePageMeta = ({
       name: "robots",
       content: noindex ? "noindex, nofollow" : "index, follow",
     });
-  }, [title, description, canonicalPath, image, noindex]);
+
+    upsertStructuredData(structuredData);
+  }, [title, description, canonicalPath, image, noindex, ogType, structuredData]);
 };

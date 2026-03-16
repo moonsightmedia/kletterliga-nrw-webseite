@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kletterliga NRW - Routing Split Report</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f1e8;
+        --panel: #fffdf8;
+        --text: #1f2933;
+        --muted: #52606d;
+        --accent: #c46a2d;
+        --line: #e7ded0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(196, 106, 45, 0.12), transparent 24rem),
+          linear-gradient(180deg, #fbf8f1, var(--bg));
+        color: var(--text);
+      }
+
+      main {
+        width: min(960px, calc(100% - 48px));
+        margin: 48px auto;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 18px 40px rgba(31, 41, 51, 0.08);
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 10px 0 12px;
+        font-size: clamp(32px, 4vw, 52px);
+        line-height: 1;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 17px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .tile {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px 20px;
+        background: #fff;
+      }
+
+      .tile strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text);
+        font-size: 15px;
+      }
+
+      .tile span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      code {
+        display: block;
+        margin-top: 28px;
+        padding: 20px;
+        border-radius: 18px;
+        background: #201b17;
+        color: #f3efe8;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <div class="eyebrow">Punkt 1</div>
+        <h1>Public Website und App-Routen sind jetzt sauber gesplittet.</h1>
+        <p>
+          Die öffentliche Website lädt ihre Seiten per Lazy Loading. Die App-Bereiche
+          bleiben ebenfalls in eigenen Chunks. Damit muss die Website beim ersten Aufruf
+          nicht mehr die komplette App-Struktur mitziehen.
+        </p>
+
+        <div class="grid">
+          <div class="tile">
+            <strong>Öffentliche Seiten</strong>
+            <span>Index, Liga, Modus, Regelwerk, Hallen, Ranglisten, Sponsoren, Kontakt, Rechtstexte und 404 jeweils als eigene Chunks.</span>
+          </div>
+          <div class="tile">
+            <strong>App-Bereiche</strong>
+            <span>Teilnehmer-, Admin- und Auth-Seiten bleiben separat und werden erst bei Bedarf nachgeladen.</span>
+          </div>
+          <div class="tile">
+            <strong>Technischer Effekt</strong>
+            <span>Weniger unnötiger Code im ersten Website-Load, sauberere Trennung zwischen Website und App.</span>
+          </div>
+          <div class="tile">
+            <strong>Verifikation</strong>
+            <span>Produktionsbuild erfolgreich, Chunk-Liste unten aus dem aktuellen Build.</span>
+          </div>
+        </div>
+
+        <code>Index-n6lkpGom.js              23.75 kB
+Liga-Cw5mjg5J.js                5.67 kB
+Modus-cpJelaoh.js              23.12 kB
+Regelwerk-B8sboj5x.js          22.15 kB
+Hallen-DqD3iHF-.js              4.79 kB
+Ranglisten-pakRuc8W.js          6.38 kB
+Sponsoren-B6HtKz7P.js           4.89 kB
+Kontakt-CbpzmBc5.js             8.71 kB
+NotFound-5E6xvAZv.js            3.14 kB
+Login-CWS7pIrw.js               2.67 kB
+Home-GnBtmUNf.js               19.77 kB
+LeagueDashboard-fYEsW6WW.js     5.05 kB</code>
+      </section>
+    </main>
+  </body>
+</html>
