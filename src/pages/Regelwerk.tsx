@@ -90,7 +90,7 @@ const Regelwerk = () => {
               </p>
               <p>
                 <strong className="text-foreground">Wertungsklasse:</strong> Eine nach Geschlecht und
-                Altersgruppe definierte Kategorie (z. B. U15 weiblich, Ü15 männlich, Ü40 weiblich),
+                Altersgruppe definierte Kategorie (z. B. U15 weiblich, Ü15 männlich, Ü40 weiblich),
                 in der eine eigene Rangliste geführt wird.
               </p>
               <p>
@@ -143,7 +143,7 @@ const Regelwerk = () => {
               <p>
                 Eine Teilnehmer:in nimmt pro Saison in genau einer Liga teil. Ein Wechsel der Liga
                 während der Saison ist nur in Ausnahmefällen und nach Rücksprache mit der
-                Liga-Organisation möglich (z. B. über ein offizielles Änderungsverfahren).
+                Liga-Organisation möglich (z. B. über ein offizielles Änderungsverfahren).
               </p>
             </div>
           </article>
@@ -214,7 +214,7 @@ const Regelwerk = () => {
               <p>
                 Die Ranglisten werden nach <strong className="text-foreground">Geschlecht</strong> (weiblich/männlich)
                 und <strong className="text-foreground">Altersgruppen</strong> getrennt geführt. Das Alter wird
-                auf den Stichtag der Saison (z. B. Jahresbeginn oder Start der Qualifikation)
+                auf den Stichtag der Saison (z. B. Jahresbeginn oder Start der Qualifikation)
                 berechnet. Es gelten unter anderem:
               </p>
               <ul className="list-disc pl-6 space-y-1">
@@ -223,15 +223,15 @@ const Regelwerk = () => {
                 <li>Ü40: 40 Jahre und älter</li>
               </ul>
               <p>
-                Zusätzlich können weitere Altersklassen (z. B. U9, U11, U13, Ü50) für Ranglisten
+                Zusätzlich können weitere Altersklassen (z. B. U9, U11, U13, Ü50) für Ranglisten
                 ohne Finalrelevanz geführt werden. Für die Qualifikation zu Halbfinale und Finale
                 sind nur die in der Ausschreibung als „finalrelevant“ bezeichneten Wertungsklassen
                 maßgeblich (in der Regel U15 w/m, Ü15 w/m, Ü40 w/m).
               </p>
               <p>
                 Die Zuordnung zu Liga und Wertungsklasse erfolgt bei der Registrierung. Änderungen
-                (z. B. Liga- oder Geschlechtswechsel) sind nur über das von der Liga bereitgestellte
-                Verfahren (z. B. Änderungsantrag) und nach Prüfung durch die Organisation möglich.
+                (z. B. Liga- oder Geschlechtswechsel) sind nur über das von der Liga bereitgestellte
+                Verfahren (z. B. Änderungsantrag) und nach Prüfung durch die Organisation möglich.
               </p>
             </div>
           </article>
@@ -262,9 +262,9 @@ const Regelwerk = () => {
               </p>
               <p>
                 <strong className="text-foreground">Wildcard-Plätze:</strong> Zusätzlich werden pro
-                Wertungsklasse und Geschlecht eine festgelegte Anzahl Wildcard-Plätze (z. B. 10)
+                Wertungsklasse und Geschlecht eine festgelegte Anzahl Wildcard-Plätze (z. B. 10)
                 vergeben. Teilnahmeberechtigt sind Teilnehmer:innen, die nicht unter die Top 30
-                gekommen sind, aber eine Mindestanzahl verschiedener Hallen (z. B. 8) während der
+                gekommen sind, aber eine Mindestanzahl verschiedener Hallen (z. B. 8) während der
                 Qualifikation besucht haben. Die Vergabe erfolgt per Verlosung unter allen
                 Berechtigten. Details (Mindesthallen, Anzahl Wildcards) stehen in der
                 Saison-Ausschreibung.
@@ -277,8 +277,8 @@ const Regelwerk = () => {
               </p>
               <p>
                 <strong className="text-foreground">Halbfinale:</strong> Im Halbfinale sind eine
-                festgelegte Anzahl Routen (z. B. 5) in einem vorgegebenen Zeitfenster zu klettern.
-                Pro Route gilt ein Zeitlimit (z. B. 5 Minuten). Die Besten (z. B. Top 6) pro
+                festgelegte Anzahl Routen (z. B. 5) in einem vorgegebenen Zeitfenster zu klettern.
+                Pro Route gilt ein Zeitlimit (z. B. 5 Minuten). Die Besten (z. B. Top 6) pro
                 Wertungsklasse ziehen ins Finale ein.
               </p>
               <p>
@@ -310,7 +310,7 @@ const Regelwerk = () => {
               <p>
                 <strong className="text-foreground">Registrierung:</strong> Die Teilnahme setzt eine
                 Registrierung im offiziellen Teilnehmerbereich der Kletterliga NRW voraus. Dabei
-                sind u. a. Name, E-Mail, Geburtsdatum, Geschlecht und die gewählte Liga anzugeben.
+                sind u. a. Name, E-Mail, Geburtsdatum, Geschlecht und die gewählte Liga anzugeben.
                 Unvollständige oder falsche Angaben können zum Ausschluss führen.
               </p>
               <p>
@@ -318,7 +318,7 @@ const Regelwerk = () => {
                 den Ranglisten gewertet zu werden, muss die Teilnahme durch Einlösen eines
                 <strong className="text-foreground"> Mastercodes</strong> freigeschaltet werden. Den
                 Mastercode erhalten Teilnehmer:innen nach Zahlung der ausgeschriebenen
-                Teilnahmegebühr (z. B. 15 €) in einer der teilnehmenden Hallen. Der Mastercode ist
+                Teilnahmegebühr (z. B. 15 €) in einer der teilnehmenden Hallen. Der Mastercode ist
                 einmalig pro Saison und Account einzulösen. Ohne gültig eingelösten Mastercode
                 werden keine Ergebnisse in den Ranglisten berücksichtigt.
               </p>
@@ -408,7 +408,71 @@ const Regelwerk = () => {
           </article>
         </AnimatedSection>
 
-        {/* §10 Ausschluss, Nachmeldungen, Änderungen */}
+        {/* §10 Tie-Break-Regelung */}
+        <AnimatedSection animation="fade-up">
+          <article className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                  § 10 Tie-Break-Regelung
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Punktgleichheit · Rangfolge
+                </p>
+              </div>
+            </div>
+            <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
+              <p>
+                Bei Punktgleichheit in einer Wertungsklasse entscheidet in folgender Reihenfolge:
+              </p>
+              <ol className="list-decimal pl-6 space-y-1">
+                <li>höhere Anzahl an Tops</li>
+                <li>höhere Anzahl an erreichten Zone 3</li>
+                <li>höhere Anzahl an erreichten Zone 2</li>
+                <li>höhere Anzahl an Flash-Wertungen</li>
+                <li>frühere Erreichung des Gesamtpunktestands (Zeitstempel der Eintragung)</li>
+              </ol>
+              <p>
+                Kann auch danach keine eindeutige Rangfolge bestimmt werden, entscheidet die Liga-Organisation per Losverfahren.
+              </p>
+            </div>
+          </article>
+        </AnimatedSection>
+
+        {/* §11 Einspruchs- und Klärungsverfahren */}
+        <AnimatedSection animation="fade-up">
+          <article className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                <FileCheck className="h-5 w-5 text-secondary" />
+              </div>
+              <div>
+                <h2 className="font-headline text-2xl md:text-3xl text-primary">
+                  § 11 Einspruchs- und Klärungsverfahren
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Fristen · Entscheidung · Verbindlichkeit
+                </p>
+              </div>
+            </div>
+            <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
+              <p>
+                Einsprüche gegen Ergebnisse, Klassenzuordnungen oder Qualifikationsentscheidungen müssen innerhalb von 48 Stunden nach Veröffentlichung schriftlich über den offiziellen Kontaktweg eingereicht werden.
+              </p>
+              <p>
+                Die Liga-Organisation prüft den Einspruch, kann Nachweise anfordern und entscheidet in der Regel innerhalb von 7 Kalendertagen. Die Entscheidung wird dokumentiert und dem/der Einspruchsführenden mitgeteilt.
+              </p>
+              <p>
+                Nach Fristablauf ohne Einspruch gelten veröffentlichte Ergebnisse als verbindlich.
+              </p>
+            </div>
+          </article>
+        </AnimatedSection>
+
+        {/* §12 Ausschluss, Nachmeldungen, Änderungen */}
         <AnimatedSection animation="fade-up">
           <article className="space-y-4">
             <div className="flex items-start gap-3">
@@ -417,19 +481,25 @@ const Regelwerk = () => {
               </div>
               <div>
                 <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
-                  § 10 Ausschluss, Nachmeldungen, Änderungen
+                  § 12 Ausschluss, Nachmeldungen, Änderungen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Ausschluss · Regeländerungen
+                  Sanktionen · Ausschluss · Regeländerungen
                 </p>
               </div>
             </div>
             <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
               <p>
-                Die Liga-Organisation kann Teilnehmer:innen bei Verstößen gegen dieses Regelwerk,
-                bei Falschangaben oder bei unsportlichem Verhalten von der weiteren Teilnahme
-                ausschließen. Ein Anspruch auf Teilnahme oder auf einen Startplatz im Halbfinale
-                oder Finale besteht nicht.
+                Bei Regelverstößen gilt ein abgestuftes Sanktionsmodell:
+              </p>
+              <ol className="list-decimal pl-6 space-y-1">
+                <li>Verwarnung (leichter Erstverstoß)</li>
+                <li>Streichung einzelner Ergebnisse</li>
+                <li>Disqualifikation aus Wertung, Halbfinale oder Finale</li>
+                <li>Ausschluss aus der laufenden Saison</li>
+              </ol>
+              <p>
+                Schwere Verstöße (z. B. vorsätzliche Falscheinträge, Manipulationen, wiederholtes unsportliches Verhalten) können direkt zu Disqualifikation oder Ausschluss führen. Ein Anspruch auf Teilnahme oder auf einen Startplatz im Halbfinale oder Finale besteht nicht.
               </p>
               <p>
                 <strong className="text-foreground">Regeländerungen:</strong> Die Organisatoren
@@ -442,7 +512,7 @@ const Regelwerk = () => {
           </article>
         </AnimatedSection>
 
-        {/* §11 Schlussbestimmungen */}
+        {/* §13 Schlussbestimmungen */}
         <AnimatedSection animation="fade-up">
           <article className="space-y-4">
             <div className="flex items-start gap-3">
@@ -451,7 +521,7 @@ const Regelwerk = () => {
               </div>
               <div>
                 <h2 className="font-headline text-xl sm:text-2xl md:text-3xl leading-tight text-primary [overflow-wrap:anywhere]">
-                  § 11 Schlussbestimmungen
+                  § 13 Schlussbestimmungen
                 </h2>
                 <p className="text-muted-foreground mt-1 text-sm">
                   Kontakt · Gerichtsstand
@@ -461,7 +531,7 @@ const Regelwerk = () => {
             <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
               <p>
                 Bei Fragen zum Regelwerk oder zur Teilnahme ist die Liga unter der auf der Website
-                angegebenen Kontaktadresse (z. B. info@kletterliga-nrw.de) erreichbar. Für
+                angegebenen Kontaktadresse (z. B. info@kletterliga-nrw.de) erreichbar. Für
                 Streitigkeiten aus oder im Zusammenhang mit der Teilnahme an der Liga ist – soweit
                 gesetzlich zulässig – der Sitz der verantwortlichen Organisation maßgeblich.
               </p>
@@ -470,8 +540,7 @@ const Regelwerk = () => {
                 die Gültigkeit der übrigen Bestimmungen unberührt.
               </p>
               <p className="text-sm text-muted-foreground/80 pt-4">
-                Stand: Angabe gemäß Veröffentlichung auf der Website. Es gilt die jeweils aktuelle
-                Fassung unter kletterliga-nrw.de.
+                Version 2026 v1.0 · Stand: 18.03.2026 · Gültig für die Saison 2026. Maßgeblich ist die jeweils veröffentlichte Fassung unter kletterliga-nrw.de.
               </p>
             </div>
           </article>
