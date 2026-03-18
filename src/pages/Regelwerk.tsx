@@ -179,9 +179,14 @@ const Regelwerk = () => {
                 <li>Top: 10 Punkte</li>
               </ul>
               <p>
+                <strong className="text-foreground">Versuch (Attempt):</strong> Ein Versuch beginnt,
+                sobald die Teilnehmer:in den Boden verlässt bzw. die Route aktiv startet. Ein Versuch
+                endet mit Sturz, Abbruch, Entlastung des Seils oder Rückkehr auf den Boden. Jeder
+                neue Einstieg in dieselbe Route zählt als neuer Versuch.
+              </p>
+              <p>
                 <strong className="text-foreground">Flash-Bonus:</strong> Wird eine Route im ersten
-                Versuch (ohne vorherigen Sturz oder Abbruch an derselben Route in derselben Session)
-                bis mindestens zur Zone 1 oder höher geklettert, wird ein pauschaler Zusatzpunkt
+                Versuch bis mindestens Zone 1 oder höher geklettert, wird ein pauschaler Zusatzpunkt
                 (+1) gutgeschrieben. Der Flash-Bonus wird pro Route maximal einmal vergeben.
               </p>
               <p>
@@ -357,8 +362,12 @@ const Regelwerk = () => {
                 Ergebnisse werden von den Teilnehmer:innen <strong className="text-foreground">selbstständig</strong> über
                 die bereitgestellte App bzw. den Teilnehmerbereich eingetragen. Es sind die
                 tatsächlich erreichte Zone sowie ggf. die Angabe „Flash“ (erster Versuch) zu
-                wählen. Nachträgliche Korrekturen sind nur innerhalb der von der Liga gesetzten
-                Fristen und unter Einhaltung der Fair-Play-Grundsätze zulässig.
+                wählen.
+              </p>
+              <p>
+                <strong className="text-foreground">Korrekturfrist:</strong> Nachträgliche Korrekturen
+                sind bis 24 Stunden nach Eintragung zulässig. Danach sind Änderungen nur noch auf
+                schriftlichen Antrag und nach Prüfung durch die Liga-Organisation möglich.
               </p>
               <p>
                 Nur Routen, die <strong className="text-foreground">innerhalb des offiziellen
@@ -366,6 +375,11 @@ const Regelwerk = () => {
                 Rangliste und die Qualifikation. Das Kletterdatum ist bei der Eintragung anzugeben.
                 Die Organisation behält sich vor, bei Verdacht auf Manipulation Nachweise zu
                 verlangen oder Eintragungen zu streichen.
+              </p>
+              <p>
+                Bei Konflikten zwischen Hallenanzeige und App-Eintrag gilt der in der Liga-App
+                veröffentlichte Datensatz als maßgeblich, sofern die Liga-Organisation keine
+                abweichende Entscheidung dokumentiert.
               </p>
             </div>
           </article>
