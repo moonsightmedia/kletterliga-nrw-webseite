@@ -262,12 +262,10 @@ const Regelwerk = () => {
               </p>
               <p>
                 <strong className="text-foreground">Wildcard-Plätze:</strong> Zusätzlich werden pro
-                Wertungsklasse und Geschlecht eine festgelegte Anzahl Wildcard-Plätze (z. B. 10)
-                vergeben. Teilnahmeberechtigt sind Teilnehmer:innen, die nicht unter die Top 30
-                gekommen sind, aber eine Mindestanzahl verschiedener Hallen (z. B. 8) während der
-                Qualifikation besucht haben. Die Vergabe erfolgt per Verlosung unter allen
-                Berechtigten. Details (Mindesthallen, Anzahl Wildcards) stehen in der
-                Saison-Ausschreibung.
+                Wertungsklasse und Geschlecht 10 Wildcard-Plätze vergeben. Teilnahmeberechtigt sind
+                Teilnehmer:innen, die nicht unter die Top 30 gekommen sind, aber mindestens 8
+                verschiedene Hallen während der Qualifikation besucht haben. Die Vergabe erfolgt per
+                Verlosung unter allen Berechtigten.
               </p>
               <p>
                 <strong className="text-foreground">Anmeldung Halbfinale:</strong> Qualifizierte und
@@ -276,10 +274,9 @@ const Regelwerk = () => {
                 können berücksichtigt werden.
               </p>
               <p>
-                <strong className="text-foreground">Halbfinale:</strong> Im Halbfinale sind eine
-                festgelegte Anzahl Routen (z. B. 5) in einem vorgegebenen Zeitfenster zu klettern.
-                Pro Route gilt ein Zeitlimit (z. B. 5 Minuten). Die Besten (z. B. Top 6) pro
-                Wertungsklasse ziehen ins Finale ein.
+                <strong className="text-foreground">Halbfinale:</strong> Im Halbfinale sind 5 Routen
+                in einem vorgegebenen Zeitfenster zu klettern. Pro Route gilt ein Zeitlimit von
+                5 Minuten. Die Top 6 pro Wertungsklasse ziehen ins Finale ein.
               </p>
               <p>
                 <strong className="text-foreground">Finale:</strong> Im Finale wird je Wertungsklasse
@@ -317,8 +314,8 @@ const Regelwerk = () => {
                 <strong className="text-foreground">Teilnahmegebühr und Mastercode:</strong> Um in
                 den Ranglisten gewertet zu werden, muss die Teilnahme durch Einlösen eines
                 <strong className="text-foreground"> Mastercodes</strong> freigeschaltet werden. Den
-                Mastercode erhalten Teilnehmer:innen nach Zahlung der ausgeschriebenen
-                Teilnahmegebühr (z. B. 15 €) in einer der teilnehmenden Hallen. Der Mastercode ist
+                Mastercode erhalten Teilnehmer:innen nach Zahlung der Teilnahmegebühr von
+                15 € in einer der teilnehmenden Hallen. Der Mastercode ist
                 einmalig pro Saison und Account einzulösen. Ohne gültig eingelösten Mastercode
                 werden keine Ergebnisse in den Ranglisten berücksichtigt.
               </p>
