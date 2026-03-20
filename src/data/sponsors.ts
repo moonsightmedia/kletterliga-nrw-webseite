@@ -4,20 +4,20 @@ export type Sponsor = {
   name: string;
   tier: SponsorTier;
   website?: string;
-  logo?: string;
+  logoUrl?: string;
+  details?: string;
   isPlaceholder?: boolean;
 };
 
 export const mainSponsors: Sponsor[] = [
-  { name: "Hauptsponsor 1", tier: "Gold", isPlaceholder: true },
-  { name: "Hauptsponsor 2", tier: "Gold", isPlaceholder: true },
+  {
+    name: "Kletterladen NRW",
+    tier: "Gold",
+    website: "https://kletterladen.nrw",
+    logoUrl:
+      "https://kletterladen.nrw/themes/Frontend/Kletterladen/frontend/_public/src/img/logos/apple-touch-icon-152x152.png",
+    details: "Süllenstraße 28, 40599 Düsseldorf • Di-Fr 11:00-19:00 • Sa 10:00-16:00",
+  },
 ];
 
-export const partnerSponsors: Sponsor[] = [
-  { name: "Sponsor 1", tier: "Silber", isPlaceholder: true },
-  { name: "Sponsor 2", tier: "Silber", isPlaceholder: true },
-  { name: "Sponsor 3", tier: "Silber", isPlaceholder: true },
-  { name: "Sponsor 4", tier: "Bronze", isPlaceholder: true },
-  { name: "Sponsor 5", tier: "Bronze", isPlaceholder: true },
-  { name: "Sponsor 6", tier: "Bronze", isPlaceholder: true },
-];
+export const partnerSponsors: Sponsor[] = [];

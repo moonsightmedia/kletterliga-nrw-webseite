@@ -44,15 +44,27 @@ const Sponsoren = () => {
                   rel={sponsor.website ? "noopener noreferrer" : undefined}
                   className="card-kl flex flex-col items-center justify-center text-center p-8 md:p-12 group"
                 >
-                  <div className="w-32 h-32 -skew-x-6 bg-accent/50 flex items-center justify-center mb-6 group-hover:bg-secondary transition-colors duration-300">
-                    <span className="skew-x-6 font-headline text-4xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                      {sponsor.name.charAt(0)}
-                    </span>
+                  <div className="w-32 h-32 -skew-x-6 bg-accent/50 flex items-center justify-center mb-6 group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
+                    {sponsor.logoUrl ? (
+                      <img
+                        src={sponsor.logoUrl}
+                        alt={`Logo ${sponsor.name}`}
+                        className="skew-x-6 w-24 h-24 object-contain"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="skew-x-6 font-headline text-4xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                        {sponsor.name.charAt(0)}
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-headline text-xl text-primary mb-2">{sponsor.name}</h3>
                   <span className="inline-block bg-secondary text-secondary-foreground text-xs px-3 py-1 -skew-x-6">
                     <span className="skew-x-6 inline-block">{sponsor.tier}</span>
                   </span>
+                  {sponsor.details && (
+                    <span className="mt-3 text-xs text-muted-foreground text-center max-w-sm">{sponsor.details}</span>
+                  )}
                   {sponsor.isPlaceholder && (
                     <span className="mt-3 text-xs text-muted-foreground">
                       Platzhalter – Logo & Link folgen
@@ -74,37 +86,52 @@ const Sponsoren = () => {
             </h2>
           </AnimatedSection>
 
-          <StaggeredAnimation 
-            className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
-            staggerDelay={75}
-            animation="fade-up"
-          >
-            {partnerSponsors.map((sponsor) => {
-              const Wrapper = sponsor.website ? "a" : "div";
-              return (
-                <Wrapper
-                  key={sponsor.name}
-                  href={sponsor.website}
-                  target={sponsor.website ? "_blank" : undefined}
-                  rel={sponsor.website ? "noopener noreferrer" : undefined}
-                  className="card-kl flex flex-col items-center justify-center text-center p-6 group"
-                >
-                  <div className="w-20 h-20 -skew-x-6 bg-accent/30 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors duration-300">
-                    <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                      {sponsor.name.charAt(0)}
-                    </span>
-                  </div>
-                  <h3 className="font-medium text-primary mb-1">{sponsor.name}</h3>
-                  <span className="text-xs text-muted-foreground">{sponsor.tier}</span>
-                  {sponsor.isPlaceholder && (
-                    <span className="mt-2 text-[11px] text-muted-foreground">
-                      Platzhalter
-                    </span>
-                  )}
-                </Wrapper>
-              );
-            })}
-          </StaggeredAnimation>
+          {partnerSponsors.length === 0 ? (
+            <AnimatedSection animation="fade-up" className="text-center text-muted-foreground">
+              Weitere Partner werden in Kürze veröffentlicht.
+            </AnimatedSection>
+          ) : (
+            <StaggeredAnimation 
+              className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+              staggerDelay={75}
+              animation="fade-up"
+            >
+              {partnerSponsors.map((sponsor) => {
+                const Wrapper = sponsor.website ? "a" : "div";
+                return (
+                  <Wrapper
+                    key={sponsor.name}
+                    href={sponsor.website}
+                    target={sponsor.website ? "_blank" : undefined}
+                    rel={sponsor.website ? "noopener noreferrer" : undefined}
+                    className="card-kl flex flex-col items-center justify-center text-center p-6 group"
+                  >
+                    <div className="w-20 h-20 -skew-x-6 bg-accent/30 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
+                      {sponsor.logoUrl ? (
+                        <img
+                          src={sponsor.logoUrl}
+                          alt={`Logo ${sponsor.name}`}
+                          className="skew-x-6 w-14 h-14 object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
+                          {sponsor.name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-medium text-primary mb-1">{sponsor.name}</h3>
+                    <span className="text-xs text-muted-foreground">{sponsor.tier}</span>
+                    {sponsor.isPlaceholder && (
+                      <span className="mt-2 text-[11px] text-muted-foreground">
+                        Platzhalter
+                      </span>
+                    )}
+                  </Wrapper>
+                );
+              })}
+            </StaggeredAnimation>
+          )}
         </div>
       </section>
 
