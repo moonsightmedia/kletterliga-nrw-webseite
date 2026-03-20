@@ -119,29 +119,6 @@ export default function Liga() {
         </div>
       </section>
 
-      {/* Team/Organization Section */}
-      <section className="section-padding bg-background">
-        <div className="container-kl">
-          <div className="max-w-4xl mx-auto text-center">
-            <AnimatedSection animation="fade-up">
-              <h2 className="font-headline text-3xl md:text-4xl text-primary mb-6">
-                DAS TEAM
-              </h2>
-              <p className="text-base leading-7 md:text-lg md:leading-relaxed text-muted-foreground mb-8">
-                Die Kletterliga NRW wird von einem engagierten Team aus Kletterbegeisterten 
-                organisiert. Wir arbeiten ehrenamtlich daran, die Liga weiterzuentwickeln 
-                und das beste Erlebnis für alle Teilnehmer:innen zu schaffen.
-              </p>
-              <p className="text-muted-foreground">
-                Bei Fragen oder Anregungen erreichst du uns unter{" "}
-                <a href="mailto:info@kletterliga-nrw.de" className="text-secondary hover:underline">
-                  info@kletterliga-nrw.de
-                </a>
-              </p>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
 
       {/* Regelwerk-Abschnitt */}
       <section className="section-padding bg-background border-t border-border/60">
