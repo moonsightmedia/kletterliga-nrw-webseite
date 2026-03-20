@@ -37,14 +37,14 @@ const enrichGym = (gym: Gym): Gym => {
 
   // Local transparent fallback logos (avoid external hotlink/broken DNS issues)
   const logoFallbacks: Record<string, string> = {
-    "2T Lindlar": "/gym-logos/2t-lindlar.svg",
-    "Canyon Chorweiler": "/gym-logos/canyon-chorweiler.svg",
-    "Chimpanzodrome Frechen": "/gym-logos/chimpanzodrome-frechen.svg",
-    "DAV Alpinzentrum Bielefeld": "/gym-logos/dav-bielefeld.svg",
-    "KletterBar Münster": "/gym-logos/kletterbar-muenster.svg",
-    "Kletterfabrik Köln": "/gym-logos/kletterfabrik-koeln.svg",
-    "Kletterwelt Sauerland": "/gym-logos/kletterwelt-sauerland.svg",
-    "OWL": "/gym-logos/owl.svg",
+    "2T Lindlar": "/gym-logos-real/2t-lindlar.png",
+    "Canyon Chorweiler": "/gym-logos-real/canyon-chorweiler.jpg",
+    "Chimpanzodrome Frechen": "/gym-logos-real/chimpanzodrome-frechen.png",
+    "DAV Alpinzentrum Bielefeld": "/gym-logos-real/dav-bielefeld.svg",
+    "KletterBar Münster": "/gym-logos-real/kletterbar-muenster.png",
+    "Kletterfabrik Köln": "/gym-logos-real/kletterfabrik-koeln.png",
+    "Kletterwelt Sauerland": "/gym-logos-real/kletterwelt-sauerland.jpg",
+    "OWL": "/gym-logos-real/owl.jpg",
   };
 
   return {
@@ -71,7 +71,7 @@ const MISSING_OFFICIAL_GYMS: Gym[] = [
     postal_code: null,
     address: null,
     website: "https://kletterbar-muenster.de",
-    logo_url: "/gym-logos/kletterbar-muenster.svg",
+    logo_url: "/gym-logos-real/kletterbar-muenster.png",
     opening_hours: null,
   },
   {
@@ -81,7 +81,7 @@ const MISSING_OFFICIAL_GYMS: Gym[] = [
     postal_code: null,
     address: null,
     website: "https://www.kletterfabrik.koeln",
-    logo_url: "/gym-logos/kletterfabrik-koeln.svg",
+    logo_url: "/gym-logos-real/kletterfabrik-koeln.png",
     opening_hours: null,
   },
   {
@@ -91,7 +91,7 @@ const MISSING_OFFICIAL_GYMS: Gym[] = [
     postal_code: null,
     address: null,
     website: "https://www.kletterzentrum-owl.de",
-    logo_url: "/gym-logos/owl.svg",
+    logo_url: "/gym-logos-real/owl.jpg",
     opening_hours: null,
   },
 ];
