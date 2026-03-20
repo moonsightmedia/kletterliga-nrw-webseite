@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { Heart, Mail } from "lucide-react";
-import { mainSponsors, partnerSponsors } from "@/data/sponsors";
+import { mainSponsors } from "@/data/sponsors";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Sponsoren = () => {
@@ -77,63 +77,6 @@ const Sponsoren = () => {
         </div>
       </section>
 
-      {/* Other Sponsors */}
-      <section className="section-padding bg-muted/50">
-        <div className="container-kl">
-          <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
-              WEITERE PARTNER
-            </h2>
-          </AnimatedSection>
-
-          {partnerSponsors.length === 0 ? (
-            <AnimatedSection animation="fade-up" className="text-center text-muted-foreground">
-              Weitere Partner werden in Kürze veröffentlicht.
-            </AnimatedSection>
-          ) : (
-            <StaggeredAnimation 
-              className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
-              staggerDelay={75}
-              animation="fade-up"
-            >
-              {partnerSponsors.map((sponsor) => {
-                const Wrapper = sponsor.website ? "a" : "div";
-                return (
-                  <Wrapper
-                    key={sponsor.name}
-                    href={sponsor.website}
-                    target={sponsor.website ? "_blank" : undefined}
-                    rel={sponsor.website ? "noopener noreferrer" : undefined}
-                    className="card-kl flex flex-col items-center justify-center text-center p-6 group"
-                  >
-                    <div className="w-20 h-20 -skew-x-6 bg-accent/30 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
-                      {sponsor.logoUrl ? (
-                        <img
-                          src={sponsor.logoUrl}
-                          alt={`Logo ${sponsor.name}`}
-                          className="skew-x-6 w-14 h-14 object-contain"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                          {sponsor.name.charAt(0)}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-medium text-primary mb-1">{sponsor.name}</h3>
-                    <span className="text-xs text-muted-foreground">{sponsor.tier}</span>
-                    {sponsor.isPlaceholder && (
-                      <span className="mt-2 text-[11px] text-muted-foreground">
-                        Platzhalter
-                      </span>
-                    )}
-                  </Wrapper>
-                );
-              })}
-            </StaggeredAnimation>
-          )}
-        </div>
-      </section>
 
       {/* Become Sponsor Section */}
       <section className="section-padding bg-gradient-kl">
