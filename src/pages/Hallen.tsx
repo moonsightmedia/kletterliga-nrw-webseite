@@ -11,6 +11,56 @@ import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 const mapSearchUrl = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
+const OFFICIAL_GYMS = new Set([
+  "2T Lindlar",
+  "Kletterzentrum OWL",
+  "Canyon Chorweiler",
+  "DAV Alpinzentrum Bielefeld",
+  "KletterBar Münster",
+  "Kletterwelt Sauerland",
+  "Kletterfabrik Köln",
+  "Chimpanzodrome Frechen",
+]);
+
+const normalizeGymName = (name: string) => {
+  if (name === "Kletterzentrum OWL" || name === "DAV Kletterzentrum Siegerland") return "Kletterzentrum OWL";
+  return name;
+};
+
+const enrichGym = (gym: Gym): Gym => {
+  const normalizedName = normalizeGymName(gym.name);
+  const normalizedWebsite = gym.website
+    ? gym.website.startsWith("http")
+      ? gym.website
+      : `https://${gym.website}`
+    : gym.website;
+
+  // Fallback logo urls for official gyms when DB has no logo yet
+  const logoFallbacks: Record<string, string> = {
+    "Canyon Chorweiler": "https://canyon-chorweiler.de/wp-content/uploads/2021/10/cropped-LogoCC-7427.jpg",
+    "Chimpanzodrome Frechen": "https://chimpanzodrome.de/wp-content/uploads/2022/03/logo-b.png",
+    "Kletterwelt Sauerland": "https://www.kletterwelt-sauerland.de/wp-content/uploads/2020/12/logo_kws.jpg",
+    "Kletterzentrum OWL": "https://www.kletterzentrum-owl.de/wp-content/uploads/2016/11/Logo_KLZ_320-180x70.jpg",
+    "KletterBar Münster": "https://kletterbar-muenster.de/wp-content/uploads/2023/05/KletterBar_WortBild_Muenster_Schwarz-Orange_250.png",
+    "Kletterfabrik Köln": "https://www.kletterfabrik.koeln/files/daten/icon/apple-touch-icon.png",
+  };
+
+  return {
+    ...gym,
+    name: normalizedName,
+    website: normalizedWebsite,
+    logo_url: gym.logo_url ?? logoFallbacks[normalizedName] ?? null,
+  };
+};
+
+const pickBetterGym = (a: Gym, b: Gym) => {
+  const score = (g: Gym) =>
+    Number(Boolean(g.logo_url)) +
+    Number(Boolean(g.website)) +
+    Number(Boolean(g.address && g.address.length > 10));
+  return score(b) > score(a) ? b : a;
+};
+
 const Hallen = () => {
   usePageMeta({
     title: "Teilnehmende Hallen",
@@ -39,7 +89,21 @@ const Hallen = () => {
           setError(err.message ?? "Hallen konnten nicht geladen werden.");
           setGyms([]);
         } else {
-          setGyms(data ?? []);
+          const cleaned = (data ?? [])
+            .map(enrichGym)
+            .filter((gym) => OFFICIAL_GYMS.has(gym.name))
+            .reduce<Gym[]>((acc, gym) => {
+              const idx = acc.findIndex((g) => g.name === gym.name);
+              if (idx === -1) {
+                acc.push(gym);
+              } else {
+                acc[idx] = pickBetterGym(acc[idx], gym);
+              }
+              return acc;
+            }, [])
+            .sort((a, b) => a.name.localeCompare(b.name, "de"));
+
+          setGyms(cleaned);
         }
       })
       .finally(() => setLoading(false));
