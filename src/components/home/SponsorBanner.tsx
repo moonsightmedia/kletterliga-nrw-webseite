@@ -2,7 +2,11 @@ const sponsor = {
   name: "Kletterladen NRW",
   label: "Hauptsponsor",
   website: "kletterladen.nrw",
-  logoShort: "KL",
+  address: "Süllenstraße 28, 40599 Düsseldorf",
+  phone: "+49 211-731 603 31",
+  openingHours: "Di-Fr 11:00-19:00 • Sa 10:00-16:00",
+  logoUrl:
+    "https://kletterladen.nrw/themes/Frontend/Kletterladen/frontend/_public/src/img/logos/apple-touch-icon-152x152.png",
 };
 
 export const SponsorBanner = () => {
@@ -18,13 +22,16 @@ export const SponsorBanner = () => {
             className="flex items-center gap-2 flex-shrink-0 mx-6"
             aria-label="Hauptsponsor Kletterladen NRW"
           >
-            <div className="w-6 h-6 -skew-x-6 bg-accent flex items-center justify-center">
-              <span className="skew-x-6 font-headline text-xs text-primary">
-                {sponsor.logoShort}
-              </span>
+            <div className="w-6 h-6 -skew-x-6 bg-accent overflow-hidden flex items-center justify-center">
+              <img
+                src={sponsor.logoUrl}
+                alt="Logo Kletterladen NRW"
+                className="skew-x-6 w-5 h-5 object-contain"
+                loading="lazy"
+              />
             </div>
             <span className="text-primary-foreground font-medium text-xs whitespace-nowrap">
-              {sponsor.label}: {sponsor.name} • {sponsor.website}
+              {sponsor.label}: {sponsor.name} • {sponsor.address} • {sponsor.phone} • {sponsor.openingHours} • {sponsor.website}
             </span>
           </a>
         ))}
