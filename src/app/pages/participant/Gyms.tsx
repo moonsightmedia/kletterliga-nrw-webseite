@@ -7,6 +7,36 @@ import { listGyms, listResultsForUser, listRoutes, checkGymCodeRedeemed } from "
 import { useAuth } from "@/app/auth/AuthProvider";
 import type { Gym, Result, Route } from "@/services/appTypes";
 
+const OFFICIAL_GYMS = new Set([
+  "2T Lindlar",
+  "OWL",
+  "Canyon Chorweiler",
+  "DAV Alpinzentrum Bielefeld",
+  "KletterBar Münster",
+  "Kletterwelt Sauerland",
+  "Kletterfabrik Köln",
+  "Chimpanzodrome Frechen",
+]);
+
+const normalizeGymName = (name: string) => {
+  const cleaned = name.trim().replace(/\s+/g, " ");
+  if (cleaned === "Kletterzentrum OWL" || cleaned === "DAV Kletterzentrum Siegerland") return "OWL";
+  return cleaned;
+};
+
+const gymKey = (name: string) => normalizeGymName(name).toLocaleLowerCase("de");
+
+const LOGO_FALLBACKS: Record<string, string> = {
+  "2T Lindlar": "/gym-logos-real/2t-lindlar.png",
+  "Canyon Chorweiler": "/gym-logos-real/canyon-chorweiler.jpg",
+  "Chimpanzodrome Frechen": "/gym-logos-real/chimpanzodrome-frechen.png",
+  "DAV Alpinzentrum Bielefeld": "/gym-logos-real/dav-bielefeld.svg",
+  "KletterBar Münster": "/gym-logos-real/kletterbar-muenster.png",
+  "Kletterfabrik Köln": "/gym-logos-real/kletterfabrik-koeln.png",
+  "Kletterwelt Sauerland": "/gym-logos-real/kletterwelt-sauerland.jpg",
+  "OWL": "/gym-logos-real/owl.jpg",
+};
+
 const Gyms = () => {
   const { profile } = useAuth();
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -15,7 +45,25 @@ const Gyms = () => {
   const [unlockedGyms, setUnlockedGyms] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    listGyms().then(({ data }) => setGyms(data ?? []));
+    listGyms().then(({ data }) => {
+      const cleaned = (data ?? [])
+        .map((gym) => {
+          const normalizedName = normalizeGymName(gym.name);
+          return {
+            ...gym,
+            name: normalizedName,
+            logo_url: LOGO_FALLBACKS[normalizedName] ?? gym.logo_url,
+          };
+        })
+        .filter((gym) => OFFICIAL_GYMS.has(gym.name))
+        .reduce<Gym[]>((acc, gym) => {
+          const idx = acc.findIndex((g) => gymKey(g.name) === gymKey(gym.name));
+          if (idx === -1) acc.push(gym);
+          return acc;
+        }, []);
+
+      setGyms(cleaned.sort((a, b) => a.name.localeCompare(b.name, "de")));
+    });
     listRoutes().then(({ data }) => setRoutes(data ?? []));
   }, []);
 

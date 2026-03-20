@@ -23,9 +23,12 @@ const OFFICIAL_GYMS = new Set([
 ]);
 
 const normalizeGymName = (name: string) => {
-  if (name === "Kletterzentrum OWL" || name === "DAV Kletterzentrum Siegerland") return "OWL";
-  return name;
+  const cleaned = name.trim().replace(/\s+/g, " ");
+  if (cleaned === "Kletterzentrum OWL" || cleaned === "DAV Kletterzentrum Siegerland") return "OWL";
+  return cleaned;
 };
+
+const gymKey = (name: string) => normalizeGymName(name).toLocaleLowerCase("de");
 
 const enrichGym = (gym: Gym): Gym => {
   const normalizedName = normalizeGymName(gym.name);
@@ -129,7 +132,7 @@ const Hallen = () => {
             .map(enrichGym)
             .filter((gym) => OFFICIAL_GYMS.has(gym.name))
             .reduce<Gym[]>((acc, gym) => {
-              const idx = acc.findIndex((g) => g.name === gym.name);
+              const idx = acc.findIndex((g) => gymKey(g.name) === gymKey(gym.name));
               if (idx === -1) {
                 acc.push(gym);
               } else {
@@ -140,7 +143,7 @@ const Hallen = () => {
 
           const withFallbacks = [...cleaned];
           for (const fallbackGym of MISSING_OFFICIAL_GYMS) {
-            if (!withFallbacks.some((g) => g.name === fallbackGym.name)) {
+            if (!withFallbacks.some((g) => gymKey(g.name) === gymKey(fallbackGym.name))) {
               withFallbacks.push(fallbackGym);
             }
           }
