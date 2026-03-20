@@ -61,6 +61,31 @@ const pickBetterGym = (a: Gym, b: Gym) => {
   return score(b) > score(a) ? b : a;
 };
 
+const MISSING_OFFICIAL_GYMS: Gym[] = [
+  {
+    id: "fallback-kletterbar-muenster",
+    name: "KletterBar Münster",
+    city: "Münster",
+    postal_code: null,
+    address: null,
+    website: "https://kletterbar-muenster.de",
+    logo_url:
+      "https://kletterbar-muenster.de/wp-content/uploads/2023/05/KletterBar_WortBild_Muenster_Schwarz-Orange_250.png",
+    opening_hours: null,
+  },
+  {
+    id: "fallback-kletterfabrik-koeln",
+    name: "Kletterfabrik Köln",
+    city: "Köln",
+    postal_code: null,
+    address: null,
+    website: "https://www.kletterfabrik.koeln",
+    logo_url: "https://www.kletterfabrik.koeln/files/daten/icon/apple-touch-icon.png",
+    opening_hours: null,
+  },
+];
+
+
 const Hallen = () => {
   usePageMeta({
     title: "Teilnehmende Hallen",
@@ -100,10 +125,17 @@ const Hallen = () => {
                 acc[idx] = pickBetterGym(acc[idx], gym);
               }
               return acc;
-            }, [])
-            .sort((a, b) => a.name.localeCompare(b.name, "de"));
+            }, []);
 
-          setGyms(cleaned);
+          const withFallbacks = [...cleaned];
+          for (const fallbackGym of MISSING_OFFICIAL_GYMS) {
+            if (!withFallbacks.some((g) => g.name === fallbackGym.name)) {
+              withFallbacks.push(fallbackGym);
+            }
+          }
+
+          const sorted = withFallbacks.sort((a, b) => a.name.localeCompare(b.name, "de"));
+          setGyms(sorted);
         }
       })
       .finally(() => setLoading(false));
