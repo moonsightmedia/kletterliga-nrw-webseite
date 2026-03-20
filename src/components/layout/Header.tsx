@@ -10,7 +10,6 @@ const navItems = [
   { label: "Die Liga", href: "/liga" },
   { label: "Modus & Regeln", href: "/modus" },
   { label: "Hallen", href: "/hallen" },
-  { label: "Ranglisten", href: "/ranglisten" },
   { label: "Sponsoren", href: "/sponsoren" },
 ];
 

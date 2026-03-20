@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Outlet, useLocation, NavLink, Link } from "react-router-dom";
 import { BottomNav } from "@/app/components/BottomNav";
-import { Home, ListOrdered, MapPinned, User } from "lucide-react";
+import { Home, ListOrdered, MapPinned, User, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { getUnlockDate, isParticipantFeatureLocked } from "@/config/launch";
 
 const getPageTitle = (path: string) => {
   if (path.startsWith("/app/participation/redeem")) return "Teilnahme freischalten";
@@ -18,11 +19,13 @@ const getPageTitle = (path: string) => {
   return "Home";
 };
 
+const featureLocked = isParticipantFeatureLocked();
+
 const sidebarItems = [
-  { to: "/app", label: "Home", icon: Home },
-  { to: "/app/gyms", label: "Hallen", icon: MapPinned },
-  { to: "/app/rankings", label: "Ranglisten", icon: ListOrdered },
-  { to: "/app/profile", label: "Profil", icon: User },
+  { to: "/app", label: "Home", icon: Home, locked: false },
+  { to: "/app/gyms", label: "Hallen", icon: MapPinned, locked: featureLocked },
+  { to: "/app/rankings", label: "Ranglisten", icon: ListOrdered, locked: featureLocked },
+  { to: "/app/profile", label: "Profil", icon: User, locked: false },
 ];
 
 export const ParticipantLayout = () => {
@@ -31,6 +34,7 @@ export const ParticipantLayout = () => {
   const title = getPageTitle(location.pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const participationInactive = profile && profile.role === "participant" && !profile.participation_activated_at;
+  const unlockDate = getUnlockDate().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 
   return (
     <div className="min-h-screen bg-accent/30 desktop-layout-flex">
@@ -53,6 +57,22 @@ export const ParticipantLayout = () => {
             const Icon = item.icon;
             const exactPaths = ["/app"];
             const isExact = exactPaths.includes(item.to);
+
+            if (item.locked) {
+              return (
+                <div
+                  key={item.to}
+                  className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/40 bg-accent/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span>{item.label}</span>
+                  </div>
+                  <Lock className="h-4 w-4" />
+                </div>
+              );
+            }
+
             return (
               <NavLink
                 key={item.to}
@@ -86,6 +106,13 @@ export const ParticipantLayout = () => {
 
         {/* Content */}
         <main className="flex-1 px-5 pt-6 pb-24 lg:px-8 lg:pt-8 lg:pb-8 lg:max-w-7xl lg:mx-auto lg:w-full">
+          {featureLocked && (
+            <div className="mb-4 p-4 rounded-lg border-2 border-primary/30 bg-primary/5">
+              <p className="text-sm font-medium text-foreground">
+                Dashboard und Account sind aktiv. Weitere Bereiche werden am {unlockDate} freigeschaltet.
+              </p>
+            </div>
+          )}
           {participationInactive && (
             <div className="mb-4 p-4 rounded-lg border-2 border-amber-500/50 bg-amber-500/10">
               <p className="text-sm font-medium text-foreground">

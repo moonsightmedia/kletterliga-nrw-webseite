@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { getPublicRankings } from "@/services/appApi";
+import { getUnlockDate, isPublicRankingsEnabled } from "@/config/launch";
 
 const ageGroups = ["U15", "Ü15", "Ü40"] as const;
 const getCategoryFromFilters = (age: typeof ageGroups[number], gender: "m" | "w") => {
@@ -42,8 +43,16 @@ const Ranglisten = () => {
 
   const apiLeague = league === "vorstieg" ? "lead" : "toprope";
   const category = getCategoryFromFilters(ageFilter, genderFilter);
+  const publicRankingsEnabled = isPublicRankingsEnabled();
 
   useEffect(() => {
+    if (!publicRankingsEnabled) {
+      setLoading(false);
+      setCurrentData([]);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     getPublicRankings(apiLeague, category)
@@ -62,9 +71,50 @@ const Ranglisten = () => {
         }
       })
       .finally(() => setLoading(false));
-  }, [apiLeague, category]);
+  }, [apiLeague, category, publicRankingsEnabled]);
 
   const categoryLabel = getCategoryLabel(ageFilter, genderFilter);
+
+  if (!publicRankingsEnabled) {
+    const unlockDate = getUnlockDate().toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    return (
+      <PageLayout>
+        <PageHeader title="RANGLISTEN" subtitle="Die Ranglisten gehen zum Saisonstart live." />
+        <section className="section-padding bg-background">
+          <div className="container-kl">
+            <AnimatedSection animation="fade-up">
+              <div className="max-w-3xl mx-auto bg-accent/30 p-6 md:p-8 text-center -skew-x-3">
+                <div className="skew-x-3 space-y-4">
+                  <h2 className="font-headline text-2xl md:text-3xl text-primary">RANGLISTEN AB {unlockDate}</h2>
+                  <p className="text-muted-foreground">
+                    Die öffentliche Rangliste ist aktuell pausiert. Registrierung und Dashboard sind bereits verfügbar,
+                    die Wettbewerbsbereiche werden zum Saisonstart freigeschaltet.
+                  </p>
+                  <div className="flex justify-center gap-3 flex-wrap">
+                    <Button asChild variant="secondary" size="lg">
+                      <a href="/app/register">
+                        <span className="skew-x-6">Account erstellen</span>
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" size="lg">
+                      <a href="/app">
+                        <span className="skew-x-6">Zum Teilnehmerbereich</span>
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
+        </section>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout>
