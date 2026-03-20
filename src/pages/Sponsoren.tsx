@@ -30,7 +30,7 @@ const Sponsoren = () => {
           </AnimatedSection>
 
           <StaggeredAnimation 
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
+            className="grid grid-cols-1 gap-8 max-w-xl mx-auto"
             staggerDelay={150}
             animation="scale"
           >
@@ -158,7 +158,7 @@ const Sponsoren = () => {
 
             <AnimatedSection animation="fade-up" delay={200}>
               <a 
-                href="mailto:sponsoring@kletterliga-nrw.de"
+                href="mailto:info@kletterliga-nrw.de"
                 className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-8 py-4 -skew-x-6 font-medium hover:bg-accent/90 transition-colors"
               >
                 <Mail className="skew-x-6" size={20} />
