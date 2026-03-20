@@ -13,7 +13,7 @@ const mapSearchUrl = (address: string) =>
 
 const OFFICIAL_GYMS = new Set([
   "2T Lindlar",
-  "Kletterzentrum OWL",
+  "OWL",
   "Canyon Chorweiler",
   "DAV Alpinzentrum Bielefeld",
   "KletterBar Münster",
@@ -23,7 +23,7 @@ const OFFICIAL_GYMS = new Set([
 ]);
 
 const normalizeGymName = (name: string) => {
-  if (name === "Kletterzentrum OWL" || name === "DAV Kletterzentrum Siegerland") return "Kletterzentrum OWL";
+  if (name === "Kletterzentrum OWL" || name === "DAV Kletterzentrum Siegerland") return "OWL";
   return name;
 };
 
@@ -35,21 +35,23 @@ const enrichGym = (gym: Gym): Gym => {
       : `https://${gym.website}`
     : gym.website;
 
-  // Fallback logo urls for official gyms when DB has no logo yet
+  // Local transparent fallback logos (avoid external hotlink/broken DNS issues)
   const logoFallbacks: Record<string, string> = {
-    "Canyon Chorweiler": "https://canyon-chorweiler.de/wp-content/uploads/2021/10/cropped-LogoCC-7427.jpg",
-    "Chimpanzodrome Frechen": "https://chimpanzodrome.de/wp-content/uploads/2022/03/logo-b.png",
-    "Kletterwelt Sauerland": "https://www.kletterwelt-sauerland.de/wp-content/uploads/2020/12/logo_kws.jpg",
-    "Kletterzentrum OWL": "https://www.kletterzentrum-owl.de/wp-content/uploads/2016/11/Logo_KLZ_320-180x70.jpg",
-    "KletterBar Münster": "https://kletterbar-muenster.de/wp-content/uploads/2023/05/KletterBar_WortBild_Muenster_Schwarz-Orange_250.png",
-    "Kletterfabrik Köln": "https://www.kletterfabrik.koeln/files/daten/icon/apple-touch-icon.png",
+    "2T Lindlar": "/gym-logos/2t-lindlar.svg",
+    "Canyon Chorweiler": "/gym-logos/canyon-chorweiler.svg",
+    "Chimpanzodrome Frechen": "/gym-logos/chimpanzodrome-frechen.svg",
+    "DAV Alpinzentrum Bielefeld": "/gym-logos/dav-bielefeld.svg",
+    "KletterBar Münster": "/gym-logos/kletterbar-muenster.svg",
+    "Kletterfabrik Köln": "/gym-logos/kletterfabrik-koeln.svg",
+    "Kletterwelt Sauerland": "/gym-logos/kletterwelt-sauerland.svg",
+    "OWL": "/gym-logos/owl.svg",
   };
 
   return {
     ...gym,
     name: normalizedName,
     website: normalizedWebsite,
-    logo_url: gym.logo_url ?? logoFallbacks[normalizedName] ?? null,
+    logo_url: logoFallbacks[normalizedName] ?? gym.logo_url ?? null,
   };
 };
 
@@ -69,8 +71,7 @@ const MISSING_OFFICIAL_GYMS: Gym[] = [
     postal_code: null,
     address: null,
     website: "https://kletterbar-muenster.de",
-    logo_url:
-      "https://kletterbar-muenster.de/wp-content/uploads/2023/05/KletterBar_WortBild_Muenster_Schwarz-Orange_250.png",
+    logo_url: "/gym-logos/kletterbar-muenster.svg",
     opening_hours: null,
   },
   {
@@ -80,7 +81,17 @@ const MISSING_OFFICIAL_GYMS: Gym[] = [
     postal_code: null,
     address: null,
     website: "https://www.kletterfabrik.koeln",
-    logo_url: "https://www.kletterfabrik.koeln/files/daten/icon/apple-touch-icon.png",
+    logo_url: "/gym-logos/kletterfabrik-koeln.svg",
+    opening_hours: null,
+  },
+  {
+    id: "fallback-owl",
+    name: "OWL",
+    city: "Bielefeld",
+    postal_code: null,
+    address: null,
+    website: "https://www.kletterzentrum-owl.de",
+    logo_url: "/gym-logos/owl.svg",
     opening_hours: null,
   },
 ];
@@ -181,7 +192,7 @@ const Hallen = () => {
                 >
                   <div className="w-20 h-20 flex-shrink-0 -skew-x-6 bg-accent/50 flex items-center justify-center group-hover:bg-secondary transition-colors duration-300 overflow-hidden">
                     {gym.logo_url ? (
-                      <img src={gym.logo_url} alt={gym.name} className="skew-x-6 h-full w-full object-contain p-1" />
+                      <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-1" />
                     ) : (
                       <span className="skew-x-6 font-headline text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
                         {gym.name.charAt(0)}
