@@ -124,7 +124,7 @@ const Regelwerk = () => {
             </div>
             <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
               <p>
-                Die Liga wird in zwei getrennten <strong className="text-foreground">Ligen</strong> durchgeführt:
+                Die Kletterliga NRW wird in zwei getrennten <strong className="text-foreground">Ligen</strong> durchgeführt:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
@@ -181,19 +181,20 @@ const Regelwerk = () => {
               <p>
                 <strong className="text-foreground">Versuch (Attempt):</strong> Ein Versuch beginnt,
                 sobald die Teilnehmer:in den Boden verlässt bzw. die Route aktiv startet. Ein Versuch
-                endet mit Sturz, Abbruch, Entlastung des Seils oder Rückkehr auf den Boden. Jeder
+                endet mit Sturz, Abbruch oder Rückkehr auf den Boden. Jeder
                 neue Einstieg in dieselbe Route zählt als neuer Versuch.
               </p>
               <p>
                 <strong className="text-foreground">Flash-Bonus:</strong> Wird eine Route im ersten
-                Versuch bis mindestens Zone 1 oder höher geklettert, wird ein pauschaler Zusatzpunkt
-                (+1) gutgeschrieben. Der Flash-Bonus wird pro Route maximal einmal vergeben.
+                Versuch bis zum Top geklettert, wird ein pauschaler Zusatzpunkt (+1)
+                gutgeschrieben. Der Flash-Bonus wird pro Route maximal einmal vergeben.
               </p>
               <p>
                 Pro Route wird nur das <strong className="text-foreground">beste Ergebnis</strong> einer
                 Teilnehmer:in innerhalb der Qualifikationsphase gewertet. Spätere Verbesserungen
                 ersetzen das vorherige Ergebnis für diese Route. Es werden nur Routen gewertet, die
-                in Partnerhallen der Kletterliga NRW ausgehängt und im System der Liga erfasst sind.
+                in Partnerhallen der Kletterliga NRW ausgehängt, als „Kletterliga-NRW-Route"
+                gekennzeichnet und im System der Liga erfasst sind.
               </p>
             </div>
           </article>
@@ -228,13 +229,14 @@ const Regelwerk = () => {
                 <li>Ü40: 40 Jahre und älter</li>
               </ul>
               <p>
-                Zusätzlich können weitere Altersklassen (z. B. U9, U11, U13, Ü50) für Ranglisten
-                ohne Finalrelevanz geführt werden. Für die Qualifikation zu Halbfinale und Finale
+                Zusätzlich werden weitere Altersklassen (z. B. U9, U11, U13, Ü50) für Ranglisten
+                ohne Finalrelevanz geführt. Für die Qualifikation zu Halbfinale und Finale
                 sind nur die in der Ausschreibung als „finalrelevant“ bezeichneten Wertungsklassen
                 maßgeblich (in der Regel U15 w/m, Ü15 w/m, Ü40 w/m).
               </p>
               <p>
-                Die Zuordnung zu Liga und Wertungsklasse erfolgt bei der Registrierung. Änderungen
+                Die Auswahl der Liga und die Zuordnung zur Wertungsklasse erfolgen bei der
+                Anmeldung zur jeweiligen jährlichen Kletterliga-NRW-Saison. Änderungen
                 (z. B. Liga- oder Geschlechtswechsel) sind nur über das von der Liga bereitgestellte
                 Verfahren (z. B. Änderungsantrag) und nach Prüfung durch die Organisation möglich.
               </p>
@@ -276,12 +278,12 @@ const Regelwerk = () => {
                 <strong className="text-foreground">Anmeldung Halbfinale:</strong> Qualifizierte und
                 Wildcard-Gewinner:innen müssen sich bis zu einer festgelegten Frist verbindlich zum
                 Halbfinale anmelden. Ohne rechtzeitige Anmeldung verfällt der Startplatz; Nachrücker
-                können berücksichtigt werden.
+                werden berücksichtigt.
               </p>
               <p>
                 <strong className="text-foreground">Halbfinale:</strong> Im Halbfinale sind 5 Routen
-                in einem vorgegebenen Zeitfenster zu klettern. Pro Route gilt ein Zeitlimit von
-                5 Minuten. Die Top 6 pro Wertungsklasse ziehen ins Finale ein.
+                in einem vorgegebenen Zeitfenster zu klettern. Pro Route gilt ein Kletterzeitlimit
+                von 5 Minuten. Die Top 6 pro Wertungsklasse ziehen ins Finale ein.
               </p>
               <p>
                 <strong className="text-foreground">Finale:</strong> Im Finale wird je Wertungsklasse
@@ -319,23 +321,23 @@ const Regelwerk = () => {
                 <strong className="text-foreground">Teilnahmegebühr und Mastercode:</strong> Um in
                 den Ranglisten gewertet zu werden, muss die Teilnahme durch Einlösen eines
                 <strong className="text-foreground"> Mastercodes</strong> freigeschaltet werden. Den
-                Mastercode erhalten Teilnehmer:innen nach Zahlung der Teilnahmegebühr von
-                15 € in einer der teilnehmenden Hallen. Der Mastercode ist
-                einmalig pro Saison und Account einzulösen. Ohne gültig eingelösten Mastercode
-                werden keine Ergebnisse in den Ranglisten berücksichtigt.
+                Mastercode erhalten Teilnehmer:innen nach Zahlung der Teilnahmegebühr in einer
+                der teilnehmenden Hallen. Der Mastercode ist einmalig pro Saison und Account
+                einzulösen. Ohne gültig eingelösten Mastercode können keine Ergebnisse eingetragen
+                werden.
               </p>
               <p>
                 <strong className="text-foreground">Hallen-Codes:</strong> Um Ergebnisse in einer
                 bestimmten Partnerhalle eintragen zu können, muss die Halle für den Account
-                freigeschaltet sein. Dafür ist der jeweilige <strong className="text-foreground">Hallen-Code</strong> vor
+                freigeschaltet werden. Dafür ist der jeweilige <strong className="text-foreground">Hallen-Code</strong> vor
                 Ort (kostenfrei) zu erhalten und einmalig im Account einzugeben. Pro Halle ist nur
-                ein Code pro Teilnehmer:in nötig. Ohne Freischaltung der Halle können keine Routen
-                dieser Halle gewertet werden.
+                ein Code pro Teilnehmer:in nötig. Ohne Freischaltung der Halle können keine
+                Ergebnisse dieser Halle eingetragen werden.
               </p>
               <p>
                 Die Teilnahmegebühr und die Modalitäten des Mastercodes können je Saison angepasst
-                werden; die gültigen Beträge und Schritte sind der aktuellen Ausschreibung und der
-                Website zu entnehmen.
+                werden; die gültigen Beträge und Schritte können der aktuellen Ausschreibung und
+                der Website entnommen werden.
               </p>
             </div>
           </article>
@@ -366,8 +368,9 @@ const Regelwerk = () => {
               </p>
               <p>
                 <strong className="text-foreground">Korrekturfrist:</strong> Nachträgliche Korrekturen
-                sind bis 24 Stunden nach Eintragung zulässig. Danach sind Änderungen nur noch auf
-                schriftlichen Antrag und nach Prüfung durch die Liga-Organisation möglich.
+                sind bis 24 Stunden nach Eintragung zulässig, spätestens jedoch bis zum Ende der
+                Qualifikationsphase. Danach sind Änderungen nur noch über das Einspruchsverfahren
+                gemäß § 11 möglich.
               </p>
               <p>
                 Nur Routen, die <strong className="text-foreground">innerhalb des offiziellen
@@ -415,6 +418,13 @@ const Regelwerk = () => {
                 Darstellung in der Halle bzw. durch die Halle. Die Organisatoren behalten sich
                 vor, stichprobenartige Kontrollen oder Rückfragen durchzuführen.
               </p>
+              <p>
+                <strong className="text-foreground">Teilnahmegrundsatz:</strong> Mit der Teilnahme
+                an der Kletterliga NRW verpflichten sich alle Teilnehmer:innen zu gegenseitigem
+                Respekt, zu verantwortungsvollem Verhalten in der Halle und zur Anwendung
+                korrekter Sicherungstechniken nach den jeweils geltenden Hallen- und
+                Sicherheitsregeln.
+              </p>
             </div>
           </article>
         </AnimatedSection>
@@ -447,7 +457,7 @@ const Regelwerk = () => {
                 <li>frühere Erreichung des Gesamtpunktestands (Zeitstempel der Eintragung)</li>
               </ol>
               <p>
-                Kann auch danach keine eindeutige Rangfolge bestimmt werden, entscheidet die Liga-Organisation per Losverfahren.
+                Kann auch danach keine eindeutige Rangfolge bestimmt werden, erhalten die betroffenen Teilnehmer:innen denselben Rang. Für nachgelagerte Qualifikationsstufen (z. B. Halbfinale) können entsprechend zusätzliche Startplätze entstehen.
               </p>
             </div>
           </article>
@@ -477,7 +487,7 @@ const Regelwerk = () => {
                 Die Liga-Organisation prüft den Einspruch, kann Nachweise anfordern und entscheidet in der Regel innerhalb von 7 Kalendertagen. Die Entscheidung wird dokumentiert und dem/der Einspruchsführenden mitgeteilt.
               </p>
               <p>
-                Nach Fristablauf ohne Einspruch gelten veröffentlichte Ergebnisse als verbindlich.
+                Nach Ablauf der Einspruchsfrist und Abschluss aller fristgerecht eingegangenen Klärungen gelten veröffentlichte Ergebnisse als verbindlich.
               </p>
             </div>
           </article>
