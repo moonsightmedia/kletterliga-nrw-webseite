@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import logo from "@/assets/logo.png";
 
 const navItems = [
@@ -100,12 +101,10 @@ export const Header = () => {
           {/* CTA Button (Desktop) - Inside the corner */}
           <div className="hidden lg:block relative z-10">
             <Button
-              asChild
               className="px-6"
+              onClick={(event) => handlePublicParticipantAccess(event, "/app")}
             >
-              <a href="/app">
-                <span className="skew-x-6">Teilnehmen</span>
-              </a>
+              <span className="skew-x-6">Teilnehmen</span>
             </Button>
           </div>
 
@@ -153,13 +152,11 @@ export const Header = () => {
               ))}
               <div className="pt-4 mt-2 border-t border-border">
                 <Button
-                  asChild
                   variant="secondary"
                   className="w-full min-h-12"
+                  onClick={(event) => handlePublicParticipantAccess(event, "/app")}
                 >
-                  <a href="/app">
-                    <span className="skew-x-6">Jetzt teilnehmen</span>
-                  </a>
+                  <span className="skew-x-6">Jetzt teilnehmen</span>
                 </Button>
               </div>
             </nav>

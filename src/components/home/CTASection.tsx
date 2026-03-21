@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import { listGyms } from "@/services/appApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
@@ -47,15 +48,15 @@ export const CTASection = () => {
           <AnimatedSection animation="fade-up" delay={200}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
               <Button
-                asChild
                 variant="secondary"
                 size="lg"
                 className="h-14 min-w-[200px] px-10 text-lg group"
+                onClick={(event) => handlePublicParticipantAccess(event, "/app")}
               >
-                <a href="/app" className="flex items-center justify-center">
+                <span className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt registrieren</span>
                   <ArrowRight className="ml-2 skew-x-6 group-hover:translate-x-1 transition-transform" size={20} />
-                </a>
+                </span>
               </Button>
               
               <Button

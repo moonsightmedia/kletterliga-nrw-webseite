@@ -6,6 +6,7 @@ import { ExternalLink, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import { getPublicRankings } from "@/services/appApi";
 import { getUnlockDate, isPublicRankingsEnabled } from "@/config/launch";
 
@@ -96,15 +97,19 @@ const Ranglisten = () => {
                     die Wettbewerbsbereiche werden zum Saisonstart freigeschaltet.
                   </p>
                   <div className="flex justify-center gap-3 flex-wrap">
-                    <Button asChild variant="secondary" size="lg">
-                      <a href="/app/register">
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={(event) => handlePublicParticipantAccess(event, "/app/register")}
+                    >
                         <span className="skew-x-6">Account erstellen</span>
-                      </a>
                     </Button>
-                    <Button asChild variant="outline" size="lg">
-                      <a href="/app">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={(event) => handlePublicParticipantAccess(event, "/app")}
+                    >
                         <span className="skew-x-6">Zum Teilnehmerbereich</span>
-                      </a>
                     </Button>
                   </div>
                 </div>
@@ -139,18 +144,15 @@ const Ranglisten = () => {
                 </p>
                 <div className="flex justify-center">
                   <Button
-                    asChild
                     variant="secondary"
                     size="lg"
                     className="w-auto max-w-full px-4 sm:px-8 text-sm sm:text-lg"
+                    onClick={(event) => handlePublicParticipantAccess(event, "/app/ranglisten")}
                   >
-                    <a
-                      href="/app/ranglisten"
-                      className="inline-flex items-center justify-center gap-2 text-center whitespace-normal sm:whitespace-nowrap"
-                    >
+                    <span className="inline-flex items-center justify-center gap-2 text-center whitespace-normal sm:whitespace-nowrap">
                       <span className="skew-x-6 inline-block leading-tight">Zum Teilnehmerbereich</span>
                       <ExternalLink className="skew-x-6" size={18} />
-                    </a>
+                    </span>
                   </Button>
                 </div>
               </div>

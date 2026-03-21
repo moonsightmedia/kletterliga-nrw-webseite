@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { Outlet, useLocation, NavLink, Link } from "react-router-dom";
 import { BottomNav } from "@/app/components/BottomNav";
 import { Home, ListOrdered, MapPinned, User, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { getUnlockDate, isParticipantFeatureLocked } from "@/config/launch";
+import { formatUnlockDate, isParticipantFeatureLocked } from "@/config/launch";
 
 const getPageTitle = (path: string) => {
   if (path.startsWith("/app/participation/redeem")) return "Teilnahme freischalten";
@@ -32,9 +31,8 @@ export const ParticipantLayout = () => {
   const location = useLocation();
   const { profile } = useAuth();
   const title = getPageTitle(location.pathname);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const participationInactive = profile && profile.role === "participant" && !profile.participation_activated_at;
-  const unlockDate = getUnlockDate().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const unlockDate = formatUnlockDate();
 
   return (
     <div className="min-h-screen bg-accent/30 desktop-layout-flex">
@@ -107,9 +105,10 @@ export const ParticipantLayout = () => {
         {/* Content */}
         <main className="flex-1 px-5 pt-6 pb-24 lg:px-8 lg:pt-8 lg:pb-8 lg:max-w-7xl lg:mx-auto lg:w-full">
           {featureLocked && (
-            <div className="mb-4 p-4 rounded-lg border-2 border-primary/30 bg-primary/5">
-              <p className="text-sm font-medium text-foreground">
-                Dashboard und Account sind aktiv. Weitere Bereiche werden am {unlockDate} freigeschaltet.
+            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-sm text-foreground">
+                Dein Dashboard ist schon aktiv. Hallen, Ranglisten und Codes werden am {unlockDate}
+                freigeschaltet.
               </p>
             </div>
           )}

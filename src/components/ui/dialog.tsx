@@ -36,15 +36,14 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 border bg-background shadow-lg duration-200",
+        "fixed z-50 border bg-background duration-200",
         // Mobile: Bottom sheet style
-        "bottom-2 left-2 right-2 top-auto translate-y-0 rounded-3xl border-2",
-        "w-auto max-w-none",
+        "bottom-0 left-0 right-0 top-auto w-full max-w-none translate-y-0 rounded-t-[1.75rem] rounded-b-none border-x-0 border-b-0 border-t-2 shadow-[0_-18px_40px_-24px_rgba(0,61,85,0.45)]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         "max-h-[90vh] overflow-y-auto",
         // Desktop: Centered modal with default padding
-        "sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:bottom-auto sm:right-auto sm:w-auto sm:max-w-lg sm:rounded-lg sm:border-t sm:border-b sm:grid sm:gap-4",
+        "sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:bottom-auto sm:right-auto sm:w-auto sm:max-w-lg sm:rounded-lg sm:border sm:shadow-lg sm:grid sm:gap-4",
         "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
         "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
         "sm:max-h-[85vh] sm:overflow-hidden",
@@ -55,8 +54,8 @@ const DialogContent = React.forwardRef<
       {...props}
       >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/35 bg-background/95 text-primary shadow-sm transition-all hover:border-primary/60 hover:bg-accent hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none sm:h-9 sm:w-9">
-        <X className="h-5 w-5 sm:h-4 sm:w-4" strokeWidth={2.25} />
+      <DialogPrimitive.Close className="absolute right-5 top-5 z-10 inline-flex h-11 min-w-12 items-center justify-center border-2 border-primary/30 bg-background/95 px-3 text-primary transition-all hover:border-primary/60 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none -skew-x-6 sm:right-4 sm:top-4 sm:h-9 sm:min-w-10 sm:px-2.5">
+        <X className="h-5 w-5 skew-x-6 sm:h-4 sm:w-4" strokeWidth={2.25} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -65,7 +64,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left pt-6 px-6 sm:pt-0 sm:px-0", className)} {...props} />
+  <div className={cn("flex flex-col space-y-1.5 px-5 pt-5 text-center sm:px-0 sm:pt-0 sm:text-left", className)} {...props} />
 );
 DialogHeader.displayName = "DialogHeader";
 
@@ -80,7 +79,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-tight tracking-tight pr-8 sm:pr-10", className)}
+    className={cn("pr-14 text-lg font-semibold leading-tight tracking-tight sm:pr-10", className)}
     {...props}
   />
 ));

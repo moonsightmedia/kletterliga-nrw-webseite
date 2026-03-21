@@ -11,6 +11,10 @@ import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 const mapSearchUrl = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
+const isAbortError = (error: unknown) =>
+  error instanceof Error &&
+  (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
+
 const OFFICIAL_GYMS = new Set([
   "2T Lindlar",
   "OWL",
@@ -122,8 +126,13 @@ const Hallen = () => {
   const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
 
   useEffect(() => {
-    listGyms()
-      .then(({ data, error: err }) => {
+    let active = true;
+
+    const loadGyms = async () => {
+      try {
+        const { data, error: err } = await listGyms();
+        if (!active) return;
+
         if (err) {
           setError(err.message ?? "Hallen konnten nicht geladen werden.");
           setGyms([]);
@@ -151,8 +160,23 @@ const Hallen = () => {
           const sorted = withFallbacks.sort((a, b) => a.name.localeCompare(b.name, "de"));
           setGyms(sorted);
         }
-      })
-      .finally(() => setLoading(false));
+      } catch (error) {
+        if (!active || isAbortError(error)) return;
+        console.error("Failed to load public gyms", error);
+        setError("Hallen konnten nicht geladen werden.");
+        setGyms([]);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadGyms();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

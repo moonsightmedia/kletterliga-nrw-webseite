@@ -76,7 +76,7 @@ const GymRedeem = () => {
                   <span className="hidden md:inline">Scannen</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-md">
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Code scannen</DialogTitle>
                   <DialogDescription>Halte den QR-Code oder Barcode vor die Kamera.</DialogDescription>

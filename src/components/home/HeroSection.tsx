@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import logo from "@/assets/logo.png";
 import { listGyms } from "@/services/appApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
@@ -137,15 +138,15 @@ export const HeroSection = () => {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-stretch animate-fade-in-up" style={{ animationDelay: "250ms" }}>
               <Button
-                asChild
                 variant="secondary"
                 size="lg"
                 className="h-14 min-w-[200px] px-8 text-lg shadow-lg hover:shadow-xl"
+                onClick={(event) => handlePublicParticipantAccess(event, "/app")}
               >
-                <a href="/app" className="flex items-center justify-center">
+                <span className="flex items-center justify-center">
                   <span className="skew-x-6">Jetzt teilnehmen</span>
                   <ArrowRight className="ml-2 skew-x-6" size={20} />
-                </a>
+                </span>
               </Button>
               <Button
                 asChild

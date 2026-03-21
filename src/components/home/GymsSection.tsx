@@ -5,15 +5,40 @@ import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 
+const isAbortError = (error: unknown) =>
+  error instanceof Error &&
+  (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
+
 export const GymsSection = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGym, setSelectedGym] = useState<Gym | null>(null);
 
   useEffect(() => {
-    listGyms()
-      .then(({ data }) => setGyms(data ?? []))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    const loadGyms = async () => {
+      try {
+        const { data } = await listGyms();
+        if (active) {
+          setGyms(data ?? []);
+        }
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("Failed to load gyms", error);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadGyms();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

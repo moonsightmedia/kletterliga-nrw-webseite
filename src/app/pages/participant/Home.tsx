@@ -9,6 +9,7 @@ import { listGyms, listResultsForUser, listRoutes, listProfiles, listResults } f
 import type { Gym, Result, Route, Profile } from "@/services/appTypes";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import type { Stage } from "@/services/appTypes";
+import { formatUnlockDate, isBeforeAppUnlock } from "@/config/launch";
 
 const Home = () => {
   const { profile, user, role } = useAuth();
@@ -17,6 +18,8 @@ const Home = () => {
   const league = profile?.league || (user?.user_metadata?.league as string | undefined);
   const birthDate = profile?.birth_date ?? (user?.user_metadata?.birth_date as string | undefined);
   const gender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as "m" | "w" | undefined;
+  const prelaunchActive = isBeforeAppUnlock();
+  const unlockDate = formatUnlockDate();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [results, setResults] = useState<Result[]>([]);
@@ -241,6 +244,107 @@ const Home = () => {
 
   return (
     <div className="space-y-6">
+      {prelaunchActive && role === "participant" && (
+        <section className="rounded-3xl border border-secondary/20 bg-[linear-gradient(135deg,rgba(255,255,255,1)_0%,rgba(248,241,231,1)_100%)] p-6 shadow-[0_18px_48px_-36px_rgba(0,0,0,0.32)] md:p-8">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl space-y-3">
+                <div className="text-xs uppercase tracking-widest text-secondary">Pre-Launch Onboarding</div>
+                <h1 className="font-headline text-3xl text-primary md:text-4xl">
+                  Dein Account ist aktiv. Der Rest startet am {unlockDate}.
+                </h1>
+                <p className="text-sm leading-6 text-muted-foreground md:text-base">
+                  Du kannst dich schon jetzt einloggen, dein Profil prüfen und dich mit der App
+                  vertraut machen. Hallen, Codes, Ranglisten und weitere Wettbewerbsbereiche werden
+                  automatisch am {unlockDate} freigeschaltet.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-primary/15 bg-white/90 px-5 py-5 shadow-sm lg:max-w-xs">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                    <CalendarDays className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-secondary">Freischaltung</div>
+                    <div className="font-headline text-2xl text-primary">{unlockDate}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[28px] border border-border/60 bg-white/90 p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/80">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-secondary">Jetzt schon möglich</div>
+                    <div className="text-lg font-semibold text-primary">Vorbereitung ohne Zeitdruck</div>
+                  </div>
+                </div>
+                <ul className="mt-4 space-y-3 text-sm text-primary">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-secondary" />
+                    <span>Profil, Liga und persönliche Angaben prüfen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-secondary" />
+                    <span>Dashboard, Saisonablauf und Termine anschauen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-secondary" />
+                    <span>E-Mail-Bestätigung und Login schon komplett erledigen</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-[28px] border border-border/60 bg-white/90 p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10">
+                    <Trophy className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-widest text-secondary">Ab {unlockDate}</div>
+                    <div className="text-lg font-semibold text-primary">Dann geht die Liga live</div>
+                  </div>
+                </div>
+                <ul className="mt-4 space-y-3 text-sm text-primary">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                    <span>Hallen freischalten und Mastercodes einlösen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                    <span>Routen erfassen und Ergebnisse eintragen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                    <span>Ranglisten, Hallenübersicht und weitere Liga-Bereiche nutzen</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild>
+                <Link to="/app/profile">
+                  <span className="skew-x-6 inline-flex items-center gap-2">
+                    Profil vervollständigen
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Sobald die App am {unlockDate} freigeschaltet wird, erscheint hier automatisch der
+                direkte Einstieg in Hallen, Codes und Ranglisten.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-3xl border border-border border-t-4 border-t-secondary bg-white shadow-[0_12px_40px_-32px_rgba(0,0,0,0.35)]">
         <div className="grid gap-5 p-6 pt-5">
           <div className="flex items-start justify-between gap-4">

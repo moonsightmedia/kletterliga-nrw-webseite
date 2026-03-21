@@ -325,7 +325,7 @@ const LeagueParticipants = () => {
           <DialogHeader>
             <DialogTitle>Profil bearbeiten</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 px-5 pb-5 pt-4 sm:px-0 sm:pb-0">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-first-name">Vorname</Label>
@@ -418,7 +418,7 @@ const LeagueParticipants = () => {
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
             <Button variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto touch-manipulation">
               Abbrechen
             </Button>
@@ -435,7 +435,7 @@ const LeagueParticipants = () => {
           <DialogHeader>
             <DialogTitle>Profil löschen</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="px-5 pb-5 pt-3 sm:px-0 sm:pb-0">
             <p className="text-sm text-muted-foreground mb-4">
               Möchtest du das Profil von <strong>{deletingProfile?.first_name} {deletingProfile?.last_name}</strong> wirklich löschen?
             </p>
@@ -446,7 +446,7 @@ const LeagueParticipants = () => {
               Alle zugehörigen Ergebnisse werden ebenfalls gelöscht.
             </p>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
             <Button variant="outline" onClick={() => setDeletingProfile(null)} className="w-full sm:w-auto touch-manipulation">
               Abbrechen
             </Button>

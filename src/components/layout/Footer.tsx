@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, Mail } from "lucide-react";
+import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import logo from "@/assets/logo.png";
 
 const footerLinks = {
@@ -26,36 +27,35 @@ export const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container-kl py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] gap-12 md:gap-10">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] md:gap-10">
           <div>
-            <Link to="/" className="inline-flex items-center gap-4 mb-6">
+            <Link to="/" className="mb-6 inline-flex items-center gap-4">
               <img
                 src={logo}
                 alt="Kletterliga NRW"
-                className="w-16 h-16 md:w-20 md:h-20 object-contain flex-shrink-0"
+                className="h-16 w-16 flex-shrink-0 object-contain md:h-20 md:w-20"
               />
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="font-headline text-xl md:text-2xl text-primary-foreground tracking-wide whitespace-nowrap">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="font-headline whitespace-nowrap text-xl tracking-wide text-primary-foreground md:text-2xl">
                   KLETTERLIGA
                 </span>
-                <span className="font-headline text-xl md:text-2xl text-accent tracking-wide whitespace-nowrap">
+                <span className="font-headline whitespace-nowrap text-xl tracking-wide text-accent md:text-2xl">
                   NRW
                 </span>
               </div>
             </Link>
-            <p className="text-primary-foreground/70 text-lg leading-relaxed max-w-md">
-              Der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen.
-              Mehrere Hallen. Eine Liga. Ein Finale.
+            <p className="max-w-md text-lg leading-relaxed text-primary-foreground/70">
+              Der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen. Mehrere Hallen. Eine Liga. Ein Finale.
             </p>
 
-            <div className="flex gap-3 mt-8">
+            <div className="mt-8 flex gap-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 -skew-x-6 bg-primary-foreground/10 hover:bg-secondary flex items-center justify-center transition-colors"
+                  className="flex h-11 w-11 items-center justify-center -skew-x-6 bg-primary-foreground/10 transition-colors hover:bg-secondary"
                   aria-label={social.label}
                 >
                   <social.icon size={18} className="skew-x-6" />
@@ -65,15 +65,15 @@ export const Footer = () => {
           </div>
 
           <div className="md:text-right">
-            <h4 className="font-headline text-xl md:text-2xl mb-6 text-accent">NAVIGATION</h4>
+            <h4 className="mb-6 font-headline text-xl text-accent md:text-2xl">NAVIGATION</h4>
             <ul className="space-y-3">
               {footerLinks.navigation.map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="block text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-lg md:text-xl px-3 py-3 -skew-x-6"
+                    className="block -skew-x-6 px-3 py-3 text-lg text-primary-foreground/80 transition-colors hover:bg-accent/90 hover:text-primary md:text-xl"
                   >
-                    <span className="skew-x-6 inline-block">{link.label}</span>
+                    <span className="inline-block skew-x-6">{link.label}</span>
                   </Link>
                 </li>
               ))}
@@ -81,15 +81,15 @@ export const Footer = () => {
           </div>
 
           <div className="md:text-right">
-            <h4 className="font-headline text-xl md:text-2xl mb-6 text-accent">RECHTLICHES</h4>
+            <h4 className="mb-6 font-headline text-xl text-accent md:text-2xl">RECHTLICHES</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="inline-flex min-h-11 items-center text-primary-foreground/80 hover:text-primary hover:bg-accent/90 transition-colors text-base px-3 py-3 -skew-x-6"
+                    className="inline-flex min-h-11 items-center -skew-x-6 px-3 py-3 text-base text-primary-foreground/80 transition-colors hover:bg-accent/90 hover:text-primary"
                   >
-                    <span className="skew-x-6 inline-block">{link.label}</span>
+                    <span className="inline-block skew-x-6">{link.label}</span>
                   </Link>
                 </li>
               ))}
@@ -99,18 +99,19 @@ export const Footer = () => {
       </div>
 
       <div className="border-t border-primary-foreground/10">
-        <div className="container-kl py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-primary-foreground/50 text-center md:text-left">
+        <div className="container-kl flex flex-col items-center justify-between gap-4 py-6 text-sm md:flex-row">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-center text-primary-foreground/50 md:justify-start md:text-left">
             <p>© {new Date().getFullYear()} Kletterliga NRW</p>
             <span className="hidden md:inline">·</span>
             <p>Mehrere Hallen. Eine Liga. Ein Finale.</p>
           </div>
-          <a
-            href="/app"
-            className="inline-flex min-h-11 items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 -skew-x-6 font-medium hover:bg-secondary/90 transition-colors"
+          <button
+            type="button"
+            onClick={(event) => handlePublicParticipantAccess(event, "/app")}
+            className="inline-flex min-h-11 items-center gap-2 bg-secondary px-4 py-2 -skew-x-6 font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
           >
             <span className="skew-x-6">Zum Teilnehmerbereich →</span>
-          </a>
+          </button>
         </div>
       </div>
     </footer>

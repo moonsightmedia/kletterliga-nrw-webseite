@@ -8,6 +8,7 @@ import { isParticipantFeatureLocked } from "@/config/launch";
 
 const Login = lazy(() => import("@/app/pages/auth/Login"));
 const Register = lazy(() => import("@/app/pages/auth/Register"));
+const RegisterSuccess = lazy(() => import("@/app/pages/auth/RegisterSuccess"));
 const GymInvite = lazy(() => import("@/app/pages/auth/GymInvite"));
 const EmailConfirm = lazy(() => import("@/app/pages/auth/EmailConfirm"));
 const ResetPassword = lazy(() => import("@/app/pages/auth/ResetPassword"));
@@ -51,6 +52,7 @@ export const appRoutes = (
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
+      <Route path="/app/register/success" element={<RegisterSuccess />} />
       <Route path="/app/auth/confirm" element={<EmailConfirm />} />
       <Route path="/app/auth/reset-password" element={<ResetPassword />} />
       <Route path="/app/invite/gym/:token" element={<GymInvite />} />
