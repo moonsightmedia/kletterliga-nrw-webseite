@@ -20,16 +20,16 @@ interface GymDetailDialogProps {
 export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[calc(100vw-1rem)] sm:w-full p-4 sm:p-6">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[calc(100vw-1rem)] p-5 sm:w-full sm:p-6">
         {gym && (
           <>
-            <DialogHeader>
+            <DialogHeader className="pt-4">
               <DialogTitle className="text-2xl md:text-3xl font-headline">
                 {gym.name}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pb-1">
               {/* Logo */}
               {gym.logo_url && (
                 <div className="flex justify-center">

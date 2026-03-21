@@ -38,8 +38,8 @@ const DialogContent = React.forwardRef<
       className={cn(
         "fixed z-50 border bg-background shadow-lg duration-200",
         // Mobile: Bottom sheet style
-        "bottom-0 left-0 right-0 top-auto translate-y-0 rounded-t-2xl border-t-2 border-b-0",
-        "w-screen max-w-screen",
+        "bottom-2 left-2 right-2 top-auto translate-y-0 rounded-3xl border-2",
+        "w-auto max-w-none",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         "max-h-[90vh] overflow-y-auto",
@@ -53,10 +53,10 @@ const DialogContent = React.forwardRef<
         className,
       )}
       {...props}
-    >
+      >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10">
-        <X className="h-4 w-4" />
+      <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/35 bg-background/95 text-primary shadow-sm transition-all hover:border-primary/60 hover:bg-accent hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none sm:h-9 sm:w-9">
+        <X className="h-5 w-5 sm:h-4 sm:w-4" strokeWidth={2.25} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
