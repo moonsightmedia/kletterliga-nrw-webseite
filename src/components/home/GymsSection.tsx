@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { GymLogoBadge } from "@/components/gyms/GymLogoBadge";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
+import { preparePublicGyms } from "@/lib/publicGyms";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
@@ -21,7 +23,7 @@ export const GymsSection = () => {
       try {
         const { data } = await listGyms();
         if (active) {
-          setGyms(data ?? []);
+          setGyms(preparePublicGyms(data ?? []));
         }
       } catch (error) {
         if (!isAbortError(error)) {
@@ -68,15 +70,12 @@ export const GymsSection = () => {
                   className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer hover:shadow-lg transition-shadow h-full min-h-[160px] md:min-h-[180px]"
                   onClick={() => setSelectedGym(gym)}
                 >
-                  <div className="w-16 h-16 md:w-20 md:h-20 -skew-x-6 bg-accent/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors duration-300 overflow-hidden flex-shrink-0">
-                    {gym.logo_url ? (
-                      <img src={gym.logo_url} alt={gym.name} className="skew-x-6 h-full w-full object-contain p-1" />
-                    ) : (
-                      <span className="skew-x-6 font-headline text-xl md:text-2xl text-primary group-hover:text-secondary-foreground transition-colors duration-300">
-                        {gym.name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
+                  <GymLogoBadge
+                    name={gym.name}
+                    logoUrl={gym.logo_url}
+                    className="mb-3 h-16 w-16 group-hover:bg-secondary md:h-20 md:w-20"
+                    fallbackClassName="text-xl group-hover:text-secondary-foreground md:text-2xl"
+                  />
 
                   <h3 className="font-medium text-sm leading-tight text-primary mb-1 flex-shrink-0 min-h-[2.75rem] [overflow-wrap:anywhere]">
                     {gym.name}
