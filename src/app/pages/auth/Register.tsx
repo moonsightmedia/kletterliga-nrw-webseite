@@ -18,7 +18,7 @@ import { useAuth } from "@/app/auth/AuthProvider";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
-import { formatUnlockDate } from "@/config/launch";
+import { formatAccountCreationOpenDate, formatUnlockDate, isBeforeAccountCreationOpen } from "@/config/launch";
 
 type RegisterFormState = {
   firstName: string;
@@ -94,6 +94,8 @@ const Register = () => {
   }, []);
 
   const unlockDate = formatUnlockDate();
+  const registrationOpenDate = formatAccountCreationOpenDate();
+  const registrationClosed = isBeforeAccountCreationOpen();
   const stepOneComplete =
     form.firstName.trim().length > 0 &&
     form.lastName.trim().length > 0 &&
@@ -198,6 +200,50 @@ const Register = () => {
   };
 
   const selectedHomeGym = gyms.find((gym) => gym.id === form.homeGymId);
+
+  if (registrationClosed) {
+    return (
+      <div className="overflow-hidden">
+        <section className="border-b border-primary/10 bg-[linear-gradient(135deg,rgba(242,220,171,0.34),rgba(255,255,255,0.98)_42%,rgba(0,61,85,0.05)_100%)] px-5 py-6 sm:px-8 sm:py-8">
+          <div className="inline-flex -skew-x-6 items-center bg-primary px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary-foreground shadow-sm">
+            <span className="skew-x-6">Registrierung folgt</span>
+          </div>
+          <div className="mt-5 max-w-3xl space-y-4">
+            <h1 className="font-headline text-4xl leading-[0.96] text-primary sm:text-5xl">
+              Die Account-Erstellung öffnet am {registrationOpenDate}.
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+              Bis dahin kannst du dich auf der Webseite informieren. Nach dem Start kannst du deinen
+              Account anlegen, die E-Mail bestätigen und dich direkt auf den Saisonstart vorbereiten.
+            </p>
+          </div>
+        </section>
+
+        <section className="space-y-5 px-5 py-6 sm:px-8 sm:py-8">
+          <div className="rounded-[24px] border border-primary/10 bg-primary/[0.03] px-4 py-4 sm:px-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              <span className="font-semibold text-primary">Danach geht es so weiter:</span> Account erstellen,
+              E-Mail bestätigen und App-Zugang vorbereiten. Hallen, Codes, Ranglisten und weitere
+              Liga-Bereiche öffnen gesammelt am {unlockDate}.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild className="w-full sm:w-auto">
+              <Link to="/app/login">
+                <span className="skew-x-6">Zum Login</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/">
+                <span className="skew-x-6">Zur Startseite</span>
+              </Link>
+            </Button>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden">

@@ -4,6 +4,7 @@ import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supab
 import { fetchProfile, upsertProfile } from "@/services/appApi";
 import type { Profile, UserRole } from "@/services/appTypes";
 import { trackAuthEvent } from "@/services/authTelemetry";
+import { formatAccountCreationOpenDate, isBeforeAccountCreationOpen } from "@/config/launch";
 
 type AuthContextValue = {
   session: Session | null;
@@ -92,14 +93,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
 
     const init = async () => {
-      if (!isSupabaseConfigured) {
-        // eslint-disable-next-line no-console
-        console.warn("Supabase env vars missing. Check VITE_SUPABASE_URL/ANON_KEY.");
-        setLoading(false);
-        return;
-      }
       try {
         const timeout = new Promise<null>((resolve) => {
           setTimeout(() => resolve(null), 4000);
@@ -275,6 +276,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     league: "toprope" | "lead" | null;
   }) => {
     const { email, password, firstName, lastName, birthDate, gender, homeGymId, league } = payload;
+    if (isBeforeAccountCreationOpen()) {
+      return { error: `Die Registrierung wird am ${formatAccountCreationOpenDate()} freigeschaltet.` };
+    }
     trackAuthEvent("signup_start", { email, context: "register_form" });
     // Bestimme die Frontend-URL für redirectTo nach E-Mail-Bestätigung
     const frontendUrl = typeof window !== 'undefined' 
@@ -317,25 +321,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Kein User zurückgegeben - sollte eigentlich nicht passieren, aber sicherheitshalber prüfen
       trackAuthEvent("signup_error", { email, error: "missing_user_after_signup", context: "signup_response" });
       return { error: "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
-    }
-
-    // Prüfe, ob der User wirklich neu erstellt wurde
-    const userCreatedAt = data.user.created_at ? new Date(data.user.created_at).getTime() : 0;
-    const now = Date.now();
-    const userAge = now - userCreatedAt;
-    const isNewUser = userAge < 2000; // Weniger als 2 Sekunden alt = neuer User
-    
-    // Wenn der User nicht neu ist (älter als 2 Sekunden), existiert er bereits
-    if (!isNewUser) {
-      trackAuthEvent("signup_error", { email, error: "email_already_registered", context: "signup_existing_user_age" });
-      return { error: "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail-Adresse." };
-    }
-
-    // Wenn der User bereits bestätigt ist UND nicht gerade erst erstellt wurde, existiert er bereits
-    // (Dies ist ein zusätzlicher Check für den Fall, dass der User sehr schnell bestätigt wurde)
-    if (data.user.email_confirmed_at && userAge > 1000) {
-      trackAuthEvent("signup_error", { email, error: "email_already_confirmed", context: "signup_existing_confirmed" });
-      return { error: "Diese E-Mail-Adresse ist bereits registriert und bestätigt. Bitte melde dich an." };
     }
 
     if (data.session?.user) {

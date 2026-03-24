@@ -72,16 +72,7 @@ const Login = () => {
         setLoading(false);
         return;
       }
-
-      setTimeout(() => {
-        if (role === "gym_admin") {
-          navigate("/app/admin/gym", { replace: true });
-        } else if (role === "league_admin") {
-          navigate("/app/admin/league", { replace: true });
-        } else {
-          navigate("/app", { replace: true });
-        }
-      }, 1000);
+      navigate("/app", { replace: true });
     } finally {
       setLoading(false);
     }

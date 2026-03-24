@@ -1,4 +1,4 @@
-import { supabase, supabaseConfig } from "@/services/supabase";
+import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supabase";
 import type {
   AdminSettings,
   ChangeRequest,
@@ -14,19 +14,35 @@ import type {
   Route,
 } from "@/services/appTypes";
 
+const missingSupabaseError = () => ({
+  message: "Supabase ist lokal nicht konfiguriert. Lege VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY in .env.local an.",
+});
+
 export async function fetchProfile(profileId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   return supabase.from("profiles").select("*").eq("id", profileId).maybeSingle<Profile>();
 }
 
 export async function upsertProfile(profile: Partial<Profile> & { id: string }) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   return supabase.from("profiles").upsert(profile).select("*").single<Profile>();
 }
 
 export async function listGyms() {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   return supabase.from("gyms").select("*").order("name").returns<Gym[]>();
 }
 
 export async function getGym(gymId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   const { data, error } = await supabase
     .from("gyms")
     .select("*")
@@ -38,10 +54,16 @@ export async function getGym(gymId: string) {
 }
 
 export async function listRoutesByGym(gymId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   return supabase.from("routes").select("*").eq("gym_id", gymId).order("code").returns<Route[]>();
 }
 
 export async function listRoutes() {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   return supabase.from("routes").select("*").returns<Route[]>();
 }
 
@@ -167,6 +189,9 @@ export async function listRankings() {
 
 /** Public website: top N per league/class via Edge Function (bypasses RLS). */
 export async function getPublicRankings(league: "toprope" | "lead", className: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   const url = `${supabaseConfig.url}/functions/v1/get-public-rankings`;
   const res = await fetch(url, {
     method: "POST",
@@ -520,6 +545,9 @@ export async function listFinaleRegistrations() {
 }
 
 export async function getInstagramFeed(limit: number = 6) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   const url = `${supabaseConfig.url}/functions/v1/get-instagram-feed`;
   const res = await fetch(`${url}?limit=${limit}`, {
     method: "GET",
@@ -542,6 +570,9 @@ export async function getInstagramFeed(limit: number = 6) {
 }
 
 export async function getInstagramFeedByHashtag(hashtag: string, limit: number = 6) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
   const url = `${supabaseConfig.url}/functions/v1/get-instagram-feed`;
   const hashtagParam = hashtag.replace(/^#/, ""); // Remove # if present
   const res = await fetch(`${url}?hashtag=${encodeURIComponent(hashtagParam)}&limit=${limit}`, {

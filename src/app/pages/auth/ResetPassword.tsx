@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/services/supabase";
+import { isSupabaseConfigured, supabase } from "@/services/supabase";
 import { toast } from "@/components/ui/use-toast";
 
 // Übersetze Supabase-Fehlermeldungen ins Deutsche
@@ -42,15 +42,31 @@ const ResetPassword = () => {
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Prüfe, ob ein Token vorhanden ist
-    const token = searchParams.get("token");
-    const type = searchParams.get("type");
-    
-    if (!token || type !== "recovery") {
+    if (!isSupabaseConfigured) {
       setIsValidToken(false);
-    } else {
-      setIsValidToken(true);
+      return;
     }
+
+    let active = true;
+    const search = window.location.search;
+    const hash = window.location.hash;
+    const hasRecoveryHint =
+      searchParams.get("type") === "recovery" ||
+      search.includes("token_hash=") ||
+      hash.includes("type=recovery") ||
+      hash.includes("access_token=");
+
+    const validateRecoverySession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      setIsValidToken(Boolean(data.session) || hasRecoveryHint);
+    };
+
+    void validateRecoverySession();
+
+    return () => {
+      active = false;
+    };
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
