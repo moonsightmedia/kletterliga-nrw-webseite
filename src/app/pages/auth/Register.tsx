@@ -3,28 +3,36 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
+  Building2,
   CalendarDays,
   Check,
-  CheckCircle2,
   Flag,
   LockKeyhole,
+  Mail,
+  ShieldCheck,
+  Sparkles,
   UserRound,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
+import {
+  StitchButton,
+  StitchCard,
+  StitchSelectField,
+  StitchTextField,
+} from "@/app/components/StitchPrimitives";
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
 import { formatAccountCreationOpenDate, formatUnlockDate, isBeforeAccountCreationOpen } from "@/config/launch";
+import logo from "@/assets/logo.png";
 
 type RegisterFormState = {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
+  confirmPassword: string;
   birthDate: string;
   gender: string;
   homeGymId: string;
@@ -32,133 +40,112 @@ type RegisterFormState = {
 };
 
 const steps = [
-  {
-    step: 1,
-    eyebrow: "Schritt 1",
-    label: "Konto",
-    detail: "Persönliche Daten und Login",
-    icon: UserRound,
-  },
-  {
-    step: 2,
-    eyebrow: "Schritt 2",
-    label: "Liga",
-    detail: "Wertung, Geburtsdatum und Halle",
-    icon: Flag,
-  },
-  {
-    step: 3,
-    eyebrow: "Schritt 3",
-    label: "Start",
-    detail: "Freischaltung und letzter Check",
-    icon: CalendarDays,
-  },
-];
+  { step: 1, progressLabel: "Schritt 1 von 3", shortLabel: "Basisdaten", cardTitle: "Willkommen bei der Kletterliga NRW", cardDescription: "Lege deinen Account an und sichere dir deinen Einstieg in den Teilnehmerbereich." },
+  { step: 2, progressLabel: "Schritt 2 von 3", shortLabel: "Sicherheit", cardTitle: "Passwort festlegen", cardDescription: "Dein Zugang soll verlässlich sein. Wähle ein Passwort, mit dem du sicher in deine Saison startest." },
+  { step: 3, progressLabel: "Schritt 3 von 3", shortLabel: "Liga wählen", cardTitle: "Deine Liga wählen", cardDescription: "Verknüpfe dein Profil mit Disziplin, Wertungsklasse und optional deiner Heimathalle." },
+] as const;
+
+const passwordStrengthLabel = (password: string) => {
+  if (password.length >= 10) return "Stark";
+  if (password.length >= 6) return "Stabil";
+  return "Zu kurz";
+};
 
 const Register = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<RegisterFormState>({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     birthDate: "",
     gender: "",
     homeGymId: "",
     league: "",
   });
-  const [loading, setLoading] = useState(false);
+  const unlockDate = formatUnlockDate();
 
   useEffect(() => {
     let active = true;
-
     const loadGyms = async () => {
       try {
         const { data } = await listGyms();
-        if (active) {
-          setGyms(data ?? []);
-        }
+        if (active) setGyms(data ?? []);
       } catch (error) {
         console.error("Failed to load gyms for registration", error);
       }
     };
-
     void loadGyms();
-
     return () => {
       active = false;
     };
   }, []);
 
-  const unlockDate = formatUnlockDate();
   const registrationOpenDate = formatAccountCreationOpenDate();
   const registrationClosed = isBeforeAccountCreationOpen();
-  const stepOneComplete =
-    form.firstName.trim().length > 0 &&
-    form.lastName.trim().length > 0 &&
-    form.email.trim().length > 0 &&
-    form.password.length >= 6;
+  const stepOneComplete = form.firstName.trim() && form.lastName.trim() && form.email.trim();
   const stepTwoComplete =
-    form.birthDate.trim().length > 0 &&
-    form.gender.trim().length > 0 &&
-    form.league.trim().length > 0;
-  const canAdvance =
-    currentStep === 1 ? stepOneComplete : currentStep === 2 ? stepTwoComplete : true;
+    form.password.length >= 6 &&
+    form.confirmPassword.length >= 6 &&
+    form.password === form.confirmPassword;
+  const stepThreeComplete = form.birthDate.trim() && form.gender.trim() && form.league.trim();
+  const canAdvance = currentStep === 1 ? stepOneComplete : currentStep === 2 ? stepTwoComplete : stepThreeComplete;
+  const selectedHomeGym = useMemo(() => gyms.find((gym) => gym.id === form.homeGymId), [gyms, form.homeGymId]);
+  const selectedLeagueLabel = form.league === "lead" ? "Vorstieg" : form.league === "toprope" ? "Toprope" : "Noch offen";
 
   const stepNote = useMemo(() => {
-    if (currentStep === 1) {
-      return "Wir nutzen diese Daten nur für deinen Login und die Bestätigungsmail. Das Passwort braucht mindestens 6 Zeichen.";
-    }
-    if (currentStep === 2) {
-      return "Mit diesen Angaben ordnen wir dich sauber deiner Liga und Wertung zu. Die Heimat-Halle bleibt optional.";
-    }
-    return `Dein Account wird sofort erstellt. Hallen, Codes, Ranglisten und weitere Wettkampfbereiche öffnen am ${unlockDate}.`;
+    if (currentStep === 1) return "Mit deinen Basisdaten erstellen wir deinen Account und die Bestätigungsmail.";
+    if (currentStep === 2) return "Mindestens sechs Zeichen sind Pflicht. Noch besser ist ein längeres Passwort mit klarer Struktur.";
+    return `Hallen, Ranglisten und weitere Wettbewerbsbereiche werden zum Saisonstart am ${unlockDate} freigeschaltet.`;
   }, [currentStep, unlockDate]);
 
-  const goToNextStep = () => {
+  const validateCurrentStep = () => {
     if (currentStep === 1 && !stepOneComplete) {
-      toast({
-        title: "Pflichtfelder fehlen",
-        description: "Bitte vervollständige zuerst deine Konto-Daten.",
-        variant: "destructive",
-      });
+      toast({ title: "Pflichtfelder fehlen", description: "Bitte ergänze Vorname, Nachname und E-Mail-Adresse.", variant: "destructive" });
+      return false;
+    }
+    if (currentStep === 2) {
+      if (form.password.length < 6) {
+        toast({ title: "Passwort zu kurz", description: "Bitte wähle ein Passwort mit mindestens 6 Zeichen.", variant: "destructive" });
+        return false;
+      }
+      if (form.password !== form.confirmPassword) {
+        toast({ title: "Passwörter stimmen nicht überein", description: "Bitte prüfe die Passwort-Wiederholung.", variant: "destructive" });
+        return false;
+      }
+    }
+    if (currentStep === 3 && !stepThreeComplete) {
+      toast({ title: "Registrierung unvollständig", description: "Bitte ergänze Disziplin, Geburtsdatum und Wertungsklasse.", variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
+
+  const handleTopBack = () => {
+    if (currentStep === 1) {
+      navigate("/app/login");
       return;
     }
-
-    if (currentStep === 2 && !stepTwoComplete) {
-      toast({
-        title: "Liga-Setup unvollständig",
-        description: "Bitte ergänze Geburtsdatum, Wertungsklasse und Liga.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setCurrentStep((prev) => Math.min(prev + 1, 3));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (currentStep < 3) {
-      goToNextStep();
+    if (currentStep < steps.length) {
+      if (!validateCurrentStep()) return;
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
       return;
     }
-
-    if (!stepOneComplete || !stepTwoComplete) {
-      toast({
-        title: "Registrierung unvollständig",
-        description: "Bitte prüfe deine Angaben in den vorherigen Schritten.",
-        variant: "destructive",
-      });
+    if (!stepOneComplete || !stepTwoComplete || !stepThreeComplete) {
+      toast({ title: "Registrierung unvollständig", description: "Bitte prüfe deine Angaben in allen Schritten.", variant: "destructive" });
       return;
     }
-
     setLoading(true);
-
     try {
       const result = await signUp({
         email: form.email,
@@ -170,278 +157,366 @@ const Register = () => {
         homeGymId: form.homeGymId || null,
         league: (form.league as "toprope" | "lead") || null,
       });
-
       if (result.error) {
-        toast({
-          title: "Registrierung fehlgeschlagen",
-          description: result.error,
-          variant: "destructive",
-        });
+        toast({ title: "Registrierung fehlgeschlagen", description: result.error, variant: "destructive" });
         setLoading(false);
         return;
       }
-
-      toast({
-        title: "Account erstellt",
-        description: "Im nächsten Schritt zeigen wir dir, wie es weitergeht.",
-        variant: "success",
-      });
-
+      toast({ title: "Account erstellt", description: "Im nächsten Schritt zeigen wir dir, wie es weitergeht.", variant: "success" });
       navigate("/app/register/success");
     } catch (error) {
       console.error("Registration error:", error);
-      toast({
-        title: "Fehler",
-        description: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten.",
-        variant: "destructive",
-      });
+      toast({ title: "Fehler", description: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten.", variant: "destructive" });
       setLoading(false);
     }
   };
 
-  const selectedHomeGym = gyms.find((gym) => gym.id === form.homeGymId);
-
   if (registrationClosed) {
     return (
-      <div className="overflow-hidden">
-        <section className="border-b border-primary/10 bg-[linear-gradient(135deg,rgba(242,220,171,0.34),rgba(255,255,255,0.98)_42%,rgba(0,61,85,0.05)_100%)] px-5 py-6 sm:px-8 sm:py-8">
-          <div className="inline-flex -skew-x-6 items-center bg-primary px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary-foreground shadow-sm">
-            <span className="skew-x-6">Registrierung folgt</span>
+      <div className="space-y-6">
+        <StitchCard tone="cream" className="p-6 sm:p-8">
+          <div className="space-y-5">
+            <div className="inline-flex items-center rounded-full bg-[#003d55] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f2dcab]">
+              Registrierung folgt
+            </div>
+            <div className="space-y-3">
+              <h1 className="stitch-headline text-4xl leading-[0.96] text-[#002637] sm:text-5xl">
+                Die Account-Erstellung öffnet am {registrationOpenDate}.
+              </h1>
+              <p className="max-w-2xl text-base leading-7 text-[rgba(27,28,26,0.68)]">
+                Bis dahin kannst du dich auf der Webseite informieren. Nach dem Start legst du deinen Account an,
+                bestätigst die E-Mail-Adresse und bereitest dich direkt auf den Saisonstart vor.
+              </p>
+            </div>
           </div>
-          <div className="mt-5 max-w-3xl space-y-4">
-            <h1 className="font-headline text-4xl leading-[0.96] text-primary sm:text-5xl">
-              Die Account-Erstellung öffnet am {registrationOpenDate}.
-            </h1>
-            <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Bis dahin kannst du dich auf der Webseite informieren. Nach dem Start kannst du deinen
-              Account anlegen, die E-Mail bestätigen und dich direkt auf den Saisonstart vorbereiten.
-            </p>
-          </div>
-        </section>
+        </StitchCard>
 
-        <section className="space-y-5 px-5 py-6 sm:px-8 sm:py-8">
-          <div className="rounded-[24px] border border-primary/10 bg-primary/[0.03] px-4 py-4 sm:px-5">
-            <p className="text-sm leading-6 text-muted-foreground">
-              <span className="font-semibold text-primary">Danach geht es so weiter:</span> Account erstellen,
-              E-Mail bestätigen und App-Zugang vorbereiten. Hallen, Codes, Ranglisten und weitere
-              Liga-Bereiche öffnen gesammelt am {unlockDate}.
-            </p>
-          </div>
+        <StitchCard tone="surface" className="p-5 sm:p-6">
+          <p className="text-sm leading-6 text-[rgba(27,28,26,0.68)]">
+            <span className="font-semibold text-[#002637]">Danach geht es so weiter:</span> Account erstellen,
+            E-Mail bestätigen und App-Zugang vorbereiten. Hallen, Codes, Ranglisten und weitere Ligabereiche
+            öffnen gesammelt am {unlockDate}.
+          </p>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild className="w-full sm:w-auto">
-              <Link to="/app/login">
-                <span className="skew-x-6">Zum Login</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link to="/">
-                <span className="skew-x-6">Zur Startseite</span>
-              </Link>
-            </Button>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <StitchButton asChild className="w-full sm:w-auto">
+              <Link to="/app/login">Zum Login</Link>
+            </StitchButton>
+            <StitchButton asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/">Zur Startseite</Link>
+            </StitchButton>
           </div>
-        </section>
+        </StitchCard>
       </div>
     );
   }
-
   return (
-    <div className="overflow-hidden">
-      <section className="border-b border-primary/10 bg-[linear-gradient(135deg,rgba(242,220,171,0.34),rgba(255,255,255,0.98)_42%,rgba(0,61,85,0.05)_100%)] px-5 py-6 sm:px-8 sm:py-8">
-        <div className="inline-flex -skew-x-6 items-center bg-primary px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary-foreground shadow-sm">
-          <span className="skew-x-6">Saisonstart vorbereiten</span>
-        </div>
-
-        <div className="mt-5 max-w-3xl space-y-4">
-          <h1 className="font-headline text-4xl leading-[0.96] text-primary sm:text-5xl">
-            Erstelle deinen Liga-Account in drei klaren Schritten.
-          </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-            Lege deinen Account und dein Profil jetzt in Ruhe an. Dein Dashboard ist direkt nutzbar,
-            die wettbewerbsrelevanten Bereiche werden am {unlockDate} freigeschaltet.
-          </p>
-        </div>
-
-        <div className="mt-5 space-y-3 text-sm text-primary">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
-            <span>Account, Profil und Liga-Setup kannst du sofort anlegen und prüfen.</span>
-          </div>
-          <div className="flex items-start gap-3">
-            <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
-            <span>Hallen, Codes, Ranglisten und weitere Liga-Funktionen öffnen gesammelt am {unlockDate}.</span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid overflow-hidden rounded-[26px] border border-primary/10 bg-background/85 sm:grid-cols-3">
-          {steps.map(({ step, eyebrow, label, detail, icon: Icon }, index) => {
-            const isActive = currentStep === step;
-            const isComplete = currentStep > step;
-
-            return (
-              <div
-                key={label}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-4 sm:px-5",
-                  index > 0 && "border-t border-primary/10 sm:border-l sm:border-t-0",
-                  isActive && "bg-primary/[0.045]",
-                  isComplete && "bg-secondary/[0.06]",
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex h-12 w-12 flex-shrink-0 items-center justify-center -skew-x-6 border text-primary transition-colors",
-                    isActive && "border-secondary bg-secondary text-secondary-foreground",
-                    isComplete && "border-primary bg-primary text-primary-foreground",
-                    !isActive && !isComplete && "border-primary/20 bg-accent/45",
-                  )}
-                >
-                  {isComplete ? (
-                    <Check className="h-5 w-5 skew-x-6" />
-                  ) : (
-                    <Icon className="h-5 w-5 skew-x-6" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary">
-                    {eyebrow}
-                  </div>
-                  <div className="mt-1 text-base font-semibold text-primary">{label}</div>
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">{detail}</p>
-                </div>
+    <div className="mx-auto min-h-screen w-full max-w-4xl">
+      <form onSubmit={handleSubmit} className="pb-10">
+        <header className="sticky top-0 z-20 bg-[#003d55]/95 px-4 py-4 backdrop-blur-md sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <button type="button" onClick={handleTopBack} className="inline-flex items-center gap-2 rounded-full border border-[rgba(242,220,171,0.16)] bg-[rgba(242,220,171,0.08)] px-4 py-2 text-sm font-semibold text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]">
+              <ArrowLeft className="h-4 w-4" />
+              Zurück
+            </button>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="rounded-[0.95rem] bg-[#f2dcab] p-2.5 shadow-[0_16px_28px_rgba(0,0,0,0.2)]">
+                <img src={logo} alt="Kletterliga NRW" className="h-8 w-8 object-contain" />
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <div className="min-w-0">
+                <div className="stitch-headline truncate text-lg text-[#f2dcab]">Kletterliga NRW</div>
+                <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Registrierung</div>
+              </div>
+            </div>
+            <div className="hidden text-right sm:block">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.58)]">{steps[currentStep - 1]?.shortLabel}</div>
+            </div>
+          </div>
+        </header>
 
-      <form onSubmit={handleSubmit} className="px-5 py-6 sm:px-8 sm:py-8">
-        <div className="space-y-6">
-          {currentStep === 1 && (
+        <div className="space-y-8 px-4 py-8 sm:px-6 sm:py-10">
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-4">
+              <div className="space-y-1">
+                <div className="stitch-kicker text-[#f2dcab]">{steps[currentStep - 1]?.progressLabel}</div>
+                <div className="text-sm font-medium text-[rgba(242,220,171,0.62)]">{steps[currentStep - 1]?.shortLabel}</div>
+              </div>
+              <div className="text-sm font-semibold text-[rgba(242,220,171,0.62)]">{Math.round((currentStep / steps.length) * 100)}%</div>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(242,220,171,0.1)]">
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,#a15523_0%,#f2dcab_100%)] transition-all duration-300" style={{ width: `${(currentStep / steps.length) * 100}%` }} />
+            </div>
+          </section>
+
+          {currentStep === 1 ? (
             <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="inline-flex -skew-x-6 items-center border border-primary/15 bg-accent/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary">
-                  <span className="skew-x-6">Konto anlegen</span>
-                </div>
-                <h2 className="font-headline text-3xl leading-tight text-primary sm:text-[2.2rem]">
-                  Deine Basisdaten.
-                </h2>
-                <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-                  Wir brauchen nur die Angaben, mit denen wir deinen Account anlegen und die Bestätigungsmail verschicken.
-                </p>
-              </div>
+              <StitchCard tone="cream" className="relative p-6 sm:p-8">
+                <div className="absolute right-10 top-0 h-24 w-px bg-[#002637]/10" />
+                <div className="absolute right-[34px] top-24 h-3 w-3 rounded-full border-2 border-[#002637]/10" />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Vorname</Label>
-                  <Input
-                    id="firstName"
-                    value={form.firstName}
-                    onChange={(event) => setForm({ ...form, firstName: event.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Nachname</Label>
-                  <Input
-                    id="lastName"
-                    value={form.lastName}
-                    onChange={(event) => setForm({ ...form, lastName: event.target.value })}
-                    required
-                  />
-                </div>
-              </div>
+                <div className="relative z-10 space-y-8">
+                  <div className="space-y-3">
+                    <div className="stitch-kicker text-[#a15523]">{steps[currentStep - 1]?.progressLabel}</div>
+                    <h1 className="stitch-headline max-w-2xl text-4xl leading-[0.9] text-[#002637] sm:text-5xl">
+                      {steps[currentStep - 1]?.cardTitle}
+                    </h1>
+                    <p className="max-w-xl text-base leading-7 text-[rgba(27,28,26,0.68)]">
+                      {steps[currentStep - 1]?.cardDescription}
+                    </p>
+                  </div>
 
-              <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr]">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-Mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    value={form.email}
-                    onChange={(event) => setForm({ ...form, email: event.target.value })}
-                    required
-                  />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <StitchTextField
+                      label="Vorname"
+                      value={form.firstName}
+                      onChange={(event) => setForm((prev) => ({ ...prev, firstName: event.target.value }))}
+                      placeholder="Jana"
+                      required
+                      icon={<UserRound className="h-4 w-4" />}
+                    />
+                    <StitchTextField
+                      label="Nachname"
+                      value={form.lastName}
+                      onChange={(event) => setForm((prev) => ({ ...prev, lastName: event.target.value }))}
+                      placeholder="Muster"
+                      required
+                      icon={<UserRound className="h-4 w-4" />}
+                    />
+                    <div className="sm:col-span-2">
+                      <StitchTextField
+                        label="E-Mail-Adresse"
+                        type="email"
+                        autoComplete="email"
+                        value={form.email}
+                        onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+                        placeholder="dein.name@email.de"
+                        required
+                        icon={<Mail className="h-4 w-4" />}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 pt-2 md:flex-row md:items-center">
+                    <StitchButton type="submit" size="lg" className="md:min-w-[12rem]" disabled={!canAdvance}>
+                      Weiter
+                      <ArrowRight className="h-4 w-4" />
+                    </StitchButton>
+                    <div className="hidden h-px flex-1 bg-[#002637]/8 md:block" />
+                    <p className="text-xs uppercase tracking-[0.18em] text-[rgba(27,28,26,0.46)]">
+                      Durch das Fortfahren akzeptierst du unsere{" "}
+                      <Link to="/datenschutz" className="font-bold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                        Datenschutzhinweise
+                      </Link>
+                      .
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Passwort</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={form.password}
-                    onChange={(event) => setForm({ ...form, password: event.target.value })}
-                    required
-                  />
+              </StitchCard>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <StitchCard tone="navy" className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(242,220,171,0.1)] text-[#f2dcab]">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Sicherer Zugang</div>
+                      <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+                        Deine Daten werden geschützt gespeichert und dein Zugang im nächsten Schritt abgesichert.
+                      </p>
+                    </div>
+                  </div>
+                </StitchCard>
+
+                <div className="relative overflow-hidden rounded-[1.5rem] border border-[rgba(242,220,171,0.14)] bg-[linear-gradient(135deg,rgba(242,220,171,0.12),rgba(0,61,85,0.4))] p-5">
+                  <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f2dcab]/10 blur-2xl" />
+                  <div className="relative">
+                    <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Saisonstart</div>
+                    <div className="stitch-headline mt-3 text-2xl text-[#f2dcab]">Hallen und Ranglisten ab {unlockDate}</div>
+                    <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+                      Profil und Dashboard sind sofort da. Die Wettbewerbsbereiche öffnen gesammelt zum Saisonstart.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="inline-flex -skew-x-6 items-center border border-primary/15 bg-accent/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary">
-                  <span className="skew-x-6">Liga vorbereiten</span>
+          ) : null}
+          {currentStep === 2 ? (
+            <div className="overflow-hidden rounded-[2rem] bg-[#fbf9f6] shadow-[0_28px_64px_rgba(0,38,55,0.18)]">
+              <div className="bg-[#003d55] px-6 pb-20 pt-6 text-[#f2dcab] sm:px-8">
+                <div className="flex items-end justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="stitch-headline text-3xl text-[#f2dcab] sm:text-4xl">Sicherheit</div>
+                    <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">{steps[currentStep - 1]?.progressLabel}</div>
+                  </div>
+                  <div className="hidden text-right text-sm text-[rgba(242,220,171,0.6)] sm:block">Zugang für deinen Account</div>
                 </div>
-                <h2 className="font-headline text-3xl leading-tight text-primary sm:text-[2.2rem]">
-                  Dein Liga-Setup.
-                </h2>
-                <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-                  Diese Angaben sorgen dafür, dass Wertung, Liga und Heimat-Halle direkt richtig hinterlegt sind.
-                </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="birthDate">Geburtsdatum</Label>
-                  <Input
-                    id="birthDate"
+              <div className="relative -mt-12 px-4 pb-6 sm:px-8 sm:pb-8">
+                <StitchCard tone="surface" className="border border-white/10 p-6 sm:p-8">
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <h2 className="stitch-headline text-3xl leading-[0.92] text-[#002637] sm:text-4xl">
+                        {steps[currentStep - 1]?.cardTitle}
+                      </h2>
+                      <p className="max-w-2xl text-sm leading-7 text-[rgba(27,28,26,0.66)]">
+                        {steps[currentStep - 1]?.cardDescription}
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <StitchTextField
+                        label="Passwort"
+                        type="password"
+                        autoComplete="new-password"
+                        value={form.password}
+                        onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
+                        placeholder="Mindestens 6 Zeichen"
+                        required
+                        icon={<LockKeyhole className="h-4 w-4" />}
+                      />
+                      <StitchTextField
+                        label="Passwort bestätigen"
+                        type="password"
+                        autoComplete="new-password"
+                        value={form.confirmPassword}
+                        onChange={(event) => setForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+                        placeholder="Passwort erneut eingeben"
+                        required
+                        icon={<ShieldCheck className="h-4 w-4" />}
+                        error={form.confirmPassword.length > 0 && form.confirmPassword !== form.password ? "Die Passwörter stimmen nicht überein." : null}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                      <StitchCard tone="muted" className="p-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className="stitch-kicker text-[#a15523]">Sicherheitsgrad</div>
+                            <div className="mt-2 text-lg font-semibold text-[#002637]">{passwordStrengthLabel(form.password)}</div>
+                          </div>
+                          <div className="text-sm text-[rgba(27,28,26,0.56)]">{form.password.length}/10+</div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          {[0, 1, 2, 3].map((segment) => {
+                            const activeSegments = form.password.length >= 10 ? 4 : form.password.length >= 8 ? 3 : form.password.length >= 6 ? 2 : form.password.length > 0 ? 1 : 0;
+                            return <div key={segment} className={cn("h-1.5 flex-1 rounded-full transition-all", segment < activeSegments ? "bg-[#a15523]" : "bg-[rgba(0,38,55,0.12)]")} />;
+                          })}
+                        </div>
+                      </StitchCard>
+
+                      <div className="rounded-[1.4rem] border-l-4 border-[#fd9f66] bg-[#f5efe5] p-5">
+                        <div className="flex items-start gap-3">
+                          <ShieldCheck className="mt-0.5 h-5 w-5 text-[#a15523]" />
+                          <div className="space-y-2">
+                            <div className="stitch-kicker text-[#a15523]">Sicherheits-Check</div>
+                            <ul className="space-y-2 text-sm leading-6 text-[rgba(27,28,26,0.68)]">
+                              <li>Mindestens 6 Zeichen</li>
+                              <li>Wiederholung zum Prüfen von Tippfehlern</li>
+                              <li>Bestätigung deiner E-Mail im Anschluss</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 pt-2">
+                      <StitchButton type="submit" size="lg" className="w-full" disabled={!canAdvance}>
+                        Weiter
+                        <ArrowRight className="h-4 w-4" />
+                      </StitchButton>
+                      <StitchButton type="button" variant="outline" size="lg" className="w-full" onClick={() => setCurrentStep(1)}>
+                        Zurück
+                      </StitchButton>
+                    </div>
+                  </div>
+                </StitchCard>
+              </div>
+            </div>
+          ) : null}
+          {currentStep === 3 ? (
+            <div className="space-y-6 rounded-[2rem] bg-[#fbf9f6] p-6 shadow-[0_28px_64px_rgba(0,38,55,0.18)] sm:p-8">
+              <div className="space-y-4">
+                <div className="flex items-end justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="stitch-kicker text-[#a15523]">{steps[currentStep - 1]?.progressLabel}</div>
+                    <h2 className="stitch-headline text-4xl leading-none text-[#002637] sm:text-5xl">
+                      {steps[currentStep - 1]?.cardTitle}
+                    </h2>
+                  </div>
+                  <div className="hidden max-w-[16rem] text-right text-sm leading-6 text-[rgba(27,28,26,0.56)] sm:block">
+                    Wähle die Disziplin, mit der du in die Saison startest.
+                  </div>
+                </div>
+
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(0,38,55,0.08)]">
+                  <div className="h-full w-full rounded-full bg-[#a15523]" />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  { value: "lead", title: "Vorstieg", description: "Für alle Teilnahmen in der Vorstiegsliga mit entsprechendem Fokus auf Technik und Routenlesen.", meta: "Lead" },
+                  { value: "toprope", title: "Toprope", description: "Der ideale Einstieg, wenn du im Toprope-Format antrittst und deine Saison sauber aufbauen willst.", meta: "Toprope" },
+                  { value: "home", title: selectedHomeGym ? selectedHomeGym.name : "Heimathalle", description: selectedHomeGym ? selectedHomeGym.city || "Bereits ausgewählt" : "Optional. Du kannst deine Halle jetzt setzen oder später ergänzen.", meta: selectedHomeGym ? "Gesetzt" : "Optional" },
+                ].map((option) => {
+                  const isLeagueCard = option.value === "lead" || option.value === "toprope";
+                  const isSelected = isLeagueCard && form.league === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        if (isLeagueCard) setForm((prev) => ({ ...prev, league: option.value }));
+                      }}
+                      className={cn("group relative flex min-h-[16rem] flex-col items-start overflow-hidden rounded-[1.4rem] border-b-4 px-5 py-6 text-left transition-all", isSelected ? "border-[#a15523] bg-[#ede8e1] shadow-[0_16px_30px_rgba(0,38,55,0.08)]" : "border-transparent bg-[#f5efe5] hover:border-[#a15523]", !isLeagueCard && "cursor-default")}
+                    >
+                      <div className="absolute -right-5 -top-5 text-[#002637]/5 transition-opacity group-hover:text-[#002637]/10">
+                        {option.value === "lead" ? <Flag className="h-24 w-24" /> : option.value === "toprope" ? <Sparkles className="h-24 w-24" /> : <Building2 className="h-24 w-24" />}
+                      </div>
+
+                      <div className={cn("mb-6 flex h-12 w-12 items-center justify-center rounded-full", isSelected ? "bg-[#a15523] text-white" : "bg-white text-[#a15523]")}>
+                        {option.value === "lead" ? <Flag className="h-5 w-5" /> : option.value === "toprope" ? <Sparkles className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
+                      </div>
+
+                      <div className="stitch-headline text-2xl text-[#002637]">{option.title}</div>
+                      <p className="mt-3 text-sm leading-6 text-[rgba(27,28,26,0.64)]">{option.description}</p>
+                      <div className="mt-auto pt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#002637]">{option.meta}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <StitchCard tone="surface" className="p-5 sm:p-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <StitchTextField
+                    label="Geburtsdatum"
                     type="date"
                     value={form.birthDate}
-                    onChange={(event) => setForm({ ...form, birthDate: event.target.value })}
+                    onChange={(event) => setForm((prev) => ({ ...prev, birthDate: event.target.value }))}
                     required
+                    icon={<CalendarDays className="h-4 w-4" />}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Wertungsklasse (m/w)</Label>
-                  <select
-                    id="gender"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  <StitchSelectField
+                    label="Wertungsklasse"
                     value={form.gender}
-                    onChange={(event) => setForm({ ...form, gender: event.target.value })}
+                    onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
                     required
                   >
                     <option value="">Auswählen</option>
                     <option value="w">Weiblich</option>
                     <option value="m">Männlich</option>
-                  </select>
+                  </StitchSelectField>
                 </div>
-              </div>
 
-              <div className="grid gap-4 sm:grid-cols-[0.85fr_1.15fr]">
-                <div className="space-y-2">
-                  <Label htmlFor="league">Liga</Label>
-                  <select
-                    id="league"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={form.league}
-                    onChange={(event) => setForm({ ...form, league: event.target.value })}
-                    required
-                  >
-                    <option value="">Auswählen</option>
-                    <option value="toprope">Toprope</option>
-                    <option value="lead">Vorstieg</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="homeGym">Heimat-Halle (optional)</Label>
-                  <select
-                    id="homeGym"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                <div className="mt-4">
+                  <StitchSelectField
+                    label="Heimathalle"
                     value={form.homeGymId}
-                    onChange={(event) => setForm({ ...form, homeGymId: event.target.value })}
+                    onChange={(event) => setForm((prev) => ({ ...prev, homeGymId: event.target.value }))}
+                    hint="Optional. Du kannst die Halle auch später im Profil ergänzen."
                   >
                     <option value="">Keine Auswahl</option>
                     {gyms.map((gym) => (
@@ -449,140 +524,62 @@ const Register = () => {
                         {gym.name} {gym.city ? `(${gym.city})` : ""}
                       </option>
                     ))}
-                  </select>
+                  </StitchSelectField>
                 </div>
-              </div>
-            </div>
-          )}
+              </StitchCard>
 
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="inline-flex -skew-x-6 items-center border border-primary/15 bg-accent/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary">
-                  <span className="skew-x-6">Vor dem letzten Klick</span>
-                </div>
-                <h2 className="font-headline text-3xl leading-tight text-primary sm:text-[2.2rem]">
-                  So geht es nach der Registrierung weiter.
-                </h2>
-                <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-                  Dein Account steht sofort. Danach bestätigst du kurz deine E-Mail und bist startklar für den Saisonstart.
-                </p>
-              </div>
-
-              <div className="overflow-hidden rounded-[26px] border border-primary/10">
-                <div className="flex gap-4 px-4 py-4 sm:px-5">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center -skew-x-6 bg-primary text-primary-foreground">
-                    <LockKeyhole className="h-5 w-5 skew-x-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-primary">Account sofort aktiv</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Wir erstellen dein Konto direkt nach dem Klick und senden dir sofort die Bestätigungsmail.
-                    </p>
-                  </div>
-                </div>
-                <div className="border-t border-primary/10 px-4 py-4 sm:px-5">
-                  <div className="flex gap-4">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center -skew-x-6 bg-accent text-primary">
-                      <CheckCircle2 className="h-5 w-5 skew-x-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-primary">Dashboard direkt nutzbar</p>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                        Nach der Mail-Bestätigung kannst du dich einloggen, dein Profil pflegen und dich in Ruhe vorbereiten.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="border-t border-primary/10 px-4 py-4 sm:px-5">
-                  <div className="flex gap-4">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center -skew-x-6 bg-secondary text-secondary-foreground">
-                      <CalendarDays className="h-5 w-5 skew-x-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-primary">Volle Freischaltung am {unlockDate}</p>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                        Hallen, Codes, Ranglisten und weitere Liga-Bereiche werden dann automatisch freigeschaltet.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="rounded-[1.5rem] bg-[#f5efe5] p-5 sm:p-6">
+                <label className="flex items-start gap-4">
+                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded border border-[rgba(0,38,55,0.24)] bg-white">
+                    <Check className="h-4 w-4 text-[#a15523]" />
+                  </span>
+                  <span className="text-sm leading-7 text-[rgba(27,28,26,0.68)]">
+                    Mit dem Erstellen bestätigst du die{" "}
+                    <Link to="/modus" className="font-semibold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                      Teilnahmebedingungen
+                    </Link>{" "}
+                    und die{" "}
+                    <Link to="/datenschutz" className="font-semibold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                      Datenschutzbestimmungen
+                    </Link>{" "}
+                    der Kletterliga NRW.
+                  </span>
+                </label>
               </div>
 
-              <div className="rounded-[24px] border border-secondary/15 bg-accent/25 px-4 py-4 sm:px-5">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary">
-                  Dein Check
-                </div>
-                <div className="mt-3 grid gap-3 text-sm text-primary sm:grid-cols-2">
-                  <div>
-                    <span className="text-muted-foreground">Name:</span> {form.firstName} {form.lastName}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">E-Mail:</span> {form.email}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Liga:</span>{" "}
-                    {form.league === "lead" ? "Vorstieg" : "Toprope"}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Wertung:</span>{" "}
-                    {form.gender === "w" ? "Weiblich" : "Männlich"}
-                  </div>
+              <StitchCard tone="muted" className="p-5">
+                <div className="grid gap-3 text-sm text-[#002637] sm:grid-cols-2">
+                  <div><span className="font-semibold text-[rgba(27,28,26,0.56)]">Name:</span> {form.firstName} {form.lastName}</div>
+                  <div><span className="font-semibold text-[rgba(27,28,26,0.56)]">E-Mail:</span> {form.email}</div>
+                  <div><span className="font-semibold text-[rgba(27,28,26,0.56)]">Disziplin:</span> {selectedLeagueLabel}</div>
+                  <div><span className="font-semibold text-[rgba(27,28,26,0.56)]">Wertungsklasse:</span> {form.gender === "w" ? "Weiblich" : form.gender === "m" ? "Männlich" : "-"}</div>
                   <div className="sm:col-span-2">
-                    <span className="text-muted-foreground">Heimat-Halle:</span>{" "}
-                    {selectedHomeGym
-                      ? `${selectedHomeGym.name}${selectedHomeGym.city ? ` (${selectedHomeGym.city})` : ""}`
-                      : "Noch keine Auswahl"}
+                    <span className="font-semibold text-[rgba(27,28,26,0.56)]">Heimathalle:</span>{" "}
+                    {selectedHomeGym ? `${selectedHomeGym.name}${selectedHomeGym.city ? ` (${selectedHomeGym.city})` : ""}` : "Noch keine Auswahl"}
                   </div>
                 </div>
+              </StitchCard>
+
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <StitchButton type="button" variant="outline" size="lg" className="md:min-w-[11rem]" onClick={() => setCurrentStep(2)}>
+                  Zurück
+                </StitchButton>
+                <StitchButton type="submit" size="lg" className="md:min-w-[16rem]" disabled={loading || !stepThreeComplete}>
+                  {loading ? "Account wird erstellt..." : "Jetzt registrieren"}
+                </StitchButton>
               </div>
             </div>
-          )}
+          ) : null}
 
-          <div className="rounded-[22px] border border-primary/10 bg-primary/[0.03] px-4 py-4 sm:px-5">
-            <p className="text-sm leading-6 text-muted-foreground">
-              <span className="font-semibold text-primary">Wichtig:</span> {stepNote}
-            </p>
+          <div className="rounded-[1.3rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] px-5 py-4 text-sm leading-6 text-[rgba(242,220,171,0.78)]">
+            <span className="font-semibold text-[#f2dcab]">Wichtig:</span> {stepNote}
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-primary/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              Bereits registriert?{" "}
-              <Link to="/app/login" className="font-medium text-primary underline-offset-4 hover:underline">
-                Zum Login
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
-                  className="w-full sm:w-auto"
-                >
-                  <span className="inline-flex items-center gap-2 skew-x-6">
-                    <ArrowLeft className="h-4 w-4" />
-                    Zurück
-                  </span>
-                </Button>
-              )}
-
-              {currentStep < 3 ? (
-                <Button type="submit" disabled={!canAdvance} className="w-full sm:w-auto">
-                  <span className="inline-flex items-center gap-2 skew-x-6">
-                    Weiter
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Button>
-              ) : (
-                <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                  <span className="inline-flex items-center gap-2 skew-x-6">
-                    {loading ? "Account wird erstellt..." : "Account erstellen"}
-                  </span>
-                </Button>
-              )}
-            </div>
+          <div className="text-center text-sm text-[rgba(242,220,171,0.72)]">
+            Bereits registriert?{" "}
+            <Link to="/app/login" className="font-semibold text-[#f2dcab] underline decoration-[rgba(242,220,171,0.3)] underline-offset-4">
+              Zum Login
+            </Link>
           </div>
         </div>
       </form>

@@ -1,17 +1,22 @@
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, Lock, MessageSquareText, Star, Zap } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
-import { listRoutesByGym, upsertResult, checkGymCodeRedeemed, listResultsForUser } from "@/services/appApi";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/app/auth/AuthProvider";
-import type { Route, Result } from "@/services/appTypes";
-import { Lock, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { checkGymCodeRedeemed, listResultsForUser, listRoutesByGym, upsertResult } from "@/services/appApi";
+import type { Result, Route } from "@/services/appTypes";
 
 const colorClassMap: Record<string, string> = {
   rot: "bg-red-500",
@@ -22,7 +27,7 @@ const colorClassMap: Record<string, string> = {
   pink: "bg-pink-500",
   lila: "bg-purple-500",
   schwarz: "bg-black",
-  weiß: "bg-white",
+  weiß: "bg-white border border-[rgba(0,38,55,0.12)]",
   grau: "bg-gray-400",
 };
 
@@ -38,29 +43,27 @@ const ResultEntry = () => {
   const [existingResult, setExistingResult] = useState<Result | null>(null);
   const [selectedOption, setSelectedOption] = useState<PointsOption>(0);
   const [rating, setRating] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState<string>("");
+  const [feedback, setFeedback] = useState("");
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
   const [checkingCode, setCheckingCode] = useState(true);
 
   const colorClass = useMemo(() => {
-    if (!route?.color) return "bg-muted";
-    const colorKey = route.color.toLowerCase();
-    return colorClassMap[colorKey] ?? "bg-muted";
+    if (!route?.color) return "bg-[rgba(0,38,55,0.12)]";
+    return colorClassMap[route.color.toLowerCase()] ?? "bg-[rgba(0,38,55,0.12)]";
   }, [route?.color]);
 
   useEffect(() => {
     if (!gymId || !routeId || !profile?.id) return;
-    
-    // Prüfe, ob ein Code für diese Halle eingelöst wurde
+
     checkGymCodeRedeemed(gymId, profile.id).then(({ data, error }) => {
       setCheckingCode(false);
       if (error) {
         console.error("Error checking code:", error);
         setCodeRedeemed(false);
       } else {
-        setCodeRedeemed(data !== null);
+        setCodeRedeemed(Boolean(data));
       }
     });
 
@@ -69,9 +72,8 @@ const ResultEntry = () => {
       setRoute(found);
     });
 
-    // Lade bestehendes Ergebnis für diese Route
     listResultsForUser(profile.id).then(({ data }) => {
-      const result = data?.find((r) => r.route_id === routeId) ?? null;
+      const result = data?.find((item) => item.route_id === routeId) ?? null;
       setExistingResult(result);
       if (result) {
         if (result.flash && result.points === 10) {
@@ -87,13 +89,12 @@ const ResultEntry = () => {
 
   const handleSave = async () => {
     if (!profile?.id || !routeId) return;
-    
-    // Prüfe erneut, ob Code eingelöst wurde
+
     if (!codeRedeemed) {
-      toast({ 
-        title: "Halle nicht freigeschaltet", 
-        description: "Du musst zuerst einen Hallen-Code einlösen, bevor du Ergebnisse eintragen kannst.",
-        variant: "destructive"
+      toast({
+        title: "Halle nicht freigeschaltet",
+        description: "Du musst zuerst einen Hallencode einlösen, bevor du Ergebnisse eintragen kannst.",
+        variant: "destructive",
       });
       return;
     }
@@ -108,220 +109,248 @@ const ResultEntry = () => {
       points,
       flash,
       status: points === 0 ? "not_climbed" : "climbed",
-      rating: rating,
+      rating,
       feedback: feedback || null,
     });
     setLoading(false);
+
     if (error) {
       toast({ title: "Fehler", description: error.message });
       return;
     }
-    toast({ title: "Ergebnis gespeichert", description: flash ? "Top mit Flash-Bonus gespeichert!" : "Dein Punktestand wurde aktualisiert." });
+
+    toast({
+      title: "Ergebnis gespeichert",
+      description: flash ? "Top mit Flash-Bonus gespeichert." : "Dein Ergebnis wurde aktualisiert.",
+      variant: "success",
+    });
     navigate(`/app/gyms/${gymId}/routes`);
   };
 
   const pageTitle = existingResult ? "Ergebnis bearbeiten" : "Ergebnis eintragen";
+  const pointsLabel = selectedOption === "flash" ? 11 : selectedOption;
 
   if (checkingCode) {
-    return (
-      <div className="space-y-5">
-        <div>
-          <h2 className="font-headline text-2xl text-primary">{pageTitle}</h2>
-          <p className="text-sm text-muted-foreground">Lade...</p>
-        </div>
-      </div>
-    );
+    return <div className="text-sm text-[rgba(27,28,26,0.6)]">Ergebnisformular wird geladen...</div>;
   }
 
   if (!codeRedeemed) {
     return (
       <div className="space-y-5">
-        {route && (
-          <Card className="p-5 border-border/60">
+        {route ? (
+          <StitchCard tone="navy" className="p-5">
             <div className="flex items-start gap-4">
-              {route.color && (
-                <div className={`h-6 w-6 rounded-full ${colorClass} border-2 border-border/50 flex-shrink-0 mt-1`} />
-              )}
-              <div className="flex-1">
-                <div className="font-headline text-xl text-primary mb-1">
-                  {route.code} {route.name && `· ${route.name}`}
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  {route.color && <div>Farbe: {route.color}</div>}
-                  {route.setter && <div>Routenschrauber: {route.setter}</div>}
-                  {route.grade_range && <div>Schwierigkeit: {route.grade_range}</div>}
+              <div className={`mt-1 h-10 w-10 rounded-[0.9rem] ${colorClass}`} />
+              <div className="space-y-2">
+                <div className="stitch-headline text-2xl text-[#f2dcab]">{route.code}</div>
+                <div className="text-sm text-[rgba(242,220,171,0.72)]">
+                  {(route.name || "Route") + (route.grade_range ? ` • ${route.grade_range}` : "")}
                 </div>
               </div>
             </div>
-          </Card>
-        )}
+          </StitchCard>
+        ) : null}
 
-        <Card className="p-6 border-2 border-destructive/50 bg-destructive/5">
+        <StitchCard tone="cream" className="p-6">
           <div className="flex items-start gap-4">
-            <div className="p-2 rounded-full bg-destructive/10">
-              <Lock className="h-6 w-6 text-destructive" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(161,85,35,0.1)] text-[#a15523]">
+              <Lock className="h-5 w-5" />
             </div>
-            <div className="flex-1 space-y-3">
+            <div className="space-y-3">
               <div>
-                <h3 className="font-semibold text-destructive mb-1">Halle nicht freigeschaltet</h3>
-                <p className="text-sm text-muted-foreground">
-                  Du musst zuerst einen Hallen-Code einlösen, bevor du Ergebnisse für diese Halle eintragen kannst.
+                <div className="text-xl font-semibold text-[#002637]">Halle noch gesperrt</div>
+                <p className="mt-1 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+                  Du brauchst zuerst einen Hallencode, bevor du ein Ergebnis für diese Route speichern kannst.
                 </p>
               </div>
-              <Button asChild variant="default" className="w-full sm:w-auto">
-                <Link to="/app/gyms/redeem">
-                  Code einlösen
-                </Link>
-              </Button>
+              <StitchButton asChild size="sm">
+                <Link to="/app/gyms/redeem">Code einlösen</Link>
+              </StitchButton>
             </div>
           </div>
-        </Card>
+        </StitchCard>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 md:space-y-6 max-w-2xl mx-auto">
-      {route && (
-        <Card className="p-5 md:p-6 lg:p-8 border-border/60">
-          <div className="flex items-start gap-4 md:gap-6">
-            {route.color && (
-              <div className={`h-6 w-6 md:h-8 md:w-8 rounded-full ${colorClass} border-2 border-border/50 flex-shrink-0 mt-1`} />
-            )}
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <div className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">
-                  {route.code} {route.name && `· ${route.name}`}
-                </div>
-                <div className="text-right flex-shrink-0 ml-4">
-                  <div className="text-2xl md:text-3xl font-bold text-secondary">
-                    {selectedOption === "flash" ? 11 : selectedOption}
-                  </div>
-                  <div className="text-xs md:text-sm text-muted-foreground">Punkte</div>
+    <div className="mx-auto max-w-3xl space-y-6">
+      {route ? (
+        <StitchCard tone="navy" className="p-5 sm:p-6">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StitchBadge tone="cream">{pageTitle}</StitchBadge>
+                {route.grade_range ? <StitchBadge tone="ghost">{route.grade_range}</StitchBadge> : null}
+                <StitchBadge tone="ghost">{route.discipline === "lead" ? "Vorstieg" : "Toprope"}</StitchBadge>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className={`mt-1 h-12 w-12 rounded-[1rem] ${colorClass}`} />
+                <div>
+                  <div className="stitch-headline text-4xl text-[#f2dcab]">{route.code}</div>
+                  <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
+                    {(route.name || "Route") + (route.setter ? ` • gesetzt von ${route.setter}` : "")}
+                  </p>
                 </div>
               </div>
-              <div className="text-sm md:text-base text-muted-foreground space-y-1">
-                {route.color && <div>Farbe: {route.color}</div>}
-                {route.setter && <div>Routenschrauber: {route.setter}</div>}
-                {route.grade_range && <div>Schwierigkeit: {route.grade_range}</div>}
+            </div>
+
+            <div className="rounded-[1.3rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4 text-right">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Aktuelle Wertung</div>
+              <div className="stitch-metric mt-3 text-5xl text-[#f2dcab]">{pointsLabel}</div>
+              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">Punkte</p>
+            </div>
+          </div>
+        </StitchCard>
+      ) : null}
+
+      <StitchCard tone="surface" className="p-5 sm:p-6">
+        <div className="space-y-5">
+          <div>
+            <div className="stitch-kicker text-[#a15523]">Ergebnis</div>
+            <div className="mt-2 text-lg font-semibold text-[#002637]">Wähle deinen erreichten Status</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {POINTS_OPTIONS.map((value) => {
+              const active = selectedOption === value;
+              const label = value === "flash" ? "Flash" : `${value} Punkte`;
+
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSelectedOption(value)}
+                  className={cn(
+                    "rounded-[1.1rem] border px-4 py-4 text-left transition-all",
+                    active
+                      ? "border-[#a15523] bg-[#a15523] text-white shadow-[0_14px_24px_rgba(161,85,35,0.24)]"
+                      : "border-[rgba(0,38,55,0.08)] bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
+                  )}
+                >
+                  <div className="stitch-headline text-lg">{value === "flash" ? "11" : value}</div>
+                  <div className="mt-2 text-xs font-bold uppercase tracking-[0.22em]">{label}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+            <StitchCard tone="muted" className="p-4">
+              <div className="flex items-start gap-3">
+                <Zap className="mt-0.5 h-5 w-5 text-[#a15523]" />
+                <div className="space-y-1.5">
+                  <div className="text-sm font-semibold text-[#002637]">Punkte-Logik</div>
+                  <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+                    Flash wird intern als Top mit Bonus gespeichert. Alle anderen Auswahlstufen bleiben unverändert.
+                  </p>
+                </div>
+              </div>
+            </StitchCard>
+
+            {existingResult?.feedback ? (
+              <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(161,85,35,0.08)] px-4 py-2 text-sm font-semibold text-[#a15523]">
+                <CheckCircle2 className="h-4 w-4" />
+                Feedback vorhanden
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </StitchCard>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+        <StitchCard tone="surface" className="p-5 sm:p-6">
+          <div className="space-y-4">
+            <div>
+              <div className="stitch-kicker text-[#a15523]">Bewertung</div>
+              <div className="mt-2 text-lg font-semibold text-[#002637]">Wie hat sich die Route angefühlt?</div>
+            </div>
+            <div className="rounded-[1.2rem] bg-[#f5efe5] p-4">
+              <StarRating value={rating} onChange={setRating} size="md" />
+              <div className="mt-3 flex items-center gap-2 text-sm text-[rgba(27,28,26,0.64)]">
+                <Star className="h-4 w-4 text-[#a15523]" />
+                Optional, aber hilfreich für spätere Auswertungen.
               </div>
             </div>
           </div>
-        </Card>
-      )}
+        </StitchCard>
 
-      <Card className="p-4 md:p-6 lg:p-8 border-border/60">
-        <div className="text-xs md:text-sm uppercase tracking-widest text-secondary mb-3 md:mb-4">Ergebnis</div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          {POINTS_OPTIONS.map((value) => (
-            <Button
-              key={value}
-              variant={selectedOption === value ? "default" : "outline"}
-              size="sm"
-              className="md:text-base"
-              onClick={() => setSelectedOption(value)}
-              type="button"
-            >
-              <span className="skew-x-6">
-                {value === "flash" ? "Flash (11 Pkt)" : `${value} Punkte`}
-              </span>
-            </Button>
-          ))}
-        </div>
-        <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-border/60">
-          <div className="text-xs md:text-sm uppercase tracking-widest text-secondary mb-3">Bewertung</div>
-          <StarRating value={rating} onChange={setRating} size="md" />
-        </div>
-        {existingResult?.feedback && (
-          <div className="mt-4 pt-4 border-t border-border/60">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <span>Feedback bereits eingereicht</span>
+        <StitchCard tone="cream" className="p-5 sm:p-6">
+          <div className="space-y-4">
+            <div>
+              <div className="stitch-kicker text-[#a15523]">Feedback</div>
+              <div className="mt-2 text-lg font-semibold text-[#002637]">Hinweis zur Route ergänzen</div>
             </div>
-          </div>
-        )}
-      </Card>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <Button className="w-full sm:flex-1" size="lg" onClick={handleSave} disabled={loading}>
-          {loading 
-            ? "Speichern..." 
-            : existingResult 
-              ? "Änderungen speichern"
-              : selectedOption === "flash" 
-                ? "Top mit Flash speichern" 
-                : "Ergebnis speichern"}
-        </Button>
-        <Button 
-          variant="outline" 
-          size="lg" 
-          onClick={() => setShowFeedbackDialog(true)}
-          className="w-full sm:w-auto relative"
-        >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          {existingResult?.feedback ? "Feedback bearbeiten" : "Feedback geben"}
-          {existingResult?.feedback && (
-            <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
-              Vorhanden
-            </Badge>
-          )}
-        </Button>
+            <p className="text-sm leading-6 text-[rgba(27,28,26,0.68)]">
+              Wenn dir etwas an der Route aufgefallen ist, kannst du dein Feedback direkt mit dem Ergebnis speichern.
+            </p>
+
+            <StitchButton type="button" variant="navy" size="sm" onClick={() => setShowFeedbackDialog(true)}>
+              <MessageSquareText className="h-4 w-4" />
+              {existingResult?.feedback ? "Feedback bearbeiten" : "Feedback hinzufügen"}
+            </StitchButton>
+          </div>
+        </StitchCard>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <StitchButton asChild variant="outline">
+          <Link to={`/app/gyms/${gymId}/routes`}>Abbrechen</Link>
+        </StitchButton>
+        <StitchButton type="button" onClick={handleSave} disabled={loading}>
+          {loading ? "Speichern..." : existingResult ? "Änderungen speichern" : "Ergebnis speichern"}
+        </StitchButton>
       </div>
 
       <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
-        <DialogContent className="max-w-2xl flex flex-col p-4 sm:p-6">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-base sm:text-lg">Feedback zur Route</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
-              Hast du ein Problem mit dieser Route bemerkt oder etwas, das gestört hat? Teile uns dein Feedback mit.
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Feedback zur Route</DialogTitle>
+            <DialogDescription>
+              Teile mit, ob etwas nicht gepasst hat oder dir beim Klettern aufgefallen ist.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 py-4 min-h-0">
-            <div className="space-y-2">
-              <Label htmlFor="feedback" className="text-sm">Dein Feedback</Label>
-              <Textarea
-                id="feedback"
-                placeholder="Beschreibe das Problem oder was dich gestört hat..."
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={6}
-                className="resize-none text-sm sm:text-base min-h-[120px] sm:min-h-[140px] focus-visible:ring-offset-0 focus-visible:ring-inset"
-              />
-            </div>
+
+          <div className="space-y-2 py-2">
+            <Label htmlFor="feedback">Dein Feedback</Label>
+            <Textarea
+              id="feedback"
+              placeholder="Beschreibe kurz dein Feedback zur Route..."
+              value={feedback}
+              onChange={(event) => setFeedback(event.target.value)}
+              rows={6}
+              className="resize-none"
+            />
           </div>
-          <DialogFooter className="flex-shrink-0 flex-col gap-2 sm:flex-row sm:gap-2 pt-2 sm:pt-0 pb-safe sm:pb-0">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowFeedbackDialog(false);
-                // Setze Feedback zurück auf den ursprünglichen Wert, falls vorhanden
-                if (existingResult?.feedback) {
-                  setFeedback(existingResult.feedback);
-                } else {
-                  setFeedback("");
-                }
-              }}
-              className="w-full sm:w-auto"
-            >
-              Abbrechen
-            </Button>
-            <Button 
+
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <StitchButton type="button" variant="outline" onClick={() => setShowFeedbackDialog(false)}>
+              Schließen
+            </StitchButton>
+            <StitchButton
+              type="button"
               onClick={() => {
                 setShowFeedbackDialog(false);
                 toast({
-                  title: "Feedback gespeichert",
-                  description: "Dein Feedback wird zusammen mit dem Ergebnis gespeichert.",
+                  title: "Feedback übernommen",
+                  description: "Dein Hinweis wird zusammen mit dem Ergebnis gespeichert.",
                 });
               }}
-              className="w-full sm:w-auto"
             >
-              Feedback speichern
-            </Button>
+              <AlertTriangle className="h-4 w-4" />
+              Feedback übernehmen
+            </StitchButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
+
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export default ResultEntry;

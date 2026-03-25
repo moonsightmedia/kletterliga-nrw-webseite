@@ -8,48 +8,53 @@ const featureLocked = isParticipantFeatureLocked();
 const items = [
   { to: "/app", label: "Home", icon: Home, locked: false },
   { to: "/app/gyms", label: "Hallen", icon: MapPinned, locked: featureLocked },
-  { to: "/app/rankings", label: "Ranglisten", icon: ListOrdered, locked: featureLocked },
+  { to: "/app/rankings", label: "Rangliste", icon: ListOrdered, locked: featureLocked },
   { to: "/app/profile", label: "Profil", icon: User, locked: false },
 ];
 
 export const BottomNav = () => {
   return (
-    <nav className="mobile-nav-visible fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t border-border">
-      <div className="grid grid-cols-4 max-w-md mx-auto">
-        {items.map((item) => {
-          const Icon = item.icon;
-          if (item.locked) {
-            return (
-              <div
-                key={item.to}
-                className="py-3 flex flex-col items-center justify-center gap-1 text-xs font-medium text-foreground/40"
-              >
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  <Lock className="h-3 w-3 absolute -right-2 -bottom-1" />
-                </div>
-                <span>{item.label}</span>
-              </div>
-            );
-          }
+    <nav className="fixed inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 px-3">
+      <div className="mx-auto w-full max-w-md rounded-[1.4rem] p-2 stitch-dock">
+        <div className="grid grid-cols-4 gap-2">
+          {items.map((item) => {
+            const Icon = item.icon;
 
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/app"}
-              className={({ isActive }) =>
-                cn(
-                  "py-3 flex flex-col items-center justify-center gap-1 text-xs font-medium",
-                  isActive ? "text-primary" : "text-foreground/60",
-                )
-              }
-            >
-              <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
+            if (item.locked) {
+              return (
+                <div
+                  key={item.to}
+                  className="flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[1rem] text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(242,220,171,0.46)]"
+                >
+                  <div className="relative">
+                    <Icon className="h-4 w-4" />
+                    <Lock className="absolute -bottom-1 -right-2 h-3 w-3" />
+                  </div>
+                  <span>{item.label}</span>
+                </div>
+              );
+            }
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/app"}
+                className={({ isActive }) =>
+                  cn(
+                    "flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 rounded-[1rem] px-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] transition-all",
+                    isActive
+                      ? "bg-[#a15523] text-white shadow-[0_12px_28px_rgba(161,85,35,0.28)]"
+                      : "text-[rgba(242,220,171,0.76)] hover:bg-[rgba(242,220,171,0.08)]",
+                  )
+                }
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

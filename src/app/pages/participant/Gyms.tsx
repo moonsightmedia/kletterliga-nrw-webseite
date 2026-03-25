@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Unlock } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { ArrowRight, Lock, MapPinned, Trophy, Unlock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
 import { listGyms, listResultsForUser, listRoutes, checkGymCodeRedeemed } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
 import type { Gym, Result, Route } from "@/services/appTypes";
@@ -25,7 +26,7 @@ const LOGO_FALLBACKS: Record<string, string> = {
   "KletterBar Münster": "/gym-logos-real/kletterbar-muenster.png",
   "Kletterfabrik Köln": "/gym-logos-real/kletterfabrik-koeln.png",
   "Kletterwelt Sauerland": "/gym-logos-real/kletterwelt-sauerland.jpg",
-  "OWL": "/gym-logos-real/owl.jpg",
+  OWL: "/gym-logos-real/owl.jpg",
 };
 
 const isAbortError = (error: unknown) =>
@@ -66,8 +67,8 @@ const Gyms = () => {
           })
           .filter((gym) => OFFICIAL_GYMS.has(gym.name))
           .reduce<Gym[]>((acc, gym) => {
-            const idx = acc.findIndex((g) => gymKey(g.name) === gymKey(gym.name));
-            if (idx === -1) acc.push(gym);
+            const index = acc.findIndex((existing) => gymKey(existing.name) === gymKey(gym.name));
+            if (index === -1) acc.push(gym);
             return acc;
           }, []);
 
@@ -106,6 +107,7 @@ const Gyms = () => {
     if (gyms.length > 0) {
       const checkUnlocked = async () => {
         const unlocked = new Set<string>();
+
         await Promise.all(
           gyms.map(async (gym) => {
             const { data } = await checkGymCodeRedeemed(gym.id, profile.id);
@@ -132,24 +134,76 @@ const Gyms = () => {
     };
   }, [profile?.id, gyms]);
 
-  const routeByGym = useMemo(() => {
-    return routes.reduce<Record<string, Route[]>>((acc, route) => {
-      acc[route.gym_id] = acc[route.gym_id] ?? [];
-      acc[route.gym_id].push(route);
-      return acc;
-    }, {});
-  }, [routes]);
+  const routeByGym = useMemo(
+    () =>
+      routes.reduce<Record<string, Route[]>>((acc, route) => {
+        acc[route.gym_id] = acc[route.gym_id] ?? [];
+        acc[route.gym_id].push(route);
+        return acc;
+      }, {}),
+    [routes],
+  );
 
-  const resultMap = useMemo(() => {
-    return results.reduce<Record<string, Result>>((acc, result) => {
-      acc[result.route_id] = result;
-      return acc;
-    }, {});
-  }, [results]);
+  const resultMap = useMemo(
+    () =>
+      results.reduce<Record<string, Result>>((acc, result) => {
+        acc[result.route_id] = result;
+        return acc;
+      }, {}),
+    [results],
+  );
+
+  const unlockedCount = unlockedGyms.size;
+  const totalRoutes = routes.length;
+  const climbedRoutes = results.filter((result) => result.points > 0).length;
+  const overallProgress = totalRoutes > 0 ? Math.round((climbedRoutes / totalRoutes) * 100) : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5">
+    <div className="space-y-6">
+      <StitchCard tone="navy" className="p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <StitchBadge tone="cream">Hallen Übersicht</StitchBadge>
+              <StitchBadge tone="terracotta">{gyms.length} offizielle Hallen</StitchBadge>
+            </div>
+
+            <StitchSectionHeading
+              eyebrow="Partnerhallen"
+              title="Alle Hallen in einem vertikalen Flow"
+              description="Unlock-Status, Logos und persönlicher Fortschritt sind auf Stitch-Karten abgebildet."
+              className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.66)] [&_p]:text-[rgba(242,220,171,0.76)]"
+            />
+
+            <StitchButton asChild variant="cream">
+              <Link to="/app/gyms/redeem">
+                Code einlösen
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </StitchButton>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Freigeschaltet</div>
+              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{unlockedCount}</div>
+              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">Hallen offen</p>
+            </div>
+            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Routen</div>
+              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{climbedRoutes}</div>
+              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">bereits geklettert</p>
+            </div>
+            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Gesamtfortschritt</div>
+              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{overallProgress}%</div>
+              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">über alle Routen</p>
+            </div>
+          </div>
+        </div>
+      </StitchCard>
+
+      <div className="space-y-3">
         {gyms.map((gym) => {
           const gymRoutes = routeByGym[gym.id] ?? [];
           const completed = gymRoutes.filter((route) => resultMap[route.id]).length;
@@ -158,92 +212,68 @@ const Gyms = () => {
           const hasProgress = completed > 0;
 
           return (
-            <Link key={gym.id} to={`/app/gyms/${gym.id}`}>
-              <Card
-                className={`relative h-full overflow-hidden border-2 p-4 transition-all md:p-5 lg:p-6 ${
-                  unlocked
-                    ? "border-secondary/40 bg-gradient-to-br from-background to-secondary/5 hover:border-secondary hover:shadow-lg"
-                    : "border-border/60 bg-background opacity-90 hover:border-border hover:shadow-md"
-                }`}
-              >
-                <div className="space-y-3 md:space-y-4">
-                  <div className="flex items-start justify-between gap-2">
+            <Link key={gym.id} to={`/app/gyms/${gym.id}`} className="block">
+              <StitchCard tone={unlocked ? "surface" : "muted"} className="p-5 transition-transform hover:-translate-y-0.5">
+                <div className="grid gap-4 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+                  <div className="flex items-center gap-4">
                     <div
-                      className={`h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl md:h-16 md:w-16 ${
-                        unlocked
-                          ? "border-2 border-secondary/30 bg-secondary/10"
-                          : "border border-border/60 bg-muted/50"
+                      className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.4rem] ${
+                        unlocked ? "bg-[#f5efe5]" : "bg-white/70"
                       }`}
                     >
                       {gym.logo_url ? (
-                        <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-1.5" />
+                        <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-2.5" />
                       ) : (
-                        <span
-                          className={`text-sm font-bold md:text-base ${
-                            unlocked ? "text-secondary" : "text-muted-foreground"
-                          }`}
-                        >
-                          KL
-                        </span>
+                        <span className="stitch-headline text-xl text-[#003d55]">KL</span>
                       )}
                     </div>
-                    <div className="flex-shrink-0 pt-1">
-                      {unlocked ? (
-                        <Unlock className="h-5 w-5 text-secondary md:h-6 md:w-6" />
-                      ) : (
-                        <Lock className="h-5 w-5 text-muted-foreground/60 md:h-6 md:w-6" />
-                      )}
+
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="stitch-headline text-2xl text-[#002637]">{gym.name}</div>
+                        <StitchBadge tone={unlocked ? "terracotta" : "ghost"}>
+                          {unlocked ? "Besucht" : "Offen"}
+                        </StitchBadge>
+                      </div>
+                      <div className="inline-flex items-center gap-2 text-sm text-[rgba(27,28,26,0.62)]">
+                        <MapPinned className="h-4 w-4 text-[#003d55]" />
+                        {gym.city || "NRW"}
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <div
-                      className={`mb-1 text-sm font-medium leading-tight md:text-base ${
-                        unlocked ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      {gym.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground md:text-sm">{gym.city || ""}</div>
-                  </div>
-
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Routen geklettert</span>
-                      <span
-                        className={`text-xs font-bold ${
-                          hasProgress ? "text-primary" : "text-muted-foreground"
-                        }`}
-                      >
-                        {completed}/{gymRoutes.length || 0}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-semibold text-[#002637]">Fortschritt in dieser Halle</span>
+                      <span className="text-[rgba(27,28,26,0.62)]">
+                        {completed}/{gymRoutes.length || 0} Routen
                       </span>
                     </div>
-                    {gymRoutes.length > 0 ? (
-                      <div className="relative">
-                        <div className="h-2.5 overflow-hidden rounded-full bg-muted/60">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              hasProgress ? "bg-primary" : "bg-muted"
-                            }`}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        {progress > 0 && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[9px] font-semibold text-primary-foreground drop-shadow-sm">
-                              {progress}%
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-2.5 rounded-full bg-muted/40">
-                        <div className="h-full w-full rounded-full bg-muted/60" />
-                      </div>
-                    )}
+
+                    <Progress
+                      value={progress}
+                      className="h-3 rounded-full bg-[rgba(0,38,55,0.08)] [&>*]:bg-[#a15523]"
+                    />
+
+                    <div className="flex flex-wrap gap-2">
+                      <StitchBadge tone="ghost">{progress}% abgeschlossen</StitchBadge>
+                      <StitchBadge tone="ghost">{hasProgress ? "Mit Aktivität" : "Noch offen"}</StitchBadge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#003d55]">
+                      {unlocked ? <Unlock className="h-5 w-5 text-[#a15523]" /> : <Lock className="h-5 w-5" />}
+                      {unlocked ? "Freigeschaltet" : "Gesperrt"}
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#003d55] px-4 py-2 text-sm font-semibold text-[#f2dcab]">
+                      <Trophy className="h-4 w-4" />
+                      Halle öffnen
+                    </div>
                   </div>
                 </div>
-              </Card>
+              </StitchCard>
             </Link>
           );
         })}

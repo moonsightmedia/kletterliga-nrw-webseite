@@ -1,135 +1,151 @@
-import { Outlet, useLocation, NavLink, Link } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
+import { Bell, ListOrdered, User } from "lucide-react";
 import { BottomNav } from "@/app/components/BottomNav";
-import { Home, ListOrdered, MapPinned, User, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { formatUnlockDate, isParticipantFeatureLocked } from "@/config/launch";
+import logo from "@/assets/logo.png";
 
 const getPageTitle = (path: string) => {
-  if (path.startsWith("/app/participation/redeem")) return "Teilnahme freischalten";
+  if (path.startsWith("/app/participation/redeem")) return "Teilnahme";
   if (path.startsWith("/app/gyms/redeem")) return "Code einlösen";
-  if (path.includes("/app/gyms/") && path.endsWith("/routes")) return "Routen & Ergebnisse";
-  if (path.includes("/app/gyms/") && path.includes("/result")) return "Ergebnis eintragen";
-  if (path.startsWith("/app/gyms/")) return "Hallen-Detail";
-  if (path.startsWith("/app/gyms")) return "Hallen";
-  if (path.startsWith("/app/rankings")) return "Ranglisten";
-  if (path.startsWith("/app/age-group-rankings")) return "Altersklassenranglisten";
+  if (path.includes("/app/gyms/") && path.endsWith("/routes")) return "Routen";
+  if (path.includes("/app/gyms/") && path.includes("/result")) return "Ergebnis";
+  if (path.startsWith("/app/gyms/")) return "Hallenprofil";
+  if (path.startsWith("/app/gyms")) return "Partnerhallen";
+  if (path.startsWith("/app/rankings")) return "Rangliste";
+  if (path.startsWith("/app/age-group-rankings")) return "Altersklassen";
+  if (path.startsWith("/app/finale")) return "Finale";
   if (path.startsWith("/app/profile")) return "Profil";
-  return "Home";
+  return "Dashboard";
 };
 
 const featureLocked = isParticipantFeatureLocked();
-
-const sidebarItems = [
-  { to: "/app", label: "Home", icon: Home, locked: false },
-  { to: "/app/gyms", label: "Hallen", icon: MapPinned, locked: featureLocked },
-  { to: "/app/rankings", label: "Ranglisten", icon: ListOrdered, locked: featureLocked },
-  { to: "/app/profile", label: "Profil", icon: User, locked: false },
-];
 
 export const ParticipantLayout = () => {
   const location = useLocation();
   const { profile } = useAuth();
   const title = getPageTitle(location.pathname);
-  const participationInactive = profile && profile.role === "participant" && !profile.participation_activated_at;
+  const participationInactive =
+    profile && profile.role === "participant" && !profile.participation_activated_at;
   const unlockDate = formatUnlockDate();
 
   return (
-    <div className="min-h-screen bg-accent/30 desktop-layout-flex">
-      {/* Mobile Header */}
-      <div className="mobile-header-visible sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="px-5 py-4 text-center">
-          <div className="text-xs uppercase tracking-widest text-secondary">Kletterliga NRW</div>
-          <div className="font-headline text-2xl text-primary">{title}</div>
-        </div>
-      </div>
+    <div className="stitch-app stitch-app-shell">
+      <Sheet>
+        <header className="stitch-topbar">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <Link to="/app" className="flex min-w-0 items-center gap-3">
+              <div className="rounded-[1rem] bg-[#f2dcab] p-2.5 shadow-[0_16px_30px_rgba(0,0,0,0.18)]">
+                <img src={logo} alt="Kletterliga NRW" className="h-10 w-10 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Kletterliga NRW</div>
+                <div className="stitch-headline truncate text-xl text-[#f2dcab]">{title}</div>
+              </div>
+            </Link>
 
-      {/* Desktop Sidebar */}
-      <aside className="desktop-sidebar sticky top-0 h-screen w-64 flex-col border-r border-border bg-background overflow-y-auto">
-        <div className="px-6 py-5 border-b border-border">
-          <div className="text-xs uppercase tracking-widest text-secondary">Kletterliga NRW</div>
-          <div className="font-headline text-xl text-primary mt-1">Teilnehmer</div>
-        </div>
-        <nav className="p-3 flex flex-col gap-2 flex-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const exactPaths = ["/app"];
-            const isExact = exactPaths.includes(item.to);
-
-            if (item.locked) {
-              return (
-                <div
-                  key={item.to}
-                  className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/40 bg-accent/30"
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-5 w-5 flex-shrink-0" />
-                    <span>{item.label}</span>
-                  </div>
-                  <Lock className="h-4 w-4" />
-                </div>
-              );
-            }
-
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={isExact}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent text-primary"
-                      : "text-foreground/70 hover:bg-accent/70 hover:text-primary",
-                  )
-                }
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
+                aria-label="Benachrichtigungen öffnen"
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Desktop Header */}
-        <header className="desktop-header sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-          <div className="px-8 py-4">
-            <div className="font-headline text-3xl text-primary">{title}</div>
+                <Bell className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 px-5 pt-6 pb-24 lg:px-8 lg:pt-8 lg:pb-8 lg:max-w-7xl lg:mx-auto lg:w-full">
-          {featureLocked && (
-            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-              <p className="text-sm text-foreground">
-                Dein Dashboard ist schon aktiv. Hallen, Ranglisten und Codes werden am {unlockDate}
-                freigeschaltet.
-              </p>
+        <SheetContent
+          side="right"
+          className="stitch-app stitch-rope-texture w-[88vw] max-w-sm border-l-0 bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] px-5 py-14 text-[#f2dcab]"
+        >
+          <SheetHeader className="space-y-4 text-left">
+            <div>
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">
+                Benachrichtigungen
+              </div>
+              <SheetTitle className="stitch-headline text-3xl text-[#f2dcab]">
+                Noch alles ruhig
+              </SheetTitle>
             </div>
-          )}
-          {participationInactive && (
-            <div className="mb-4 p-4 rounded-lg border-2 border-amber-500/50 bg-amber-500/10">
-              <p className="text-sm font-medium text-foreground">
-                Deine Teilnahme ist noch nicht aktiv. Ergebnisse werden nicht in den Ranglisten gezählt.
-              </p>
-              <Link
-                to="/app/participation/redeem"
-                className="inline-block mt-2 text-sm font-semibold text-primary hover:underline"
-              >
-                Mastercode einlösen →
-              </Link>
-            </div>
-          )}
-          <Outlet />
-        </main>
-      </div>
+          </SheetHeader>
 
-      {/* Mobile Bottom Navigation */}
+          <div className="mt-8 space-y-4">
+            <StitchCard tone="glass" className="p-5">
+              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Liga-App</div>
+              <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+                Sobald es echte Benachrichtigungen gibt, erscheinen sie hier. Wichtige
+                Einstellungen, Hilfe und Logout findest du aktuell im Profil.
+              </p>
+            </StitchCard>
+
+            <StitchButton asChild variant="cream" className="w-full justify-start text-[#002637]">
+              <Link to="/app/profile">
+                <User className="h-4 w-4" />
+                Zum Profil
+              </Link>
+            </StitchButton>
+
+            {!featureLocked ? (
+              <StitchButton
+                asChild
+                variant="outline"
+                className="w-full justify-start border-[rgba(242,220,171,0.18)] bg-[rgba(242,220,171,0.06)] text-[#f2dcab] hover:bg-[rgba(242,220,171,0.12)]"
+              >
+                <Link to="/app/rankings">
+                  <ListOrdered className="h-4 w-4" />
+                  Zur Rangliste
+                </Link>
+              </StitchButton>
+            ) : null}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <main className="stitch-page-pad mx-auto w-full max-w-6xl px-4 pb-8 pt-5 sm:px-6">
+        {featureLocked ? (
+          <StitchCard tone="navy" className="mb-4 px-5 py-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
+                <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
+                <div className="stitch-headline text-2xl text-[#f2dcab]">
+                  Dein Dashboard ist offen, die Liga startet am {unlockDate}.
+                </div>
+                <p className="max-w-2xl text-sm leading-6 text-[rgba(242,220,171,0.72)]">
+                  Profil, Vorbereitung und persönliche Statistiken sind bereits verfügbar.
+                  Hallen, Codes und Ranglisten öffnen gesammelt zum Saisonstart.
+                </p>
+              </div>
+              <div className="stitch-headline inline-flex items-center rounded-full bg-[#f2dcab] px-3 py-1 text-[0.58rem] font-bold tracking-[0.22em] text-[#002637]">
+                Freischaltung {unlockDate}
+              </div>
+            </div>
+          </StitchCard>
+        ) : null}
+
+        {participationInactive ? (
+          <StitchCard tone="cream" className="mb-4 px-5 py-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
+                <div className="mt-1 text-sm leading-6 text-[rgba(27,28,26,0.7)]">
+                  Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den
+                  Ranglisten berücksichtigt.
+                </div>
+              </div>
+              <StitchButton asChild size="sm">
+                <Link to="/app/participation/redeem">Mastercode einlösen</Link>
+              </StitchButton>
+            </div>
+          </StitchCard>
+        ) : null}
+
+        <Outlet />
+      </main>
+
       <BottomNav />
     </div>
   );

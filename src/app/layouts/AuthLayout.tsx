@@ -4,43 +4,50 @@ import { cn } from "@/lib/utils";
 
 export const AuthLayout = () => {
   const location = useLocation();
+  const isLoginRoute = location.pathname === "/app/login";
+  const isRegisterRoute = location.pathname === "/app/register";
   const isOnboardingRoute =
     location.pathname === "/app/register" || location.pathname === "/app/register/success";
+  const suppressHeader = isLoginRoute || isRegisterRoute;
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(242,220,171,0.55),rgba(255,255,255,0.98)_26%,rgba(242,220,171,0.28)_100%)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(161,85,35,0.18),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(0,61,85,0.14),_transparent_34%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[linear-gradient(135deg,rgba(242,220,171,0.28),transparent_62%)]" />
+    <div className="stitch-app stitch-auth-shell">
+      <div className="stitch-rope-texture absolute inset-0 opacity-40" />
 
-      <header className="relative px-4 pb-2 pt-6 sm:px-6 sm:pt-8">
-        <Link
-          to="/"
-          className={cn(
-            "mx-auto flex w-full items-center gap-3",
-            isOnboardingRoute ? "max-w-[980px]" : "max-w-[480px]",
-          )}
-        >
-          <img src={logo} alt="Kletterliga NRW" className="h-10 w-10 object-contain" />
-          <div className="font-headline text-lg tracking-wide text-primary">
-            KLETTERLIGA <span className="text-secondary">NRW</span>
+      {!suppressHeader ? (
+        <header className="relative z-10 px-4 pt-6 sm:px-6 sm:pt-8">
+          <div className={cn("mx-auto flex w-full items-center justify-between gap-4", isOnboardingRoute ? "max-w-5xl" : "max-w-md")}>
+            <Link to="/" className="inline-flex items-center gap-3">
+              <div className="rounded-[1.1rem] bg-[#f2dcab] p-3 shadow-[0_18px_36px_rgba(0,0,0,0.18)] rotate-[-2deg]">
+                <img src={logo} alt="Kletterliga NRW" className="h-9 w-9 object-contain" />
+              </div>
+              <div>
+                <div className="stitch-headline text-lg text-[#f2dcab]">Kletterliga NRW</div>
+                <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Teilnehmerbereich</div>
+              </div>
+            </Link>
+
+            <div className="stitch-kicker hidden text-[rgba(242,220,171,0.62)] sm:block">
+              Saison-App
+            </div>
           </div>
-        </Link>
-      </header>
+        </header>
+      ) : null}
 
-      <main className="relative flex flex-1 items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
-        <div
-          className={cn(
-            "w-full overflow-hidden rounded-[30px] border border-primary/10 bg-background/95 shadow-[0_28px_90px_-52px_rgba(18,28,36,0.34)] backdrop-blur sm:rounded-[36px]",
-            isOnboardingRoute ? "max-w-[980px]" : "max-w-[480px]",
-          )}
-        >
+      <main
+        className={cn(
+          "relative z-10 flex flex-1 justify-center",
+          isRegisterRoute
+            ? "items-start px-0 pb-0 pt-0 sm:px-0 sm:pb-0 sm:pt-0"
+            : isLoginRoute
+              ? "items-center px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10"
+              : "items-center px-4 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8",
+        )}
+      >
+        <div className={cn("w-full", isOnboardingRoute ? "max-w-5xl" : "max-w-md")}>
           <Outlet />
         </div>
       </main>
-
-      <footer className="relative px-4 pb-6 text-center text-xs text-muted-foreground">
-        Liga-App {"\u00b7"} Mobile First
-      </footer>
     </div>
   );
 };

@@ -1,0 +1,202 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap");
+
+.stitch-app {
+    --stitch-navy: #003d55;
+    --stitch-navy-deep: #002637;
+    --stitch-cream: #f2dcab;
+    --stitch-terracotta: #a15523;
+    --stitch-surface: #ffffff;
+    --stitch-surface-soft: #f8f4ee;
+    --stitch-surface-muted: #ede8e1;
+    --stitch-outline: rgba(0, 38, 55, 0.12);
+    --stitch-outline-strong: rgba(0, 38, 55, 0.2);
+    --stitch-ink: #1b1c1a;
+    --stitch-ink-muted: rgba(27, 28, 26, 0.64);
+    --stitch-cream-muted: rgba(242, 220, 171, 0.72);
+    --stitch-shadow: 0 24px 48px rgba(0, 38, 55, 0.12);
+    color: var(--stitch-ink);
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+
+  .stitch-app-shell {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top right, rgba(161, 85, 35, 0.12), transparent 28%),
+      linear-gradient(180deg, #fbf9f6 0%, #f5f0e7 100%);
+  }
+
+  .stitch-auth-shell {
+    position: relative;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 80%, rgba(242, 220, 171, 0.16), transparent 22%),
+      radial-gradient(circle at 88% 18%, rgba(161, 85, 35, 0.16), transparent 20%),
+      linear-gradient(180deg, var(--stitch-navy) 0%, var(--stitch-navy-deep) 100%);
+    color: var(--stitch-cream);
+    overflow: hidden;
+  }
+
+  .stitch-auth-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(242, 220, 171, 0.13) 1px, transparent 0);
+    background-size: 22px 22px;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .stitch-rope-texture {
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.028) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.028) 50%,
+      rgba(255, 255, 255, 0.028) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 20px 20px;
+  }
+
+  .stitch-headline {
+    font-family: "Space Grotesk", system-ui, sans-serif !important;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .stitch-kicker {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .stitch-surface-card,
+  .stitch-cream-card,
+  .stitch-muted-card,
+  .stitch-glass-card,
+  .stitch-navy-card {
+    border-radius: 1.5rem;
+    overflow: hidden;
+  }
+
+  .stitch-surface-card {
+    background: linear-gradient(180deg, var(--stitch-surface) 0%, var(--stitch-surface-soft) 100%);
+    border: 1px solid rgba(242, 220, 171, 0.28);
+    box-shadow: var(--stitch-shadow);
+  }
+
+  .stitch-cream-card {
+    background: linear-gradient(180deg, #f7e7bd 0%, var(--stitch-cream) 100%);
+    border: 1px solid rgba(0, 38, 55, 0.08);
+    box-shadow: 0 18px 42px rgba(0, 38, 55, 0.18);
+  }
+
+  .stitch-muted-card {
+    background: linear-gradient(180deg, #f5efe5 0%, #ede8e1 100%);
+    border: 1px solid rgba(0, 38, 55, 0.08);
+  }
+
+  .stitch-glass-card {
+    background: rgba(242, 220, 171, 0.06);
+    border: 1px solid rgba(242, 220, 171, 0.1);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  }
+
+  .stitch-navy-card {
+    background:
+      radial-gradient(circle at bottom right, rgba(242, 220, 171, 0.08), transparent 28%),
+      linear-gradient(180deg, var(--stitch-navy) 0%, var(--stitch-navy-deep) 100%);
+    border: 1px solid rgba(242, 220, 171, 0.08);
+    box-shadow: 0 18px 48px rgba(0, 38, 55, 0.24);
+    color: var(--stitch-cream);
+  }
+
+  .stitch-metric {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 0.92;
+  }
+
+  .stitch-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(0, 61, 85, 0.96);
+    border-bottom: 1px solid rgba(242, 220, 171, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .stitch-dock {
+    background: rgba(0, 38, 55, 0.92);
+    border: 1px solid rgba(242, 220, 171, 0.14);
+    box-shadow: 0 24px 40px rgba(0, 38, 55, 0.28);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .stitch-page-pad {
+    padding-bottom: calc(7.25rem + env(safe-area-inset-bottom));
+  }
+
+  .stitch-field-shell {
+    background: rgba(255, 255, 255, 0.7);
+    border-bottom: 2px solid rgba(0, 38, 55, 0.16);
+    border-radius: 1rem 1rem 0.35rem 0.35rem;
+    transition: border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .stitch-field-shell:focus-within {
+    background: rgba(255, 255, 255, 0.94);
+    border-bottom-color: var(--stitch-navy);
+  }
+
+  .stitch-input,
+  .stitch-textarea,
+  .stitch-select {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--stitch-navy-deep);
+    font-size: 0.97rem;
+    outline: 0;
+  }
+
+  .stitch-input::placeholder,
+  .stitch-textarea::placeholder {
+    color: rgba(0, 38, 55, 0.32);
+  }
+
+  .stitch-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+
+  .stitch-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 38, 55, 0.1), transparent);
+  }
+
+  .stitch-avatar-ring {
+    box-shadow:
+      0 0 0 3px rgba(242, 220, 171, 0.18),
+      0 8px 24px rgba(0, 38, 55, 0.18);
+  }
+
+  .stitch-scroll-x {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+.stitch-scroll-x::-webkit-scrollbar {
+  display: none;
+}
