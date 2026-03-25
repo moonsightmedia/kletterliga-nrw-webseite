@@ -43,7 +43,7 @@ begin
   points_per_profile as (
     select
       r.profile_id,
-      coalesce(sum(coalesce(r.points, 0)::bigint), 0) + coalesce(sum(case when r.flash then 1 else 0 end)::bigint, 0) as total
+      sum(r.points::bigint) + sum(case when r.flash then 1 else 0 end)::bigint as total
     from public.results r
     join public.routes rt on rt.id = r.route_id
     where rt.discipline = p_league
@@ -77,10 +77,8 @@ begin
   limit 50;
 end;
 $$;
-
 comment on function public.get_public_rankings(text, text) is
   'Returns top 50 ranking rows for public website by league and class. Callable by anon.';
-
 -- Only service role (Edge Function) and authenticated may call; anon uses Edge Function
 grant execute on function public.get_public_rankings(text, text) to authenticated;
 grant execute on function public.get_public_rankings(text, text) to service_role;

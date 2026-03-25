@@ -77,9 +77,7 @@ begin
   limit 50;
 end;
 $$;
-
 comment on function public.get_public_rankings(text, text) is
   'Returns top 50 ranking rows for public website by league and class (U15/Ü15/Ü40). Callable by anon.';
-
 grant execute on function public.get_public_rankings(text, text) to authenticated;
 grant execute on function public.get_public_rankings(text, text) to service_role;

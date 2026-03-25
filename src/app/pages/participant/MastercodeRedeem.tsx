@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { CheckCircle2, LineChart, Scan, ShieldCheck, TicketCheck } from "lucide-react";
+import { CheckCircle2, LineChart, Scan, ShieldCheck, TicketCheck, X } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
@@ -140,7 +141,7 @@ const MastercodeRedeem = () => {
                 <input
                   value={code}
                   onChange={(event) => setCode(event.target.value.toUpperCase())}
-                  placeholder="CODE-XXXX-XXXX"
+                  placeholder="KL-MASTER-XXXXXX-XXXX"
                   maxLength={24}
                   className="w-full bg-transparent text-center font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.22em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.24)]"
                 />
@@ -152,26 +153,54 @@ const MastercodeRedeem = () => {
                 {loading ? "Wird freigeschaltet..." : "Jetzt freischalten"}
               </StitchButton>
 
-              <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-                <DialogTrigger asChild>
+              <Drawer open={scanOpen} onOpenChange={setScanOpen}>
+                <DrawerTrigger asChild>
                   <StitchButton type="button" variant="outline" size="lg" className="w-full sm:w-auto">
                     <Scan className="h-4 w-4" />
                     Scannen
                   </StitchButton>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Mastercode scannen</DialogTitle>
-                    <DialogDescription>Halte den QR-Code oder Barcode vor die Kamera.</DialogDescription>
-                  </DialogHeader>
-                  <CodeQrScanner
-                    onScan={(value) => {
-                      setCode(value.trim().toUpperCase());
-                      setScanOpen(false);
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+                </DrawerTrigger>
+                <DrawerContent
+                  showHandle={false}
+                  className="mx-auto max-w-md rounded-t-[2rem] border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
+                >
+                  <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-[rgba(242,220,171,0.24)]" />
+
+                  <DrawerHeader className="px-7 pb-0 pt-4 text-left">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <DrawerTitle className="pr-0 font-['Space_Grotesk'] text-[2rem] font-bold tracking-[-0.04em] text-[#f2dcab]">
+                          Kamera-Scanner
+                        </DrawerTitle>
+                        <DrawerDescription className="text-base text-[rgba(242,220,171,0.62)]">
+                          Mastercode in den Rahmen halten
+                        </DrawerDescription>
+                      </div>
+
+                      <DrawerClose asChild>
+                        <button
+                          type="button"
+                          className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
+                          aria-label="Scanner schließen"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </DrawerClose>
+                    </div>
+                  </DrawerHeader>
+
+                  <div className="px-7 pt-5">
+                    <div className="overflow-hidden rounded-[1.8rem] bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
+                      <CodeQrScanner
+                        onScan={(value) => {
+                          setCode(value.trim().toUpperCase());
+                          setScanOpen(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
             </div>
 
             <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.52)]">

@@ -20,8 +20,11 @@ const GymRedeem = lazy(() => import("@/app/pages/participant/GymRedeem"));
 const GymRoutes = lazy(() => import("@/app/pages/participant/GymRoutes"));
 const ResultEntry = lazy(() => import("@/app/pages/participant/ResultEntry"));
 const Rankings = lazy(() => import("@/app/pages/participant/Rankings"));
+const ParticipantProfilePage = lazy(() => import("@/app/pages/participant/ParticipantProfilePage"));
 const AgeGroupRankings = lazy(() => import("@/app/pages/participant/AgeGroupRankings"));
+const RankingParticipantHistory = lazy(() => import("@/app/pages/participant/RankingParticipantHistory"));
 const Profile = lazy(() => import("@/app/pages/participant/Profile"));
+const ProfileHistory = lazy(() => import("@/app/pages/participant/ProfileHistory"));
 const MastercodeRedeem = lazy(() => import("@/app/pages/participant/MastercodeRedeem"));
 const Finale = lazy(() => import("@/app/pages/participant/Finale"));
 const FeatureLocked = lazy(() => import("@/app/pages/participant/FeatureLocked"));
@@ -96,6 +99,26 @@ export const appRoutes = (
         element={isParticipantFeatureLocked() ? <FeatureLocked title="Ranglisten folgen zum Saisonstart" /> : <Rankings />}
       />
       <Route
+        path="rankings/profile/:profileId"
+        element={
+          isParticipantFeatureLocked() ? (
+            <FeatureLocked title="Teilnehmerprofile folgen zum Saisonstart" />
+          ) : (
+            <ParticipantProfilePage />
+          )
+        }
+      />
+      <Route
+        path="rankings/profile/:profileId/history"
+        element={
+          isParticipantFeatureLocked() ? (
+            <FeatureLocked title="Teilnehmerverlaeufe folgen zum Saisonstart" />
+          ) : (
+            <RankingParticipantHistory />
+          )
+        }
+      />
+      <Route
         path="age-group-rankings"
         element={isParticipantFeatureLocked() ? <FeatureLocked title="Altersklassenranglisten folgen zum Saisonstart" /> : <AgeGroupRankings />}
       />
@@ -104,6 +127,7 @@ export const appRoutes = (
         element={isParticipantFeatureLocked() ? <FeatureLocked title="Finale-Bereich folgt zum Saisonstart" /> : <Finale />}
       />
       <Route path="profile" element={<Profile />} />
+      <Route path="profile/history" element={<ProfileHistory />} />
     </Route>
 
     <Route

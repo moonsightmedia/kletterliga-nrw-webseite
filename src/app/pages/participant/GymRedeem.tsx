@@ -1,25 +1,60 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, HelpCircle, Scan, Ticket } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle2, CircleHelp, KeyRound, ScanLine, Ticket, X } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
-import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
-import { redeemGymCode } from "@/services/appApi";
+import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { getGym, redeemGymCode } from "@/services/appApi";
+import type { Gym } from "@/services/appTypes";
+
+const isAbortError = (error: unknown) =>
+  error instanceof Error &&
+  (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
 const GymRedeem = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const gymId = searchParams.get("gymId");
+  const [gym, setGym] = useState<Gym | null>(null);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+
+  useEffect(() => {
+    if (!gymId) {
+      setGym(null);
+      return;
+    }
+
+    let active = true;
+
+    getGym(gymId)
+      .then(({ data }) => {
+        if (active) {
+          setGym(data ?? null);
+        }
+      })
+      .catch((error) => {
+        if (!isAbortError(error)) {
+          console.error("Failed to load redeem gym", error);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [gymId]);
 
   const handleRedeem = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -50,114 +85,155 @@ const GymRedeem = () => {
       variant: "success",
     });
     setCode("");
+    if (data.gym_id) {
+      navigate(`/app/gyms/${data.gym_id}`, { replace: true });
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <StitchCard tone="navy" className="overflow-hidden">
-        <div className="stitch-rope-texture p-5 sm:p-6">
-          <div className="mx-auto max-w-xl space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StitchBadge tone="cream">Code einlösen</StitchBadge>
-              <StitchBadge tone="ghost">Partnerhalle freischalten</StitchBadge>
-            </div>
-
-            <StitchSectionHeading
-              eyebrow="Hallenzugang"
-              title="Mit einem Hallencode direkt in deine Session"
-              description="Gib den Code aus deiner Halle ein. Danach kannst du dort Ergebnisse eintragen und deine Fortschritte live verfolgen."
-              className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.66)] [&_p]:text-[rgba(242,220,171,0.76)]"
-            />
-          </div>
-        </div>
-      </StitchCard>
-
-      <div className="mx-auto grid max-w-xl gap-4">
-        <StitchCard tone="cream" className="p-5 sm:p-6">
+    <div className="mx-auto max-w-md">
+      <div className="space-y-5">
+        <StitchCard
+          tone="cream"
+          className="overflow-hidden rounded-[2.2rem] border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-5 shadow-[0_28px_70px_rgba(0,0,0,0.24)] sm:p-6"
+        >
           <form onSubmit={handleRedeem} className="space-y-6">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[rgba(0,61,85,0.06)]">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(0,61,85,0.08)] text-[#a15523]">
-                <Ticket className="h-7 w-7" />
-                <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-[#a15523] text-[#f2dcab] shadow-[0_10px_22px_rgba(161,85,35,0.28)]">
-                  <ArrowRight className="h-4 w-4" />
+            <div className="flex justify-center pt-2">
+              <div className="relative">
+                <div className="flex h-24 w-24 items-center justify-center rounded-[1.35rem] bg-[rgba(0,38,55,0.08)] text-[#a15523] shadow-[inset_0_-2px_0_rgba(0,38,55,0.06)]">
+                  <Ticket className="h-10 w-10" />
+                </div>
+                <div className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[#a15523] text-[#f2dcab] shadow-[0_14px_28px_rgba(161,85,35,0.28)]">
+                  <KeyRound className="h-5 w-5" />
                 </div>
               </div>
             </div>
 
             <div className="space-y-3 text-center">
-              <div className="stitch-headline text-3xl text-[#002637]">Halle freischalten</div>
-              <p className="text-sm leading-6 text-[rgba(27,28,26,0.66)]">
-                Dein Hallencode aktiviert den Zugang zur Location und öffnet die Ergebnis-Erfassung für diese Halle.
+              <div className="stitch-headline text-[2rem] leading-[1.02] text-[#002637]">
+                Halle freischalten
+              </div>
+              <p className="mx-auto max-w-[18rem] text-base leading-7 text-[rgba(0,38,55,0.72)]">
+                {gym
+                  ? `Gib den Code von ${gym.name} ein, um dort Routen zu loggen und Punkte zu sammeln.`
+                  : "Gib den Code deiner Halle ein, um dort Routen zu loggen und Punkte zu sammeln."}
               </p>
             </div>
 
-            <label className="block space-y-2">
-              <span className="stitch-kicker text-[#a15523]">Hallencode</span>
-              <div className="rounded-[1.2rem] bg-white px-5 py-4 shadow-[inset_0_-3px_0_rgba(161,85,35,0.22)]">
+            <label className="block space-y-3">
+              <span className="sr-only">Hallencode</span>
+              <div className="rounded-[1.2rem] bg-white px-5 pb-4 pt-4 shadow-[0_16px_34px_rgba(0,0,0,0.08)]">
                 <input
                   value={code}
                   onChange={(event) => setCode(event.target.value.toUpperCase())}
-                  placeholder="CODE-123"
+                  placeholder="KL-XXXXXX-XXXX"
                   maxLength={24}
-                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-xl font-bold uppercase tracking-[0.32em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.22)]"
+                  autoComplete="off"
+                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-[1.75rem] font-bold uppercase tracking-[0.28em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.22)]"
                 />
+                <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#a15523]" />
               </div>
             </label>
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <StitchButton type="submit" size="lg" className="w-full" disabled={loading || !code.trim()}>
-                {loading ? "Code wird geprüft..." : "Code aktivieren"}
-                <ArrowRight className="h-4 w-4" />
-              </StitchButton>
+            <StitchButton
+              type="submit"
+              size="lg"
+              className="w-full rounded-[1.1rem] py-6 text-base shadow-[0_18px_34px_rgba(161,85,35,0.24)]"
+              disabled={loading || !code.trim()}
+            >
+              {loading ? "Code wird geprüft..." : "Code aktivieren"}
+              <CheckCircle2 className="h-5 w-5" />
+            </StitchButton>
 
-              <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-                <DialogTrigger asChild>
-                  <StitchButton type="button" variant="outline" size="lg" className="w-full sm:w-auto">
-                    <Scan className="h-4 w-4" />
-                    Scannen
-                  </StitchButton>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Code scannen</DialogTitle>
-                    <DialogDescription>Halte den QR-Code oder Barcode vor die Kamera.</DialogDescription>
-                  </DialogHeader>
-                  <CodeQrScanner
-                    onScan={(value) => {
-                      setCode(value.trim().toUpperCase());
-                      setScanOpen(false);
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+            <div className="border-t border-[rgba(0,38,55,0.08)] pt-4">
+              <div className="flex flex-col items-center justify-center gap-3 text-center">
+                <Drawer open={scanOpen} onOpenChange={setScanOpen}>
+                  <DrawerTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-[#002637]/72 transition hover:text-[#002637]"
+                    >
+                      <ScanLine className="h-4 w-4" />
+                      Code scannen
+                    </button>
+                  </DrawerTrigger>
+                  <DrawerContent
+                    showHandle={false}
+                    className="mx-auto max-w-md rounded-t-[2rem] border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
+                  >
+                    <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-[rgba(242,220,171,0.24)]" />
+
+                    <DrawerHeader className="px-7 pb-0 pt-4 text-left">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <DrawerTitle className="pr-0 font-['Space_Grotesk'] text-[2rem] font-bold tracking-[-0.04em] text-[#f2dcab]">
+                            Kamera-Scanner
+                          </DrawerTitle>
+                          <DrawerDescription className="text-base text-[rgba(242,220,171,0.62)]">
+                            Code in den Rahmen halten
+                          </DrawerDescription>
+                        </div>
+
+                        <DrawerClose asChild>
+                          <button
+                            type="button"
+                            className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
+                            aria-label="Scanner schließen"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        </DrawerClose>
+                      </div>
+                    </DrawerHeader>
+
+                    <div className="px-7 pt-5">
+                      <div className="overflow-hidden rounded-[1.8rem] bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
+                        <CodeQrScanner
+                          onScan={(value) => {
+                            setCode(value.trim().toUpperCase());
+                            setScanOpen(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </DrawerContent>
+                </Drawer>
+
+                <a
+                  href="mailto:info@kletterliga-nrw.de"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#a15523] transition hover:text-[#8d481c]"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                  Probleme mit dem Code?
+                </a>
+              </div>
             </div>
           </form>
         </StitchCard>
 
-        <StitchCard tone="surface" className="p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1.5">
-              <div className="stitch-kicker text-[#a15523]">Noch keinen Code?</div>
-              <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-                Schau in der Hallenübersicht nach Partnerhallen oder frag direkt vor Ort nach dem aktuellen Ligacode.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StitchButton asChild variant="ghost" size="sm">
-                <Link to="/app/gyms">
-                  Partnerhallen
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </StitchButton>
-              <StitchButton asChild variant="outline" size="sm">
-                <a href="mailto:support@kletterliga-nrw.de">
-                  <HelpCircle className="h-4 w-4" />
-                  Hilfe
-                </a>
-              </StitchButton>
-            </div>
-          </div>
-        </StitchCard>
+        <div className="pb-2 text-center text-sm leading-6 text-[rgba(242,220,171,0.74)]">
+          {gym ? (
+            <>
+              Zurück zu{" "}
+              <Link
+                to={`/app/gyms/${gym.id}`}
+                className="font-semibold text-[#f2dcab] underline decoration-[rgba(242,220,171,0.36)] underline-offset-4 transition hover:decoration-[#f2dcab]"
+              >
+                {gym.name}
+              </Link>
+            </>
+          ) : (
+            <>
+              Noch keine Partnerhalle?{" "}
+              <Link
+                to="/app/gyms"
+                className="font-semibold text-[#f2dcab] underline decoration-[rgba(242,220,171,0.36)] underline-offset-4 transition hover:decoration-[#f2dcab]"
+              >
+                Hallen ansehen
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,51 +1,123 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Lock, MapPinned, Trophy, Unlock } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
-import { listGyms, listResultsForUser, listRoutes, checkGymCodeRedeemed } from "@/services/appApi";
+import { ArrowRight, ChevronRight, MapPin, Users } from "lucide-react";
+import { StitchCard } from "@/app/components/StitchPrimitives";
 import { useAuth } from "@/app/auth/AuthProvider";
-import type { Gym, Result, Route } from "@/services/appTypes";
+import { cn } from "@/lib/utils";
+import { useSeasonSettings } from "@/services/seasonSettings";
+import {
+  checkGymCodeRedeemed,
+  listGyms,
+  listProfiles,
+  listResults,
+  listResultsForUser,
+  listRoutes,
+} from "@/services/appApi";
+import type { Gym, Profile, Result, Route } from "@/services/appTypes";
 
 const OFFICIAL_GYMS = new Set([
   "2T Lindlar",
-  "OWL",
   "Canyon Chorweiler",
-  "DAV Alpinzentrum Bielefeld",
+  "Chimpanzodrom",
   "KletterBar Münster",
-  "Kletterwelt Sauerland",
   "Kletterfabrik Köln",
-  "Chimpanzodrome Frechen",
+  "Kletterhalle Bielefeld",
+  "Kletterwelt Sauerland",
+  "OWL",
 ]);
 
 const LOGO_FALLBACKS: Record<string, string> = {
   "2T Lindlar": "/gym-logos-real/2t-lindlar.png",
   "Canyon Chorweiler": "/gym-logos-real/canyon-chorweiler.jpg",
-  "Chimpanzodrome Frechen": "/gym-logos-real/chimpanzodrome-frechen.png",
-  "DAV Alpinzentrum Bielefeld": "/gym-logos-real/dav-bielefeld.svg",
+  Chimpanzodrom: "/gym-logos-real/chimpanzodrome-frechen.png",
   "KletterBar Münster": "/gym-logos-real/kletterbar-muenster.png",
   "Kletterfabrik Köln": "/gym-logos-real/kletterfabrik-koeln.png",
+  "Kletterhalle Bielefeld": "/gym-logos-real/dav-bielefeld.svg",
   "Kletterwelt Sauerland": "/gym-logos-real/kletterwelt-sauerland.jpg",
   OWL: "/gym-logos-real/owl.jpg",
+};
+
+const GYM_NAME_ALIASES: Record<string, string> = {
+  "2t": "2T Lindlar",
+  "2t lindlar": "2T Lindlar",
+  "canyon chorweiler": "Canyon Chorweiler",
+  chimpanzodrom: "Chimpanzodrom",
+  "chimpanzodrome frechen": "Chimpanzodrom",
+  "dav alpinzentrum bielefeld": "Kletterhalle Bielefeld",
+  "kletterhalle bielefeld": "Kletterhalle Bielefeld",
+  "kletterbar münster": "KletterBar Münster",
+  "kletterfabrik köln": "Kletterfabrik Köln",
+  "kletterwelt sauerland": "Kletterwelt Sauerland",
+  owl: "OWL",
+  "kletterzentrum owl": "OWL",
+  "dav kletterzentrum siegerland": "OWL",
 };
 
 const isAbortError = (error: unknown) =>
   error instanceof Error &&
   (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
-const normalizeGymName = (name: string) => {
+const getCanonicalGymName = (name: string) => {
   const cleaned = name.trim().replace(/\s+/g, " ");
-  if (cleaned === "Kletterzentrum OWL" || cleaned === "DAV Kletterzentrum Siegerland") return "OWL";
-  return cleaned;
+  const aliasKey = cleaned.toLocaleLowerCase("de");
+  return GYM_NAME_ALIASES[aliasKey] ?? cleaned;
 };
 
-const gymKey = (name: string) => normalizeGymName(name).toLocaleLowerCase("de");
+const gymKey = (name: string) => getCanonicalGymName(name).toLocaleLowerCase("de");
+
+const getDisciplineLabel = (routes: Route[]) => {
+  const hasLead = routes.some((route) => route.discipline === "lead");
+  const hasToprope = routes.some((route) => route.discipline === "toprope");
+
+  if (hasLead && hasToprope) return "Klettern";
+  if (hasLead) return "Vorstieg";
+  if (hasToprope) return "Toprope";
+  return "Partnerhalle";
+};
+
+const getDisciplineBadgeClass = (routes: Route[]) => {
+  const hasLead = routes.some((route) => route.discipline === "lead");
+  const hasToprope = routes.some((route) => route.discipline === "toprope");
+
+  if (hasLead && hasToprope) return "bg-[#003d55] text-[#f2dcab]";
+  if (hasLead) return "bg-[#003d55] text-white";
+  if (hasToprope) return "bg-[#a15523] text-white";
+  return "bg-[rgba(0,38,55,0.68)] text-[#f2dcab]";
+};
+
+const getGymInitials = (name: string) =>
+  name
+    .split(/\s+/)
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const formatAverage = (value: number | null) =>
+  value === null
+    ? "-"
+    : value.toLocaleString("de-DE", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
+
+type CommunityStats = {
+  visitors: number;
+  averagePoints: number | null;
+};
+
+type DisplayGym = Gym & {
+  canonicalName: string;
+};
 
 const Gyms = () => {
   const { profile } = useAuth();
-  const [gyms, setGyms] = useState<Gym[]>([]);
+  const { getQualificationEnd } = useSeasonSettings();
+  const [gyms, setGyms] = useState<DisplayGym[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
+  const [userResults, setUserResults] = useState<Result[]>([]);
+  const [allResults, setAllResults] = useState<Result[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [unlockedGyms, setUnlockedGyms] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -53,27 +125,34 @@ const Gyms = () => {
 
     const loadData = async () => {
       try {
-        const [gymsResult, routesResult] = await Promise.all([listGyms(), listRoutes()]);
+        const [{ data: gymsData }, { data: routesData }, { data: profilesData }, { data: resultsData }] =
+          await Promise.all([listGyms(), listRoutes(), listProfiles(), listResults()]);
+
         if (!active) return;
 
-        const cleaned = (gymsResult.data ?? [])
+        const cleanedGyms = (gymsData ?? [])
           .map((gym) => {
-            const normalizedName = normalizeGymName(gym.name);
+            const canonicalName = getCanonicalGymName(gym.name);
             return {
               ...gym,
-              name: normalizedName,
-              logo_url: LOGO_FALLBACKS[normalizedName] ?? gym.logo_url,
+              canonicalName,
+              logo_url: gym.logo_url ?? LOGO_FALLBACKS[canonicalName] ?? null,
             };
           })
-          .filter((gym) => OFFICIAL_GYMS.has(gym.name))
-          .reduce<Gym[]>((acc, gym) => {
-            const index = acc.findIndex((existing) => gymKey(existing.name) === gymKey(gym.name));
+          .filter((gym) => OFFICIAL_GYMS.has(gym.canonicalName))
+          .reduce<DisplayGym[]>((acc, gym) => {
+            const index = acc.findIndex(
+              (existing) => gymKey(existing.canonicalName) === gymKey(gym.canonicalName),
+            );
             if (index === -1) acc.push(gym);
             return acc;
-          }, []);
+          }, [])
+          .sort((a, b) => a.name.localeCompare(b.name, "de"));
 
-        setGyms(cleaned.sort((a, b) => a.name.localeCompare(b.name, "de")));
-        setRoutes(routesResult.data ?? []);
+        setGyms(cleanedGyms);
+        setRoutes(routesData ?? []);
+        setProfiles(profilesData ?? []);
+        setAllResults(resultsData ?? []);
       } catch (error) {
         if (!isAbortError(error)) {
           console.error("Failed to load participant gyms", error);
@@ -95,7 +174,7 @@ const Gyms = () => {
     listResultsForUser(profile.id)
       .then(({ data }) => {
         if (active) {
-          setResults(data ?? []);
+          setUserResults(data ?? []);
         }
       })
       .catch((error) => {
@@ -104,180 +183,270 @@ const Gyms = () => {
         }
       });
 
-    if (gyms.length > 0) {
-      const checkUnlocked = async () => {
-        const unlocked = new Set<string>();
+    return () => {
+      active = false;
+    };
+  }, [profile?.id]);
 
-        await Promise.all(
-          gyms.map(async (gym) => {
-            const { data } = await checkGymCodeRedeemed(gym.id, profile.id);
-            if (data) {
-              unlocked.add(gym.id);
-            }
-          }),
-        );
+  useEffect(() => {
+    if (!profile?.id || gyms.length === 0) return;
+    let active = true;
 
-        if (active) {
-          setUnlockedGyms(unlocked);
-        }
-      };
+    const checkUnlocked = async () => {
+      const unlocked = new Set<string>();
 
-      void checkUnlocked().catch((error) => {
-        if (!isAbortError(error)) {
-          console.error("Failed to check unlocked gyms", error);
-        }
-      });
-    }
+      await Promise.all(
+        gyms.map(async (gym) => {
+          const { data } = await checkGymCodeRedeemed(gym.id, profile.id);
+          if (data) {
+            unlocked.add(gym.id);
+          }
+        }),
+      );
+
+      if (active) {
+        setUnlockedGyms(unlocked);
+      }
+    };
+
+    void checkUnlocked().catch((error) => {
+      if (!isAbortError(error)) {
+        console.error("Failed to check unlocked gyms", error);
+      }
+    });
 
     return () => {
       active = false;
     };
   }, [profile?.id, gyms]);
 
+  const officialGymIds = useMemo(() => new Set(gyms.map((gym) => gym.id)), [gyms]);
+
+  const officialRoutes = useMemo(
+    () => routes.filter((route) => officialGymIds.has(route.gym_id)),
+    [routes, officialGymIds],
+  );
+
   const routeByGym = useMemo(
     () =>
-      routes.reduce<Record<string, Route[]>>((acc, route) => {
+      officialRoutes.reduce<Record<string, Route[]>>((acc, route) => {
         acc[route.gym_id] = acc[route.gym_id] ?? [];
         acc[route.gym_id].push(route);
         return acc;
       }, {}),
-    [routes],
+    [officialRoutes],
   );
 
-  const resultMap = useMemo(
-    () =>
-      results.reduce<Record<string, Result>>((acc, result) => {
-        acc[result.route_id] = result;
-        return acc;
-      }, {}),
-    [results],
+  const routeMap = useMemo(
+    () => new Map(officialRoutes.map((route) => [route.id, route])),
+    [officialRoutes],
   );
 
-  const unlockedCount = unlockedGyms.size;
-  const totalRoutes = routes.length;
-  const climbedRoutes = results.filter((result) => result.points > 0).length;
-  const overallProgress = totalRoutes > 0 ? Math.round((climbedRoutes / totalRoutes) * 100) : 0;
+  const participantIds = useMemo(
+    () => new Set(profiles.filter((item) => item.role === "participant").map((item) => item.id)),
+    [profiles],
+  );
+
+  const communityStatsByGym = useMemo(() => {
+    const stats = new Map<string, { visitorIds: Set<string>; totalPoints: number; resultCount: number }>();
+
+    allResults.forEach((result) => {
+      if (!participantIds.has(result.profile_id)) return;
+      const route = routeMap.get(result.route_id);
+      if (!route) return;
+
+      const current = stats.get(route.gym_id) ?? {
+        visitorIds: new Set<string>(),
+        totalPoints: 0,
+        resultCount: 0,
+      };
+
+      current.visitorIds.add(result.profile_id);
+      current.totalPoints += (result.points ?? 0) + (result.flash ? 1 : 0);
+      current.resultCount += 1;
+      stats.set(route.gym_id, current);
+    });
+
+    return stats;
+  }, [allResults, participantIds, routeMap]);
+
+  const qualificationDaysLeft = useMemo(() => {
+    const qualificationEnd = getQualificationEnd();
+    if (!qualificationEnd) return null;
+
+    const now = new Date();
+    const end = new Date(`${qualificationEnd}T23:59:59`);
+    const diffMs = end.getTime() - now.getTime();
+
+    if (diffMs <= 0) return 0;
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }, [getQualificationEnd]);
 
   return (
-    <div className="space-y-6">
-      <StitchCard tone="navy" className="p-5 sm:p-6">
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StitchBadge tone="cream">Hallen Übersicht</StitchBadge>
-              <StitchBadge tone="terracotta">{gyms.length} offizielle Hallen</StitchBadge>
+    <div className="mx-auto max-w-md space-y-4">
+      <section className="space-y-4">
+        <StitchCard
+          tone="navy"
+          className="overflow-hidden rounded-[1.7rem] border border-[rgba(242,220,171,0.08)] bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.22)]"
+        >
+          <div className="space-y-3">
+            <div className="stitch-headline text-[2rem] uppercase leading-[0.98] text-[#f2dcab]">
+              Partnerhallen
             </div>
+            <p className="max-w-[17rem] text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+              Entdecke die besten Kletterhallen in NRW. Sammel Punkte für die Liga in jeder
+              Location.
+            </p>
+          </div>
+        </StitchCard>
 
-            <StitchSectionHeading
-              eyebrow="Partnerhallen"
-              title="Alle Hallen in einem vertikalen Flow"
-              description="Unlock-Status, Logos und persönlicher Fortschritt sind auf Stitch-Karten abgebildet."
-              className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.66)] [&_p]:text-[rgba(242,220,171,0.76)]"
-            />
-
-            <StitchButton asChild variant="cream">
-              <Link to="/app/gyms/redeem">
-                Code einlösen
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </StitchButton>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+            <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
+              Hallen
+            </div>
+            <div className="mt-1 stitch-headline text-[1.65rem] text-[#002637]">{gyms.length}</div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
-              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Freigeschaltet</div>
-              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{unlockedCount}</div>
-              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">Hallen offen</p>
+          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+            <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
+              Besucht
             </div>
-            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
-              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Routen</div>
-              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{climbedRoutes}</div>
-              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">bereits geklettert</p>
+            <div className="mt-1 stitch-headline text-[1.65rem] text-[#002637]">{unlockedGyms.size}</div>
+          </div>
+
+          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+            <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
+              Resttage
             </div>
-            <div className="rounded-[1.35rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
-              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Gesamtfortschritt</div>
-              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">{overallProgress}%</div>
-              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">über alle Routen</p>
+            <div className="mt-1 stitch-headline text-[1.65rem] text-[#002637]">
+              {qualificationDaysLeft ?? "-"}
             </div>
           </div>
         </div>
-      </StitchCard>
+      </section>
 
-      <div className="space-y-3">
+      <section className="space-y-4">
         {gyms.map((gym) => {
           const gymRoutes = routeByGym[gym.id] ?? [];
-          const completed = gymRoutes.filter((route) => resultMap[route.id]).length;
           const unlocked = unlockedGyms.has(gym.id);
-          const progress = gymRoutes.length ? Math.round((completed / gymRoutes.length) * 100) : 0;
-          const hasProgress = completed > 0;
+          const disciplineLabel = getDisciplineLabel(gymRoutes);
+          const community = communityStatsByGym.get(gym.id);
+          const communityStats: CommunityStats = {
+            visitors: community?.visitorIds.size ?? 0,
+            averagePoints:
+              community && community.resultCount > 0 ? community.totalPoints / community.resultCount : null,
+          };
 
           return (
-            <Link key={gym.id} to={`/app/gyms/${gym.id}`} className="block">
-              <StitchCard tone={unlocked ? "surface" : "muted"} className="p-5 transition-transform hover:-translate-y-0.5">
-                <div className="grid gap-4 lg:grid-cols-[auto_1fr_auto] lg:items-center">
-                  <div className="flex items-center gap-4">
+            <Link key={gym.id} to={`/app/gyms/${gym.id}`} className="group block">
+              <StitchCard
+                tone="surface"
+                className="overflow-hidden rounded-[1.35rem] border border-[rgba(242,220,171,0.3)] bg-white shadow-[0_16px_34px_rgba(0,0,0,0.08)] transition-transform duration-200 active:scale-[0.985] group-hover:-translate-y-0.5"
+              >
+                <div className="relative h-40 overflow-hidden bg-[#f2dcab]">
+
+                  <div className="absolute left-3 top-3 z-10">
                     <div
-                      className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.4rem] ${
-                        unlocked ? "bg-[#f5efe5]" : "bg-white/70"
-                      }`}
+                      className={`stitch-headline inline-flex items-center rounded-full px-3 py-1 text-[0.56rem] font-bold tracking-[0.2em] ${getDisciplineBadgeClass(
+                        gymRoutes,
+                      )}`}
                     >
-                      {gym.logo_url ? (
-                        <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-2.5" />
-                      ) : (
-                        <span className="stitch-headline text-xl text-[#003d55]">KL</span>
+                      {disciplineLabel}
+                    </div>
+                  </div>
+
+                  <div className="absolute inset-0 flex items-center justify-center px-6 py-5">
+                    {gym.logo_url ? (
+                      <img
+                        src={gym.logo_url}
+                        alt={gym.name}
+                        className="h-full max-h-[7.1rem] w-full object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.18)]"
+                      />
+                    ) : (
+                      <div className="stitch-headline text-5xl text-[#003d55]">
+                        {getGymInitials(gym.name)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="stitch-headline text-[1.25rem] uppercase leading-[1.02] text-[#002637]">
+                        {gym.name}
+                      </div>
+                    </div>
+
+                    <div
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.5rem] font-bold uppercase tracking-[0.18em]",
+                        unlocked
+                          ? "bg-[#003d55] text-[#f2dcab]"
+                          : "bg-[rgba(0,38,55,0.08)] text-[rgba(0,38,55,0.62)]",
                       )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="stitch-headline text-2xl text-[#002637]">{gym.name}</div>
-                        <StitchBadge tone={unlocked ? "terracotta" : "ghost"}>
-                          {unlocked ? "Besucht" : "Offen"}
-                        </StitchBadge>
-                      </div>
-                      <div className="inline-flex items-center gap-2 text-sm text-[rgba(27,28,26,0.62)]">
-                        <MapPinned className="h-4 w-4 text-[#003d55]" />
-                        {gym.city || "NRW"}
-                      </div>
+                    >
+                      {unlocked ? "Besucht" : "Offen"}
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-semibold text-[#002637]">Fortschritt in dieser Halle</span>
-                      <span className="text-[rgba(27,28,26,0.62)]">
-                        {completed}/{gymRoutes.length || 0} Routen
-                      </span>
-                    </div>
-
-                    <Progress
-                      value={progress}
-                      className="h-3 rounded-full bg-[rgba(0,38,55,0.08)] [&>*]:bg-[#a15523]"
-                    />
-
-                    <div className="flex flex-wrap gap-2">
-                      <StitchBadge tone="ghost">{progress}% abgeschlossen</StitchBadge>
-                      <StitchBadge tone="ghost">{hasProgress ? "Mit Aktivität" : "Noch offen"}</StitchBadge>
-                    </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-[0.64rem] font-bold uppercase tracking-[0.14em] text-[rgba(0,38,55,0.46)]">
+                    <MapPin className="h-3.5 w-3.5 text-[#a15523]" />
+                    <span>{gym.city ? `${gym.city}, NRW` : "Nordrhein-Westfalen"}</span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#003d55]">
-                      {unlocked ? <Unlock className="h-5 w-5 text-[#a15523]" /> : <Lock className="h-5 w-5" />}
-                      {unlocked ? "Freigeschaltet" : "Gesperrt"}
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="flex gap-5">
+                      <div className="flex flex-col">
+                        <span className="text-[0.48rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.4)]">
+                          Besucher
+                        </span>
+                        <span className="mt-1 font-['Space_Grotesk'] text-sm font-bold text-[#002637]">
+                          {communityStats.visitors}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-[0.48rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.4)]">
+                          Ø Punkte/Route
+                        </span>
+                        <span className="mt-1 font-['Space_Grotesk'] text-sm font-bold text-[#002637]">
+                          {formatAverage(communityStats.averagePoints)}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#003d55] px-4 py-2 text-sm font-semibold text-[#f2dcab]">
-                      <Trophy className="h-4 w-4" />
-                      Halle öffnen
-                    </div>
+                    {unlocked ? (
+                      <ChevronRight className="h-5 w-5 text-[rgba(0,38,55,0.28)] transition-transform duration-200 group-hover:translate-x-0.5" />
+                    ) : (
+                      <div className="inline-flex items-center gap-1 rounded-full border border-[rgba(0,38,55,0.12)] px-3 py-2 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#003d55]">
+                        Details
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </StitchCard>
             </Link>
           );
         })}
-      </div>
+
+        {gyms.length === 0 ? (
+          <StitchCard tone="surface" className="rounded-[1.35rem] p-5 text-[#002637]">
+            <div className="flex items-start gap-3">
+              <Users className="mt-0.5 h-5 w-5 text-[#a15523]" />
+              <div>
+                <div className="stitch-headline text-xl text-[#002637]">Noch keine Hallen sichtbar</div>
+                <p className="mt-2 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+                  Sobald die offiziellen Partnerhallen geladen sind, erscheinen sie hier in der
+                  Übersicht.
+                </p>
+              </div>
+            </div>
+          </StitchCard>
+        ) : null}
+      </section>
     </div>
   );
 };

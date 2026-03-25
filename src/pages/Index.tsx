@@ -6,6 +6,7 @@ import { SeasonSection } from "@/components/home/SeasonSection";
 import { GymsSection } from "@/components/home/GymsSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { CTASection } from "@/components/home/CTASection";
+import { SponsorSpotlightSection } from "@/components/home/SponsorSpotlightSection";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Index = () => {
@@ -38,6 +39,7 @@ const Index = () => {
       <GymsSection />
       <InstagramSection />
       <CTASection />
+      <SponsorSpotlightSection />
     </PageLayout>
   );
 };

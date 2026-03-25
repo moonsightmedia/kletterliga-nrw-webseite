@@ -1,685 +1,459 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import {
-  Award,
-  ChevronDown,
-  MapPin,
-  Medal,
-  Route as RouteIcon,
-  Target,
-  Trophy,
-  Zap,
-} from "lucide-react";
+import { BarChart3, Flame, MapPin, TrendingUp } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
 import {
-  StitchBadge,
-  StitchButton,
-  StitchCard,
-  StitchSectionHeading,
-} from "@/app/components/StitchPrimitives";
-import { listGyms, listProfiles, listResults, listRoutes } from "@/services/appApi";
+  buildRankingRowsForScope,
+  type RankingAgeScope,
+  type RankingGenderScope,
+  type RankingLeagueScope,
+  type RankingRowData,
+} from "@/app/pages/participant/participantData";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useSeasonSettings } from "@/services/seasonSettings";
-import type { Gym, Result, Route } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
 
-type RankingRow = {
-  rank: number;
-  name: string;
-  points: number;
-  profile_id: string;
-  visitedGyms: number;
-  flashes: number;
-  tops: number;
-  points_7_5: number;
-  points_5: number;
-  points_2_5: number;
-  points_0: number;
-  totalRoutes: number;
+const rankFormatter = new Intl.NumberFormat("de-DE");
+const pointsFormatter = new Intl.NumberFormat("de-DE", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+
+const formatPoints = (value: number) => pointsFormatter.format(value);
+
+type RankingLeagueFilterValue = Exclude<RankingLeagueScope, "all">;
+type RankingAgeFilterValue = Exclude<RankingAgeScope, "all">;
+
+const getLeagueScopeFromValue = (value: string | null | undefined): RankingLeagueFilterValue => {
+  if (value === "toprope") return "toprope";
+  return "lead";
 };
 
-const normalizeDiscipline = (discipline: string) =>
-  discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
-
-const getStageRange = (stageKey: string, stages: Array<{ key: string; start: string; end: string }>) => {
-  const stage = stages.find((item) => item.key === stageKey);
-  if (!stage) return null;
-  return {
-    start: new Date(`${stage.start}T00:00:00Z`),
-    end: new Date(`${stage.end}T23:59:59Z`),
-  };
+const getAgeScopeFromClassName = (className: string | null): RankingAgeFilterValue => {
+  if (className?.startsWith("U15-")) return "U15";
+  if (className?.startsWith("\u00dc15-")) return "UE15";
+  if (className?.startsWith("\u00dc40-")) return "UE40";
+  return "U15";
 };
 
-const getClassLabel = (value: string) => {
-  switch (value) {
-    case "U15-m":
-      return "U15 männlich";
-    case "U15-w":
-      return "U15 weiblich";
-    case "Ü15-m":
-      return "Ü15 männlich";
-    case "Ü15-w":
-      return "Ü15 weiblich";
-    case "Ü40-m":
-      return "Ü40 männlich";
-    case "Ü40-w":
-      return "Ü40 weiblich";
-    default:
-      return value;
-  }
-};
+const getHomeGymLabel = (row: RankingRowData) =>
+  row.homeGymName && row.homeGymCity
+    ? `${row.homeGymName} ${row.homeGymCity}`
+    : row.homeGymName || row.homeGymCity || "Keine Heimathalle";
 
-const Rankings = () => {
-  const { profile, user } = useAuth();
-  const { getClassName, getStages } = useSeasonSettings();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [rankings, setRankings] = useState<RankingRow[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [gyms, setGyms] = useState<Gym[]>([]);
-  const userLeague = (profile?.league || (user?.user_metadata?.league as string | undefined) || "toprope") as
-    | "toprope"
-    | "lead";
-  const [leagueFilter, setLeagueFilter] = useState<"toprope" | "lead">(userLeague);
-  const [className, setClassName] = useState("U15-m");
-  const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
-  const [ageFilter, setAgeFilter] = useState<"U15" | "Ü15" | "Ü40">("U15");
-  const stages = getStages();
-  const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
-  const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "");
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const birthDate = profile?.birth_date ?? (user?.user_metadata?.birth_date as string | undefined);
-    const gender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as "m" | "w" | undefined;
-    const derived = getClassName(birthDate ?? null, gender ?? null);
-    if (derived) {
-      setClassName(derived);
-      const [age, genderValue] = derived.split("-") as ["U15" | "Ü15" | "Ü40", "m" | "w"];
-      if (age) setAgeFilter(age);
-      if (genderValue) setGenderFilter(genderValue);
-    }
-  }, [profile, user, getClassName]);
-
-  useEffect(() => {
-    const paramTab = searchParams.get("tab");
-    const paramStage = searchParams.get("stage");
-
-    if (paramTab === "stage" || paramTab === "overall") {
-      setTab(paramTab);
-    }
-
-    if (paramStage && stages.some((stage) => stage.key === paramStage)) {
-      setStageKey(paramStage);
-    }
-  }, [searchParams, stages]);
-
-  useEffect(() => {
-    if (!stageKey && stages[0]?.key) {
-      setStageKey(stages[0].key);
-    }
-  }, [stageKey, stages]);
-
-  useEffect(() => {
-    const load = async () => {
-      const [{ data: profiles }, { data: resultsData }, { data: routesData }, { data: gymsData }] =
-        await Promise.all([listProfiles(), listResults(), listRoutes(), listGyms()]);
-
-      if (!profiles || !resultsData || !routesData) {
-        setRankings([]);
-        return;
-      }
-
-      setResults(resultsData);
-      setRoutes(routesData);
-      if (gymsData) setGyms(gymsData);
-
-      const routeMap = new Map(routesData.map((route) => [route.id, route]));
-      const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
-
-      const totals = resultsData.reduce<Record<string, number>>((acc, result) => {
-        const route = routeMap.get(result.route_id);
-        if (!route) return acc;
-        if (normalizeDiscipline(route.discipline) !== leagueFilter) return acc;
-        if (range) {
-          const createdAt = result.created_at ? new Date(result.created_at) : null;
-          if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
-        }
-        acc[result.profile_id] =
-          (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
-        return acc;
-      }, {});
-
-      const stats = resultsData.reduce<
-        Record<
-          string,
-          {
-            visitedGyms: Set<string>;
-            flashes: number;
-            tops: number;
-            points_7_5: number;
-            points_5: number;
-            points_2_5: number;
-            points_0: number;
-            totalRoutes: number;
-          }
-        >
-      >((acc, result) => {
-        const route = routeMap.get(result.route_id);
-        if (!route) return acc;
-        if (normalizeDiscipline(route.discipline) !== leagueFilter) return acc;
-        if (range) {
-          const createdAt = result.created_at ? new Date(result.created_at) : null;
-          if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
-        }
-
-        if (!acc[result.profile_id]) {
-          acc[result.profile_id] = {
-            visitedGyms: new Set(),
-            flashes: 0,
-            tops: 0,
-            points_7_5: 0,
-            points_5: 0,
-            points_2_5: 0,
-            points_0: 0,
-            totalRoutes: 0,
-          };
-        }
-
-        const stat = acc[result.profile_id];
-        stat.visitedGyms.add(route.gym_id);
-        if (result.flash) stat.flashes += 1;
-        if (result.points === 10) stat.tops += 1;
-        if (result.points === 7.5) stat.points_7_5 += 1;
-        if (result.points === 5) stat.points_5 += 1;
-        if (result.points === 2.5) stat.points_2_5 += 1;
-        if (result.points === 0) stat.points_0 += 1;
-        stat.totalRoutes += 1;
-
-        return acc;
-      }, {});
-
-      const rows = profiles
-        .filter((item) => {
-          if (item.role === "gym_admin" || item.role === "league_admin") return false;
-          if (!item.participation_activated_at) return false;
-          return item.league === null || item.league === leagueFilter;
-        })
-        .map((item) => {
-          const stat = stats[item.id] || {
-            visitedGyms: new Set<string>(),
-            flashes: 0,
-            tops: 0,
-            points_7_5: 0,
-            points_5: 0,
-            points_2_5: 0,
-            points_0: 0,
-            totalRoutes: 0,
-          };
-
-          return {
-            id: item.id,
-            className: getClassName(item.birth_date, item.gender),
-            name: `${item.first_name ?? ""} ${item.last_name ?? ""}`.trim() || item.email || "Unbekannt",
-            points: totals[item.id] ?? 0,
-            visitedGyms: stat.visitedGyms.size,
-            flashes: stat.flashes,
-            tops: stat.tops,
-            points_7_5: stat.points_7_5,
-            points_5: stat.points_5,
-            points_2_5: stat.points_2_5,
-            points_0: stat.points_0,
-            totalRoutes: stat.totalRoutes,
-          };
-        })
-        .filter((row) => row.className === className)
-        .sort((a, b) => b.points - a.points)
-        .map((row, index) => ({
-          rank: index + 1,
-          name: row.name,
-          points: row.points,
-          profile_id: row.id,
-          visitedGyms: row.visitedGyms,
-          flashes: row.flashes,
-          tops: row.tops,
-          points_7_5: row.points_7_5,
-          points_5: row.points_5,
-          points_2_5: row.points_2_5,
-          points_0: row.points_0,
-          totalRoutes: row.totalRoutes,
-        }));
-
-      setRankings(rows);
+const buildRankingWindow = (rows: RankingRowData[], currentProfileId: string | null) => {
+  if (rows.length === 0) {
+    return {
+      visibleRows: [] as RankingRowData[],
+      separatorBeforeProfileId: null as string | null,
     };
+  }
 
-    void load();
-  }, [className, leagueFilter, tab, stageKey, stages, getClassName]);
+  const currentIndex = currentProfileId ? rows.findIndex((row) => row.profileId === currentProfileId) : -1;
+  if (currentIndex < 0) {
+    return {
+      visibleRows: rows.slice(0, 3),
+      separatorBeforeProfileId: null,
+    };
+  }
 
-  const getParticipantDetails = (profileId: string) => {
-    if (!results.length || !routes.length || !gyms.length) return null;
+  if (currentIndex <= 1) {
+    return {
+      visibleRows: rows.slice(0, Math.min(3, rows.length)),
+      separatorBeforeProfileId: null,
+    };
+  }
 
-    const routeMap = new Map(routes.map((route) => [route.id, route]));
-    const gymMap = new Map(gyms.map((gym) => [gym.id, gym]));
-    const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
-
-    const participantResults = results.filter((result) => {
-      if (result.profile_id !== profileId) return false;
-      const route = routeMap.get(result.route_id);
-      if (!route) return false;
-      if (normalizeDiscipline(route.discipline) !== leagueFilter) return false;
-      if (range) {
-        const createdAt = result.created_at ? new Date(result.created_at) : null;
-        if (!createdAt || createdAt < range.start || createdAt > range.end) return false;
-      }
+  const uniqueProfileIds = new Set<string>();
+  const visibleRows = [rows[0], rows[1], rows[currentIndex], rows[currentIndex + 1]]
+    .filter((row): row is RankingRowData => Boolean(row))
+    .filter((row) => {
+      if (uniqueProfileIds.has(row.profileId)) return false;
+      uniqueProfileIds.add(row.profileId);
       return true;
     });
 
-    const gymGroups = new Map<
-      string,
-      { gym: Gym; routes: Array<{ route: Route; result: Result; points: number }>; totalPoints: number }
-    >();
-
-    participantResults.forEach((result) => {
-      const route = routeMap.get(result.route_id);
-      if (!route) return;
-      const gym = gymMap.get(route.gym_id);
-      if (!gym) return;
-      const points = result.points + (result.flash ? 1 : 0);
-
-      if (!gymGroups.has(gym.id)) {
-        gymGroups.set(gym.id, { gym, routes: [], totalPoints: 0 });
-      }
-
-      const group = gymGroups.get(gym.id);
-      if (!group) return;
-      group.routes.push({ route, result, points });
-      group.totalPoints += points;
-    });
-
-    return Array.from(gymGroups.values()).sort((a, b) => b.totalPoints - a.totalPoints);
+  return {
+    visibleRows,
+    separatorBeforeProfileId: rows[currentIndex]?.profileId ?? null,
   };
+};
 
-  const updateSearch = (nextTab: "overall" | "stage", nextStage: string) => {
-    setTab(nextTab);
-    setStageKey(nextStage);
-    setSearchParams(nextTab === "stage" ? { tab: nextTab, stage: nextStage } : { tab: nextTab, stage: nextStage });
-  };
-
-  const toggleRow = (profileId: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(profileId)) {
-        next.delete(profileId);
-      } else {
-        next.add(profileId);
-      }
-      return next;
-    });
-  };
-
-  const currentUserRow = rankings.find((row) => row.profile_id === profile?.id) ?? null;
-  const classLabel = getClassLabel(className);
-  const leagueLabel = leagueFilter === "lead" ? "Vorstieg" : "Toprope";
-  const stageLabel = stages.find((stage) => stage.key === stageKey)?.label || "Etappe";
-  const topThree = rankings.slice(0, 3);
-  const restRows = rankings.slice(3);
-  const participationInactive = profile?.role === "participant" && !profile?.participation_activated_at;
+const RankingRowCard = ({
+  row,
+  isCurrentUser,
+  expanded,
+  onToggle,
+}: {
+  row: RankingRowData;
+  isCurrentUser: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) => {
+  const progressValue = Math.min(row.visitedGyms, 8);
+  const pointsLabel = expanded && isCurrentUser ? "Gesamtpkt" : "Pkt";
+  const topRowBackground = isCurrentUser ? "bg-[#003D55]/5" : "bg-white";
 
   return (
-    <div className="space-y-6">
-      {participationInactive ? (
-        <StitchCard tone="cream" className="p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1.5">
-              <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
-              <p className="text-sm leading-6 text-[rgba(27,28,26,0.68)]">
-                Du erscheinst erst in den Ranglisten, wenn du deine Teilnahme freigeschaltet hast.
-              </p>
-            </div>
-            <StitchButton asChild size="sm">
-              <Link to="/app/participation/redeem">Jetzt freischalten</Link>
-            </StitchButton>
-          </div>
-        </StitchCard>
-      ) : null}
-
-      <StitchCard tone="navy" className="p-5 sm:p-6">
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StitchBadge tone="cream">{leagueLabel}</StitchBadge>
-              <StitchBadge tone="terracotta">{classLabel}</StitchBadge>
-              <StitchBadge tone="ghost">{tab === "stage" ? stageLabel : "Gesamtwertung"}</StitchBadge>
-            </div>
-
-            <StitchSectionHeading
-              eyebrow="Rangliste"
-              title="Rangliste deiner Klasse"
-              description="Filter, Etappen und Detail-Ansichten im Stitch-Stil, aber mit deiner bestehenden Ranking-Logik."
-              className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.66)] [&_p]:text-[rgba(242,220,171,0.76)]"
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[1.4rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
-              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Dein Rang</div>
-              <div className="stitch-metric mt-3 text-4xl text-[#f2dcab]">
-                {currentUserRow ? `#${currentUserRow.rank}` : "--"}
-              </div>
-              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">
-                {currentUserRow ? `${currentUserRow.points} Punkte` : "Noch keine Platzierung"}
-              </p>
-            </div>
-            <div className="rounded-[1.4rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.08)] p-4">
-              <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Modus</div>
-              <div className="mt-3 text-lg font-semibold text-[#f2dcab]">
-                {tab === "stage" ? `Etappe ${stageLabel}` : "Gesamtwertung"}
-              </div>
-              <p className="mt-2 text-sm text-[rgba(242,220,171,0.72)]">{rankings.length} aktive Einträge</p>
-            </div>
-          </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      className={cn(
+        "block w-full overflow-hidden rounded-[8px] text-left transition-all duration-300",
+        isCurrentUser
+          ? "bg-white shadow-md ring-2 ring-[#A15523]"
+          : "border border-[#F2DCAB]/30 bg-white shadow-sm",
+      )}
+      aria-expanded={expanded}
+    >
+      <div className={cn("flex items-center gap-4 p-4", topRowBackground)}>
+        <div className="flex w-8 shrink-0 justify-center">
+          <span
+            className={cn(
+              "font-['Space_Grotesk'] text-2xl italic leading-none",
+              isCurrentUser || row.rank === 1 ? "font-black text-[#A15523]" : "font-bold text-[#003D55]/40",
+            )}
+          >
+            {String(row.rank).padStart(2, "0")}
+          </span>
         </div>
-      </StitchCard>
 
-      <StitchCard tone="surface" className="p-5 sm:p-6">
-        <div className="space-y-5">
-          <div className="grid gap-4 lg:grid-cols-[auto_auto_1fr] lg:items-end">
-            <div className="space-y-2">
-              <div className="stitch-kicker text-[#a15523]">Liga</div>
-              <div className="flex flex-wrap gap-2">
-                {(["toprope", "lead"] as const).map((leagueValue) => (
-                  <button
-                    key={leagueValue}
-                    type="button"
-                    onClick={() => setLeagueFilter(leagueValue)}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                      leagueFilter === leagueValue
-                        ? "bg-[#a15523] text-white"
-                        : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                    )}
-                  >
-                    {leagueValue === "lead" ? "Vorstieg" : "Toprope"}
-                  </button>
-                ))}
-              </div>
+        <div
+            className={cn(
+            "h-12 w-12 shrink-0 overflow-hidden rounded-[10px] border-2",
+            isCurrentUser ? "border-[#A15523]" : row.rank === 1 ? "border-[#F2DCAB]" : "border-[#F2DCAB]/20",
+          )}
+        >
+          {row.avatarUrl ? (
+            <img src={row.avatarUrl} alt={row.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-[#003D55] text-sm font-semibold text-[#F2DCAB]">
+              {getInitials(row.name)}
             </div>
+          )}
+        </div>
 
-            <div className="space-y-2">
-              <div className="stitch-kicker text-[#a15523]">Wertung</div>
-              <div className="flex flex-wrap gap-2">
-                {(["m", "w"] as const).map((genderValue) => (
-                  <button
-                    key={genderValue}
-                    type="button"
-                    onClick={() => {
-                      setGenderFilter(genderValue);
-                      setClassName(`${ageFilter}-${genderValue}`);
-                    }}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                      genderFilter === genderValue
-                        ? "bg-[#003d55] text-[#f2dcab]"
-                        : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                    )}
-                  >
-                    {genderValue.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="stitch-kicker text-[#a15523]">Klasse</div>
-              <div className="flex flex-wrap gap-2">
-                {(["U15", "Ü15", "Ü40"] as const).map((ageValue) => (
-                  <button
-                    key={ageValue}
-                    type="button"
-                    onClick={() => {
-                      setAgeFilter(ageValue);
-                      setClassName(`${ageValue}-${genderFilter}`);
-                    }}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                      ageFilter === ageValue
-                        ? "bg-[#003d55] text-[#f2dcab]"
-                        : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                    )}
-                  >
-                    {ageValue}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[auto_1fr] lg:items-start">
-            <div className="space-y-2">
-              <div className="stitch-kicker text-[#a15523]">Wertungstyp</div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => updateSearch("overall", stageKey)}
-                  className={cn(
-                    "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                    tab === "overall" ? "bg-[#a15523] text-white" : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                  )}
-                >
-                  Gesamtwertung
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSearch("stage", stageKey || stages[0]?.key || "")}
-                  className={cn(
-                    "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                    tab === "stage" ? "bg-[#a15523] text-white" : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                  )}
-                >
-                  Etappenwertung
-                </button>
-              </div>
-            </div>
-
-            {tab === "stage" ? (
-              <div className="space-y-2">
-                <div className="stitch-kicker text-[#a15523]">Etappe</div>
-                <div className="stitch-scroll-x -mx-1 overflow-x-auto px-1">
-                  <div className="flex gap-2 pb-1">
-                    {stages.map((stage) => (
-                      <button
-                        key={stage.key}
-                        type="button"
-                        onClick={() => updateSearch("stage", stage.key)}
-                        className={cn(
-                          "whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                          stageKey === stage.key
-                            ? "bg-[#003d55] text-[#f2dcab]"
-                            : "bg-[#f5efe5] text-[#003d55] hover:bg-[#ece2d3]",
-                        )}
-                      >
-                        {stage.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <p
+              className={cn(
+                "truncate font-['Space_Grotesk'] font-bold leading-tight tracking-[-0.04em] text-[#003D55]",
+                isCurrentUser ? "text-lg" : "text-base",
+              )}
+            >
+              {row.name}
+            </p>
+            {isCurrentUser ? (
+              <span className="shrink-0 rounded-[3px] bg-[#A15523] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-white">
+                DU
+              </span>
             ) : null}
           </div>
-        </div>
-      </StitchCard>
 
-      {rankings.length === 0 ? (
-        <StitchCard tone="surface" className="p-6 text-center">
-          <div className="stitch-headline text-2xl text-[#002637]">Noch keine Rangliste verfügbar</div>
-          <p className="mt-3 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-            Sobald Ergebnisse für diese Kombination vorliegen, erscheint hier die Rangliste.
+          <p className="mt-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#71787D]">
+            <MapPin className="h-3 w-3 shrink-0 text-[#A15523]" />
+            <span className="truncate">{getHomeGymLabel(row)}</span>
           </p>
-        </StitchCard>
+        </div>
+
+        <div className="min-w-[4.4rem] shrink-0 text-right">
+          <p
+            className={cn(
+              "font-['Space_Grotesk'] font-extrabold leading-none",
+              isCurrentUser ? "text-xl" : "text-base",
+              isCurrentUser ? "text-[#A15523]" : "text-[#003D55]",
+            )}
+          >
+            {formatPoints(row.points)}
+          </p>
+          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-tight text-[#71787D]">{pointsLabel}</p>
+        </div>
+      </div>
+
+      {expanded ? (
+        <div className="border-t border-[#003D55]/10 bg-white px-4 pb-3.5 pt-3">
+          <div className="mb-3.5">
+            <div className="mb-2 flex items-center justify-between">
+              <h4 className="font-['Space_Grotesk'] text-[9px] font-bold uppercase tracking-[0.18em] text-[#003D55]/50">
+                Hallen-Fortschritt
+              </h4>
+              <span className="font-['Space_Grotesk'] text-[10px] font-bold text-[#003D55]">
+                {progressValue} / 8
+              </span>
+            </div>
+
+            <div className="flex gap-1">
+              {Array.from({ length: 8 }, (_, index) => (
+                <div
+                  key={`${row.profileId}-segment-${index}`}
+                  className={cn(
+                    "h-1 flex-1 rounded-[0.75rem]",
+                    index < progressValue ? "bg-[#A15523]" : "bg-[#003D55]/10",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-6 gap-1 border-t border-[#003D55]/5 pt-3 text-center">
+            {[
+              { label: "Flash", value: row.flashCount, accent: true },
+              { label: "10 Pkt", value: row.points10, accent: false },
+              { label: "7.5 Pkt", value: row.points7_5, accent: false },
+              { label: "5 Pkt", value: row.points5, accent: false },
+              { label: "2.5 Pkt", value: row.points2_5, accent: false },
+              { label: "0 Pkt", value: row.points0, accent: false },
+            ].map((item) => (
+              <div key={`${row.profileId}-${item.label}`} className="flex flex-col">
+                <span className="mb-0.5 text-[6.5px] font-bold uppercase text-[#71787D]">{item.label}</span>
+                <span
+                  className={cn(
+                    "font-['Space_Grotesk'] text-[10px] font-bold",
+                    item.accent ? "text-[#A15523]" : "text-[#003D55]",
+                  )}
+                >
+                  {formatPoints(item.value)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </button>
+  );
+};
+
+const leagueOptions: Array<{ value: RankingLeagueFilterValue; label: string }> = [
+  { value: "lead", label: "VORSTIEG" },
+  { value: "toprope", label: "TOP-ROPE" },
+];
+
+const genderOptions: Array<{ value: RankingGenderScope; label: string }> = [
+  { value: "m", label: "M" },
+  { value: "w", label: "W" },
+];
+
+const ageOptions: Array<{ value: RankingAgeFilterValue; label: string }> = [
+  { value: "U15", label: "U15" },
+  { value: "UE15", label: "\u00dc15" },
+  { value: "UE40", label: "\u00dc40" },
+];
+
+const Rankings = () => {
+  const { profile, user } = useAuth();
+  const { getClassName } = useSeasonSettings();
+  const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
+  const [leagueScope, setLeagueScope] = useState<RankingLeagueFilterValue>("lead");
+  const [genderFilter, setGenderFilter] = useState<RankingGenderScope>("m");
+  const [ageFilter, setAgeFilter] = useState<RankingAgeFilterValue>("U15");
+  const [expandedProfileId, setExpandedProfileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const gender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as
+      | "m"
+      | "w"
+      | undefined;
+    const league = (profile?.league || (user?.user_metadata?.league as string | undefined)) ?? null;
+    const birthDate = (profile?.birth_date || (user?.user_metadata?.birth_date as string | undefined)) ?? null;
+    const className = getClassName(birthDate, gender ?? null);
+
+    setLeagueScope(getLeagueScopeFromValue(league));
+    setGenderFilter(gender === "w" ? "w" : "m");
+    setAgeFilter(getAgeScopeFromClassName(className));
+  }, [profile, user, getClassName]);
+
+  useEffect(() => {
+    setExpandedProfileId(null);
+  }, [leagueScope, genderFilter, ageFilter]);
+
+  const rankingRows = useMemo(
+    () =>
+      buildRankingRowsForScope({
+        profiles,
+        results,
+        routes,
+        gyms,
+        leagueScope,
+        gender: genderFilter,
+        ageScope: ageFilter,
+        getClassName,
+      }),
+    [profiles, results, routes, gyms, leagueScope, genderFilter, ageFilter, getClassName],
+  );
+
+  const currentProfileId = profile?.id ?? user?.id ?? null;
+  const currentUserRow = useMemo(
+    () => rankingRows.find((row) => row.profileId === currentProfileId) ?? null,
+    [rankingRows, currentProfileId],
+  );
+  const visibleWindow = useMemo(
+    () => buildRankingWindow(rankingRows, currentProfileId),
+    [rankingRows, currentProfileId],
+  );
+  const isSparseWindow = visibleWindow.visibleRows.length <= 1;
+
+  if (loading) {
+    return (
+      <ParticipantStateCard
+        title="Rangliste laedt"
+        description="Die Stitch-Rangliste wird gerade mit den aktuellen Teilnehmerdaten aufgebaut."
+      />
+    );
+  }
+
+  if (error) {
+    return <ParticipantStateCard title="Rangliste nicht verfuegbar" description={error} />;
+  }
+
+  return (
+    <div className="mx-auto max-w-lg">
+      <section className="mb-6">
+        <div className="relative overflow-hidden rounded-2xl bg-[#003D55] p-6 shadow-lg">
+          <BarChart3 className="absolute -bottom-7 -right-6 h-32 w-32 rotate-[12deg] text-[#F2DCAB]/5" />
+
+          <h2 className="mb-4 font-['Space_Grotesk'] text-xs font-bold uppercase tracking-[0.24em] text-[#F2DCAB]/80">
+            Dein aktueller Stand
+          </h2>
+
+          <div className="relative z-10 flex items-end justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="font-['Space_Grotesk'] text-5xl font-bold italic leading-none text-[#F2DCAB]">
+                {currentUserRow ? `#${rankFormatter.format(currentUserRow.rank)}` : "#-"}
+              </span>
+              <span className="font-['Space_Grotesk'] text-lg font-semibold text-[#F2DCAB]/60">
+                / {rankFormatter.format(rankingRows.length)}
+              </span>
+            </div>
+
+            <div className="text-right">
+              <p className="font-['Space_Grotesk'] text-2xl font-bold text-[#F2DCAB]">
+                {formatPoints(currentUserRow?.points ?? 0)}
+              </p>
+              <p className="text-[10px] font-bold uppercase tracking-tight text-[#F2DCAB]/70">Gesamtpunkte</p>
+            </div>
+          </div>
+
+          <div className="relative z-10 mt-6 flex gap-3">
+            <div className="flex items-center gap-2 rounded-[10px] bg-[#A15523] px-4 py-1.5 text-white shadow-sm">
+              <TrendingUp className="h-4 w-4" />
+              <span className="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.15em]">
+                {"+3 Pl\u00e4tze"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-[10px] border border-[#F2DCAB]/20 bg-[#F2DCAB]/10 px-4 py-1.5 text-[#F2DCAB] backdrop-blur-md">
+              <Flame className="h-4 w-4" />
+              <span className="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.15em]">
+                Top 5%
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="sticky top-16 z-30 -mx-4 mb-4 border-b border-[#003D55]/5 bg-[#fbf9f6]/95 px-4 py-2.5 backdrop-blur-xl">
+        <div className="hide-scrollbar flex items-center gap-1.5 overflow-x-auto">
+          <div className="inline-flex shrink-0 items-center rounded-[6px] bg-[#003D55]/5 p-0.5">
+            {leagueOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setLeagueScope(option.value)}
+                className={cn(
+                  "rounded-[6px] px-2.5 py-1 font-['Space_Grotesk'] text-[8px] font-bold uppercase leading-none tracking-[0.08em] transition-all",
+                  leagueScope === option.value
+                    ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
+                    : "text-[#003D55]/40 hover:text-[#003D55]",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="inline-flex shrink-0 items-center rounded-[6px] bg-[#003D55]/5 p-0.5">
+            {genderOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setGenderFilter(option.value)}
+                className={cn(
+                  "min-w-[2.35rem] rounded-[6px] px-3 py-1 font-['Space_Grotesk'] text-[8px] font-bold uppercase leading-none tracking-[0.08em] transition-all",
+                  genderFilter === option.value
+                    ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
+                    : "text-[#003D55]/40 hover:text-[#003D55]",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="inline-flex shrink-0 items-center rounded-[6px] bg-[#003D55]/5 p-0.5">
+            {ageOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setAgeFilter(option.value)}
+                className={cn(
+                  "rounded-[6px] px-2.5 py-1 font-['Space_Grotesk'] text-[8px] font-bold uppercase leading-none tracking-[0.08em] transition-all",
+                  ageFilter === option.value
+                    ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
+                    : "text-[#003D55]/40 hover:text-[#003D55]",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {rankingRows.length === 0 ? (
+        <ParticipantStateCard
+          title="Noch keine Rangliste"
+          description="Fuer diese Filterkombination gibt es aktuell noch keine sichtbaren Eintraege."
+        />
       ) : (
         <>
-          {topThree.length > 0 ? (
-            <div className="grid gap-3 lg:grid-cols-3">
-              {topThree.map((row) => {
-                const Icon = row.rank === 1 ? Trophy : row.rank === 2 ? Medal : Award;
-                const tone = row.rank === 1 ? "navy" : row.rank === 2 ? "surface" : "cream";
-
-                return (
-                  <StitchCard key={row.profile_id} tone={tone} className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className={cn("stitch-kicker", tone === "navy" ? "text-[rgba(242,220,171,0.62)]" : "text-[#a15523]")}>
-                          Platz {row.rank}
-                        </div>
-                        <div
-                          className={cn(
-                            "stitch-headline mt-3 text-3xl",
-                            tone === "navy" ? "text-[#f2dcab]" : "text-[#002637]",
-                          )}
-                        >
-                          {row.name}
-                        </div>
-                      </div>
-                      <Icon className={cn("h-6 w-6", tone === "navy" ? "text-[#f2dcab]" : "text-[#003d55]")} />
-                    </div>
-
-                    <div className={cn("stitch-metric mt-6 text-5xl", tone === "navy" ? "text-[#f2dcab]" : "text-[#002637]")}>
-                      {row.points}
-                    </div>
-                    <p className={cn("mt-2 text-sm", tone === "navy" ? "text-[rgba(242,220,171,0.72)]" : "text-[rgba(27,28,26,0.64)]")}>
-                      {row.totalRoutes} Routen · {row.visitedGyms} Hallen
-                    </p>
-                  </StitchCard>
-                );
-              })}
-            </div>
-          ) : null}
-
           <div className="space-y-3">
-            {(topThree.length > 0 ? restRows : rankings).map((row) => {
-              const isUser = row.profile_id === profile?.id;
-              const details = expandedRows.has(row.profile_id) ? getParticipantDetails(row.profile_id) : null;
-              const Icon = row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
-
-              return (
-                <StitchCard key={row.profile_id} tone={isUser ? "cream" : "surface"} className="p-4 sm:p-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] bg-[#003d55] text-[#f2dcab]">
-                        {Icon ? <Icon className="h-5 w-5" /> : <span className="text-sm font-semibold">#{row.rank}</span>}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-base font-semibold text-[#002637]">{row.name}</div>
-                          {isUser ? <StitchBadge tone="terracotta">Du</StitchBadge> : null}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-[rgba(27,28,26,0.64)]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <MapPin className="h-4 w-4 text-[#003d55]" />
-                            {row.visitedGyms} Hallen
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <RouteIcon className="h-4 w-4 text-[#003d55]" />
-                            {row.totalRoutes} Routen
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Zap className="h-4 w-4 text-[#a15523]" />
-                            {row.flashes} Flashes
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Target className="h-4 w-4 text-[#003d55]" />
-                            {row.tops} Tops
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4 lg:justify-end">
-                      <div className="text-right">
-                        <div className="stitch-metric text-4xl text-[#002637]">{row.points}</div>
-                        <p className="text-sm text-[rgba(27,28,26,0.62)]">Punkte</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleRow(row.profile_id)}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(0,38,55,0.08)] bg-white/70 text-[#003d55] transition hover:bg-white"
-                        aria-label={expandedRows.has(row.profile_id) ? "Details ausblenden" : "Details anzeigen"}
-                      >
-                        <ChevronDown
-                          className={cn("h-5 w-5 transition-transform", expandedRows.has(row.profile_id) && "rotate-180")}
-                        />
-                      </button>
-                    </div>
+            {visibleWindow.visibleRows.map((row) => (
+              <div key={row.profileId}>
+                {visibleWindow.separatorBeforeProfileId === row.profileId ? (
+                  <div className="flex flex-col items-center gap-1 py-2 opacity-20">
+                    <div className="h-1 w-1 rounded-full bg-[#003D55]" />
+                    <div className="h-1 w-1 rounded-full bg-[#003D55]" />
+                    <div className="h-1 w-1 rounded-full bg-[#003D55]" />
                   </div>
+                ) : null}
 
-                  {expandedRows.has(row.profile_id) ? (
-                    <div className="mt-4 space-y-4 border-t border-[rgba(0,38,55,0.08)] pt-4">
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                        <div className="rounded-[1.2rem] bg-[#f5efe5] p-3">
-                          <div className="stitch-kicker text-[#a15523]">Hallen</div>
-                          <div className="mt-2 text-xl font-semibold text-[#002637]">{row.visitedGyms}</div>
-                        </div>
-                        <div className="rounded-[1.2rem] bg-[#f5efe5] p-3">
-                          <div className="stitch-kicker text-[#a15523]">Routen</div>
-                          <div className="mt-2 text-xl font-semibold text-[#002637]">{row.totalRoutes}</div>
-                        </div>
-                        <div className="rounded-[1.2rem] bg-[#f5efe5] p-3">
-                          <div className="stitch-kicker text-[#a15523]">7,5 Punkte</div>
-                          <div className="mt-2 text-xl font-semibold text-[#002637]">{row.points_7_5}</div>
-                        </div>
-                        <div className="rounded-[1.2rem] bg-[#f5efe5] p-3">
-                          <div className="stitch-kicker text-[#a15523]">5 Punkte</div>
-                          <div className="mt-2 text-xl font-semibold text-[#002637]">{row.points_5}</div>
-                        </div>
-                        <div className="rounded-[1.2rem] bg-[#f5efe5] p-3">
-                          <div className="stitch-kicker text-[#a15523]">2,5 / 0</div>
-                          <div className="mt-2 text-xl font-semibold text-[#002637]">
-                            {row.points_2_5} / {row.points_0}
-                          </div>
-                        </div>
-                      </div>
+                <RankingRowCard
+                  row={row}
+                  isCurrentUser={row.profileId === currentProfileId}
+                  expanded={expandedProfileId === row.profileId}
+                  onToggle={() =>
+                    setExpandedProfileId((current) => (current === row.profileId ? null : row.profileId))
+                  }
+                />
+              </div>
+            ))}
+          </div>
 
-                      {details && details.length > 0 ? (
-                        <div className="grid gap-3 lg:grid-cols-2">
-                          {details.map((group) => (
-                            <StitchCard key={group.gym.id} tone="muted" className="p-4">
-                              <div className="flex items-start justify-between gap-4">
-                                <div>
-                                  <div className="stitch-kicker text-[#a15523]">{group.gym.city || "Halle"}</div>
-                                  <div className="mt-2 text-lg font-semibold text-[#002637]">{group.gym.name}</div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-2xl font-semibold text-[#002637]">{group.totalPoints}</div>
-                                  <div className="text-xs text-[rgba(27,28,26,0.62)]">Punkte</div>
-                                </div>
-                              </div>
-
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                {group.routes.map(({ route, result, points }) => (
-                                  <div
-                                    key={result.id}
-                                    className={cn(
-                                      "rounded-full px-3 py-1.5 text-xs font-semibold",
-                                      result.flash
-                                        ? "bg-[#a15523] text-white"
-                                        : "bg-white text-[#003d55]",
-                                    )}
-                                  >
-                                    {route.code} · {points}
-                                  </div>
-                                ))}
-                              </div>
-                            </StitchCard>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-[rgba(27,28,26,0.64)]">Keine Detailergebnisse gefunden.</p>
-                      )}
-                    </div>
-                  ) : null}
-                </StitchCard>
-              );
-            })}
+          <div className={cn("text-center", isSparseWindow ? "mt-5" : "mt-7")}>
+            <button
+              type="button"
+              className="rounded-[10px] border border-[#003D55]/10 bg-[#F2DCAB] px-10 py-4 font-['Space_Grotesk'] text-[10px] font-bold uppercase leading-none tracking-[0.24em] text-[#003D55] shadow-sm transition-all hover:shadow-md"
+            >
+              Weitere laden
+            </button>
           </div>
         </>
       )}
