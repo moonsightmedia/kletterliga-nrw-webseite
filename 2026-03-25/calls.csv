@@ -1,0 +1,11 @@
+query,total_exec_time,prop_exec_time,ncalls,sync_io_time
+"select set_config('search_path', $1, true), set_config($2, $3, true), set_config('role', $4, true), set_config('request.jwt.claims', $5, true), set_config('request.method', $6, true), set_config('request.path', $7, true), set_config('request.headers', $8, true), set_config('request.cookies', $9, true)",00:00:00.533754,2.4%,"3,900",00:00:00
+SHOW transaction_read_only,00:00:00.061024,0.3%,"3,012",00:00:00
+SET client_min_messages TO WARNING,00:00:00.016799,0.1%,"1,494",00:00:00
+SET client_encoding = 'UTF8',00:00:00.020282,0.1%,"1,494",00:00:00
+BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY,00:00:00.046508,0.2%,"1,485",00:00:00
+select setting from pg_config where name = $1,00:00:00.338093,1.5%,"1,004",00:00:00
+"select set_config('search_path', $1, true), set_config($2, $3, true), set_config('role', $4, true), set_config('request.jwt.claims', $5, true), set_config('request.method', $6, true), set_config('request.path', $7, true), set_config('request.headers', $8, true), set_config('request.cookies', $9, true)",00:00:00.525719,2.4%,882,00:00:00
+COMMIT,00:00:00.001071,0.0%,806,00:00:00
+"WITH pgrst_source AS ( SELECT ""public"".""profiles"".* FROM ""public"".""profiles"" WHERE  ""public"".""profiles"".""id"" = $1   LIMIT $2 OFFSET $3 )  SELECT $4::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $5) AS body, nullif(current_setting($6, $7), $8) AS response_headers, nullif(current_setting($9, $10), $11) AS response_status, $12 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",00:00:00.100078,0.5%,727,00:00:00
+"WITH pgrst_source AS ( SELECT ""public"".""gyms"".* FROM ""public"".""gyms""  ORDER BY ""public"".""gyms"".""name"" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",00:00:00.496797,2.3%,694,00:00:00

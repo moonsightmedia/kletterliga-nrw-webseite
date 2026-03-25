@@ -1,0 +1,18 @@
+name,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,rowcount,dead_rowcount,autovacuum_threshold,expect_autovacuum,autoanalyze_threshold,expect_autoanalyze
+public.gym_codes,"","","","",             3,            35,            51,no,            50,no
+public.gyms,"",2026-03-20 23:12,"",2026-03-20 23:11,             0,             2,            50,no,            50,no
+public.profiles,"","","","",             4,             5,            51,no,            50,no
+public.results,"","","","",             4,            12,            51,no,            50,no
+public.routes,"",2026-03-20 22:55,"",2026-03-20 22:55,             0,             0,            50,no,            50,no
+public.routes_backup_20260320,"","","",2026-03-20 22:53,           147,             0,            79,no,            65,no
+public.routes_backup_20260320_final,"","","",2026-03-20 22:55,           147,             0,            79,no,            65,no
+public.admin_settings,"","","","",            -1,             0,            50,no,            50,no
+public.change_requests,"","","","",            -1,             2,            50,no,            50,no
+public.contact_requests,"","","","",            -1,             0,            50,no,            50,no
+public.finale_registrations,"","","","",            -1,             0,            50,no,            50,no
+public.gym_admins,"","","","",            -1,             5,            50,no,            50,no
+public.gym_invites,"","","","",            -1,             0,            50,no,            50,no
+public.gyms_backup_20260320,"","","","",            -1,             0,            50,no,            50,no
+public.gyms_backup_20260320_final,"","","","",            -1,             0,            50,no,            50,no
+public.master_codes,"","","","",            -1,             1,            50,no,            50,no
+public.profile_overrides,"","","","",            -1,             0,            50,no,            50,no

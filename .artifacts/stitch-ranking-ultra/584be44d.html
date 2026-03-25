@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KletterLiga NRW - Rangliste</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002637",
+                        "primary-container": "#003d55",
+                        "on-primary-container": "#F2DCAB",
+                        "secondary": "#A15523",
+                        "on-secondary": "#ffffff",
+                        "background": "#fbf9f6",
+                        "surface": "#fbf9f6",
+                        "surface-container": "#efeeeb",
+                        "on-surface": "#1b1c1a",
+                        "outline": "#71787d",
+                        "brand-cream": "#F2DCAB",
+                        "brand-navy": "#003D55",
+                        "brand-terracotta": "#A15523"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- TopAppBar Component -->
+<header class="bg-[#003D55] dark:bg-slate-950 fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 w-full h-16">
+<div class="flex items-center">
+<h1 class="font-headline font-bold uppercase tracking-widest text-xl text-[#F2DCAB]">KletterLiga NRW</h1>
+</div>
+<div class="flex items-center">
+<div class="w-8 h-8 rounded-full bg-brand-terracotta flex items-center justify-center border-2 border-[#F2DCAB] overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFk_Pt5AAnMo0DtN_ZCbIwD6iqsAjjEniaK_FoOC0GAx3WojefuolUtYIlfsVDW8vWxHtLDo09QjazXKvvhW4EXc8B5jz7uhPd8jpQhJL7uK2jwmmQQ-oxNr-xAET27_XRI39TP1D_5GSlvHLo4cVUuAxobk_kJ93Ke1KRW9lSIygykbD-wa_Fy4yXtjLQWghWZAsuEBrE-6o6V61sy-eAlEmRgifIYklrw6SZ6-bjH_vzVMKjzuU3ZDZc-iSRNwkFEJAyGFrpbB0"/>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-32 px-4 max-w-lg mx-auto">
+<!-- Your Standing Card -->
+<section class="mb-4">
+<div class="bg-brand-navy rounded-2xl p-6 shadow-lg relative overflow-hidden">
+<!-- Decorative Icon -->
+<span class="material-symbols-outlined absolute -right-6 -bottom-6 text-[120px] text-brand-cream opacity-5 rotate-12" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<h2 class="font-headline text-brand-cream text-xs font-bold uppercase tracking-widest mb-4 opacity-80">Dein aktueller Stand</h2>
+<div class="flex items-end justify-between relative z-10">
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-5xl font-bold text-brand-cream italic leading-none">#42</span>
+<span class="font-headline text-brand-cream opacity-60 font-semibold text-lg">/ 1.240</span>
+</div>
+<div class="text-right">
+<p class="font-headline text-brand-cream text-2xl font-bold">12.450</p>
+<p class="text-[10px] font-bold text-brand-cream uppercase tracking-tighter opacity-70">Gesamtpunkte</p>
+</div>
+</div>
+<div class="mt-6 flex gap-3 relative z-10">
+<div class="bg-brand-terracotta text-white rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">+3 Plätze</span>
+</div>
+<div class="bg-brand-cream/10 backdrop-blur-md text-brand-cream rounded-full px-4 py-1.5 flex items-center gap-2 border border-brand-cream/20">
+<span class="material-symbols-outlined text-sm">local_fire_department</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Top 5%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Optimized Single Row Comprehensive Filtering UI -->
+<section class="mb-4 sticky top-16 bg-background/95 glass-nav py-2.5 z-40 -mx-4 px-4 border-b border-brand-navy/5">
+<div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+<!-- Discipline Toggle -->
+<div class="flex bg-brand-navy/5 p-0.5 rounded-full shrink-0">
+<button class="bg-brand-terracotta text-brand-cream font-headline font-bold text-[8px] uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm transition-all">Vorstieg</button>
+<button class="text-brand-navy/40 font-headline font-bold text-[8px] uppercase tracking-wide px-2.5 py-1 rounded-full hover:text-brand-navy transition-all">Top-Rope</button>
+</div>
+<!-- Gender Toggle -->
+<div class="flex bg-brand-navy/5 p-0.5 rounded-full shrink-0">
+<button class="bg-brand-terracotta text-brand-cream font-headline font-bold text-[8px] uppercase tracking-wide px-3 py-1 rounded-full shadow-sm transition-all">M</button>
+<button class="text-brand-navy/40 font-headline font-bold text-[8px] uppercase tracking-wide px-3 py-1 rounded-full hover:text-brand-navy transition-all">W</button>
+</div>
+<!-- Age Toggle -->
+<div class="flex bg-brand-navy/5 p-0.5 rounded-full shrink-0">
+<button class="bg-brand-terracotta text-brand-cream font-headline font-bold text-[8px] uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm transition-all">U15</button>
+<button class="text-brand-navy/40 font-headline font-bold text-[8px] uppercase tracking-wide px-2.5 py-1 rounded-full hover:text-brand-navy transition-all">Ü15</button>
+<button class="text-brand-navy/40 font-headline font-bold text-[8px] uppercase tracking-wide px-2.5 py-1 rounded-full hover:text-brand-navy transition-all">Ü40</button>
+</div>
+<!-- Hallen Filter (Icon only for maximum space) -->
+<button class="ml-auto flex items-center justify-center w-7 h-7 bg-brand-navy/5 rounded-full text-brand-terracotta shrink-0">
+<span class="material-symbols-outlined text-base">filter_list</span>
+</button>
+</div>
+</section>
+<!-- Leaderboard List -->
+<div class="space-y-3">
+<!-- Athlete 1 -->
+<div class="bg-white rounded-xl p-4 flex items-center gap-4 shadow-sm border border-brand-cream/30 relative">
+<div class="w-8 flex justify-center">
+<span class="font-headline text-2xl font-black text-brand-terracotta italic leading-none">01</span>
+</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-cream flex-shrink-0">
+<img alt="Sarah Müller" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCHRfpvKzHT-seUA8Aid_GCsILfSdutN2Z8JZtVwKbguEFflDp-OdQ8TAFs9w6PaSbxlt1IU2PZ505rkSp7-Ioe7rtrkLVwfG7PAizl4AhmYn_Vy2gT_LaYocF1DiQBA50q6bpj0OOY-n3_6QvCR8dFkPLiyv3K2-Hd2sGvJdPcMhFbbHAoqpOqx0_4gdB5tMk3M4Ig8b-tUtGwdIxmPUyo2LMHCIEI3b18yXqa4UbvW90mjvL1iklHEj-qipdBwf_PD3NPfpjS2I"/>
+</div>
+<div class="flex-grow min-w-0">
+<p class="font-headline font-bold text-brand-navy truncate">Sarah Müller</p>
+<p class="text-[10px] font-bold text-outline uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-brand-terracotta">location_on</span> Boulderwelt West
+                </p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="font-headline font-extrabold text-brand-navy text-base leading-none">24.590</p>
+<p class="text-[8px] font-bold uppercase tracking-tighter text-outline mt-0.5">Pkt</p>
+</div>
+</div>
+<!-- Athlete 2 -->
+<div class="bg-white rounded-xl p-4 flex items-center gap-4 shadow-sm border border-brand-cream/30">
+<div class="w-8 flex justify-center">
+<span class="font-headline text-2xl font-bold text-brand-navy italic opacity-40 leading-none">02</span>
+</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-cream/20 flex-shrink-0">
+<img alt="Lukas Weber" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMlgAzbG-HTgygIOTF3uEV-mi6UBa_JSinP2mv9bV_TeGM2G97XfvzFL22nrDc_SoMxiT5Mp9UMMnhlmBNPZip5HjxMciJHRbZgpQViRT3omsu7XNfBc-nVsyYooVsQDYum3QUmR60deij5WKj93VOKrFKb60WKt7-vGI6V7vnU0Tp-glyL9tg8v1CzWmDzuJ1YfNcV1r-gwxiDAYrtJFa5D9Vxk1vgxHHcV5rUfwYR58rD82bs5w9xP_5i01Oke0gZkvItV_aZDw"/>
+</div>
+<div class="flex-grow min-w-0">
+<p class="font-headline font-bold text-brand-navy truncate">Lukas Weber</p>
+<p class="text-[10px] font-bold text-outline uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-brand-terracotta">location_on</span> Superblock Düsseldorf
+                </p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="font-headline font-extrabold text-brand-navy text-base leading-none">22.105</p>
+<p class="text-[8px] font-bold uppercase tracking-tighter text-outline mt-0.5">Pkt</p>
+</div>
+</div>
+<!-- Separator -->
+<div class="flex flex-col items-center py-2 gap-1 opacity-20">
+<div class="w-1 h-1 bg-brand-navy rounded-full"></div>
+<div class="w-1 h-1 bg-brand-navy rounded-full"></div>
+<div class="w-1 h-1 bg-brand-navy rounded-full"></div>
+</div>
+<!-- Current User Row -->
+<div class="bg-white rounded-xl shadow-md ring-2 ring-brand-terracotta relative overflow-hidden transition-all duration-300">
+<!-- Main Row Part -->
+<div class="p-4 flex items-center gap-4 bg-brand-navy/5">
+<div class="w-8 flex justify-center">
+<span class="font-headline text-2xl font-black text-brand-terracotta italic leading-none">42</span>
+</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-terracotta flex-shrink-0">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFk_Pt5AAnMo0DtN_ZCbIwD6iqsAjjEniaK_FoOC0GAx3WojefuolUtYIlfsVDW8vWxHtLDo09QjazXKvvhW4EXc8B5jz7uhPd8jpQhJL7uK2jwmmQQ-oxNr-xAET27_XRI39TP1D_5GSlvHLo4cVUuAxobk_kJ93Ke1KRW9lSIygykbD-wa_Fy4yXtjLQWghWZAsuEBrE-6o6V61sy-eAlEmRgifIYklrw6SZ6-bjH_vzVMKjzuU3ZDZc-iSRNwkFEJAyGFrpbB0"/>
+</div>
+<div class="flex-grow min-w-0">
+<div class="flex items-center gap-2">
+<p class="font-headline font-bold text-brand-navy truncate text-lg">Max Mustermann</p>
+<span class="bg-brand-terracotta text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-tighter">DU</span>
+</div>
+<div class="flex items-center gap-3 mt-0.5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-brand-terracotta">location_on</span> Neoliet Bochum
+                        </p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="font-headline font-extrabold text-brand-terracotta text-xl leading-none">12.450</p>
+<p class="text-[8px] font-bold uppercase tracking-tighter text-outline mt-0.5">Gesamtpkt</p>
+</div>
+</div>
+<!-- Compact Quick Stats Section -->
+<div class="px-4 pb-4 pt-3 border-t border-brand-navy/10 bg-white">
+<!-- Hallen-Fortschritt Bar -->
+<div class="mb-4">
+<div class="flex justify-between items-center mb-2">
+<h4 class="font-headline text-[9px] font-bold text-brand-navy/50 uppercase tracking-widest">Hallen-Fortschritt</h4>
+<span class="font-headline text-[10px] font-bold text-brand-navy">5 / 8</span>
+</div>
+<div class="flex gap-1">
+<div class="h-1 flex-1 bg-brand-terracotta rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-terracotta rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-terracotta rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-terracotta rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-terracotta rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-navy/10 rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-navy/10 rounded-full"></div>
+<div class="h-1 flex-1 bg-brand-navy/10 rounded-full"></div>
+</div>
+</div>
+<!-- Scoring Categories Horizontal Grid -->
+<div class="grid grid-cols-6 gap-1 text-center border-t border-brand-navy/5 pt-3">
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">Flash</span>
+<span class="font-headline font-bold text-[11px] text-brand-terracotta">13</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">10 Pkt</span>
+<span class="font-headline font-bold text-[11px] text-brand-navy">7</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">7.5 Pkt</span>
+<span class="font-headline font-bold text-[11px] text-brand-navy">7</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">5 Pkt</span>
+<span class="font-headline font-bold text-[11px] text-brand-navy">2</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">2.5 Pkt</span>
+<span class="font-headline font-bold text-[11px] text-brand-navy">1</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[7px] font-bold uppercase text-outline mb-0.5">0 Pkt</span>
+<span class="font-headline font-bold text-[11px] text-brand-navy">0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Next Athlete -->
+<div class="bg-white rounded-xl p-4 flex items-center gap-4 shadow-sm border border-brand-cream/30">
+<div class="w-8 flex justify-center">
+<span class="font-headline text-2xl font-bold text-brand-navy italic opacity-40 leading-none">43</span>
+</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-cream/20 flex-shrink-0">
+<img alt="Tobi Schmidt" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9z_XSJnsUDHy4vjw0zA-MuzHuzgsik2EF33VCfH6-oWlnI9L-i2LGFZXWkEp16fBkhWnIz2XbJw2oFM9MJeSRDZ6itilMpSsY5KtR44B6cD7mOwctgnMejHSQ-gJNMJbwQUbvlIIuOEum-PSua_0srgb0ixo7pm7ygun3NKZb61nINHc6usEY-peY9dANmTCdsba6eSsk1q_dJWQVcSHnZsdBQWLx5LVWPqiZTuXbilEkHxH5CCqytv2QYDM5RQWP5bWFfpzW0Ts"/>
+</div>
+<div class="flex-grow min-w-0">
+<p class="font-headline font-bold text-brand-navy truncate">Tobi Schmidt</p>
+<p class="text-[10px] font-bold text-outline uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-brand-terracotta">location_on</span> Einstein Duisburg
+                </p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="font-headline font-extrabold text-brand-navy text-base leading-none">12.110</p>
+<p class="text-[8px] font-bold uppercase tracking-tighter text-outline mt-0.5">Pkt</p>
+</div>
+</div>
+</div>
+<!-- Load More Button -->
+<div class="mt-8 text-center">
+<button class="bg-brand-cream text-brand-navy font-headline font-bold text-[10px] uppercase tracking-widest px-10 py-4 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 border border-brand-navy/10">
+            Weitere laden
+        </button>
+</div>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="bg-[#003D55]/90 dark:bg-slate-950/90 backdrop-blur-md fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 z-50 rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">location_on</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider">Hallen</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#A15523] text-[#F2DCAB] rounded-full px-5 py-2 active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider">Rangliste</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider">Profil</span>
+</a>
+</nav>
+</body></html>

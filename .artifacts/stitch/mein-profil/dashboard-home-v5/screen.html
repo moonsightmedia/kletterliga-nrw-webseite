@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="light" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002637",
+                        "primary-container": "#003d55",
+                        "on-primary-container": "#F2DCAB",
+                        "secondary": "#A15523",
+                        "on-secondary": "#ffffff",
+                        "background": "#003D55", // Adjusted to match the deep navy of SCREEN_12 background
+                        "surface": "#fbf9f6",
+                        "surface-container": "#efeeeb",
+                        "on-surface": "#1b1c1a",
+                        "outline": "#71787d",
+                        "brand-cream": "#F2DCAB",
+                        "brand-navy": "#003D55",
+                        "brand-terracotta": "#A15523"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(242, 220, 171, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(242, 220, 171, 0.1);
+        }
+        .rope-texture {
+            background-image: radial-gradient(circle at 2px 2px, rgba(242, 220, 171, 0.03) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+<body class="bg-brand-navy font-body text-brand-cream selection:bg-brand-terracotta selection:text-white rope-texture">
+<!-- Header Component -->
+<header class="bg-[#003D55] dark:bg-slate-950 fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 h-16">
+<div class="flex items-center gap-4">
+<h1 class="font-headline font-bold uppercase tracking-widest text-xl text-[#F2DCAB]">KletterLiga NRW</h1>
+</div>
+<button class="text-[#F2DCAB] hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-2xl font-light">
+notifications
+</span>
+</button></header>
+<main class="pt-24 pb-32 px-6 max-w-lg mx-auto">
+<!-- Hero Section -->
+<section class="mb-12">
+<div class="flex flex-col gap-6">
+<div>
+<span class="inline-block px-3 py-1 rounded-md bg-brand-terracotta text-white font-headline font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
+                    Elite Division
+                </span>
+<h2 class="text-5xl font-headline font-bold text-brand-cream leading-[0.9] tracking-tighter uppercase">
+                    LUKAS <br/><span class="text-brand-terracotta">BERGMANN</span>
+</h2>
+<p class="mt-4 text-brand-cream/60 text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">flag</span>
+                    Etappe 1 von 5 • <span class="text-brand-cream">Bouldergarten Köln</span>
+</p>
+</div>
+<!-- Action Button -->
+<button class="flex items-center justify-center gap-3 bg-brand-terracotta px-8 py-4 rounded-xl text-white font-headline font-bold uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+                Code einlösen
+            </button>
+</div>
+</section>
+<!-- Statistics -->
+<div class="grid grid-cols-1 gap-4 mb-12">
+<!-- Points Card -->
+<div class="glass-card rounded-2xl p-6 border-l-4 border-brand-terracotta relative overflow-hidden">
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] text-brand-cream opacity-5 rotate-12" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<h3 class="font-headline text-brand-cream/60 text-[10px] font-bold uppercase tracking-widest mb-2">Gesamtpunkte</h3>
+<p class="text-6xl font-headline font-bold text-brand-cream italic leading-none">1.240</p>
+<div class="mt-6 flex items-center gap-2 text-[10px] text-brand-terracotta font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                Top 5% der Liga
+            </div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Routes Card -->
+<div class="glass-card rounded-2xl p-6 border-l-4 border-brand-cream/20">
+<h3 class="font-headline text-brand-cream/60 text-[10px] font-bold uppercase tracking-widest mb-4">Routen</h3>
+<p class="text-4xl font-headline font-bold text-brand-cream">42</p>
+<p class="text-[8px] text-brand-cream/40 mt-1 uppercase font-bold tracking-wider">Erfolgreich geloggt</p>
+</div>
+<!-- Flash Count Card -->
+<div class="glass-card rounded-2xl p-6 border-l-4 border-brand-terracotta">
+<h3 class="font-headline text-brand-cream/60 text-[10px] font-bold uppercase tracking-widest mb-4">Flash Count</h3>
+<p class="text-4xl font-headline font-bold text-brand-terracotta">12</p>
+<p class="text-[8px] text-brand-cream/40 mt-1 uppercase font-bold tracking-wider">Im ersten Versuch</p>
+</div>
+</div>
+<!-- Avg Points Card -->
+<div class="glass-card rounded-2xl p-6 border-l-4 border-brand-cream/20">
+<h3 class="font-headline text-brand-cream/60 text-[10px] font-bold uppercase tracking-widest mb-2">Avg. Points</h3>
+<p class="text-4xl font-headline font-bold text-brand-cream">29.5</p>
+<div class="w-full bg-black/20 h-1.5 mt-4 rounded-full overflow-hidden">
+<div class="bg-brand-cream h-full w-[70%]"></div>
+</div>
+</div>
+<!-- Wildcard-Qualifikation Progress -->
+<div class="glass-card rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden">
+<div>
+<h3 class="font-headline text-brand-cream text-lg font-bold uppercase tracking-widest mb-1">Wildcard-</h3>
+<h3 class="font-headline text-brand-cream text-lg font-bold uppercase tracking-widest mb-2">Qualifikation</h3>
+<p class="text-brand-cream/60 text-[10px] leading-relaxed mb-6">Besuche 8 verschiedene Hallen in NRW für das Finale.</p>
+<div class="relative w-full h-3 bg-black/20 rounded-full mb-2">
+<div class="absolute top-0 left-0 h-full bg-brand-terracotta rounded-full shadow-[0_0_10px_rgba(161,85,35,0.4)]" style="width: 62.5%;"></div>
+</div>
+<div class="flex justify-between items-center text-[8px] font-headline font-bold text-brand-cream/40 uppercase tracking-widest">
+<span>Start</span>
+<span class="text-brand-terracotta text-sm">5 von 8 Hallen</span>
+<span>Finale</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-3">
+<div class="w-10 h-10 rounded-xl bg-brand-terracotta flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-brand-terracotta flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-brand-terracotta flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-brand-terracotta flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-brand-terracotta flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-brand-cream/20 border border-brand-cream/10">
+<span class="material-symbols-outlined text-sm">location_off</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-brand-cream/20 border border-brand-cream/10">
+<span class="material-symbols-outlined text-sm">location_off</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-brand-cream/20 border border-brand-cream/10">
+<span class="material-symbols-outlined text-sm">location_off</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity -->
+<section class="mb-8">
+<h3 class="font-headline text-brand-cream text-xs font-bold uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+<span class="w-8 h-px bg-brand-terracotta"></span>
+            Letzte Boulder
+        </h3>
+<div class="space-y-4">
+<!-- Activity Item 1 -->
+<div class="glass-card rounded-2xl p-5 flex items-center justify-between group hover:bg-brand-cream/5 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-brand-terracotta/20 rounded-xl flex flex-col items-center justify-center border border-brand-terracotta/30">
+<span class="text-brand-terracotta font-headline font-black text-lg leading-none">V6</span>
+<span class="text-[6px] text-brand-cream/60 font-bold uppercase mt-0.5">Grade</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-brand-cream text-base">Crimpy Heaven</h4>
+<p class="text-[10px] text-brand-cream/40 flex items-center gap-1 font-bold">
+<span class="material-symbols-outlined text-[10px]">schedule</span>
+                            Vor 2 Stunden • Boulderplanet Köln
+                        </p>
+</div>
+</div>
+<div class="text-right">
+<div class="flex items-center justify-end gap-1 text-brand-terracotta font-bold mb-1">
+<span class="material-symbols-outlined text-xs">bolt</span>
+<span class="text-[8px] uppercase tracking-widest font-headline">Flash</span>
+</div>
+<p class="text-brand-cream font-headline font-bold text-lg">+45 pts</p>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="glass-card rounded-2xl p-5 flex items-center justify-between group hover:bg-brand-cream/5 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-black/10 rounded-xl flex flex-col items-center justify-center border border-brand-cream/10">
+<span class="text-brand-cream/80 font-headline font-black text-lg leading-none">V5</span>
+<span class="text-[6px] text-brand-cream/60 font-bold uppercase mt-0.5">Grade</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-brand-cream text-base">Dyno Mite</h4>
+<p class="text-[10px] text-brand-cream/40 flex items-center gap-1 font-bold">
+<span class="material-symbols-outlined text-[10px]">schedule</span>
+                            Gestern • Stuntwerk Köln
+                        </p>
+</div>
+</div>
+<div class="text-right">
+<div class="flex items-center justify-end gap-1 text-brand-cream/40 font-bold mb-1">
+<span class="material-symbols-outlined text-xs">done_all</span>
+<span class="text-[8px] uppercase tracking-widest font-headline">Top</span>
+</div>
+<p class="text-brand-cream font-headline font-bold text-lg">+32 pts</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Component -->
+<nav class="bg-[#003D55]/90 dark:bg-slate-950/90 backdrop-blur-md fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 z-50 rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center bg-brand-terracotta text-white rounded-xl px-5 py-2 active:scale-90 transition-all duration-300 shadow-lg" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-body text-[10px] font-bold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">location_on</span>
+<span class="font-body text-[10px] font-bold uppercase tracking-wider">Hallen</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">leaderboard</span>
+<span class="font-body text-[10px] font-bold uppercase tracking-wider">Rangliste</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-body text-[10px] font-bold uppercase tracking-wider">Profil</span>
+</a>
+</nav>
+</body></html>

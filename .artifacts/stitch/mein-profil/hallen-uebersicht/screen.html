@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KletterLiga NRW - Partnerhallen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#002637",
+                        "primary-container": "#003d55",
+                        "on-primary-container": "#F2DCAB",
+                        "secondary": "#A15523",
+                        "on-secondary": "#ffffff",
+                        "background": "#fbf9f6",
+                        "surface": "#fbf9f6",
+                        "surface-container": "#efeeeb",
+                        "on-surface": "#1b1c1a",
+                        "outline": "#71787d",
+                        "brand-cream": "#F2DCAB",
+                        "brand-navy": "#003D55",
+                        "brand-terracotta": "#A15523"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- TopAppBar Component -->
+<header class="bg-[#003D55] dark:bg-slate-950 fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 h-16">
+<div class="flex items-center gap-4">
+<h1 class="font-headline font-bold uppercase tracking-widest text-xl text-[#F2DCAB]">KletterLiga NRW</h1>
+</div>
+<div class="flex items-center">
+<div class="w-8 h-8 rounded-full bg-brand-terracotta flex items-center justify-center border-2 border-[#F2DCAB] overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFk_Pt5AAnMo0DtN_ZCbIwD6iqsAjjEniaK_FoOC0GAx3WojefuolUtYIlfsVDW8vWxHtLDo09QjazXKvvhW4EXc8B5jz7uhPd8jpQhJL7uK2jwmmQQ-oxNr-xAET27_XRI39TP1D_5GSlvHLo4cVUuAxobk_kJ93Ke1KRW9lSIygykbD-wa_Fy4yXtjLQWghWZAsuEBrE-6o6V61sy-eAlEmRgifIYklrw6SZ6-bjH_vzVMKjzuU3ZDZc-iSRNwkFEJAyGFrpbB0"/>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-32 px-4 max-w-lg mx-auto">
+<!-- Hero Section -->
+<section class="mb-6">
+<div class="bg-brand-navy rounded-2xl p-6 shadow-lg relative overflow-hidden">
+<span class="material-symbols-outlined absolute -right-6 -bottom-6 text-[120px] text-brand-cream opacity-5 rotate-12" style="font-variation-settings: 'FILL' 1;">landscape</span>
+<h2 class="font-headline text-brand-cream text-3xl font-bold uppercase tracking-tight mb-3 relative z-10">Partnerhallen</h2>
+<p class="text-brand-cream/80 text-sm font-medium leading-relaxed relative z-10">
+                Entdecke die besten Kletter- und Boulderhallen in NRW. Sammle Punkte für die Liga in jeder Location.
+            </p>
+</div>
+</section>
+<!-- Stats Grid -->
+<div class="grid grid-cols-3 gap-3 mb-6">
+<div class="bg-white p-3 rounded-xl border border-brand-cream/30 shadow-sm text-center">
+<p class="text-[8px] font-bold uppercase tracking-widest text-outline mb-1">Hallen</p>
+<p class="font-headline text-xl font-bold text-brand-navy">24</p>
+</div>
+<div class="bg-white p-3 rounded-xl border border-brand-cream/30 shadow-sm text-center">
+<p class="text-[8px] font-bold uppercase tracking-widest text-outline mb-1">Besucht</p>
+<p class="font-headline text-xl font-bold text-brand-navy">08</p>
+</div>
+<div class="bg-white p-3 rounded-xl border border-brand-cream/30 shadow-sm text-center">
+<p class="text-[8px] font-bold uppercase tracking-widest text-outline mb-1">Rank</p>
+<p class="font-headline text-xl font-bold text-brand-navy">#142</p>
+</div>
+</div>
+<!-- Gym List -->
+<div class="space-y-4">
+<!-- Gym Item 1 - Visited -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-cream/30 flex flex-col group cursor-pointer active:scale-[0.98] transition-all">
+<div class="h-40 w-full relative overflow-hidden">
+<img alt="Einstieg Düsseldorf" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSleGWiEPGdcRcghXB7DAqb_Gw6UH1PpnTfaJdXw4jSN5fuR-wZIf92aJBAYDQIR0pMfv5CKeCPS3Y8xWC_C6-3Mmow-_gATVuABgA7uPkyqvj2sP34xW3--oXz1GAvMi8u2yMHoNjYzHvX_pLVh8yhpC-ST7ycssZtcJuZzJ140BjNdoloe5s5EwV2aajKPuYextI0p1IOlHxUH-pDSBDL0Ewu3ja2szV15HiwsBQrKwaRRR7Z0og_m8RrX4nA9BKGURusgAAIn0"/>
+<div class="absolute top-3 left-3 bg-brand-terracotta text-white px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">Bouldern</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline text-xl font-bold text-brand-navy uppercase">Einstieg Düsseldorf</h3>
+<div class="flex items-center gap-1 bg-brand-navy text-brand-cream px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[8px] font-bold uppercase tracking-widest">Besucht</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-outline mb-4">
+<span class="material-symbols-outlined text-sm text-brand-terracotta">location_on</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Düsseldorf, Lierenfeld</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-4">
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Wände</span>
+<span class="font-headline font-bold text-brand-navy text-sm">1.200m²</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Level</span>
+<span class="font-headline font-bold text-brand-navy text-sm">1 - 9+</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-brand-navy opacity-30" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Gym Item 2 - Unvisited -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-cream/30 flex flex-col group cursor-pointer active:scale-[0.98] transition-all">
+<div class="h-40 w-full relative overflow-hidden">
+<img alt="Summit Siegen" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTwxPgOq-3eXogj9PFXqLJoeLjw1bp84_Vsp98SzK5vKcHhqSsyLMwOYbiWcAbokiT_IP7SJnuzZTLqBcaVhwQj6Y0GActZlVmDCgMmdXmclfndDzsqhLmnYQcjpoZamhMWH-qCS1V85E9q9Iqlrf8S-xM3v4qZAYu3gGfMcJhsrb9IfCQao2zEjrTgcDfcJwlMXrOTbo8MbbmDAkzp-a-jLj95mpifFsxgxqDbzJ4NaXEyZCyr_iLa9Bj6dJH8jrYYf-yf8ryauw"/>
+<div class="absolute top-3 left-3 bg-brand-navy text-white px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">Klettern</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline text-xl font-bold text-brand-navy uppercase">Summit Siegen</h3>
+<div class="flex items-center gap-1 bg-surface-container text-outline px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px]">lock</span>
+<span class="text-[8px] font-bold uppercase tracking-widest">Offen</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-outline mb-4">
+<span class="material-symbols-outlined text-sm text-brand-terracotta">location_on</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Siegen, Geisweid</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-4">
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Höhe</span>
+<span class="font-headline font-bold text-brand-navy text-sm">18.5m</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Routen</span>
+<span class="font-headline font-bold text-brand-navy text-sm">210+</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-brand-navy opacity-30" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Gym Item 3 - Visited -->
+<div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-cream/30 flex flex-col group cursor-pointer active:scale-[0.98] transition-all">
+<div class="h-40 w-full relative overflow-hidden">
+<img alt="Kraftwerk Köln" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYiHiLOgp4TtrBzGrWaFw4mbY6RS98Ax4hnm9CT2GZXI8UniVfG5IgVKW-JS5ymO9LeGC9Yjv9KkiPnpYyeAa7kXADgDj9ZiVNfj014jnKXjvcleLWeFE0JzqaKRVxFWYHKGd1zJQxG1WM8xqF71MMxurn-UEy3IFBJK-VBCNDpL5rDh9JCogruzddhIPuy2oYWLZm2bf6WBzo-N2TzqOfeIuQ_8TUN9sxaFOM-fBXzkeDz0P_CKy1JsTjhJaemSWaz0O5b6oEHU0"/>
+<div class="absolute top-3 left-3 bg-brand-terracotta text-white px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">Bouldern</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline text-xl font-bold text-brand-navy uppercase">Kraftwerk Köln</h3>
+<div class="flex items-center gap-1 bg-brand-navy text-brand-cream px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[8px] font-bold uppercase tracking-widest">Besucht</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-outline mb-4">
+<span class="material-symbols-outlined text-sm text-brand-terracotta">location_on</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Köln, Ehrenfeld</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-4">
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Wände</span>
+<span class="font-headline font-bold text-brand-navy text-sm">2.400m²</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[8px] uppercase font-bold text-outline tracking-widest">Vibe</span>
+<span class="font-headline font-bold text-brand-navy text-sm">Urban</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-brand-navy opacity-30" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="bg-[#003D55]/90 dark:bg-slate-950/90 backdrop-blur-md fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 z-50 rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#A15523] text-[#F2DCAB] rounded-full px-5 py-2 active:scale-90 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider">Hallen</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">leaderboard</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider">Rangliste</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F2DCAB]/60 py-2 hover:text-[#F2DCAB] transition-colors active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider">Profil</span>
+</a>
+</nav>
+</body></html>

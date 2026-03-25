@@ -1,0 +1,17 @@
+schemaname,table_name,blocks_read,write_tuples,blocks_write,activity_ratio
+auth,users,24,64,7.11111111111111,0.3:1 (Write-Heavy)
+public,gym_codes,14,36,12,0.9:1 (Write-Heavy)
+auth,refresh_tokens,19,143,6.5,0.3:1 (Write-Heavy)
+auth,sessions,15,57,4.38461538461539,0.3:1 (Write-Heavy)
+storage,objects,13,16,3.2,0.2:1 (Write-Heavy)
+auth,one_time_tokens,10,5,5,0.5:1 (Write-Heavy)
+auth,identities,11,5,3.33333333333333,0.3:1 (Write-Heavy)
+public,routes,13,148,0,Read-Only
+public,master_codes,11,1,-0,Read-Only
+auth,mfa_amr_claims,8,28,2.15384615384615,0.3:1 (Write-Heavy)
+public,profiles,7,6,1.5,0.2:1 (Write-Heavy)
+public,gym_admins,7,5,-0,Read-Only
+public,results,3,12,3,1.0:1 (Write-Heavy)
+auth,schema_migrations,3,1,0.0138888888888889,1:216.0 (Read-Heavy)
+public,gyms,3,90,0,Read-Only
+public,change_requests,2,2,-0,Read-Only

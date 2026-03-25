@@ -1,0 +1,15 @@
+type,name,bloat,waste
+index,public.routes::routes_pkey,0.0,32 kB
+index,public.gyms::gyms_pkey,0.0,16 kB
+index,public.gym_codes::gym_codes_gym_id_idx,2.0,8192 bytes
+index,public.gym_codes::gym_codes_pkey,2.0,8192 bytes
+index,public.gym_codes::gym_codes_redeemed_by_idx,2.0,8192 bytes
+index,public.profiles::profiles_pkey,2.0,8192 bytes
+index,public.gym_codes::gym_codes_code_idx,2.0,8192 bytes
+index,public.gym_codes::gym_codes_code_key,2.0,8192 bytes
+table,public.routes_backup_20260320,1.3,8192 bytes
+table,public.routes_backup_20260320_final,1.3,8192 bytes
+table,public.gym_codes,1.0,0 bytes
+table,public.profiles,1.0,0 bytes
+table,public.gyms,0.0,0 bytes
+table,public.routes,0.0,0 bytes
