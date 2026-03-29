@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -17,22 +17,35 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { createGymAdmin, listGymAdminsByGym, listGyms, listProfiles, updateGym, deleteGym, inviteGymAdmin, updateProfile } from "@/services/appApi";
-import type { Profile } from "@/services/appTypes";
+import {
+  archiveGym,
+  createGymAdmin,
+  inviteGymAdmin,
+  listGymAdminsByGym,
+  listGyms,
+  listProfiles,
+  restoreGym,
+  updateGym,
+  updateProfile,
+} from "@/services/appApi";
 import { supabase } from "@/services/supabase";
-import type { Gym } from "@/services/appTypes";
-import { Building2, Plus, UserPlus, Edit2, Trash2, Mail } from "lucide-react";
+import type { Gym, Profile } from "@/services/appTypes";
+import { Archive, Building2, Edit2, Mail, Plus, RotateCcw, UserPlus } from "lucide-react";
+
+const formatDate = (value: string | null | undefined) =>
+  value ? new Date(value).toLocaleDateString("de-DE") : "—";
 
 const LeagueGyms = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [adminsByGym, setAdminsByGym] = useState<Record<string, string[]>>({});
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selectedGym, setSelectedGym] = useState<string>("");
-  const [selectedAdmin, setSelectedAdmin] = useState<string>("");
+  const [selectedGym, setSelectedGym] = useState("");
+  const [selectedAdmin, setSelectedAdmin] = useState("");
   const [creating, setCreating] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [editingGym, setEditingGym] = useState<Gym | null>(null);
-  const [deletingGym, setDeletingGym] = useState<Gym | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Gym | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Gym | null>(null);
   const [createMode, setCreateMode] = useState<"direct" | "invite">("direct");
   const [form, setForm] = useState({
     name: "",
@@ -45,7 +58,7 @@ const LeagueGyms = () => {
     adminPassword: "",
   });
   const [inviteEmail, setInviteEmail] = useState("");
-  const [skipEmail, setSkipEmail] = useState(false); // Für Testing: E-Mail-Versand überspringen
+  const [skipEmail, setSkipEmail] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     city: "",
@@ -54,37 +67,53 @@ const LeagueGyms = () => {
     website: "",
     logo_url: "",
   });
+  const allowInviteLinkPreview = import.meta.env.DEV;
+
+  const loadData = async () => {
+    const [{ data: gymData }, { data: profileData }] = await Promise.all([
+      listGyms({ includeArchived: true }),
+      listProfiles({ includeArchived: true }),
+    ]);
+    setGyms(gymData ?? []);
+    setProfiles(profileData ?? []);
+  };
 
   useEffect(() => {
-    listGyms().then(({ data }) => setGyms(data ?? []));
-    listProfiles().then(({ data }) => setProfiles(data ?? []));
+    void loadData();
   }, []);
 
   const loadAdmins = async (gymsToLoad: Gym[] = gyms) => {
-    if (gymsToLoad.length === 0) return;
+    if (gymsToLoad.length === 0) {
+      setAdminsByGym({});
+      return;
+    }
+
     const mapping: Record<string, string[]> = {};
     await Promise.all(
       gymsToLoad.map(async (gym) => {
-        const { data, error } = await listGymAdminsByGym(gym.id);
-        if (error) {
-          console.error(`Error loading admins for gym ${gym.id}:`, error);
-          mapping[gym.id] = [];
-        } else {
-          mapping[gym.id] = (data ?? []).map((item) => item.profile_id);
-        }
-      })
+        const { data } = await listGymAdminsByGym(gym.id);
+        mapping[gym.id] = (data ?? []).map((item) => item.profile_id);
+      }),
     );
     setAdminsByGym(mapping);
   };
 
   useEffect(() => {
-    if (gyms.length > 0) {
-      loadAdmins(gyms);
-    }
+    void loadAdmins(gyms);
   }, [gyms]);
 
-  const getCreateGymErrorDescription = (err: string): string => {
-    const msg = (err || "").toLowerCase();
+  const activeGyms = useMemo(() => gyms.filter((gym) => !gym.archived_at), [gyms]);
+  const archivedGyms = useMemo(() => gyms.filter((gym) => Boolean(gym.archived_at)), [gyms]);
+  const activeProfiles = useMemo(() => profiles.filter((profile) => !profile.archived_at), [profiles]);
+
+  const getErrorCode = (value: unknown) => {
+    if (typeof value !== "object" || value === null || !("code" in value)) return null;
+    const { code } = value as { code?: unknown };
+    return typeof code === "string" ? code : null;
+  };
+
+  const getCreateGymErrorDescription = (errorMessage: string): string => {
+    const msg = errorMessage.toLowerCase();
     if (msg.includes("missing required") || msg.includes("fehlende")) return "Name, PLZ, E-Mail und Passwort sind Pflicht.";
     if (msg.includes("password") && (msg.includes("6") || msg.includes("least"))) return "Das Passwort muss mindestens 6 Zeichen lang sein.";
     if (msg.includes("already") && (msg.includes("registered") || msg.includes("exist") || msg.includes("e-mail"))) return "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.";
@@ -92,20 +121,20 @@ const LeagueGyms = () => {
     if (msg.includes("gym create") || msg.includes("halle")) return "Die Halle konnte nicht angelegt werden. Bitte prüfe die Angaben.";
     if (msg.includes("user create") || msg.includes("user create failed")) return "Der Hallen-Admin konnte nicht angelegt werden.";
     if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already exists")) return "Eine Halle oder E-Mail mit diesen Daten existiert bereits.";
-    return err || "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.";
+    return errorMessage || "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.";
   };
 
   const handleCreate = async () => {
-    const trimmedPlz = (form.postal_code || "").trim();
-    if (!form.name?.trim()) {
+    const trimmedPlz = form.postal_code.trim();
+    if (!form.name.trim()) {
       toast({ title: "Fehlende Angaben", description: "Bitte gib einen Hallennamen ein.", variant: "destructive" });
       return;
     }
     if (!trimmedPlz) {
-      toast({ title: "Fehlende Angaben", description: "Bitte gib die Postleitzahl (PLZ) der Halle ein.", variant: "destructive" });
+      toast({ title: "Fehlende Angaben", description: "Bitte gib die Postleitzahl der Halle ein.", variant: "destructive" });
       return;
     }
-    if (!form.adminEmail?.trim()) {
+    if (!form.adminEmail.trim()) {
       toast({ title: "Fehlende Angaben", description: "Bitte gib die E-Mail-Adresse des Hallen-Admins ein.", variant: "destructive" });
       return;
     }
@@ -117,10 +146,11 @@ const LeagueGyms = () => {
       toast({ title: "Ungültiges Passwort", description: "Das Passwort muss mindestens 6 Zeichen lang sein.", variant: "destructive" });
       return;
     }
-    if (!form.adminEmail.includes("@") || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.adminEmail)) {
       toast({ title: "Ungültige E-Mail", description: "Bitte gib eine gültige E-Mail-Adresse ein.", variant: "destructive" });
       return;
     }
+
     setCreating(true);
     try {
       const {
@@ -130,11 +160,11 @@ const LeagueGyms = () => {
         body: {
           gym: {
             name: form.name.trim(),
-            city: form.city?.trim() || null,
+            city: form.city.trim() || null,
             postal_code: trimmedPlz || null,
-            address: form.address?.trim() || null,
-            website: form.website?.trim() || null,
-            logo_url: form.logo_url?.trim() || null,
+            address: form.address.trim() || null,
+            website: form.website.trim() || null,
+            logo_url: form.logo_url.trim() || null,
           },
           admin: {
             email: form.adminEmail.trim(),
@@ -143,6 +173,7 @@ const LeagueGyms = () => {
         },
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
+
       if (error) {
         toast({
           title: "Fehler beim Anlegen",
@@ -151,45 +182,36 @@ const LeagueGyms = () => {
         });
         return;
       }
-      const errMsg = typeof data?.error === "string" ? data.error : (data?.error as { message?: string })?.message;
-      if (errMsg) {
+
+      const remoteError = typeof data?.error === "string" ? data.error : (data?.error as { message?: string })?.message;
+      if (remoteError) {
         toast({
           title: "Fehler beim Anlegen",
-          description: getCreateGymErrorDescription(errMsg),
+          description: getCreateGymErrorDescription(remoteError),
           variant: "destructive",
         });
         return;
       }
-      if (data?.gym) {
-        const newGym = data.gym as Gym;
-        setGyms((prev) => {
-          const updated = [newGym, ...prev];
-          loadAdmins(updated);
-          return updated;
-        });
-        setForm({
-          name: "",
-          city: "",
-          postal_code: "",
-          address: "",
-          website: "",
-          logo_url: "",
-          adminEmail: "",
-          adminPassword: "",
-        });
-        toast({ title: "Halle erstellt", description: "Der Hallen-Admin kann sich jetzt anmelden." });
-        return;
-      }
-      toast({
-        title: "Fehler",
-        description: "Die Halle konnte nicht erstellt werden. Bitte versuche es erneut.",
-        variant: "destructive",
+
+      await loadData();
+      setForm({
+        name: "",
+        city: "",
+        postal_code: "",
+        address: "",
+        website: "",
+        logo_url: "",
+        adminEmail: "",
+        adminPassword: "",
       });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Netzwerkfehler";
+      toast({ title: "Halle erstellt", description: "Die Halle und der Hallen-Admin wurden angelegt." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Netzwerkfehler";
       toast({
         title: "Fehler",
-        description: msg.includes("fetch") || msg.includes("network") ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung." : msg,
+        description: message.includes("fetch") || message.includes("network")
+          ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung."
+          : message,
         variant: "destructive",
       });
     } finally {
@@ -199,109 +221,53 @@ const LeagueGyms = () => {
 
   const handleInvite = async () => {
     if (!inviteEmail || !inviteEmail.includes("@")) {
-      toast({ title: "Ungültige E-Mail", description: "Bitte gib eine gültige E-Mail-Adresse ein." });
+      toast({ title: "Ungültige E-Mail-Adresse", description: "Bitte gib eine gültige E-Mail-Adresse ein." });
       return;
     }
+
     setInviting(true);
     try {
-      const { data, error } = await inviteGymAdmin(inviteEmail, skipEmail);
+      const shouldSkipEmail = allowInviteLinkPreview && skipEmail;
+      const { data, error } = await inviteGymAdmin(inviteEmail, shouldSkipEmail);
       if (error) {
-        console.error("Invite error:", error);
-        
-        // Prüfe auf spezifische Fehlermeldungen
         const errorMessage = error.message || "";
-        const errorCode = (error as any)?.code || (data?.error as any)?.code;
-        
-        if (errorCode === "INVITE_ALREADY_EXISTS" ||
-            errorMessage.includes("active invite already exists") || 
-            errorMessage.includes("bereits eine aktive Einladung") ||
-            errorMessage.includes("Einladung bereits vorhanden")) {
-          toast({ 
-            title: "Einladung bereits vorhanden", 
-            description: `Für ${inviteEmail} existiert bereits eine aktive Einladung. Die E-Mail wurde bereits gesendet.`,
-            variant: "default",
-          });
-        } else if (errorMessage.includes("Valid email address is required") ||
-                   errorMessage.includes("gültige E-Mail")) {
-          toast({ 
-            title: "Ungültige E-Mail-Adresse", 
-            description: "Bitte gib eine gültige E-Mail-Adresse ein." 
+        const errorCode = getErrorCode(error) || getErrorCode(data?.error);
+
+        if (
+          errorCode === "INVITE_ALREADY_EXISTS" ||
+          errorMessage.includes("active invite already exists") ||
+          errorMessage.includes("bereits eine aktive Einladung")
+        ) {
+          toast({
+            title: "Einladung bereits vorhanden",
+            description: `Für ${inviteEmail} existiert bereits eine aktive Einladung.`,
           });
         } else {
-          toast({ 
-            title: "Fehler", 
-            description: errorMessage || "Einladung konnte nicht gesendet werden. Bitte versuche es erneut.",
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-      if (data?.error) {
-        console.error("Invite data error:", data.error);
-        
-        // Prüfe auf spezifische Fehlermeldungen im data.error
-        const errorData = typeof data.error === "string" 
-          ? { message: data.error } 
-          : data.error || {};
-        const errorMessage = errorData.message || errorData.toString() || "";
-        const errorCode = errorData.code;
-        
-        if (errorCode === "INVITE_ALREADY_EXISTS" ||
-            errorMessage.includes("active invite already exists") || 
-            errorMessage.includes("bereits eine aktive Einladung") ||
-            errorMessage.includes("Einladung bereits vorhanden")) {
-          toast({ 
-            title: "Einladung bereits vorhanden", 
-            description: `Für ${inviteEmail} existiert bereits eine aktive Einladung. Die E-Mail wurde bereits gesendet.`,
-            variant: "default",
-          });
-        } else {
-          toast({ 
-            title: "Fehler", 
+          toast({
+            title: "Fehler",
             description: errorMessage || "Einladung konnte nicht gesendet werden.",
             variant: "destructive",
           });
         }
         return;
       }
-      // Zeige den Link an, auch wenn E-Mail-Versand fehlgeschlagen ist
-      const inviteUrl = data?.invite_url;
-      const emailSent = data?.email_sent !== false; // Default to true if not specified
-      const savedEmail = inviteEmail; // Speichere E-Mail vor dem Löschen
-      
-      setInviteEmail("");
-      
-      if (inviteUrl) {
-        // Kopiere Link in Zwischenablage
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(inviteUrl).catch(() => {
-            // Ignoriere Fehler beim Kopieren
-          });
-        }
-        
-        toast({
-          title: emailSent ? "Einladung gesendet" : "Einladung erstellt",
-          description: emailSent 
-            ? `Eine E-Mail wurde an ${savedEmail} gesendet. Link: ${inviteUrl}`
-            : `Einladung erstellt. Link wurde kopiert: ${inviteUrl}`,
-          duration: 10000, // Länger anzeigen damit Link sichtbar ist
-          variant: "success",
-        });
-        
-        // Zeige Link auch in Konsole für einfaches Kopieren
-        console.log("📧 Einladungslink:", inviteUrl);
-        console.log("📋 Link wurde in die Zwischenablage kopiert");
-      } else {
-        toast({
-          title: "Einladung gesendet",
-          description: `Eine E-Mail wurde an ${savedEmail} gesendet. Die Halle kann sich jetzt registrieren.`,
-        });
+
+      if (data?.invite_url && shouldSkipEmail && navigator.clipboard) {
+        void navigator.clipboard.writeText(data.invite_url).catch(() => undefined);
       }
-    } catch (err) {
-      console.error("Invite exception:", err);
-      toast({ 
-        title: "Fehler", 
-        description: err instanceof Error ? err.message : "Einladung konnte nicht gesendet werden.",
+
+      toast({
+        title: shouldSkipEmail ? "Test-Link erzeugt" : "Einladung gesendet",
+        description: shouldSkipEmail
+          ? `Für ${inviteEmail} wurde ein Test-Link erzeugt und in die Zwischenablage kopiert.`
+          : `Eine Einladung wurde an ${inviteEmail} gesendet.`,
+        variant: shouldSkipEmail ? "success" : "default",
+      });
+      setInviteEmail("");
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: error instanceof Error ? error.message : "Einladung konnte nicht gesendet werden.",
         variant: "destructive",
       });
     } finally {
@@ -314,43 +280,28 @@ const LeagueGyms = () => {
       toast({ title: "Fehlende Auswahl", description: "Bitte Halle und Admin wählen." });
       return;
     }
-    
-    // Erstelle gym_admins Eintrag
-    const { error: gymAdminError } = await createGymAdmin({
+
+    const { error: mappingError } = await createGymAdmin({
       gym_id: selectedGym,
       profile_id: selectedAdmin,
     });
-    if (gymAdminError) {
-      toast({ title: "Fehler", description: gymAdminError.message });
+    if (mappingError) {
+      toast({ title: "Fehler", description: mappingError.message, variant: "destructive" });
       return;
     }
-    
-    // Setze die Rolle automatisch auf gym_admin, falls sie es noch nicht ist
-    const selectedProfile = profiles.find((p) => p.id === selectedAdmin);
+
+    const selectedProfile = profiles.find((profile) => profile.id === selectedAdmin);
     if (selectedProfile && selectedProfile.role !== "gym_admin") {
-      const { error: roleError } = await updateProfile(selectedAdmin, { role: "gym_admin" });
-      if (roleError) {
-        console.warn("Rolle konnte nicht automatisch gesetzt werden:", roleError);
-        // Fortfahren, auch wenn die Rolle nicht gesetzt werden konnte
-      } else {
-        // Aktualisiere das lokale Profile-State
-        setProfiles((prev) =>
-          prev.map((p) => (p.id === selectedAdmin ? { ...p, role: "gym_admin" } : p))
-        );
+      const { error } = await updateProfile(selectedAdmin, { role: "gym_admin" });
+      if (error) {
+        console.warn("Gym admin role could not be synced", error);
       }
     }
-    
-    setAdminsByGym((prev) => ({
-      ...prev,
-      [selectedGym]: [...(prev[selectedGym] ?? []), selectedAdmin],
-    }));
+
+    await loadData();
     setSelectedGym("");
     setSelectedAdmin("");
     toast({ title: "Zugeordnet", description: "Admin wurde der Halle zugeordnet." });
-    // Reload admins to ensure consistency
-    loadAdmins(gyms);
-    // Reload profiles to reflect role changes
-    listProfiles().then(({ data }) => setProfiles(data ?? []));
   };
 
   const handleEdit = (gym: Gym) => {
@@ -367,44 +318,150 @@ const LeagueGyms = () => {
 
   const handleSaveEdit = async () => {
     if (!editingGym) return;
-    const { data, error } = await updateGym(editingGym.id, editForm);
+    const { data, error } = await updateGym(editingGym.id, {
+      name: editForm.name,
+      city: editForm.city || null,
+      postal_code: editForm.postal_code || null,
+      address: editForm.address || null,
+      website: editForm.website || null,
+      logo_url: editForm.logo_url || null,
+    });
     if (error) {
-      toast({ title: "Fehler", description: error.message });
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
       return;
     }
     if (data) {
-      setGyms((prev) => prev.map((gym) => (gym.id === editingGym.id ? data : gym)));
+      setGyms((prev) => prev.map((gym) => (gym.id === data.id ? data : gym)));
       setEditingGym(null);
-      toast({ title: "Gespeichert", description: "Halle wurde aktualisiert." });
+      toast({ title: "Gespeichert", description: "Hallendaten wurden aktualisiert." });
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingGym) return;
-    const { error } = await deleteGym(deletingGym.id);
+  const handleArchive = async () => {
+    if (!archiveTarget) return;
+    const { error } = await archiveGym(archiveTarget.id);
     if (error) {
-      toast({ title: "Fehler", description: error.message });
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
       return;
     }
-    setGyms((prev) => {
-      const updated = prev.filter((gym) => gym.id !== deletingGym.id);
-      // Reload admins immediately with updated gyms list
-      loadAdmins(updated);
-      return updated;
-    });
-    setDeletingGym(null);
-    toast({ title: "Gelöscht", description: "Halle wurde gelöscht." });
+    await loadData();
+    setArchiveTarget(null);
+    toast({ title: "Archiviert", description: "Die Halle und ihre Hallen-Admins wurden archiviert." });
+  };
+
+  const handleRestore = async () => {
+    if (!restoreTarget) return;
+    const { error } = await restoreGym(restoreTarget.id);
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      return;
+    }
+    await loadData();
+    setRestoreTarget(null);
+    toast({ title: "Wiederhergestellt", description: "Die Halle ist wieder aktiv." });
+  };
+
+  const renderGymCard = (gym: Gym, archived: boolean) => {
+    const admins = (adminsByGym[gym.id] ?? [])
+      .map((adminId) => profiles.find((profile) => profile.id === adminId))
+      .filter((profile): profile is Profile => Boolean(profile))
+      .map((profile) => {
+        const label = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || profile.id;
+        return profile.archived_at ? `${label} (archiviert)` : label;
+      });
+
+    return (
+      <Card
+        key={gym.id}
+        className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="font-semibold text-primary text-base md:text-lg break-words">{gym.name}</div>
+              {archived ? <Badge variant="outline">Archiviert</Badge> : null}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {[gym.postal_code, gym.city].filter(Boolean).join(" ")}
+            </div>
+            {gym.address ? <div className="text-xs text-muted-foreground mt-1 break-words">{gym.address}</div> : null}
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {gym.logo_url ? (
+              <div className="hidden sm:block h-12 w-12 rounded-lg border border-border/60 overflow-hidden">
+                <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
+              </div>
+            ) : null}
+            {!archived ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(gym)}
+                  className="h-9 w-9 p-0"
+                  aria-label={`Halle ${gym.name} bearbeiten`}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setArchiveTarget(gym)}
+                  className="h-9 w-9 p-0 text-amber-700 hover:text-amber-700 hover:bg-amber-500/10"
+                  aria-label={`Halle ${gym.name} archivieren`}
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRestoreTarget(gym)}
+                className="h-9 gap-2 px-3"
+                aria-label={`Halle ${gym.name} wiederherstellen`}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restore
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-border/60 space-y-2 text-xs text-muted-foreground">
+          <div>
+            <span className="font-medium">Admins:</span> {admins.length ? admins.join(", ") : "Keine"}
+          </div>
+          {archived ? (
+            <>
+              <div>
+                <span className="font-medium">Archiviert am:</span> {formatDate(gym.archived_at)}
+              </div>
+              {gym.archive_reason ? (
+                <div>
+                  <span className="font-medium">Grund:</span> {gym.archive_reason}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      </Card>
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              backgroundRepeat: "repeat",
+            }}
+          />
         </div>
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
@@ -419,100 +476,64 @@ const LeagueGyms = () => {
                 </Badge>
               </div>
               <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
-                Alle Partnerhallen im Überblick · {gyms.length} {gyms.length === 1 ? 'Halle' : 'Hallen'}
+                {activeGyms.length} aktive Hallen · {archivedGyms.length} archiviert
               </p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Neue Halle erstellen */}
       <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <Plus className="h-5 w-5 text-primary flex-shrink-0" />
           <h2 className="text-base md:text-lg font-headline text-primary">Neue Halle erstellen</h2>
         </div>
-        <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as "direct" | "invite")}>
+        <Tabs value={createMode} onValueChange={(value) => setCreateMode(value as "direct" | "invite")}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="direct" className="text-xs md:text-sm">Direkt erstellen</TabsTrigger>
             <TabsTrigger value="invite" className="text-xs md:text-sm">Per E-Mail einladen</TabsTrigger>
           </TabsList>
+
           <TabsContent value="direct" className="space-y-4 mt-4">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="gymName">Hallenname</Label>
-                <Input
-                  id="gymName"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
+                <Input id="gymName" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gymCity">Stadt</Label>
-                <Input
-                  id="gymCity"
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                />
+                <Input id="gymCity" value={form.city} onChange={(event) => setForm((prev) => ({ ...prev, city: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gymPlz">PLZ <span className="text-destructive">*</span></Label>
-                <Input
-                  id="gymPlz"
-                  placeholder="z. B. 45127"
-                  value={form.postal_code}
-                  onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
-                />
+                <Label htmlFor="gymPlz">PLZ</Label>
+                <Input id="gymPlz" value={form.postal_code} onChange={(event) => setForm((prev) => ({ ...prev, postal_code: event.target.value }))} />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="gymAddress">Adresse</Label>
-                <Input
-                  id="gymAddress"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                />
+                <Input id="gymAddress" value={form.address} onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gymWebsite">Webseite</Label>
-                <Input
-                  id="gymWebsite"
-                  value={form.website}
-                  onChange={(e) => setForm({ ...form, website: e.target.value })}
-                />
+                <Input id="gymWebsite" value={form.website} onChange={(event) => setForm((prev) => ({ ...prev, website: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gymLogo">Logo URL</Label>
-                <Input
-                  id="gymLogo"
-                  value={form.logo_url}
-                  onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-                />
+                <Input id="gymLogo" value={form.logo_url} onChange={(event) => setForm((prev) => ({ ...prev, logo_url: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="adminEmail">Admin E-Mail</Label>
-                <Input
-                  id="adminEmail"
-                  type="email"
-                  value={form.adminEmail}
-                  onChange={(e) => setForm({ ...form, adminEmail: e.target.value })}
-                />
+                <Input id="adminEmail" type="email" value={form.adminEmail} onChange={(event) => setForm((prev) => ({ ...prev, adminEmail: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="adminPassword">Admin Passwort</Label>
-                <Input
-                  id="adminPassword"
-                  type="password"
-                  value={form.adminPassword}
-                  onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
-                />
+                <Input id="adminPassword" type="password" value={form.adminPassword} onChange={(event) => setForm((prev) => ({ ...prev, adminPassword: event.target.value }))} />
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Button onClick={handleCreate} disabled={creating} className="min-w-0 touch-manipulation">
-                <span className="skew-x-6">{creating ? "Erstelle..." : "Halle anlegen"}</span>
-              </Button>
-            </div>
+            <Button onClick={handleCreate} disabled={creating}>
+              {creating ? "Erstelle..." : "Halle anlegen"}
+            </Button>
           </TabsContent>
+
           <TabsContent value="invite" className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label htmlFor="inviteEmail">E-Mail-Adresse der Halle</Label>
@@ -521,35 +542,34 @@ const LeagueGyms = () => {
                 type="email"
                 placeholder="halle@example.com"
                 value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                onChange={(event) => setInviteEmail(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Die Halle erhält eine E-Mail mit einem Link zur Registrierung. Dort kann sie ihre Daten und ein Passwort eingeben.
+                Die Halle erhält einen Link zur Registrierung und kann ihre Daten selbst hinterlegen.
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="skipEmail"
-                checked={skipEmail}
-                onChange={(e) => setSkipEmail(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="skipEmail" className="text-xs text-muted-foreground cursor-pointer">
-                E-Mail-Versand überspringen (nur Link generieren - für Testing)
-              </Label>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Button onClick={handleInvite} disabled={inviting} className="min-w-0 touch-manipulation">
-                <Mail className="h-4 w-4 mr-2" />
-                <span className="skew-x-6">{inviting ? "Erstelle..." : (skipEmail ? "Link generieren" : "Einladung senden")}</span>
-              </Button>
-            </div>
+            {allowInviteLinkPreview ? (
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="skipEmail"
+                  checked={skipEmail}
+                  onChange={(event) => setSkipEmail(event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="skipEmail" className="cursor-pointer text-xs text-muted-foreground">
+                  E-Mail-Versand überspringen und Test-Link lokal erzeugen
+                </Label>
+              </div>
+            ) : null}
+            <Button onClick={handleInvite} disabled={inviting}>
+              <Mail className="h-4 w-4 mr-2" />
+              {inviting ? "Erstelle..." : allowInviteLinkPreview && skipEmail ? "Link generieren" : "Einladung senden"}
+            </Button>
           </TabsContent>
         </Tabs>
       </Card>
 
-      {/* Admin zuordnen */}
       <Card className="p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <UserPlus className="h-5 w-5 text-secondary" />
@@ -562,10 +582,10 @@ const LeagueGyms = () => {
               id="assignGym"
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={selectedGym}
-              onChange={(e) => setSelectedGym(e.target.value)}
+              onChange={(event) => setSelectedGym(event.target.value)}
             >
               <option value="">Bitte wählen</option>
-              {gyms.map((gym) => (
+              {activeGyms.map((gym) => (
                 <option key={gym.id} value={gym.id}>
                   {gym.name}
                 </option>
@@ -573,25 +593,17 @@ const LeagueGyms = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="assignAdmin">Admin (Gym)</Label>
+            <Label htmlFor="assignAdmin">Admin</Label>
             <select
               id="assignAdmin"
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={selectedAdmin}
-              onChange={(e) => setSelectedAdmin(e.target.value)}
+              onChange={(event) => setSelectedAdmin(event.target.value)}
             >
               <option value="">Bitte wählen</option>
-              {profiles
-                .filter((p) => {
-                  // Zeige alle Benutzer außer league_admins
-                  if (p.role === "league_admin") return false;
-                  // Optional: Filtere bereits zugewiesene Admins für die ausgewählte Halle heraus
-                  if (selectedGym) {
-                    const isAlreadyAdminForThisGym = (adminsByGym[selectedGym] ?? []).includes(p.id);
-                    return !isAlreadyAdminForThisGym;
-                  }
-                  return true;
-                })
+              {activeProfiles
+                .filter((profile) => profile.role !== "league_admin")
+                .filter((profile) => !selectedGym || !(adminsByGym[selectedGym] ?? []).includes(profile.id))
                 .map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.email ?? profile.id}
@@ -601,67 +613,35 @@ const LeagueGyms = () => {
             </select>
           </div>
         </div>
-        <Button onClick={handleAssignAdmin} className="touch-manipulation">
-          <span className="skew-x-6">Zuordnen</span>
-        </Button>
+        <Button onClick={handleAssignAdmin}>Zuordnen</Button>
       </Card>
 
-      {/* Hallen-Liste */}
       <div className="space-y-4">
-        <h2 className="text-base md:text-lg font-semibold text-primary">Alle Hallen</h2>
-        <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
-          {gyms.map((gym) => {
-            const admins = (adminsByGym[gym.id] ?? []).map(
-              (adminId) => profiles.find((p) => p.id === adminId)?.email ?? adminId
-            );
-            return (
-              <Card key={gym.id} className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-primary text-base md:text-lg mb-1 break-words">{gym.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {[gym.postal_code, gym.city].filter(Boolean).join(" ")}
-                    </div>
-                    {gym.address && (
-                      <div className="text-xs text-muted-foreground mt-1 break-words">{gym.address}</div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-                    {gym.logo_url && (
-                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg border border-border/60 overflow-hidden flex-shrink-0 hidden sm:block">
-                        <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
-                      </div>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(gym)}
-                      className="h-9 w-9 md:h-9 md:w-9 p-0 touch-manipulation"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDeletingGym(gym)}
-                      className="h-9 w-9 md:h-9 md:w-9 p-0 text-destructive hover:text-destructive touch-manipulation"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-border/60">
-                  <div className="text-xs text-muted-foreground">
-                    <span className="font-medium">Admins:</span> {admins.length ? admins.join(", ") : "Keine"}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <h2 className="text-base md:text-lg font-semibold text-primary">Aktive Hallen ({activeGyms.length})</h2>
+        {activeGyms.length > 0 ? (
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
+            {activeGyms.map((gym) => renderGymCard(gym, false))}
+          </div>
+        ) : (
+          <Card className="p-8 text-center border-2 border-border/60">
+            <p className="text-muted-foreground">Noch keine aktiven Hallen vorhanden.</p>
+          </Card>
+        )}
       </div>
 
-      {/* Bearbeiten-Dialog */}
+      <div className="space-y-4">
+        <h2 className="text-base md:text-lg font-semibold text-primary">Archiv ({archivedGyms.length})</h2>
+        {archivedGyms.length > 0 ? (
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
+            {archivedGyms.map((gym) => renderGymCard(gym, true))}
+          </div>
+        ) : (
+          <Card className="p-8 text-center border-2 border-border/60">
+            <p className="text-muted-foreground">Keine archivierten Hallen vorhanden.</p>
+          </Card>
+        )}
+      </div>
+
       <Dialog open={editingGym !== null} onOpenChange={(open) => !open && setEditingGym(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -671,54 +651,27 @@ const LeagueGyms = () => {
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Hallenname</Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
+                <Input id="edit-name" value={editForm.name} onChange={(event) => setEditForm((prev) => ({ ...prev, name: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-city">Stadt</Label>
-                <Input
-                  id="edit-city"
-                  value={editForm.city}
-                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                />
+                <Input id="edit-city" value={editForm.city} onChange={(event) => setEditForm((prev) => ({ ...prev, city: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-postal_code">PLZ</Label>
-                <Input
-                  id="edit-postal_code"
-                  placeholder="z. B. 45127"
-                  value={editForm.postal_code}
-                  onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
-                />
+                <Input id="edit-postal_code" value={editForm.postal_code} onChange={(event) => setEditForm((prev) => ({ ...prev, postal_code: event.target.value }))} />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="edit-address">Adresse</Label>
-                <Input
-                  id="edit-address"
-                  value={editForm.address}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                />
+                <Input id="edit-address" value={editForm.address} onChange={(event) => setEditForm((prev) => ({ ...prev, address: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-website">Webseite</Label>
-                <Input
-                  id="edit-website"
-                  type="url"
-                  value={editForm.website}
-                  onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                />
+                <Input id="edit-website" value={editForm.website} onChange={(event) => setEditForm((prev) => ({ ...prev, website: event.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-logo">Logo URL</Label>
-                <Input
-                  id="edit-logo"
-                  type="url"
-                  value={editForm.logo_url}
-                  onChange={(e) => setEditForm({ ...editForm, logo_url: e.target.value })}
-                />
+                <Input id="edit-logo" value={editForm.logo_url} onChange={(event) => setEditForm((prev) => ({ ...prev, logo_url: event.target.value }))} />
               </div>
             </div>
           </div>
@@ -727,25 +680,41 @@ const LeagueGyms = () => {
               Abbrechen
             </Button>
             <Button onClick={handleSaveEdit} className="min-w-0 flex-1 sm:flex-initial">
-              <span className="skew-x-6">Speichern</span>
+              Speichern
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Löschen-Dialog */}
-      <AlertDialog open={deletingGym !== null} onOpenChange={(open) => !open && setDeletingGym(null)}>
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => !open && setArchiveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Halle löschen?</AlertDialogTitle>
+            <AlertDialogTitle>Halle archivieren?</AlertDialogTitle>
             <AlertDialogDescription>
-              Möchtest du die Halle "{deletingGym?.name}" wirklich löschen? Alle zugehörigen Routen, Codes und Ergebnisse werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+              {archiveTarget?.name} verschwindet aus allen aktiven Ansichten. Zugeordnete Hallen-Admins werden ebenfalls archiviert, Daten bleiben aber erhalten.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto touch-manipulation">Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto touch-manipulation">
-              Löschen
+            <AlertDialogCancel className="w-full sm:w-auto">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700">
+              Archivieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={restoreTarget !== null} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Halle wiederherstellen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {restoreTarget?.name} und ihre Hallen-Admins werden wieder aktiv geschaltet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestore} className="w-full sm:w-auto">
+              Wiederherstellen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

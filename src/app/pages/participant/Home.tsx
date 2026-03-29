@@ -11,15 +11,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { RouteHighlightCard } from "@/app/components/RouteHighlightCard";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
+import { useParticipantUserResultsQuery } from "@/app/pages/participant/participantQueries";
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
-import {
-  listGyms,
-  listProfiles,
-  listResults,
-  listResultsForUser,
-  listRoutes,
-} from "@/services/appApi";
-import type { Gym, Profile, Result, Route, Stage } from "@/services/appTypes";
+import type { Gym, Result, Route, Stage } from "@/services/appTypes";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
 const WILDCARD_TARGET = 8;
@@ -29,8 +25,8 @@ const LOGO_FALLBACKS: Record<string, string> = {
   "Canyon Chorweiler": "/gym-logos-real/canyon-chorweiler.jpg",
   "Chimpanzodrome Frechen": "/gym-logos-real/chimpanzodrome-frechen.png",
   "DAV Alpinzentrum Bielefeld": "/gym-logos-real/dav-bielefeld.svg",
-  "KletterBar MÃ¼nster": "/gym-logos-real/kletterbar-muenster.png",
-  "Kletterfabrik KÃ¶ln": "/gym-logos-real/kletterfabrik-koeln.png",
+  "KletterBar Münster": "/gym-logos-real/kletterbar-muenster.png",
+  "Kletterfabrik Köln": "/gym-logos-real/kletterfabrik-koeln.png",
   "Kletterwelt Sauerland": "/gym-logos-real/kletterwelt-sauerland.jpg",
   OWL: "/gym-logos-real/owl.jpg",
 };
@@ -108,12 +104,20 @@ const Home = () => {
   const gender = (
     profile?.gender || (user?.user_metadata?.gender as string | undefined)
   ) as "m" | "w" | undefined;
-  const [gyms, setGyms] = useState<Gym[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
-  const [allResults, setAllResults] = useState<Result[]>([]);
   const [currentRank, setCurrentRank] = useState<number | null>(null);
+  const {
+    gyms: competitionGyms,
+    routes,
+    profiles: allProfiles,
+    results: allResults,
+    loading: competitionLoading,
+    error: competitionError,
+  } = useParticipantCompetitionData();
+  const {
+    results,
+    loading: userResultsLoading,
+    error: userResultsError,
+  } = useParticipantUserResultsQuery(profile?.id);
   const {
     getClassName,
     getStages,
@@ -132,30 +136,18 @@ const Home = () => {
     }
   }, [role, navigate]);
 
-  useEffect(() => {
-    Promise.all([listGyms(), listRoutes(), listProfiles(), listResults()]).then(
-      ([{ data: gymsData }, { data: routesData }, { data: profilesData }, { data: resultsData }]) => {
-        setGyms(
-          (gymsData ?? []).map((gym) => {
-            const normalizedName = normalizeGymName(gym.name);
-            return {
-              ...gym,
-              name: normalizedName,
-              logo_url: gym.logo_url ?? LOGO_FALLBACKS[normalizedName] ?? null,
-            };
-          }),
-        );
-        setRoutes(routesData ?? []);
-        setAllProfiles(profilesData ?? []);
-        setAllResults(resultsData ?? []);
-      },
-    );
-  }, []);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-    listResultsForUser(profile.id).then(({ data }) => setResults(data ?? []));
-  }, [profile?.id]);
+  const gyms = useMemo(
+    () =>
+      competitionGyms.map((gym) => {
+        const normalizedName = normalizeGymName(gym.name);
+        return {
+          ...gym,
+          name: normalizedName,
+          logo_url: gym.logo_url ?? LOGO_FALLBACKS[normalizedName] ?? null,
+        };
+      }),
+    [competitionGyms],
+  );
 
   const routeMap = useMemo(
     () => new Map(routes.map((route) => [route.id, route])),
@@ -238,7 +230,7 @@ const Home = () => {
   const prepStart = getPreparationStart();
   const prepEnd = getPreparationEnd();
   const finaleDate = getFinaleDate();
-  const today = new Date();
+  const now = useMemo(() => Date.now(), []);
 
   const stages: StageItem[] = useMemo(() => {
     const items: StageItem[] = [];
@@ -292,19 +284,20 @@ const Home = () => {
   }, [stagesFromSettings, prepStart, prepEnd, finaleDate]);
 
   const heroStage = useMemo(() => {
+    const today = now;
     const active = stages.find((stage) => {
       const start = new Date(`${stage.start}T00:00:00`);
       const end = new Date(`${stage.end}T23:59:59`);
-      return today.getTime() >= start.getTime() && today.getTime() <= end.getTime();
+      return today >= start.getTime() && today <= end.getTime();
     });
 
     if (active) return active;
 
     const upcoming = stages.find(
-      (stage) => new Date(`${stage.start}T00:00:00`).getTime() > today.getTime(),
+      (stage) => new Date(`${stage.start}T00:00:00`).getTime() > today,
     );
     return upcoming ?? stages.at(-1) ?? null;
-  }, [stages, today]);
+  }, [now, stages]);
 
   const fullName =
     [firstName, lastName].filter(Boolean).join(" ") ||
@@ -379,8 +372,6 @@ const Home = () => {
         gym,
         status: "open",
         lastActivity: null,
-        points: 0,
-        routesCount: 0,
       }));
 
     const emptySlots = Array.from({
@@ -390,8 +381,6 @@ const Home = () => {
       gym: null,
       status: "empty",
       lastActivity: null,
-      points: 0,
-      routesCount: 0,
     }));
 
     return [...visited, ...unvisited, ...emptySlots];
@@ -402,6 +391,21 @@ const Home = () => {
   );
   const quickActionTarget = getFinaleEnabled() ? "/app/finale" : "/app/rankings";
   const quickActionLabel = getFinaleEnabled() ? "Finale" : "Rangliste";
+  const homeError = competitionError || userResultsError;
+  const homeLoading = competitionLoading || userResultsLoading;
+
+  if (homeLoading) {
+    return (
+      <ParticipantStateCard
+        title="Dashboard lädt"
+        description="Deine Saisonübersicht wird gerade für den Teilnehmerbereich vorbereitet."
+      />
+    );
+  }
+
+  if (homeError) {
+    return <ParticipantStateCard title="Dashboard nicht verfügbar" description={homeError} />;
+  }
 
   return (
     <>
@@ -427,16 +431,16 @@ const Home = () => {
               </p>
             </div>
 
-            <StitchButton asChild className="w-full justify-center rounded-[1rem] py-4 text-[0.82rem]">
+            <StitchButton asChild className="w-full justify-center rounded-xl py-4 text-[0.82rem]">
               <Link to="/app/gyms/redeem">
                 <QrCode className="h-4 w-4" />
-                Hallen-Code einloesen
+                Hallen-Code einlösen
               </Link>
             </StitchButton>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className="stitch-glass-card relative overflow-hidden rounded-[1.7rem] border-l-4 border-l-[#a15523] p-6">
+            <div className="stitch-glass-card relative overflow-hidden rounded-xl border-l-4 border-l-[#a15523] p-6">
               <Trophy className="absolute -bottom-4 -right-4 h-24 w-24 rotate-12 text-[rgba(242,220,171,0.07)]" />
               <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Gesamtpunkte</div>
               <div className="stitch-metric mt-4 text-[4.3rem] italic leading-none text-[#f2dcab]">
@@ -449,7 +453,7 @@ const Home = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="stitch-glass-card rounded-[1.55rem] border-l-4 border-l-[rgba(242,220,171,0.18)] p-5">
+              <div className="stitch-glass-card rounded-xl border-l-4 border-l-[rgba(242,220,171,0.18)] p-5">
                 <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Routen</div>
                 <div className="stitch-metric mt-4 text-4xl text-[#f2dcab]">{stats.routesClimbed}</div>
                 <p className="mt-2 text-[0.62rem] uppercase tracking-[0.18em] text-[rgba(242,220,171,0.44)]">
@@ -457,7 +461,7 @@ const Home = () => {
                 </p>
               </div>
 
-              <div className="stitch-glass-card rounded-[1.55rem] border-l-4 border-l-[#a15523] p-5">
+              <div className="stitch-glass-card rounded-xl border-l-4 border-l-[#a15523] p-5">
                 <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Flash Count</div>
                 <div className="stitch-metric mt-4 text-4xl text-[#a15523]">{stats.flashCount}</div>
                 <p className="mt-2 text-[0.62rem] uppercase tracking-[0.18em] text-[rgba(242,220,171,0.44)]">
@@ -466,7 +470,7 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="stitch-glass-card rounded-[1.55rem] border-l-4 border-l-[rgba(242,220,171,0.18)] p-5">
+            <div className="stitch-glass-card rounded-xl border-l-4 border-l-[rgba(242,220,171,0.18)] p-5">
               <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">
                 Durchschnittliche Punkte pro Route
               </div>
@@ -486,14 +490,14 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="stitch-glass-card rounded-[1.75rem] p-5">
+            <div className="stitch-glass-card rounded-xl p-5">
               <div className="space-y-2">
                 <div className="stitch-headline text-[1.7rem] uppercase leading-[1.05] text-[#f2dcab]">
                   <div>Wildcard-</div>
                   <div>Qualifikation</div>
                 </div>
                 <p className="text-sm leading-6 text-[rgba(242,220,171,0.68)]">
-                  Besuche 8 verschiedene Hallen in NRW fÃ¼r das Finale.
+                  Besuche 8 verschiedene Hallen in NRW für das Finale.
                 </p>
               </div>
 
@@ -522,7 +526,7 @@ const Home = () => {
                   return (
                     <div
                       key={slot.id}
-                      className={`flex aspect-square items-center justify-center overflow-hidden rounded-[0.95rem] border ${slotTone}`}
+                      className={`flex aspect-square items-center justify-center overflow-hidden rounded-xl border ${slotTone}`}
                       aria-label={
                         slot.gym
                           ? `${slot.gym.name} ${slot.status === "done" ? "besucht" : "offen"}`
@@ -578,8 +582,8 @@ const Home = () => {
                 />
               ))
             ) : (
-              <div className="stitch-glass-card rounded-[1.4rem] p-5 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-                Sobald du Ergebnisse eintrÃ¤gst, erscheinen hier deine letzten drei Routen
+              <div className="stitch-glass-card rounded-xl p-5 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
+                Sobald du Ergebnisse einträgst, erscheinen hier deine letzten drei Routen
                 inklusive Punkte, Route und Hallenbezug.
               </div>
             )}
@@ -587,12 +591,12 @@ const Home = () => {
         </section>
 
         <section className="space-y-4">
-          <div className="stitch-glass-card rounded-[1.6rem] p-5">
+          <div className="stitch-glass-card rounded-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Saison-Timeline</div>
                 <div className="stitch-headline mt-2 text-2xl text-[#f2dcab]">
-                  Aktuelle und nÃ¤chste Etappen
+                  Aktuelle und nächste Etappen
                 </div>
               </div>
               {getFinaleEnabled() ? (
@@ -610,17 +614,17 @@ const Home = () => {
                 {stages.map((stage) => {
                   const startDate = new Date(`${stage.start}T00:00:00`);
                   const endDate = new Date(`${stage.end}T23:59:59`);
-                  const isUpcoming = today.getTime() < startDate.getTime();
+                  const isUpcoming = now < startDate.getTime();
                   const isCurrent =
-                    today.getTime() >= startDate.getTime() &&
-                    today.getTime() <= endDate.getTime();
+                    now >= startDate.getTime() &&
+                    now <= endDate.getTime();
                   const startsInDays = Math.max(
                     0,
-                    Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+                    Math.ceil((startDate.getTime() - now) / (1000 * 60 * 60 * 24)),
                   );
                   const daysLeft = Math.max(
                     0,
-                    Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+                    Math.ceil((endDate.getTime() - now) / (1000 * 60 * 60 * 24)),
                   );
 
                   return (
@@ -628,7 +632,7 @@ const Home = () => {
                       key={stage.key}
                       type="button"
                       onClick={() => navigate(`/app/rankings?tab=stage&stage=${stage.key}`)}
-                      className={`min-w-[210px] rounded-[1.2rem] border p-4 text-left transition-all ${
+                      className={`min-w-[210px] rounded-xl border p-4 text-left transition-all ${
                         isCurrent
                           ? "border-[#a15523] bg-[#a15523] text-white shadow-[0_18px_28px_rgba(161,85,35,0.18)]"
                           : "border-[rgba(242,220,171,0.12)] bg-[rgba(0,38,55,0.12)] text-[#f2dcab]"
@@ -657,7 +661,7 @@ const Home = () => {
                         {isUpcoming
                           ? `Startet in ${startsInDays} Tagen`
                           : isCurrent
-                            ? `LÃ¤uft noch ${daysLeft} Tage`
+                            ? `Läuft noch ${daysLeft} Tage`
                             : "Bereits abgeschlossen"}
                       </p>
                     </button>
@@ -667,7 +671,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="stitch-glass-card rounded-[1.6rem] p-5">
+          <div className="stitch-glass-card rounded-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Quick Actions</div>
@@ -681,7 +685,7 @@ const Home = () => {
             <div className="mt-5 grid gap-3">
               <Link
                 to="/app/gyms"
-                className="flex items-center justify-between rounded-[1.15rem] bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
+                className="flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
               >
                 <span className="flex items-center gap-3 font-semibold">
                   <MapPinned className="h-5 w-5 text-[#f2dcab]" />
@@ -692,7 +696,7 @@ const Home = () => {
 
               <Link
                 to={quickActionTarget}
-                className="flex items-center justify-between rounded-[1.15rem] bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
+                className="flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
               >
                 <span className="flex items-center gap-3 font-semibold">
                   <Trophy className="h-5 w-5 text-[#f2dcab]" />

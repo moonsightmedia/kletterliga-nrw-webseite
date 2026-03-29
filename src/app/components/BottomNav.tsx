@@ -1,24 +1,34 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Home, ListOrdered, Lock, MapPinned, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isParticipantFeatureLocked } from "@/config/launch";
-
-const featureLocked = isParticipantFeatureLocked();
-
-const items = [
-  { to: "/app", label: "Home", icon: Home, locked: false },
-  { to: "/app/gyms", label: "Hallen", icon: MapPinned, locked: featureLocked },
-  { to: "/app/rankings", label: "Rangliste", icon: ListOrdered, locked: featureLocked },
-  { to: "/app/profile", label: "Profil", icon: User, locked: false },
-];
+import { useLaunchSettings } from "@/config/launch";
 
 export const BottomNav = () => {
+  const location = useLocation();
+  const { participantFeatureLocked } = useLaunchSettings();
+  const isParticipantProfileScreen = /^\/app\/rankings\/profile\/[^/]+(?:\/history)?$/.test(
+    location.pathname,
+  );
+  const items = [
+    { to: "/app", label: "Home", icon: Home, locked: false },
+    { to: "/app/gyms", label: "Hallen", icon: MapPinned, locked: participantFeatureLocked },
+    { to: "/app/rankings", label: "Rangliste", icon: ListOrdered, locked: participantFeatureLocked },
+    { to: "/app/profile", label: "Profil", icon: User, locked: false },
+  ];
+
+  const isItemActive = (to: string) => {
+    if (to === "/app") return location.pathname === "/app";
+    if (isParticipantProfileScreen) return to === "/app/profile";
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
+  };
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 px-0">
-      <div className="mx-auto w-full max-w-md stitch-dock rounded-t-[1.9rem] rounded-b-none border-t border-[rgba(242,220,171,0.08)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_40px_rgba(0,0,0,0.22)]">
+    <nav className="fixed inset-x-0 -bottom-px z-40 px-0">
+      <div className="mx-auto w-full max-w-md stitch-dock rounded-t-[1.9rem] rounded-b-none border-t border-[rgba(242,220,171,0.08)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
         <div className="grid grid-cols-4 gap-3">
           {items.map((item) => {
             const Icon = item.icon;
+            const isActive = isItemActive(item.to);
 
             if (item.locked) {
               return (
@@ -40,11 +50,11 @@ export const BottomNav = () => {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/app"}
-                className={({ isActive }) =>
+                className={() =>
                   cn(
                     "flex min-h-[4rem] flex-col items-center justify-center gap-1.5 rounded-[1rem] px-2 py-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] transition-all",
                     isActive
-                      ? "bg-[#a15523] text-white shadow-[0_12px_28px_rgba(161,85,35,0.28)]"
+                      ? "bg-[#a15523] text-[#f2dcab] shadow-[0_12px_28px_rgba(161,85,35,0.28)]"
                       : "text-[rgba(242,220,171,0.68)] hover:bg-[rgba(242,220,171,0.08)]",
                   )
                 }

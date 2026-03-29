@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, CircleHelp, KeyRound, ScanLine, Ticket, X } from "lucide-react";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { participantQueryKeys } from "@/app/pages/participant/participantQueries";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { getGym, redeemGymCode } from "@/services/appApi";
@@ -24,6 +26,7 @@ const isAbortError = (error: unknown) =>
 const GymRedeem = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const gymId = searchParams.get("gymId");
   const [gym, setGym] = useState<Gym | null>(null);
@@ -85,6 +88,17 @@ const GymRedeem = () => {
       variant: "success",
     });
     setCode("");
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: participantQueryKeys.competitionData }),
+      queryClient.invalidateQueries({
+        queryKey: ["participant-unlocked-gyms", profile.id],
+      }),
+      data.gym_id
+        ? queryClient.invalidateQueries({
+            queryKey: participantQueryKeys.gymDetail(data.gym_id, profile.id),
+          })
+        : Promise.resolve(),
+    ]);
     if (data.gym_id) {
       navigate(`/app/gyms/${data.gym_id}`, { replace: true });
     }
@@ -129,7 +143,7 @@ const GymRedeem = () => {
                   placeholder="KL-XXXXXX-XXXX"
                   maxLength={24}
                   autoComplete="off"
-                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-[1.75rem] font-bold uppercase tracking-[0.28em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.22)]"
+                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-[1.05rem] font-bold uppercase tracking-[0.16em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.22)] sm:text-[1.75rem] sm:tracking-[0.28em]"
                 />
                 <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#a15523]" />
               </div>
@@ -151,7 +165,7 @@ const GymRedeem = () => {
                   <DrawerTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-[#002637]/72 transition hover:text-[#002637]"
+                      className="inline-flex items-center gap-2 text-[0.98rem] font-semibold text-[#002637]/88 transition hover:text-[#002637]"
                     >
                       <ScanLine className="h-4 w-4" />
                       Code scannen
@@ -201,7 +215,7 @@ const GymRedeem = () => {
 
                 <a
                   href="mailto:info@kletterliga-nrw.de"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#a15523] transition hover:text-[#8d481c]"
+                  className="inline-flex items-center gap-2 text-[0.98rem] font-semibold text-[#8d481c] transition hover:text-[#6f3916]"
                 >
                   <CircleHelp className="h-4 w-4" />
                   Probleme mit dem Code?
@@ -211,13 +225,13 @@ const GymRedeem = () => {
           </form>
         </StitchCard>
 
-        <div className="pb-2 text-center text-sm leading-6 text-[rgba(242,220,171,0.74)]">
+        <div className="pb-2 text-center text-[0.98rem] font-medium leading-7 text-[#002637]/82">
           {gym ? (
             <>
               Zurück zu{" "}
               <Link
                 to={`/app/gyms/${gym.id}`}
-                className="font-semibold text-[#f2dcab] underline decoration-[rgba(242,220,171,0.36)] underline-offset-4 transition hover:decoration-[#f2dcab]"
+                className="font-bold text-[#a15523] underline decoration-[#a15523]/36 underline-offset-4 transition hover:text-[#8d481c] hover:decoration-[#8d481c]"
               >
                 {gym.name}
               </Link>
@@ -227,7 +241,7 @@ const GymRedeem = () => {
               Noch keine Partnerhalle?{" "}
               <Link
                 to="/app/gyms"
-                className="font-semibold text-[#f2dcab] underline decoration-[rgba(242,220,171,0.36)] underline-offset-4 transition hover:decoration-[#f2dcab]"
+                className="font-bold text-[#a15523] underline decoration-[#a15523]/36 underline-offset-4 transition hover:text-[#8d481c] hover:decoration-[#8d481c]"
               >
                 Hallen ansehen
               </Link>

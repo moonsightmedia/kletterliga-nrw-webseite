@@ -1,17 +1,18 @@
-import { useState, type TouchEvent } from "react";
+import { Suspense, useState, type TouchEvent } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Share2, User } from "lucide-react";
 import { BottomNav } from "@/app/components/BottomNav";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/use-toast";
-import { formatUnlockDate, isParticipantFeatureLocked } from "@/config/launch";
+import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 import { cn } from "@/lib/utils";
 
 const getPageTitle = (path: string) => {
   if (path.startsWith("/app/participation/redeem")) return "Teilnahme";
-  if (path.startsWith("/app/gyms/redeem")) return "Code einloesen";
+  if (path.startsWith("/app/gyms/redeem")) return "Code einlösen";
   if (path.includes("/app/gyms/") && path.endsWith("/routes")) return "Routen";
   if (path.includes("/app/gyms/") && path.includes("/result")) return "Punkte eintragen";
   if (path.startsWith("/app/gyms/")) return "Hallenprofil";
@@ -21,12 +22,12 @@ const getPageTitle = (path: string) => {
   if (path.startsWith("/app/rankings")) return "Rangliste";
   if (path.startsWith("/app/age-group-rankings")) return "Altersklassen";
   if (path.startsWith("/app/finale")) return "Finale";
+  if (path === "/app/profile/edit") return "Profil bearbeiten";
   if (path === "/app/profile/history") return "Verlauf";
   if (path.startsWith("/app/profile")) return "Profil";
   return "Dashboard";
 };
 
-const featureLocked = isParticipantFeatureLocked();
 const PARTICIPATION_DISMISS_THRESHOLD = 96;
 
 const isGymDetailPath = (path: string) =>
@@ -40,11 +41,90 @@ const getGymIdFromPath = (path: string) => path.match(/^\/app\/gyms\/([^/]+)/)?.
 const getParticipantBackTarget = (path: string) => {
   if (/^\/app\/rankings\/profile\/[^/]+\/history$/.test(path)) return path.replace(/\/history$/, "");
   if (/^\/app\/rankings\/profile\/[^/]+$/.test(path)) return "/app/rankings";
+  if (path === "/app/profile/edit") return "/app/profile";
   if (path === "/app/profile/history") return "/app/profile";
   return null;
 };
 
+const isShareableParticipantProfilePath = (path: string) => /^\/app\/rankings\/profile\/[^/]+$/.test(path);
+const isParticipantProfileHistoryPath = (path: string) =>
+  /^\/app\/rankings\/profile\/[^/]+\/history$/.test(path);
+
+const ParticipantRouteFallback = ({
+  home,
+  immersive,
+}: {
+  home: boolean;
+  immersive: boolean;
+}) => {
+  if (immersive) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-72 bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]" />
+        <div className="-mt-8 space-y-4 px-4 pb-4">
+          <div className="rounded-[1.6rem] bg-white/95 p-5 shadow-[0_16px_34px_rgba(0,38,55,0.08)]">
+            <div className="h-5 w-24 rounded-full bg-[#003d55]/10" />
+            <div className="mt-4 h-10 w-2/3 rounded-full bg-[#003d55]/10" />
+            <div className="mt-6 h-4 w-full rounded-full bg-[#003d55]/8" />
+            <div className="mt-2 h-4 w-4/5 rounded-full bg-[#003d55]/8" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-[1.25rem] bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
+              <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
+              <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
+            </div>
+            <div className="rounded-[1.25rem] bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
+              <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
+              <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-md animate-pulse space-y-5">
+      <div
+        className={cn(
+          "overflow-hidden rounded-[1.7rem] border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.18)]",
+          home
+            ? "bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]"
+            : "bg-white/92 backdrop-blur",
+        )}
+      >
+        <div className={cn("h-4 w-28 rounded-full", home ? "bg-[#f2dcab]/14" : "bg-[#003d55]/8")} />
+        <div className={cn("mt-4 h-12 w-3/4 rounded-[1rem]", home ? "bg-[#f2dcab]/12" : "bg-[#003d55]/10")} />
+        <div className={cn("mt-5 h-4 w-full rounded-full", home ? "bg-[#f2dcab]/10" : "bg-[#003d55]/8")} />
+        <div className={cn("mt-2 h-4 w-5/6 rounded-full", home ? "bg-[#f2dcab]/10" : "bg-[#003d55]/8")} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+          <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
+          <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
+        </div>
+        <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+          <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
+          <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
+        </div>
+      </div>
+
+      <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+        <div className="h-4 w-28 rounded-full bg-[#003d55]/8" />
+        <div className="mt-4 space-y-3">
+          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
+          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
+          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ParticipantLayout = () => {
+  useMarkAppStartupSplashSeen();
+
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -60,13 +140,17 @@ export const ParticipantLayout = () => {
       : `/app/gyms/${routeFlowGymId}`
     : "/app/gyms";
   const participantBackTarget = getParticipantBackTarget(location.pathname);
+  const isShareableParticipantProfile = isShareableParticipantProfilePath(location.pathname);
+  const isParticipantProfileScreen =
+    isShareableParticipantProfile || isParticipantProfileHistoryPath(location.pathname);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [participationNoticeDismissed, setParticipationNoticeDismissed] = useState(false);
   const [participationTouchStartX, setParticipationTouchStartX] = useState<number | null>(null);
   const [participationSwipeOffset, setParticipationSwipeOffset] = useState(0);
   const participationInactive =
     profile && profile.role === "participant" && !profile.participation_activated_at;
-  const unlockDate = formatUnlockDate();
+  const { unlockDate, participantFeatureLocked: featureLocked } = useLaunchSettings();
+  const unlockDateLabel = formatUnlockDate(unlockDate);
 
   const handleParticipationTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     setParticipationTouchStartX(event.touches[0]?.clientX ?? null);
@@ -112,20 +196,32 @@ export const ParticipantLayout = () => {
       )}
     >
       <header className="stitch-topbar border-b-0 bg-[rgba(0,61,85,0.94)]">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div
+          className={cn(
+            "mx-auto flex w-full max-w-md items-center justify-between gap-4",
+            isParticipantProfileScreen ? "h-16 px-6" : "px-4 py-3 sm:px-6",
+          )}
+        >
           {isGymDetail ? (
             <>
               <button
                 type="button"
                 onClick={() => navigate("/app/gyms")}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
-                aria-label="Zurueck zu den Hallen"
+                aria-label="Zurück zu den Hallen"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
 
               <div className="min-w-0 flex-1">
-                <div className="stitch-headline truncate text-xl text-[#f2dcab]">{title}</div>
+                <div
+                  className={cn(
+                    "stitch-headline truncate text-[#f2dcab]",
+                    isParticipantProfileScreen ? "text-lg" : "text-xl",
+                  )}
+                >
+                  {title}
+                </div>
               </div>
 
               <button
@@ -143,7 +239,7 @@ export const ParticipantLayout = () => {
                 type="button"
                 onClick={() => navigate(routeFlowBackTarget)}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
-                aria-label="Zurueck"
+                aria-label="Zurück"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -160,16 +256,34 @@ export const ParticipantLayout = () => {
                 type="button"
                 onClick={() => navigate(participantBackTarget)}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
-                aria-label="Zurueck"
+                aria-label="Zurück"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
 
               <div className="min-w-0 flex-1">
-                <div className="stitch-headline truncate text-xl text-[#f2dcab]">{title}</div>
+                <div
+                  className={cn(
+                    "stitch-headline truncate text-[#f2dcab]",
+                    isParticipantProfileScreen ? "text-lg" : "text-xl",
+                  )}
+                >
+                  {title}
+                </div>
               </div>
 
-              <div className="h-9 w-9 shrink-0" aria-hidden="true" />
+              {isShareableParticipantProfile ? (
+                <button
+                  type="button"
+                  onClick={() => void handleSharePage()}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
+                  aria-label="Seite teilen"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+              ) : (
+                <div className="h-9 w-9 shrink-0" aria-hidden="true" />
+              )}
             </>
           ) : (
             <>
@@ -182,7 +296,7 @@ export const ParticipantLayout = () => {
                   <button
                     type="button"
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)]"
-                    aria-label={notificationsOpen ? "Benachrichtigungen schliessen" : "Benachrichtigungen oeffnen"}
+                    aria-label={notificationsOpen ? "Benachrichtigungen schließen" : "Benachrichtigungen öffnen"}
                     aria-expanded={notificationsOpen}
                   >
                     <Bell className="h-5 w-5" />
@@ -243,14 +357,14 @@ export const ParticipantLayout = () => {
       <main
         className={cn(
           "stitch-page-pad mx-auto w-full",
-          isGymDetail || isRouteFlow
+          isGymDetail || isRouteFlow || isParticipantProfileScreen
             ? "max-w-md px-0 pb-32 pt-0"
             : isHome
                 ? "max-w-md px-4 pb-32 pt-6 sm:px-6"
                 : "max-w-6xl px-4 pb-32 pt-6 sm:px-6",
         )}
       >
-        {!isGymDetail && !isRouteFlow && featureLocked ? (
+        {!isGymDetail && !isRouteFlow && !isParticipantProfileScreen && featureLocked ? (
           <StitchCard
             tone={isHome ? "glass" : "navy"}
             className={cn(
@@ -262,21 +376,25 @@ export const ParticipantLayout = () => {
               <div className="space-y-2">
                 <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
                 <div className="stitch-headline text-xl text-[#f2dcab] sm:text-2xl">
-                  Dein Dashboard ist offen, die Liga startet am {unlockDate}.
+                  Dein Dashboard ist offen, die Liga startet am {unlockDateLabel}.
                 </div>
                 <p className="max-w-2xl text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-                  Profil, Vorbereitung und persoenliche Statistiken sind bereits verfuegbar. Hallen,
-                  Codes und Ranglisten oeffnen gesammelt zum Saisonstart.
+                  Profil, Vorbereitung und persönliche Statistiken sind bereits verfügbar. Hallen,
+                  Codes und Ranglisten öffnen gesammelt zum Saisonstart.
                 </p>
               </div>
               <div className="stitch-headline inline-flex items-center rounded-full bg-[#f2dcab] px-3 py-1 text-[0.58rem] font-bold tracking-[0.22em] text-[#002637]">
-                Freischaltung {unlockDate}
+                Freischaltung {unlockDateLabel}
               </div>
             </div>
           </StitchCard>
         ) : null}
 
-        {!isGymDetail && !isRouteFlow && participationInactive && !participationNoticeDismissed ? (
+        {!isGymDetail &&
+        !isRouteFlow &&
+        !isParticipantProfileScreen &&
+        participationInactive &&
+        !participationNoticeDismissed ? (
           <StitchCard
             tone={isHome ? "glass" : "cream"}
             className={cn(
@@ -305,18 +423,20 @@ export const ParticipantLayout = () => {
                     isHome ? "text-[rgba(242,220,171,0.78)]" : "text-[rgba(27,28,26,0.7)]",
                   )}
                 >
-                  Deine Ergebnisse werden erst nach dem Einloesen des Mastercodes in den Ranglisten
-                  beruecksichtigt.
+                  Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den Ranglisten
+                  berücksichtigt.
                 </div>
               </div>
               <StitchButton asChild size="sm" className={cn(isHome && "shrink-0")}>
-                <Link to="/app/participation/redeem">Mastercode einloesen</Link>
+                <Link to="/app/participation/redeem">Mastercode einlösen</Link>
               </StitchButton>
             </div>
           </StitchCard>
         ) : null}
 
-        <Outlet />
+        <Suspense fallback={<ParticipantRouteFallback home={isHome} immersive={isGymDetail || isRouteFlow || isParticipantProfileScreen} />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <BottomNav />

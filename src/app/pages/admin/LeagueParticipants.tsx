@@ -3,22 +3,45 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { listGyms, listProfiles, updateProfile, deleteProfile, listGymAdminsByGym } from "@/services/appApi";
+import {
+  archiveProfile,
+  listGymAdminsByGym,
+  listGyms,
+  listProfiles,
+  restoreProfile,
+  updateProfile,
+} from "@/services/appApi";
 import type { Gym, Profile } from "@/services/appTypes";
-import { Users, Search, Edit2, Shield, Building2, User, Trash2 } from "lucide-react";
+import { Archive, Building2, Edit2, RotateCcw, Search, Shield, User, Users } from "lucide-react";
+
+type ParticipantTab = "all" | "participants" | "gym_admins" | "league_admins";
+
+const formatDate = (value: string | null | undefined) =>
+  value ? new Date(value).toLocaleDateString("de-DE") : "—";
 
 const LeagueParticipants = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [gymAdminProfileIds, setGymAdminProfileIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "participants" | "gym_admins" | "league_admins">("all");
+  const [activeTab, setActiveTab] = useState<ParticipantTab>("all");
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-  const [deletingProfile, setDeletingProfile] = useState<Profile | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Profile | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Profile | null>(null);
   const [editForm, setEditForm] = useState({
     first_name: "",
     last_name: "",
@@ -31,80 +54,106 @@ const LeagueParticipants = () => {
   });
 
   useEffect(() => {
-    listProfiles().then(({ data }) => setProfiles(data ?? []));
-    listGyms().then(({ data }) => setGyms(data ?? []));
+    const loadData = async () => {
+      const [{ data: profileData }, { data: gymData }] = await Promise.all([
+        listProfiles({ includeArchived: true }),
+        listGyms({ includeArchived: true }),
+      ]);
+      setProfiles(profileData ?? []);
+      setGyms(gymData ?? []);
+    };
+
+    void loadData();
   }, []);
 
-  // Lade alle gym_admins Einträge, um Profile-IDs zu sammeln
   useEffect(() => {
     const loadGymAdmins = async () => {
-      if (gyms.length === 0) return;
+      if (gyms.length === 0) {
+        setGymAdminProfileIds(new Set());
+        return;
+      }
+
       const allAdminIds = new Set<string>();
       await Promise.all(
         gyms.map(async (gym) => {
           const { data } = await listGymAdminsByGym(gym.id);
-          if (data) {
-            data.forEach((admin) => allAdminIds.add(admin.profile_id));
-          }
-        })
+          (data ?? []).forEach((admin) => allAdminIds.add(admin.profile_id));
+        }),
       );
       setGymAdminProfileIds(allAdminIds);
     };
-    loadGymAdmins();
+
+    void loadGymAdmins();
   }, [gyms]);
 
-  // Gruppiere Profile nach Rollen (berücksichtigt auch gym_admins Einträge)
+  const activeGyms = useMemo(() => gyms.filter((gym) => !gym.archived_at), [gyms]);
+
   const groupedProfiles = useMemo(() => {
-    const participants = profiles.filter((p) => {
-      // Ein Teilnehmer ist jemand, der weder gym_admin noch league_admin ist UND nicht in gym_admins eingetragen ist
-      return p.role === "participant" && !gymAdminProfileIds.has(p.id);
+    const classify = (profile: Profile) => {
+      if (profile.role === "league_admin") return "league_admins";
+      if (profile.role === "gym_admin" || gymAdminProfileIds.has(profile.id)) return "gym_admins";
+      return "participants";
+    };
+
+    const activeProfiles = profiles.filter((profile) => !profile.archived_at);
+    const archivedProfiles = profiles.filter((profile) => Boolean(profile.archived_at));
+
+    const splitByTab = (source: Profile[]) => ({
+      participants: source.filter((profile) => classify(profile) === "participants"),
+      gym_admins: source.filter((profile) => classify(profile) === "gym_admins"),
+      league_admins: source.filter((profile) => classify(profile) === "league_admins"),
     });
-    const gymAdmins = profiles.filter((p) => {
-      // Ein Gym-Admin ist jemand mit role=gym_admin ODER jemand mit Eintrag in gym_admins
-      return p.role === "gym_admin" || gymAdminProfileIds.has(p.id);
-    });
-    const leagueAdmins = profiles.filter((p) => p.role === "league_admin");
-    return { participants, gymAdmins, leagueAdmins };
+
+    return {
+      active: splitByTab(activeProfiles),
+      archived: splitByTab(archivedProfiles),
+    };
   }, [profiles, gymAdminProfileIds]);
 
-  // Gefilterte Profile basierend auf Tab und Suche
-  const filtered = useMemo(() => {
-    let baseProfiles: Profile[] = [];
-    switch (activeTab) {
-      case "participants":
-        baseProfiles = groupedProfiles.participants;
-        break;
-      case "gym_admins":
-        baseProfiles = groupedProfiles.gymAdmins;
-        break;
-      case "league_admins":
-        baseProfiles = groupedProfiles.leagueAdmins;
-        break;
-      default:
-        baseProfiles = profiles;
-    }
-
+  const filterProfiles = (source: Profile[]) => {
     const query = search.trim().toLowerCase();
-    if (!query) return baseProfiles;
-    return baseProfiles.filter((profile) => {
+    if (!query) return source;
+    return source.filter((profile) => {
       const name = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.toLowerCase();
       const email = (profile.email ?? "").toLowerCase();
       return name.includes(query) || email.includes(query);
     });
-  }, [profiles, groupedProfiles, activeTab, search]);
+  };
+
+  const getBaseProfiles = (grouped: typeof groupedProfiles.active) => {
+    switch (activeTab) {
+      case "participants":
+        return grouped.participants;
+      case "gym_admins":
+        return grouped.gym_admins;
+      case "league_admins":
+        return grouped.league_admins;
+      default:
+        return [...grouped.participants, ...grouped.gym_admins, ...grouped.league_admins];
+    }
+  };
+
+  const activeProfiles = useMemo(
+    () => filterProfiles(getBaseProfiles(groupedProfiles.active)),
+    [groupedProfiles.active, activeTab, search],
+  );
+  const archivedProfiles = useMemo(
+    () => filterProfiles(getBaseProfiles(groupedProfiles.archived)),
+    [groupedProfiles.archived, activeTab, search],
+  );
 
   const handleUpdate = async (profileId: string, patch: Partial<Profile>) => {
     const { data, error } = await updateProfile(profileId, patch);
     if (error) {
-      toast({ title: "Fehler", description: error.message || "Fehler beim Aktualisieren des Profils" });
-      return;
+      toast({ title: "Fehler", description: error.message || "Profil konnte nicht aktualisiert werden." });
+      return false;
     }
     if (data) {
-      setProfiles((prev) => prev.map((item) => (item.id === data.id ? data : item)));
+      setProfiles((prev) => prev.map((profile) => (profile.id === data.id ? data : profile)));
       toast({ title: "Gespeichert", description: "Profil wurde aktualisiert." });
-    } else {
-      toast({ title: "Fehler", description: "Profil konnte nicht aktualisiert werden." });
+      return true;
     }
+    return false;
   };
 
   const handleEdit = (profile: Profile) => {
@@ -123,51 +172,181 @@ const LeagueParticipants = () => {
 
   const handleSaveEdit = async () => {
     if (!editingProfile) return;
-    await handleUpdate(editingProfile.id, {
+    const didSave = await handleUpdate(editingProfile.id, {
       first_name: editForm.first_name || null,
       last_name: editForm.last_name || null,
       email: editForm.email || null,
       role: editForm.role,
       home_gym_id: editForm.home_gym_id || null,
       birth_date: editForm.birth_date || null,
-      gender: (editForm.gender as "m" | "w") || null,
-      league: (editForm.league as "toprope" | "lead") || null,
+      gender: editForm.gender ? (editForm.gender as "m" | "w") : null,
+      league: editForm.league ? (editForm.league as "toprope" | "lead") : null,
     });
-    setEditingProfile(null);
+    if (didSave) {
+      setEditingProfile(null);
+    }
   };
 
-  const handleDelete = async () => {
-    if (!deletingProfile) return;
-    const { error } = await deleteProfile(deletingProfile.id);
+  const handleArchive = async () => {
+    if (!archiveTarget) return;
+    const { data, error } = await archiveProfile(archiveTarget.id);
     if (error) {
-      toast({ title: "Fehler", description: error.message || "Fehler beim Löschen des Profils", variant: "destructive" });
+      toast({
+        title: "Fehler",
+        description: error.message || "Profil konnte nicht archiviert werden.",
+        variant: "destructive",
+      });
       return;
     }
-    setProfiles((prev) => prev.filter((p) => p.id !== deletingProfile.id));
-    setDeletingProfile(null);
-    toast({ title: "Gelöscht", description: "Profil und alle zugehörigen Ergebnisse wurden gelöscht." });
+    if (data) {
+      setProfiles((prev) => prev.map((profile) => (profile.id === data.id ? data : profile)));
+      toast({ title: "Archiviert", description: "Das Profil wurde sicher archiviert." });
+    }
+    setArchiveTarget(null);
   };
 
-  const getRoleBadge = (role: Profile["role"]) => {
-    switch (role) {
-      case "league_admin":
-        return <Badge variant="secondary" className="bg-purple-500/10 text-purple-700 border-purple-500/20">Liga-Admin</Badge>;
-      case "gym_admin":
-        return <Badge variant="secondary" className="bg-blue-500/10 text-blue-700 border-blue-500/20">Hallen-Admin</Badge>;
-      default:
-        return <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20">Teilnehmer</Badge>;
+  const handleRestore = async () => {
+    if (!restoreTarget) return;
+    const { data, error } = await restoreProfile(restoreTarget.id);
+    if (error) {
+      toast({
+        title: "Fehler",
+        description: error.message || "Profil konnte nicht wiederhergestellt werden.",
+        variant: "destructive",
+      });
+      return;
     }
+    if (data) {
+      setProfiles((prev) => prev.map((profile) => (profile.id === data.id ? data : profile)));
+      toast({ title: "Wiederhergestellt", description: "Das Profil ist wieder aktiv." });
+    }
+    setRestoreTarget(null);
+  };
+
+  const getRoleBadge = (profile: Profile) => {
+    const isGymAdmin = profile.role === "gym_admin" || gymAdminProfileIds.has(profile.id);
+    if (profile.role === "league_admin") {
+      return <Badge variant="secondary" className="bg-purple-500/10 text-purple-700 border-purple-500/20">Liga-Admin</Badge>;
+    }
+    if (isGymAdmin) {
+      return <Badge variant="secondary" className="bg-blue-500/10 text-blue-700 border-blue-500/20">Hallen-Admin</Badge>;
+    }
+    return <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20">Teilnehmer</Badge>;
+  };
+
+  const renderProfileCard = (profile: Profile, archived: boolean) => {
+    const homeGym = gyms.find((gym) => gym.id === profile.home_gym_id) ?? null;
+
+    return (
+      <Card
+        key={profile.id}
+        className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="font-semibold text-primary text-base md:text-lg break-words">
+                {profile.first_name ?? "-"} {profile.last_name ?? "-"}
+              </div>
+              {getRoleBadge(profile)}
+              {archived ? <Badge variant="outline">Archiviert</Badge> : null}
+            </div>
+            <div className="text-sm text-muted-foreground break-words">{profile.email ?? "-"}</div>
+            {homeGym ? (
+              <div className="text-xs text-muted-foreground mt-1 break-words">
+                Heimat-Halle: {homeGym.name}
+                {homeGym.archived_at ? " (archiviert)" : ""}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!archived ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(profile)}
+                  className="h-9 w-9 p-0 touch-manipulation"
+                  aria-label={`Profil von ${profile.email ?? profile.id} bearbeiten`}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setArchiveTarget(profile)}
+                  className="h-9 w-9 p-0 text-amber-700 hover:text-amber-700 hover:bg-amber-500/10 touch-manipulation"
+                  aria-label={`Profil von ${profile.email ?? profile.id} archivieren`}
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRestoreTarget(profile)}
+                className="h-9 gap-2 px-3 touch-manipulation"
+                aria-label={`Profil von ${profile.email ?? profile.id} wiederherstellen`}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restore
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-border/60 grid grid-cols-2 gap-2 text-xs">
+          {profile.birth_date ? (
+            <div>
+              <span className="text-muted-foreground">Geburtsdatum:</span>{" "}
+              <span className="font-medium">{formatDate(profile.birth_date)}</span>
+            </div>
+          ) : null}
+          {profile.gender ? (
+            <div>
+              <span className="text-muted-foreground">Geschlecht:</span>{" "}
+              <span className="font-medium">{profile.gender === "m" ? "Männlich" : "Weiblich"}</span>
+            </div>
+          ) : null}
+          {profile.league ? (
+            <div className="col-span-2">
+              <span className="text-muted-foreground">Liga:</span>{" "}
+              <span className="font-medium">{profile.league === "toprope" ? "Toprope" : "Vorstieg"}</span>
+            </div>
+          ) : null}
+          {archived ? (
+            <>
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Archiviert am:</span>{" "}
+                <span className="font-medium">{formatDate(profile.archived_at)}</span>
+              </div>
+              {profile.archive_reason ? (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Grund:</span>{" "}
+                  <span className="font-medium">{profile.archive_reason}</span>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      </Card>
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              backgroundRepeat: "repeat",
+            }}
+          />
         </div>
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
@@ -182,14 +361,13 @@ const LeagueParticipants = () => {
                 </Badge>
               </div>
               <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
-                Teilnehmer suchen und bearbeiten · {profiles.length} {profiles.length === 1 ? 'Person' : 'Personen'} gesamt
+                {profiles.filter((profile) => !profile.archived_at).length} aktive Personen · {profiles.filter((profile) => profile.archived_at).length} archiviert
               </p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Suche */}
       <Card className="p-4 md:p-6 border-2 border-border/60 space-y-3">
         <div className="flex items-center gap-2">
           <Search className="h-5 w-5 text-primary flex-shrink-0" />
@@ -199,127 +377,69 @@ const LeagueParticipants = () => {
           id="search"
           placeholder="Name oder E-Mail"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           className="touch-manipulation"
         />
       </Card>
 
-      {/* Tabs für Rollen-Gruppierung */}
       <Card className="p-4 md:p-6 border-2 border-border/60">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ParticipantTab)}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 md:gap-0 h-auto p-1.5 md:p-1">
-            <TabsTrigger value="all" className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm px-3 md:px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0 touch-manipulation">
-              <Users className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+            <TabsTrigger value="all" className="flex items-center justify-center gap-2 text-xs md:text-sm px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0">
+              <Users className="h-4 w-4" />
               <span>Alle</span>
-              <span className="hidden md:inline"> ({profiles.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="participants" className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm px-3 md:px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0 touch-manipulation">
-              <User className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+            <TabsTrigger value="participants" className="flex items-center justify-center gap-2 text-xs md:text-sm px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0">
+              <User className="h-4 w-4" />
               <span className="hidden sm:inline">Teilnehmer</span>
               <span className="sm:hidden">TN</span>
-              <span className="hidden md:inline"> ({groupedProfiles.participants.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="gym_admins" className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm px-3 md:px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0 touch-manipulation">
-              <Building2 className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+            <TabsTrigger value="gym_admins" className="flex items-center justify-center gap-2 text-xs md:text-sm px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0">
+              <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Hallen-Admins</span>
               <span className="sm:hidden">Hallen</span>
-              <span className="hidden md:inline"> ({groupedProfiles.gymAdmins.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="league_admins" className="flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-sm px-3 md:px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0 touch-manipulation">
-              <Shield className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+            <TabsTrigger value="league_admins" className="flex items-center justify-center gap-2 text-xs md:text-sm px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0">
+              <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Liga-Admins</span>
               <span className="sm:hidden">Liga</span>
-              <span className="hidden md:inline"> ({groupedProfiles.leagueAdmins.length})</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </Card>
 
-      {/* Teilnehmer-Liste */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-primary">
-            {search 
-              ? `Suchergebnisse (${filtered.length})`
-              : activeTab === "all"
-              ? `Alle Personen (${filtered.length})`
-              : activeTab === "participants"
-              ? `Teilnehmer (${filtered.length})`
-              : activeTab === "gym_admins"
-              ? `Hallen-Admins (${filtered.length})`
-              : `Liga-Admins (${filtered.length})`}
-          </h2>
+          <h2 className="text-lg font-semibold text-primary">Aktive Personen ({activeProfiles.length})</h2>
         </div>
-        <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
-          {filtered.map((profile) => (
-            <Card key={profile.id} className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <div className="font-semibold text-primary text-base md:text-lg break-words">
-                      {profile.first_name ?? "-"} {profile.last_name ?? "-"}
-                    </div>
-                    {getRoleBadge(profile.role ?? "participant")}
-                  </div>
-                  <div className="text-sm text-muted-foreground break-words">{profile.email ?? "-"}</div>
-                  {profile.home_gym_id && (
-                    <div className="text-xs text-muted-foreground mt-1 break-words">
-                      Heimat-Halle: {gyms.find((g) => g.id === profile.home_gym_id)?.name ?? "Unbekannt"}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(profile)}
-                    className="h-9 w-9 p-0 touch-manipulation"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDeletingProfile(profile)}
-                    className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-border/60 grid grid-cols-2 gap-2 text-xs">
-                {profile.birth_date && (
-                  <div>
-                    <span className="text-muted-foreground">Geburtsdatum:</span>{" "}
-                    <span className="font-medium">{new Date(profile.birth_date).toLocaleDateString("de-DE")}</span>
-                  </div>
-                )}
-                {profile.gender && (
-                  <div>
-                    <span className="text-muted-foreground">Geschlecht:</span>{" "}
-                    <span className="font-medium">{profile.gender === "m" ? "Männlich" : "Weiblich"}</span>
-                  </div>
-                )}
-                {profile.league && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Liga:</span>{" "}
-                    <span className="font-medium">{profile.league === "toprope" ? "Toprope" : "Vorstieg"}</span>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-        {filtered.length === 0 && (
+        {activeProfiles.length > 0 ? (
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
+            {activeProfiles.map((profile) => renderProfileCard(profile, false))}
+          </div>
+        ) : (
           <Card className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">
-              {search ? "Keine Ergebnisse gefunden." : "Keine Personen in dieser Kategorie."}
+              {search ? "Keine aktiven Personen gefunden." : "Keine aktiven Personen in dieser Kategorie."}
             </p>
           </Card>
         )}
       </div>
 
-      {/* Bearbeiten-Dialog */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-primary">Archiv ({archivedProfiles.length})</h2>
+        </div>
+        {archivedProfiles.length > 0 ? (
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
+            {archivedProfiles.map((profile) => renderProfileCard(profile, true))}
+          </div>
+        ) : (
+          <Card className="p-8 text-center border-2 border-border/60">
+            <p className="text-muted-foreground">Keine archivierten Personen für diese Ansicht.</p>
+          </Card>
+        )}
+      </div>
+
       <Dialog open={editingProfile !== null} onOpenChange={(open) => !open && setEditingProfile(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -332,7 +452,7 @@ const LeagueParticipants = () => {
                 <Input
                   id="edit-first-name"
                   value={editForm.first_name}
-                  onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, first_name: event.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -340,7 +460,7 @@ const LeagueParticipants = () => {
                 <Input
                   id="edit-last-name"
                   value={editForm.last_name}
-                  onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, last_name: event.target.value }))}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -349,7 +469,7 @@ const LeagueParticipants = () => {
                   id="edit-email"
                   type="email"
                   value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, email: event.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -357,8 +477,8 @@ const LeagueParticipants = () => {
                 <select
                   id="edit-role"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as Profile["role"] })}
+                  value={editForm.role ?? "participant"}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, role: event.target.value as Profile["role"] }))}
                 >
                   <option value="participant">Teilnehmer</option>
                   <option value="gym_admin">Gym-Admin</option>
@@ -371,10 +491,10 @@ const LeagueParticipants = () => {
                   id="edit-home-gym"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={editForm.home_gym_id}
-                  onChange={(e) => setEditForm({ ...editForm, home_gym_id: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, home_gym_id: event.target.value }))}
                 >
                   <option value="">Keine Halle</option>
-                  {gyms.map((gym) => (
+                  {activeGyms.map((gym) => (
                     <option key={gym.id} value={gym.id}>
                       {gym.name}
                     </option>
@@ -387,7 +507,7 @@ const LeagueParticipants = () => {
                   id="edit-birth-date"
                   type="date"
                   value={editForm.birth_date}
-                  onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, birth_date: event.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -396,7 +516,7 @@ const LeagueParticipants = () => {
                   id="edit-gender"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={editForm.gender}
-                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, gender: event.target.value }))}
                 >
                   <option value="">Nicht angegeben</option>
                   <option value="m">Männlich</option>
@@ -409,7 +529,7 @@ const LeagueParticipants = () => {
                   id="edit-league"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={editForm.league}
-                  onChange={(e) => setEditForm({ ...editForm, league: e.target.value })}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, league: event.target.value }))}
                 >
                   <option value="">Nicht angegeben</option>
                   <option value="toprope">Toprope</option>
@@ -419,47 +539,50 @@ const LeagueParticipants = () => {
             </div>
           </div>
           <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
-            <Button variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto touch-manipulation">
+            <Button variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto">
               Abbrechen
             </Button>
-            <Button onClick={handleSaveEdit} className="w-full sm:w-auto touch-manipulation">
-              <span className="skew-x-6">Speichern</span>
+            <Button onClick={handleSaveEdit} className="w-full sm:w-auto">
+              Speichern
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Löschen-Bestätigungs-Dialog */}
-      <Dialog open={deletingProfile !== null} onOpenChange={(open) => !open && setDeletingProfile(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Profil löschen</DialogTitle>
-          </DialogHeader>
-          <div className="px-5 pb-5 pt-3 sm:px-0 sm:pb-0">
-            <p className="text-sm text-muted-foreground mb-4">
-              Möchtest du das Profil von <strong>{deletingProfile?.first_name} {deletingProfile?.last_name}</strong> wirklich löschen?
-            </p>
-            <p className="text-sm text-destructive font-semibold">
-              ⚠️ Diese Aktion kann nicht rückgängig gemacht werden!
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Alle zugehörigen Ergebnisse werden ebenfalls gelöscht.
-            </p>
-          </div>
-          <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
-            <Button variant="outline" onClick={() => setDeletingProfile(null)} className="w-full sm:w-auto touch-manipulation">
-              Abbrechen
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDelete} 
-              className="w-full sm:w-auto touch-manipulation"
-            >
-              <span className="skew-x-6">Löschen</span>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Profil archivieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Das Profil von {archiveTarget?.first_name} {archiveTarget?.last_name} wird aus allen aktiven Ansichten entfernt.
+              Ergebnisse bleiben erhalten und das Konto kann später wiederhergestellt werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="w-full sm:w-auto">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive} className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700">
+              Archivieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={restoreTarget !== null} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Profil wiederherstellen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Das Profil von {restoreTarget?.first_name} {restoreTarget?.last_name} wird wieder in aktive Ansichten aufgenommen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="w-full sm:w-auto">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestore} className="w-full sm:w-auto">
+              Wiederherstellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

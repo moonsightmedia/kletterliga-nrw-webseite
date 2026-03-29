@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { StitchCard } from "@/app/components/StitchPrimitives";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { buildParticipantProfileData } from "./participantData";
-import { ParticipantProfileContent } from "./ParticipantProfileContent";
+import ReadonlyParticipantProfileContent from "./ReadonlyParticipantProfileContent";
 import { useParticipantCompetitionData } from "./useParticipantCompetitionData";
 
 const ParticipantProfilePage = () => {
@@ -26,36 +26,31 @@ const ParticipantProfilePage = () => {
 
   if (loading) {
     return (
-      <StitchCard tone="surface" className="p-6 text-sm text-[rgba(27,28,26,0.64)]">
-        Teilnehmerprofil wird geladen...
-      </StitchCard>
+      <ParticipantStateCard
+        title="Teilnehmerprofil lädt"
+        description="Die Teilnehmerdaten werden gerade für die neue Profilansicht vorbereitet."
+      />
     );
   }
 
   if (error) {
-    return (
-      <StitchCard tone="surface" className="p-6 text-sm text-[rgba(27,28,26,0.64)]">
-        {error}
-      </StitchCard>
-    );
+    return <ParticipantStateCard title="Teilnehmerprofil nicht verfügbar" description={error} />;
   }
 
   if (!profileData) {
     return (
-      <StitchCard tone="surface" className="p-6 text-sm text-[rgba(27,28,26,0.64)]">
-        Teilnehmerprofil konnte nicht gefunden werden.
-      </StitchCard>
+      <ParticipantStateCard
+        title="Teilnehmerprofil nicht gefunden"
+        description="Zu diesem Teilnehmer konnte kein Profil geladen werden."
+      />
     );
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <ParticipantProfileContent
-        data={profileData}
-        mode="readonly"
-        historyHref={`/app/rankings/profile/${profileData.profile.id}/history`}
-      />
-    </div>
+    <ReadonlyParticipantProfileContent
+      data={profileData}
+      historyHref={`/app/rankings/profile/${profileData.profile.id}/history`}
+    />
   );
 };
 

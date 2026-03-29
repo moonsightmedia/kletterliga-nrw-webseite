@@ -16,6 +16,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import {
+  StitchBadge,
   StitchButton,
   StitchCard,
   StitchSelectField,
@@ -24,7 +25,11 @@ import {
 import { listGyms } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
-import { formatAccountCreationOpenDate, formatUnlockDate, isBeforeAccountCreationOpen } from "@/config/launch";
+import {
+  formatAccountCreationOpenDate,
+  formatUnlockDate,
+  useLaunchSettings,
+} from "@/config/launch";
 import logo from "@/assets/logo.png";
 
 type RegisterFormState = {
@@ -68,7 +73,7 @@ const Register = () => {
     homeGymId: "",
     league: "",
   });
-  const unlockDate = formatUnlockDate();
+  const { accountCreationOpenDate, unlockDate, participantLaunchStarted, beforeAccountCreationOpen } = useLaunchSettings();
 
   useEffect(() => {
     let active = true;
@@ -86,8 +91,9 @@ const Register = () => {
     };
   }, []);
 
-  const registrationOpenDate = formatAccountCreationOpenDate();
-  const registrationClosed = isBeforeAccountCreationOpen();
+  const registrationOpenDate = formatAccountCreationOpenDate(accountCreationOpenDate);
+  const unlockDateLabel = formatUnlockDate(unlockDate);
+  const registrationClosed = beforeAccountCreationOpen;
   const stepOneComplete = form.firstName.trim() && form.lastName.trim() && form.email.trim();
   const stepTwoComplete =
     form.password.length >= 6 &&
@@ -101,8 +107,10 @@ const Register = () => {
   const stepNote = useMemo(() => {
     if (currentStep === 1) return "Mit deinen Basisdaten erstellen wir deinen Account und die Bestätigungsmail.";
     if (currentStep === 2) return "Mindestens sechs Zeichen sind Pflicht. Noch besser ist ein längeres Passwort mit klarer Struktur.";
-    return `Hallen, Ranglisten und weitere Wettbewerbsbereiche werden zum Saisonstart am ${unlockDate} freigeschaltet.`;
-  }, [currentStep, unlockDate]);
+    return participantLaunchStarted
+      ? "Hallen, Ranglisten und weitere Wettbewerbsbereiche sind jetzt freigeschaltet."
+      : `Hallen, Ranglisten und weitere Wettbewerbsbereiche werden zum Saisonstart am ${unlockDateLabel} freigeschaltet.`;
+  }, [currentStep, participantLaunchStarted, unlockDateLabel]);
 
   const validateCurrentStep = () => {
     if (currentStep === 1 && !stepOneComplete) {
@@ -173,40 +181,119 @@ const Register = () => {
 
   if (registrationClosed) {
     return (
-      <div className="space-y-6">
-        <StitchCard tone="cream" className="p-6 sm:p-8">
-          <div className="space-y-5">
-            <div className="inline-flex items-center rounded-full bg-[#003d55] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f2dcab]">
-              Registrierung folgt
+      <div className="mx-auto max-w-md space-y-8 px-4 pb-10 pt-6">
+        <section className="relative overflow-hidden">
+          <div className="absolute right-[-2rem] top-[-1rem] h-24 w-24 rounded-full bg-[#a15523]/16 blur-2xl" />
+          <div className="absolute left-[-1.5rem] top-24 h-20 w-20 rounded-full bg-[#f2dcab]/10 blur-xl" />
+
+          <div className="relative space-y-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-3">
+                <StitchBadge tone="cream">Registrierung folgt</StitchBadge>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-[1rem] bg-[#f2dcab] p-2.5 shadow-[0_18px_30px_rgba(0,0,0,0.18)]">
+                    <img src={logo} alt="Kletterliga NRW" className="h-8 w-8 object-contain" />
+                  </div>
+                  <div>
+                    <div className="stitch-headline text-lg text-[#f2dcab]">Kletterliga NRW</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(242,220,171,0.58)]">
+                      Teilnehmer-App
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] text-[#f2dcab]">
+                <CalendarDays className="h-5 w-5" />
+              </div>
             </div>
-            <div className="space-y-3">
-              <h1 className="stitch-headline text-4xl leading-[0.96] text-[#002637] sm:text-5xl">
+
+            <div className="space-y-4">
+              <h1 className="stitch-headline max-w-[13ch] text-[2.65rem] leading-[0.88] text-[#f2dcab] sm:text-5xl">
                 Die Account-Erstellung öffnet am {registrationOpenDate}.
               </h1>
-              <p className="max-w-2xl text-base leading-7 text-[rgba(27,28,26,0.68)]">
-                Bis dahin kannst du dich auf der Webseite informieren. Nach dem Start legst du deinen Account an,
-                bestätigst die E-Mail-Adresse und bereitest dich direkt auf den Saisonstart vor.
+              <p className="max-w-[30rem] text-[1.02rem] leading-8 text-[rgba(242,220,171,0.78)]">
+                Bis dahin kannst du dich in Ruhe auf der Webseite orientieren. Nach dem Start legst du deinen
+                Account an, bestätigst deine E-Mail und bereitest dein Profil direkt auf den Saisonstart vor.
               </p>
             </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.15rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
+                <div className="stitch-kicker text-[rgba(242,220,171,0.6)]">Ab Registrierung</div>
+                <div className="mt-2 font-['Space_Grotesk'] text-lg font-bold text-[#f2dcab]">Account anlegen</div>
+                <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.74)]">
+                  Profil erstellen, E-Mail bestätigen und direkt einloggen.
+                </p>
+              </div>
+              <div className="rounded-[1.15rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
+                <div className="stitch-kicker text-[rgba(242,220,171,0.6)]">Ab Saisonstart</div>
+                <div className="mt-2 font-['Space_Grotesk'] text-lg font-bold text-[#f2dcab]">{unlockDateLabel}</div>
+                <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.74)]">
+                  Hallen, Codes, Ranglisten und weitere Liga-Bereiche werden freigeschaltet.
+                </p>
+              </div>
+            </div>
           </div>
-        </StitchCard>
+        </section>
 
-        <StitchCard tone="surface" className="p-5 sm:p-6">
-          <p className="text-sm leading-6 text-[rgba(27,28,26,0.68)]">
-            <span className="font-semibold text-[#002637]">Danach geht es so weiter:</span> Account erstellen,
-            E-Mail bestätigen und App-Zugang vorbereiten. Hallen, Codes, Ranglisten und weitere Ligabereiche
-            öffnen gesammelt am {unlockDate}.
-          </p>
+        <div className="stitch-divider opacity-80" />
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <StitchButton asChild className="w-full sm:w-auto">
+        <section className="space-y-5">
+          <div className="space-y-2">
+            <div className="stitch-kicker text-[rgba(242,220,171,0.58)]">So geht es weiter</div>
+            <p className="text-sm leading-7 text-[rgba(242,220,171,0.78)]">
+              Sobald die Registrierung öffnet, ist der Ablauf bewusst einfach gehalten und auch für neue
+              Teilnehmer sofort verständlich.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              {
+                icon: Mail,
+                title: "Account anlegen",
+                text: "Mit Vorname, E-Mail und Passwort startest du in wenigen Schritten in die App.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "E-Mail bestätigen",
+                text: "Ein Bestätigungslink aktiviert deinen Zugang und macht dein Profil einsatzbereit.",
+              },
+              {
+                icon: Flag,
+                title: "Zum Saisonstart loslegen",
+                text: "Dann kannst du Hallen freischalten, Routen loggen und in den Ranglisten auftauchen.",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="flex items-start gap-3 rounded-[1.1rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] p-4 backdrop-blur-md"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f2dcab] text-[#003d55] shadow-[0_12px_22px_rgba(0,0,0,0.12)]">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="font-['Space_Grotesk'] text-base font-bold text-[#f2dcab]">{item.title}</div>
+                    <p className="text-sm leading-6 text-[rgba(242,220,171,0.72)]">{item.text}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col gap-3 pt-1">
+            <StitchButton asChild variant="cream" className="w-full">
               <Link to="/app/login">Zum Login</Link>
             </StitchButton>
-            <StitchButton asChild variant="outline" className="w-full sm:w-auto">
+            <StitchButton asChild variant="outline" className="w-full border-[rgba(242,220,171,0.18)] bg-[rgba(255,255,255,0.78)]">
               <Link to="/">Zur Startseite</Link>
             </StitchButton>
           </div>
-        </StitchCard>
+        </section>
       </div>
     );
   }
@@ -331,10 +418,16 @@ const Register = () => {
                 <div className="relative overflow-hidden rounded-[1.5rem] border border-[rgba(242,220,171,0.14)] bg-[linear-gradient(135deg,rgba(242,220,171,0.12),rgba(0,61,85,0.4))] p-5">
                   <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f2dcab]/10 blur-2xl" />
                   <div className="relative">
-                    <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Saisonstart</div>
-                    <div className="stitch-headline mt-3 text-2xl text-[#f2dcab]">Hallen und Ranglisten ab {unlockDate}</div>
+                    <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">
+                      {participantLaunchStarted ? "Saisonstatus" : "Saisonstart"}
+                    </div>
+                    <div className="stitch-headline mt-3 text-2xl text-[#f2dcab]">
+                      {participantLaunchStarted ? "Hallen und Ranglisten jetzt offen" : `Hallen und Ranglisten ab ${unlockDate}`}
+                    </div>
                     <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.76)]">
-                      Profil und Dashboard sind sofort da. Die Wettbewerbsbereiche öffnen gesammelt zum Saisonstart.
+                      {participantLaunchStarted
+                        ? "Profil, Dashboard und Wettbewerbsbereiche sind jetzt direkt verfügbar."
+                        : "Profil und Dashboard sind sofort da. Die Wettbewerbsbereiche öffnen gesammelt zum Saisonstart."}
                     </p>
                   </div>
                 </div>

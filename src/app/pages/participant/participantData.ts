@@ -72,9 +72,24 @@ export type ParticipantAscentItem = {
   routeName: string;
   gymId: string;
   gymName: string;
+  gradeLabel: string | null;
   points: number;
   flash: boolean;
   timestamp: string | null;
+  relativeTime: string;
+};
+
+export type ParticipantHistorySession = {
+  id: string;
+  gymId: string;
+  gymName: string;
+  gymCity: string | null;
+  sessionDate: string;
+  totalPoints: number;
+  routeCount: number;
+  monthKey: string;
+  monthLabel: string;
+  lastTimestamp: string | null;
 };
 
 export type ParticipantProfileData = {
@@ -89,6 +104,9 @@ export type ParticipantProfileData = {
   rank: number | null;
   totalParticipants: number;
   points: number;
+  formattedPoints: string;
+  topGrade: string | null;
+  sessionCount: number;
   routesLogged: number;
   flashCount: number;
   flashRate: number;
@@ -98,14 +116,37 @@ export type ParticipantProfileData = {
   gymRouteGroups: ParticipantGymRouteGroup[];
   recentAscents: ParticipantAscentItem[];
   historyItems: ParticipantAscentItem[];
+  historySessions: ParticipantHistorySession[];
 };
 
 const getResultTimestamp = (result: Result) => result.updated_at || result.created_at || null;
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("de-DE", { numeric: "auto" });
+const monthLabelFormatter = new Intl.DateTimeFormat("de-DE", {
+  month: "long",
+  timeZone: "UTC",
+});
 
 const getTimeValue = (value: string | null) => {
   if (!value) return 0;
   const time = new Date(value).getTime();
   return Number.isNaN(time) ? 0 : time;
+};
+
+const getResultDayKey = (result: Result) => {
+  const source = result.created_at || getResultTimestamp(result);
+  return source?.slice(0, 10) ?? null;
+};
+
+const getDateFromDayKey = (dayKey: string) => {
+  const [year, month, day] = dayKey.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day));
+};
+
+const getMonthLabel = (dayKey: string) => {
+  const date = getDateFromDayKey(dayKey);
+  if (!date) return dayKey;
+  return monthLabelFormatter.format(date);
 };
 
 const getResultScore = (result: Result) => (result.points ?? 0) + (result.flash ? 1 : 0);
@@ -115,6 +156,55 @@ const sortByCode = (a: Route, b: Route) => {
   const numB = Number(b.code.replace(/\D/g, "")) || 0;
   if (numA !== numB) return numA - numB;
   return a.code.localeCompare(b.code);
+};
+
+const getGradeSortValue = (gradeLabel: string | null | undefined) => {
+  if (!gradeLabel) return Number.NEGATIVE_INFINITY;
+
+  const matches = gradeLabel.toUpperCase().match(/\d+\s*[ABC]?[+-]?/g);
+  const candidate = matches?.[matches.length - 1]?.replace(/\s+/g, "") ?? gradeLabel.toUpperCase();
+  const parts = candidate.match(/(\d+)([ABC]?)([+-]?)/);
+  if (!parts) return Number.NEGATIVE_INFINITY;
+
+  const numberValue = Number(parts[1]);
+  const letterValue = parts[2] === "A" ? 0 : parts[2] === "B" ? 10 : parts[2] === "C" ? 20 : 0;
+  const modifierValue = parts[3] === "+" ? 5 : parts[3] === "-" ? -5 : 0;
+
+  return numberValue * 100 + letterValue + modifierValue;
+};
+
+const formatPoints = (value: number) => {
+  const hasFraction = Math.abs(value % 1) > 0.001;
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: hasFraction ? 1 : 0,
+    maximumFractionDigits: hasFraction ? 1 : 0,
+  }).format(value);
+};
+
+const formatRelativeTime = (value: string | null) => {
+  if (!value) return "ohne Datum";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "ohne Datum";
+
+  const diffInMinutes = Math.round((date.getTime() - Date.now()) / 60000);
+  const absMinutes = Math.abs(diffInMinutes);
+
+  if (absMinutes < 60) {
+    return relativeTimeFormatter.format(diffInMinutes, "minute");
+  }
+
+  const diffInHours = Math.round(diffInMinutes / 60);
+  if (Math.abs(diffInHours) < 24) {
+    return relativeTimeFormatter.format(diffInHours, "hour");
+  }
+
+  const diffInDays = Math.round(diffInHours / 24);
+  if (Math.abs(diffInDays) < 30) {
+    return relativeTimeFormatter.format(diffInDays, "day");
+  }
+
+  return date.toLocaleDateString("de-DE");
 };
 
 export const normalizeDiscipline = (discipline: string | null | undefined) => {
@@ -424,12 +514,79 @@ export const buildParticipantProfileData = ({
         routeName: route.name || route.code,
         gymId: gym.id,
         gymName: gym.name,
+        gradeLabel: route.grade_range ?? null,
         points: getResultScore(result),
         flash: result.flash,
         timestamp: getResultTimestamp(result),
+        relativeTime: formatRelativeTime(getResultTimestamp(result)),
       };
     })
     .filter((item): item is ParticipantAscentItem => item !== null);
+
+  const historySessionsMap = participantResults.reduce<
+    Map<
+      string,
+      {
+        gym: Gym;
+        sessionDate: string;
+        lastTimestamp: string | null;
+        routeResults: Map<string, Result>;
+      }
+    >
+  >((acc, result) => {
+    const route = routeMap.get(result.route_id);
+    if (!route) return acc;
+
+    const gym = gymMap.get(route.gym_id);
+    if (!gym) return acc;
+
+    const sessionDate = getResultDayKey(result);
+    if (!sessionDate) return acc;
+
+    const sessionKey = `${gym.id}:${sessionDate}`;
+    const existingSession = acc.get(sessionKey);
+    if (!existingSession) {
+      acc.set(sessionKey, {
+        gym,
+        sessionDate,
+        lastTimestamp: getResultTimestamp(result),
+        routeResults: new Map([[route.id, result]]),
+      });
+      return acc;
+    }
+
+    const nextTimestamp = getResultTimestamp(result);
+    if (getTimeValue(nextTimestamp) > getTimeValue(existingSession.lastTimestamp)) {
+      existingSession.lastTimestamp = nextTimestamp;
+    }
+
+    const existingRouteResult = existingSession.routeResults.get(route.id);
+    if (!existingRouteResult || getTimeValue(nextTimestamp) > getTimeValue(getResultTimestamp(existingRouteResult))) {
+      existingSession.routeResults.set(route.id, result);
+    }
+
+    return acc;
+  }, new Map());
+
+  const historySessions = Array.from(historySessionsMap.values())
+    .map<ParticipantHistorySession>((session) => ({
+      id: `${session.gym.id}-${session.sessionDate}`,
+      gymId: session.gym.id,
+      gymName: session.gym.name,
+      gymCity: session.gym.city ?? null,
+      sessionDate: session.sessionDate,
+      totalPoints: Array.from(session.routeResults.values()).reduce((sum, result) => sum + getResultScore(result), 0),
+      routeCount: session.routeResults.size,
+      monthKey: session.sessionDate.slice(0, 7),
+      monthLabel: getMonthLabel(session.sessionDate),
+      lastTimestamp: session.lastTimestamp,
+    }))
+    .sort((a, b) => {
+      if (a.sessionDate !== b.sessionDate) return b.sessionDate.localeCompare(a.sessionDate);
+      const timeDiff = getTimeValue(b.lastTimestamp) - getTimeValue(a.lastTimestamp);
+      if (timeDiff !== 0) return timeDiff;
+      return a.gymName.localeCompare(b.gymName, "de");
+    });
 
   const visitedGymActivity = new Map<string, string | null>();
   latestResultByRoute.forEach((result, routeId) => {
@@ -530,6 +687,16 @@ export const buildParticipantProfileData = ({
   }
 
   const totalPoints = participantResults.reduce((sum, result) => sum + getResultScore(result), 0);
+  const topGrade = participantResults.reduce<string | null>((currentTopGrade, result) => {
+    const route = routeMap.get(result.route_id);
+    const nextGrade = route?.grade_range ?? null;
+    if (!nextGrade) return currentTopGrade;
+    if (!currentTopGrade) return nextGrade;
+    return getGradeSortValue(nextGrade) > getGradeSortValue(currentTopGrade) ? nextGrade : currentTopGrade;
+  }, null);
+  const sessionCount = new Set(
+    participantResults.map((result) => result.created_at?.slice(0, 10) ?? null).filter((day): day is string => Boolean(day)),
+  ).size;
   const routesLogged = participantResults.length;
   const flashCount = participantResults.filter((result) => result.flash).length;
   const visitedGyms = new Set(
@@ -550,6 +717,9 @@ export const buildParticipantProfileData = ({
     rank,
     totalParticipants,
     points: totalPoints,
+    formattedPoints: formatPoints(totalPoints),
+    topGrade,
+    sessionCount,
     routesLogged,
     flashCount,
     flashRate: routesLogged > 0 ? (flashCount / routesLogged) * 100 : 0,
@@ -559,5 +729,6 @@ export const buildParticipantProfileData = ({
     gymRouteGroups,
     recentAscents: historyItems.slice(0, 5),
     historyItems,
+    historySessions,
   };
 };

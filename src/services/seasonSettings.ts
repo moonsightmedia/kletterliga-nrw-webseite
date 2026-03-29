@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { listAdminSettings } from "./appApi";
 import type { AdminSettings, Stage } from "./appTypes";
 
@@ -36,12 +36,12 @@ export const useSeasonSettings = () => {
     });
   }, []);
 
-  const getAgeAt = (birthDate: string | null | undefined, cutoffDate?: string | null): number | null => {
+  const getAgeAt = useCallback((birthDate: string | null | undefined, cutoffDate?: string | null): number | null => {
     if (!birthDate) return null;
     const birth = new Date(`${birthDate}T00:00:00Z`);
     if (Number.isNaN(birth.getTime())) return null;
 
-    const cutoff = cutoffDate 
+    const cutoff = cutoffDate
       ? new Date(`${cutoffDate}T00:00:00Z`)
       : settings?.age_cutoff_date
         ? new Date(`${settings.age_cutoff_date}T00:00:00Z`)
@@ -55,9 +55,9 @@ export const useSeasonSettings = () => {
       age -= 1;
     }
     return age;
-  };
+  }, [settings?.age_cutoff_date, settings?.qualification_start]);
 
-  const getClassName = (
+  const getClassName = useCallback((
     birthDate: string | null | undefined,
     gender: "m" | "w" | null | undefined,
     cutoffDate?: string | null
@@ -71,7 +71,7 @@ export const useSeasonSettings = () => {
     if (age <= u15Max) return `U15-${gender}`;
     if (age < u40Min) return `Ü15-${gender}`;
     return `Ü40-${gender}`;
-  };
+  }, [getAgeAt, settings?.age_u16_max, settings?.age_u40_min]);
 
   const getAgeGroupRankingClass = (
     birthDate: string | null | undefined,

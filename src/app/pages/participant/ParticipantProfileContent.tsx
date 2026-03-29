@@ -1,10 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, MapPin, Zap } from "lucide-react";
-import {
-  StitchButton,
-  StitchCard,
-} from "@/app/components/StitchPrimitives";
+import { StitchCard } from "@/app/components/StitchPrimitives";
 import {
   type ParticipantAscentItem,
   type ParticipantGymRouteGroup,
@@ -36,12 +33,6 @@ const getInitials = (name: string) =>
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("") || "?";
-
-const getTimeValue = (value: string | null) => {
-  if (!value) return 0;
-  const time = new Date(value).getTime();
-  return Number.isNaN(time) ? 0 : time;
-};
 
 const formatMetric = (value: number) => {
   if (Number.isInteger(value)) return integerFormatter.format(value);
@@ -102,7 +93,7 @@ const AvatarCard = ({
         "mx-auto rounded-full bg-[linear-gradient(135deg,#a15523_0%,#f2dcab_100%)] p-1 shadow-[0_22px_40px_rgba(0,0,0,0.28)] transition hover:scale-[1.01]",
         busy && "cursor-wait opacity-70",
       )}
-      aria-label="Profilbild aendern"
+      aria-label="Profilbild ändern"
     >
       <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-[#003d55] bg-[rgba(242,220,171,0.1)] text-3xl font-semibold text-[#f2dcab]">
         {content}
@@ -118,7 +109,7 @@ const GymProgressCard = ({ data }: { data: ParticipantProfileData }) => {
   );
 
   return (
-    <StitchCard tone="surface" className="rounded-[1.75rem] p-5 sm:p-6">
+    <StitchCard tone="surface" className="stitch-radius-content p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[rgba(0,38,55,0.54)]">
@@ -180,7 +171,9 @@ const GymProgressCard = ({ data }: { data: ParticipantProfileData }) => {
                   </div>
                 )}
               </div>
-              <div className={cn("h-1 w-8 rounded-full", slot.status === "empty" ? "bg-[#dfdfdb]" : "bg-[#a15523]")} />
+              <div
+                className={cn("h-1 w-8 rounded-full", slot.status === "empty" ? "bg-[#dfdfdb]" : "bg-[#a15523]")}
+              />
               <div className="text-center text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[rgba(0,38,55,0.62)]">
                 {slot.gym?.name ? slot.gym.name : "Offen"}
               </div>
@@ -205,7 +198,7 @@ const GymRouteGroupCard = ({
   open: boolean;
   onToggle: () => void;
 }) => (
-  <div className="overflow-hidden rounded-[1.8rem] border border-[rgba(0,38,55,0.06)] bg-[#ffffff] shadow-[0_16px_34px_rgba(0,61,85,0.05)]">
+  <div className="stitch-radius-content overflow-hidden border border-[rgba(0,38,55,0.06)] bg-[#ffffff] shadow-[0_16px_34px_rgba(0,61,85,0.05)]">
     <button
       type="button"
       onClick={onToggle}
@@ -289,7 +282,7 @@ export const ParticipantAscentsTimeline = ({
 
   if (visibleItems.length === 0) {
     return (
-      <StitchCard tone="surface" className="p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+      <StitchCard tone="surface" className="stitch-radius-content p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
         {emptyText}
       </StitchCard>
     );
@@ -310,14 +303,17 @@ export const ParticipantAscentsTimeline = ({
               {item.flash ? <Zap className="h-3 w-3 fill-current" /> : null}
             </div>
 
-            <StitchCard tone="surface" className="rounded-[1.35rem] p-4 shadow-[0_14px_26px_rgba(0,61,85,0.05)] sm:p-5">
+            <StitchCard
+              tone="surface"
+              className="stitch-radius-content p-4 shadow-[0_14px_26px_rgba(0,61,85,0.05)] sm:p-5"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="font-['Space_Grotesk'] text-base font-bold uppercase leading-tight text-[#002637]">
                     {item.routeName}
                   </div>
                   <div className="mt-1 text-[0.72rem] font-medium text-[rgba(0,38,55,0.58)]">
-                    {item.routeCode} • {item.gymName}
+                    {item.routeCode} | {item.gymName}
                   </div>
                   <div className="mt-2 text-[0.68rem] font-medium text-[rgba(0,38,55,0.44)]">
                     {formatTimelineDate(item.timestamp)}
@@ -325,7 +321,12 @@ export const ParticipantAscentsTimeline = ({
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <div className={cn("text-xl font-bold leading-none", item.flash ? "text-[#a15523]" : "text-[#002637]")}>
+                  <div
+                    className={cn(
+                      "text-xl font-bold leading-none",
+                      item.flash ? "text-[#a15523]" : "text-[#002637]",
+                    )}
+                  >
                     +{formatMetric(item.points)}
                   </div>
                   <div className="mt-2 text-[0.56rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.48)]">
@@ -341,56 +342,6 @@ export const ParticipantAscentsTimeline = ({
   );
 };
 
-export const ParticipantHistoryContent = ({
-  data,
-  backHref,
-}: {
-  data: ParticipantProfileData;
-  backHref: string;
-}) => (
-  <div className="mx-auto max-w-md space-y-6">
-    <StitchCard tone="navy" className="p-5 text-[#f2dcab] sm:p-6">
-      <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.15rem] border-2 border-[rgba(242,220,171,0.54)] bg-[rgba(242,220,171,0.08)] text-xl font-semibold text-[#f2dcab]">
-          {data.avatarUrl ? (
-            <img src={data.avatarUrl} alt={data.displayName} className="h-full w-full object-cover" />
-          ) : (
-            getInitials(data.displayName)
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">View History</div>
-          <div className="mt-2 font-['Space_Grotesk'] text-2xl font-bold uppercase leading-none text-[#f2dcab]">
-            {data.displayName}
-          </div>
-          <div className="mt-2 text-xs uppercase tracking-[0.18em] text-[rgba(242,220,171,0.66)]">
-            {data.historyItems.length} Eintraege insgesamt
-          </div>
-        </div>
-      </div>
-
-      <StitchButton asChild variant="cream" className="mt-5 w-full justify-center">
-        <Link to={backHref}>Zum Profil</Link>
-      </StitchButton>
-    </StitchCard>
-
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="stitch-kicker text-[#9aaab2]">Recent Ascents</div>
-        <div className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#a15523]">
-          Chronologisch
-        </div>
-      </div>
-
-      <ParticipantAscentsTimeline
-        items={data.historyItems}
-        emptyText="Noch keine eingetragenen Routen vorhanden."
-      />
-    </section>
-  </div>
-);
-
 export const ParticipantStateCard = ({
   title,
   description,
@@ -399,7 +350,7 @@ export const ParticipantStateCard = ({
   description: string;
 }) => (
   <div className="mx-auto max-w-md">
-    <StitchCard tone="surface" className="p-5 text-center sm:p-6">
+    <StitchCard tone="surface" className="stitch-radius-content p-5 text-center sm:p-6">
       <div className="font-['Space_Grotesk'] text-2xl font-bold uppercase leading-none text-[#002637]">
         {title}
       </div>
@@ -411,7 +362,7 @@ export const ParticipantStateCard = ({
 export const ParticipantProfileContent = ({
   data,
   historyHref,
-  mode,
+  mode: _mode,
   avatarInteractive = false,
   avatarBusy = false,
   onAvatarClick,
@@ -425,6 +376,8 @@ export const ParticipantProfileContent = ({
   onAvatarClick?: () => void;
   headerActions?: ReactNode;
 }) => {
+  void _mode;
+
   const [openGymId, setOpenGymId] = useState<string | null>(data.gymRouteGroups[0]?.gym.id ?? null);
 
   useEffect(() => {
@@ -444,7 +397,10 @@ export const ParticipantProfileContent = ({
   return (
     <div className="mx-auto max-w-md space-y-6">
       <section className="relative pb-2">
-        <StitchCard tone="navy" className="overflow-hidden rounded-[2rem] px-5 pb-16 pt-8 text-center text-[#f2dcab] sm:px-6">
+        <StitchCard
+          tone="navy"
+          className="stitch-radius-hero overflow-hidden px-5 pb-16 pt-8 text-center text-[#f2dcab] sm:px-6"
+        >
           <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#a15523]/10 blur-3xl" />
           <AvatarCard
             name={data.displayName}
@@ -466,7 +422,10 @@ export const ParticipantProfileContent = ({
           {headerActions ? <div className="mt-5 flex flex-wrap justify-center gap-3">{headerActions}</div> : null}
         </StitchCard>
 
-        <StitchCard tone="cream" className="-mt-8 mx-4 rounded-[1.3rem] p-5 shadow-[0_18px_30px_rgba(0,0,0,0.08)]">
+        <StitchCard
+          tone="cream"
+          className="stitch-radius-content -mt-8 mx-4 p-5 shadow-[0_18px_30px_rgba(0,0,0,0.08)]"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.52)]">
@@ -490,29 +449,49 @@ export const ParticipantProfileContent = ({
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        <StitchCard tone="surface" className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4">
-          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">Gesamtpunkte</div>
+        <StitchCard
+          tone="surface"
+          className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4"
+        >
+          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">
+            Gesamtpunkte
+          </div>
           <div className="mt-3 font-['Space_Grotesk'] text-3xl font-bold leading-none text-[#002637]">
             {formatMetric(data.points)}
           </div>
         </StitchCard>
 
-        <StitchCard tone="surface" className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4">
-          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">Routen geloggt</div>
+        <StitchCard
+          tone="surface"
+          className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4"
+        >
+          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">
+            Routen geloggt
+          </div>
           <div className="mt-3 font-['Space_Grotesk'] text-3xl font-bold leading-none text-[#002637]">
             {formatMetric(data.routesLogged)}
           </div>
         </StitchCard>
 
-        <StitchCard tone="surface" className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4">
-          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">Flash Rate</div>
+        <StitchCard
+          tone="surface"
+          className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4"
+        >
+          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">
+            Flash Rate
+          </div>
           <div className="mt-3 font-['Space_Grotesk'] text-3xl font-bold leading-none text-[#a15523]">
             {percentFormatter.format(data.flashRate)}%
           </div>
         </StitchCard>
 
-        <StitchCard tone="surface" className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4">
-          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">Durchschnitt</div>
+        <StitchCard
+          tone="surface"
+          className="rounded-[1.1rem] border-b border-[rgba(0,38,55,0.08)] bg-[#f5f3f0] p-4"
+        >
+          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(0,38,55,0.46)]">
+            Durchschnitt
+          </div>
           <div className="mt-3 font-['Space_Grotesk'] text-3xl font-bold leading-none text-[#002637]">
             {decimalFormatter.format(data.averagePoints)}
           </div>
@@ -532,7 +511,7 @@ export const ParticipantProfileContent = ({
         </div>
 
         {data.gymRouteGroups.length === 0 ? (
-          <StitchCard tone="surface" className="p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+          <StitchCard tone="surface" className="stitch-radius-content p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
             Noch keine Hallen mit geloggten Routen vorhanden.
           </StitchCard>
         ) : (

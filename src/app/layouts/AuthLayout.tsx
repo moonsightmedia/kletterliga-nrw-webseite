@@ -1,8 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { cn } from "@/lib/utils";
 
 export const AuthLayout = () => {
+  useMarkAppStartupSplashSeen();
+
   const location = useLocation();
   const isLoginRoute = location.pathname === "/app/login";
   const isRegisterRoute = location.pathname === "/app/register";

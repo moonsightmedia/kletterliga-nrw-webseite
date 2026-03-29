@@ -6,6 +6,31 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
+const allowedImageProxyHosts = [
+  "cdninstagram.com",
+  ".cdninstagram.com",
+  "fbcdn.net",
+  ".fbcdn.net",
+  "lookaside.instagram.com",
+];
+
+function isAllowedInstagramAssetUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    return allowedImageProxyHosts.some((candidate) =>
+      candidate.startsWith(".") ? hostname.endsWith(candidate) : hostname === candidate,
+    );
+  } catch {
+    return false;
+  }
+}
+
 type InstagramPost = {
   id: string;
   caption: string | null;
@@ -19,6 +44,23 @@ type InstagramPost = {
   username?: string;
 };
 
+type InstagramGraphPost = {
+  id: string;
+  caption?: string | null;
+  media_type: InstagramPost["media_type"];
+  media_url: string;
+  permalink: string;
+  thumbnail_url?: string;
+  timestamp: string;
+  like_count?: number;
+  comments_count?: number;
+  username?: string;
+};
+
+type InstagramGraphResponse = {
+  data?: InstagramGraphPost[];
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -30,13 +72,26 @@ serve(async (req) => {
     // Proxy für Bilder: /get-instagram-feed?image=<url>
     const imageUrl = url.searchParams.get("image");
     if (imageUrl) {
+      if (!isAllowedInstagramAssetUrl(imageUrl)) {
+        return new Response("Image host not allowed", { status: 400, headers: corsHeaders });
+      }
+
       try {
         const imageResponse = await fetch(imageUrl);
         if (!imageResponse.ok) {
           return new Response("Image not found", { status: 404, headers: corsHeaders });
         }
+
+        if (!isAllowedInstagramAssetUrl(imageResponse.url || imageUrl)) {
+          return new Response("Redirect host not allowed", { status: 400, headers: corsHeaders });
+        }
+
+        const contentType = imageResponse.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().startsWith("image/")) {
+          return new Response("Only image responses are allowed", { status: 415, headers: corsHeaders });
+        }
+
         const imageData = await imageResponse.arrayBuffer();
-        const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
         return new Response(imageData, {
           status: 200,
           headers: {
@@ -72,7 +127,7 @@ serve(async (req) => {
     
     let apiUrl: string;
     let response: Response;
-    let data: any;
+    let data: InstagramGraphResponse;
 
     if (hashtag) {
       // Hashtag-basierte Suche
@@ -159,7 +214,7 @@ serve(async (req) => {
     }
     
     // Extract posts from response
-    const posts: InstagramPost[] = (data.data || []).map((post: any) => {
+    const posts: InstagramPost[] = (data.data || []).map((post) => {
       // Die Instagram Graph API gibt like_count und comments_count nur zurück,
       // wenn der Account ein Business/Creator Account ist und die Berechtigungen vorhanden sind
       // Falls die Felder fehlen, werden sie als undefined gesetzt

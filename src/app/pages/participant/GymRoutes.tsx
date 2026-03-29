@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Circle, Lock, Rocket, Trophy } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { useParticipantGymDetailQuery } from "@/app/pages/participant/participantQueries";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
-import { checkGymCodeRedeemed, getGym, listResultsForUser, listRoutesByGym } from "@/services/appApi";
 import type { Gym, Result, Route } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
 
@@ -70,44 +71,8 @@ const GymRoutes = () => {
   const { gymId } = useParams();
   const { profile, user } = useAuth();
   const league = profile?.league || (user?.user_metadata?.league as string | undefined);
-  const [gym, setGym] = useState<Gym | null>(null);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!gymId || !profile?.id) return;
-    let active = true;
-
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [gymResult, routesResult, resultsResult, redeemedResult] = await Promise.all([
-          getGym(gymId),
-          listRoutesByGym(gymId),
-          listResultsForUser(profile.id),
-          checkGymCodeRedeemed(gymId, profile.id),
-        ]);
-
-        if (!active) return;
-        setGym(gymResult.data ?? null);
-        setRoutes(routesResult.data ?? []);
-        setResults(resultsResult.data ?? []);
-        setCodeRedeemed(Boolean(redeemedResult.data));
-      } catch (error) {
-        console.error("Failed to load gym routes", error);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [gymId, profile?.id]);
+  const { gym, routes, results, codeRedeemed, loading, error } =
+    useParticipantGymDetailQuery(gymId, profile?.id);
 
   const resultMap = useMemo(
     () =>
@@ -151,7 +116,16 @@ const GymRoutes = () => {
   }, [activeLeague, currentRoutes]);
 
   if (loading) {
-    return <div className="px-6 pt-6 text-sm text-[rgba(242,220,171,0.74)]">Routen werden geladen...</div>;
+    return (
+      <ParticipantStateCard
+        title="Routen laden"
+        description="Die Routen dieser Halle werden gerade für den Teilnehmerbereich vorbereitet."
+      />
+    );
+  }
+
+  if (error) {
+    return <ParticipantStateCard title="Routen nicht verfügbar" description={error} />;
   }
 
   if (!gym) {
@@ -159,7 +133,7 @@ const GymRoutes = () => {
       <StitchCard tone="navy" className="mx-4 mt-6 p-6">
         <div className="stitch-headline text-2xl text-[#f2dcab]">Halle nicht gefunden</div>
         <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-          Fuer diese Halle konnten keine Routen geladen werden.
+          Für diese Halle konnten keine Routen geladen werden.
         </p>
       </StitchCard>
     );
@@ -238,12 +212,12 @@ const GymRoutes = () => {
               <div className="space-y-3">
                 <div className="text-lg font-semibold text-[#002637]">Diese Halle ist noch gesperrt</div>
                 <p className="text-sm leading-6 text-[rgba(27,28,26,0.66)]">
-                  Du siehst die Routen bereits, kannst Ergebnisse aber erst nach dem Einloesen des Hallencodes
+                  Du siehst die Routen bereits, kannst Ergebnisse aber erst nach dem Einlösen des Hallencodes
                   speichern.
                 </p>
                 <StitchButton asChild size="sm">
                   <Link to={`/app/gyms/redeem?gymId=${encodeURIComponent(gym.id)}`}>
-                    Code einloesen
+                    Code einlösen
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </StitchButton>
@@ -315,7 +289,7 @@ const GymRoutes = () => {
             <StitchCard tone="surface" className="p-6">
               <div className="stitch-headline text-2xl text-[#002637]">Noch keine Routen vorhanden</div>
               <p className="mt-3 text-sm leading-6 text-[rgba(27,28,26,0.66)]">
-                Fuer diese Halle wurden aktuell noch keine Routen hinterlegt.
+                Für diese Halle wurden aktuell noch keine Routen hinterlegt.
               </p>
             </StitchCard>
           )}

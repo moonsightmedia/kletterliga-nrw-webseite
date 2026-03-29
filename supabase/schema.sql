@@ -136,6 +136,10 @@ create table if not exists public.finale_registrations (
 create table if not exists public.admin_settings (
   id uuid primary key default gen_random_uuid(),
   season_year text,
+  account_creation_opens_at timestamptz,
+  app_unlock_at timestamptz,
+  force_account_creation_open boolean default false,
+  force_participant_unlock boolean default false,
   qualification_start date,
   qualification_end date,
   stage_months text[],
@@ -163,10 +167,18 @@ alter table public.admin_settings add column if not exists age_cutoff_date date;
 alter table public.admin_settings add column if not exists preparation_start date;
 alter table public.admin_settings add column if not exists preparation_end date;
 alter table public.admin_settings add column if not exists stages jsonb;
+alter table public.admin_settings add column if not exists account_creation_opens_at timestamptz;
+alter table public.admin_settings add column if not exists app_unlock_at timestamptz;
+alter table public.admin_settings add column if not exists force_account_creation_open boolean default false;
+alter table public.admin_settings add column if not exists force_participant_unlock boolean default false;
 
 -- Initiale Saison-Einstellungen für 2026 setzen (nur wenn noch keine vorhanden)
 insert into public.admin_settings (
   season_year,
+  account_creation_opens_at,
+  app_unlock_at,
+  force_account_creation_open,
+  force_participant_unlock,
   qualification_start,
   qualification_end,
   preparation_start,
@@ -184,6 +196,10 @@ insert into public.admin_settings (
 )
 select
   '2026',
+  '2026-04-01T00:00:00+02:00',
+  '2026-05-01T00:00:00+02:00',
+  false,
+  false,
   '2026-05-01',
   '2026-09-13',
   '2026-04-15',

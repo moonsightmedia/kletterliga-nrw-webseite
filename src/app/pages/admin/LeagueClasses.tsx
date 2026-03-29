@@ -31,7 +31,7 @@ const LeagueClasses = () => {
     // Zähle Teilnehmer pro Klasse
     profiles.forEach((profile) => {
       const className = getClassName(profile.birth_date, profile.gender);
-      if (className && counts.hasOwnProperty(className)) {
+      if (className && Object.prototype.hasOwnProperty.call(counts, className)) {
         counts[className]++;
       }
     });

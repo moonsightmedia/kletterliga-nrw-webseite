@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, CheckCircle2, Link2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatUnlockDate } from "@/config/launch";
+import { formatUnlockDate, hasParticipantLaunchStarted } from "@/config/launch";
 import { supabase } from "@/services/supabase";
 
 const EmailConfirm = () => {
@@ -12,6 +12,7 @@ const EmailConfirm = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isMagicLink, setIsMagicLink] = useState(false);
   const unlockDate = formatUnlockDate();
+  const participantLaunchStarted = hasParticipantLaunchStarted();
 
   useEffect(() => {
     const handleEmailConfirmation = async () => {
@@ -31,7 +32,7 @@ const EmailConfirm = () => {
         if (data.session) {
           setStatus("success");
           setTimeout(() => {
-            navigate("/app/login?confirmed=true", { replace: true });
+            navigate("/app/profile", { replace: true });
           }, 2000);
         } else {
           setStatus("error");
@@ -57,10 +58,10 @@ const EmailConfirm = () => {
         </div>
         <div className="mt-5 space-y-3">
           <h1 className="font-headline text-4xl leading-[0.96] text-primary">
-            {isMagicLink ? "Wir melden dich gerade an." : "Wir prüfen gerade deine Bestätigung."}
+            {isMagicLink ? "Wir melden dich gerade an." : "Wir bestätigen gerade deine E-Mail."}
           </h1>
           <p className="text-base leading-7 text-muted-foreground">
-            Danach leiten wir dich direkt wieder in deinen Login-Flow zurück.
+            Danach leiten wir dich direkt in dein Profil weiter.
           </p>
         </div>
       </section>
@@ -75,7 +76,7 @@ const EmailConfirm = () => {
               </span>
             </div>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Einen kurzen Moment bitte. Du wirst automatisch weitergeleitet.
+              Einen kurzen Moment bitte. Dein Profil öffnet sich automatisch.
             </p>
           </div>
         )}
@@ -90,11 +91,14 @@ const EmailConfirm = () => {
                 </p>
                 {!isMagicLink && (
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Profil und Dashboard sind jetzt direkt nutzbar. Hallen, Codes, Ranglisten und
-                    weitere Liga-Bereiche werden am {unlockDate} freigeschaltet.
+                    {participantLaunchStarted
+                      ? "Dein Profil ist jetzt direkt nutzbar. Hallen, Codes, Ranglisten und weitere Liga-Bereiche sind bereits offen."
+                      : `Dein Profil ist jetzt direkt nutzbar. Hallen, Codes, Ranglisten und weitere Liga-Bereiche werden am ${unlockDate} freigeschaltet.`}
                   </p>
                 )}
-                <p className="text-sm leading-6 text-muted-foreground">Du wirst gleich weitergeleitet...</p>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Du wirst jetzt direkt in dein Profil weitergeleitet...
+                </p>
               </div>
             </div>
           </div>
@@ -107,8 +111,9 @@ const EmailConfirm = () => {
               <div className="flex items-start gap-3">
                 <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Auch nach erfolgreicher Bestätigung bleiben Hallen, Codes, Ranglisten und weitere
-                  Liga-Funktionen bis zum {unlockDate} gesperrt.
+                  {participantLaunchStarted
+                    ? "Nach erfolgreicher Bestätigung sind Hallen, Codes, Ranglisten und weitere Liga-Funktionen direkt verfügbar."
+                    : `Auch nach erfolgreicher Bestätigung bleiben Hallen, Codes, Ranglisten und weitere Liga-Funktionen bis zum ${unlockDate} gesperrt.`}
                 </p>
               </div>
             </div>

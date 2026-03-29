@@ -2,6 +2,7 @@ import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supab
 import type {
   AdminSettings,
   ChangeRequest,
+  DataChangeAudit,
   FinaleRegistration,
   Gym,
   GymAdmin,
@@ -18,6 +19,20 @@ const missingSupabaseError = () => ({
   message: "Supabase ist lokal nicht konfiguriert. Lege VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY in .env.local an.",
 });
 
+type ArchiveQueryOptions = {
+  includeArchived?: boolean;
+};
+
+type AuditListOptions = {
+  entityType?: DataChangeAudit["entity_type"];
+  entityId?: string;
+  limit?: number;
+};
+
+const shouldExcludeArchived = (options?: ArchiveQueryOptions) => !options?.includeArchived;
+
+const mapIds = <T extends { id: string }>(rows: T[] | null | undefined) => new Set((rows ?? []).map((row) => row.id));
+
 export async function fetchProfile(profileId: string) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
@@ -32,39 +47,68 @@ export async function upsertProfile(profile: Partial<Profile> & { id: string }) 
   return supabase.from("profiles").upsert(profile).select("*").single<Profile>();
 }
 
-export async function listGyms() {
+export async function listGyms(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  return supabase.from("gyms").select("*").order("name").returns<Gym[]>();
+  let query = supabase.from("gyms").select("*").order("name");
+  if (shouldExcludeArchived(options)) {
+    query = query.is("archived_at", null);
+  }
+  return query.returns<Gym[]>();
 }
 
-export async function getGym(gymId: string) {
+export async function getGym(gymId: string, options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  const { data, error } = await supabase
-    .from("gyms")
-    .select("*")
-    .eq("id", gymId)
-    .limit(1)
-    .returns<Gym[]>();
+  let query = supabase.from("gyms").select("*").eq("id", gymId).limit(1);
+  if (shouldExcludeArchived(options)) {
+    query = query.is("archived_at", null);
+  }
+  const { data, error } = await query.returns<Gym[]>();
   const single = data?.[0] ?? null;
   return { data: single, error };
 }
 
-export async function listRoutesByGym(gymId: string) {
+export async function listRoutesByGym(gymId: string, options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
+  }
+  if (shouldExcludeArchived(options)) {
+    const { data: gym, error } = await getGym(gymId);
+    if (error) {
+      return { data: null, error };
+    }
+    if (!gym) {
+      return { data: [], error: null };
+    }
   }
   return supabase.from("routes").select("*").eq("gym_id", gymId).order("code").returns<Route[]>();
 }
 
-export async function listRoutes() {
+export async function listRoutes(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  return supabase.from("routes").select("*").returns<Route[]>();
+  const routesResult = await supabase.from("routes").select("*").returns<Route[]>();
+  if (!shouldExcludeArchived(options)) {
+    return routesResult;
+  }
+
+  const gymsResult = await listGyms();
+  if (routesResult.error) {
+    return { data: null, error: routesResult.error };
+  }
+  if (gymsResult.error) {
+    return { data: null, error: gymsResult.error };
+  }
+
+  const activeGymIds = mapIds(gymsResult.data);
+  return {
+    data: (routesResult.data ?? []).filter((route) => activeGymIds.has(route.gym_id)),
+    error: null,
+  };
 }
 
 export async function createRoute(route: Omit<Route, "id" | "created_at">) {
@@ -79,20 +123,83 @@ export async function deleteRoute(routeId: string) {
   return supabase.from("routes").delete().eq("id", routeId);
 }
 
-export async function listResultsForUser(profileId: string) {
-  return supabase
+export async function listResultsForUser(profileId: string, options?: ArchiveQueryOptions) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const resultsResult = await supabase
     .from("results")
     .select("*")
     .eq("profile_id", profileId)
     .returns<Result[]>();
+  if (!shouldExcludeArchived(options)) {
+    return resultsResult;
+  }
+
+  const [profileResult, routesResult] = await Promise.all([
+    supabase.from("profiles").select("id").eq("id", profileId).is("archived_at", null).maybeSingle<{ id: string }>(),
+    listRoutes(),
+  ]);
+
+  if (resultsResult.error) {
+    return { data: null, error: resultsResult.error };
+  }
+  if (profileResult.error) {
+    return { data: null, error: profileResult.error };
+  }
+  if (routesResult.error) {
+    return { data: null, error: routesResult.error };
+  }
+  if (!profileResult.data) {
+    return { data: [], error: null };
+  }
+
+  const activeRouteIds = mapIds(routesResult.data);
+  return {
+    data: (resultsResult.data ?? []).filter((result) => activeRouteIds.has(result.route_id)),
+    error: null,
+  };
 }
 
-export async function listResults() {
-  return supabase.from("results").select("*").returns<Result[]>();
+export async function listResults(options?: ArchiveQueryOptions) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const resultsResult = await supabase.from("results").select("*").returns<Result[]>();
+  if (!shouldExcludeArchived(options)) {
+    return resultsResult;
+  }
+
+  const [profilesResult, routesResult] = await Promise.all([listProfiles(), listRoutes()]);
+  if (resultsResult.error) {
+    return { data: null, error: resultsResult.error };
+  }
+  if (profilesResult.error) {
+    return { data: null, error: profilesResult.error };
+  }
+  if (routesResult.error) {
+    return { data: null, error: routesResult.error };
+  }
+
+  const activeProfileIds = mapIds(profilesResult.data);
+  const activeRouteIds = mapIds(routesResult.data);
+  return {
+    data: (resultsResult.data ?? []).filter(
+      (result) => activeProfileIds.has(result.profile_id) && activeRouteIds.has(result.route_id),
+    ),
+    error: null,
+  };
 }
 
-export async function listProfiles() {
-  return supabase.from("profiles").select("*").returns<Profile[]>();
+export async function listProfiles(options?: ArchiveQueryOptions) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  let query = supabase.from("profiles").select("*");
+  if (shouldExcludeArchived(options)) {
+    query = query.is("archived_at", null);
+  }
+  return query.returns<Profile[]>();
 }
 
 export async function updateProfile(profileId: string, patch: Partial<Profile>) {
@@ -107,6 +214,45 @@ export async function updateProfile(profileId: string, patch: Partial<Profile>) 
     return { data: null, error: { message: "Profil nicht gefunden oder keine Berechtigung", code: "PGRST116" } };
   }
   return { data, error: null };
+}
+
+export async function archiveProfile(profileId: string, reason?: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const query = supabase.rpc("archive_profile", {
+    p_profile_id: profileId,
+    p_reason: reason ?? null,
+  });
+  const { data, error } = await query.single<Profile>();
+  return { data, error };
+}
+
+export async function restoreProfile(profileId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const { data, error } = await supabase.rpc("restore_profile", {
+    p_profile_id: profileId,
+  }).single<Profile>();
+  return { data, error };
+}
+
+export async function listAuditEntries(options?: AuditListOptions) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  let query = supabase.from("data_change_audit").select("*").order("created_at", { ascending: false });
+  if (options?.entityType) {
+    query = query.eq("entity_type", options.entityType);
+  }
+  if (options?.entityId) {
+    query = query.eq("entity_id", options.entityId);
+  }
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+  return query.returns<DataChangeAudit[]>();
 }
 
 export async function deleteProfile(profileId: string) {
@@ -372,6 +518,27 @@ export async function updateGym(gymId: string, patch: Partial<Gym>) {
   return { data: single, error };
 }
 
+export async function archiveGym(gymId: string, reason?: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const { data, error } = await supabase.rpc("archive_gym", {
+    p_gym_id: gymId,
+    p_reason: reason ?? null,
+  }).single<Gym>();
+  return { data, error };
+}
+
+export async function restoreGym(gymId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  const { data, error } = await supabase.rpc("restore_gym", {
+    p_gym_id: gymId,
+  }).single<Gym>();
+  return { data, error };
+}
+
 export async function deleteGym(gymId: string) {
   const {
     data: { session },
@@ -449,24 +616,23 @@ export async function inviteGymAdmin(email: string, skipEmail: boolean = false) 
       };
     }
     
-    console.log("inviteGymAdmin success:", data);
     return {
       data,
       error: null,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("inviteGymAdmin exception:", error);
     return {
       data: null,
       error: {
-        message: error?.message || "Einladung konnte nicht gesendet werden",
+        message: error instanceof Error ? error.message : "Einladung konnte nicht gesendet werden",
       },
     };
   }
 }
 
 export async function getGymInviteByToken(token: string) {
-  return supabase.from("gym_invites").select("*").eq("token", token).maybeSingle();
+  return fetchGymInvite(token);
 }
 
 export async function fetchGymInvite(token: string) {
@@ -506,6 +672,22 @@ export async function deleteGymAdmin(mappingId: string) {
 }
 
 export async function listAdminSettings() {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    const { data, error } = await supabase.rpc("get_public_admin_settings").maybeSingle<AdminSettings>();
+    return {
+      data: data ? [data] : [],
+      error,
+    };
+  }
+
   return supabase.from("admin_settings").select("*").order("updated_at", { ascending: false }).returns<AdminSettings[]>();
 }
 

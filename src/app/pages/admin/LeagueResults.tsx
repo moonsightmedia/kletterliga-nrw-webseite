@@ -1,16 +1,51 @@
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { listResults, listProfiles, listRoutes, listGyms } from "@/services/appApi";
-import type { Result, Profile, Route, Gym } from "@/services/appTypes";
-import { ClipboardList, Search, X, MessageSquare, AlertTriangle, MessageCircle } from "lucide-react";
+import { listAuditEntries, listGyms, listProfiles, listResults, listRoutes } from "@/services/appApi";
+import type { DataChangeAudit, Gym, Profile, Result, Route } from "@/services/appTypes";
+import { ClipboardList, History, MessageCircle, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type ResultWithDetails = Result & {
   profile: Profile | null;
   route: Route | null;
   gym: Gym | null;
+};
+
+const AUDIT_LABELS: Record<string, string> = {
+  points: "Punkte",
+  flash: "Flash",
+  status: "Status",
+  rating: "Bewertung",
+  feedback: "Feedback",
+};
+
+const formatDateTime = (value: string | null | undefined) =>
+  value ? new Date(value).toLocaleString("de-DE") : "—";
+
+const formatAuditValue = (value: unknown) => {
+  if (typeof value === "boolean") return value ? "Ja" : "Nein";
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+};
+
+const getAuditChanges = (entry: DataChangeAudit) => {
+  const before = entry.before_data ?? {};
+  const after = entry.after_data ?? {};
+
+  if (entry.action === "insert") {
+    return ["Ergebnis angelegt"];
+  }
+
+  return Object.entries(AUDIT_LABELS)
+    .filter(([key]) => (before as Record<string, unknown>)[key] !== (after as Record<string, unknown>)[key])
+    .map(([key, label]) => {
+      const previous = formatAuditValue((before as Record<string, unknown>)[key]);
+      const next = formatAuditValue((after as Record<string, unknown>)[key]);
+      return `${label}: ${previous} → ${next}`;
+    });
 };
 
 const LeagueResults = () => {
@@ -21,88 +56,100 @@ const LeagueResults = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedFeedback, setSelectedFeedback] = useState<{ text: string; route: string; profile: string } | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<{ result: ResultWithDetails; entries: DataChangeAudit[] } | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       const [{ data: resultsData }, { data: profilesData }, { data: routesData }, { data: gymsData }] = await Promise.all([
         listResults(),
-        listProfiles(),
-        listRoutes(),
-        listGyms(),
+        listProfiles({ includeArchived: true }),
+        listRoutes({ includeArchived: true }),
+        listGyms({ includeArchived: true }),
       ]);
 
-      if (resultsData) setResults(resultsData);
-      if (profilesData) {
-        const profileMap = new Map<string, Profile>();
-        profilesData.forEach((p) => profileMap.set(p.id, p));
-        setProfiles(profileMap);
-      }
-      if (routesData) {
-        const routeMap = new Map<string, Route>();
-        routesData.forEach((r) => routeMap.set(r.id, r));
-        setRoutes(routeMap);
-      }
-      if (gymsData) {
-        const gymMap = new Map<string, Gym>();
-        gymsData.forEach((g) => gymMap.set(g.id, g));
-        setGyms(gymMap);
-      }
+      setResults(resultsData ?? []);
+      setProfiles(new Map((profilesData ?? []).map((profile) => [profile.id, profile])));
+      setRoutes(new Map((routesData ?? []).map((route) => [route.id, route])));
+      setGyms(new Map((gymsData ?? []).map((gym) => [gym.id, gym])));
       setLoading(false);
     };
-    loadData();
+
+    void loadData();
   }, []);
 
-  const resultsWithDetails = useMemo((): ResultWithDetails[] => {
-    return results.map((result) => {
-      const profile = profiles.get(result.profile_id) ?? null;
-      const route = routes.get(result.route_id) ?? null;
-      const gym = route ? gyms.get(route.gym_id) ?? null : null;
-
-      return {
-        ...result,
-        profile,
-        route,
-        gym,
-      };
-    });
-  }, [results, profiles, routes, gyms]);
+  const resultsWithDetails = useMemo<ResultWithDetails[]>(
+    () =>
+      results.map((result) => {
+        const profile = profiles.get(result.profile_id) ?? null;
+        const route = routes.get(result.route_id) ?? null;
+        const gym = route ? gyms.get(route.gym_id) ?? null : null;
+        return { ...result, profile, route, gym };
+      }),
+    [results, profiles, routes, gyms],
+  );
 
   const filtered = useMemo(() => {
-    let filteredResults = resultsWithDetails;
+    const query = search.trim().toLowerCase();
+    const filteredResults = !query
+      ? resultsWithDetails
+      : resultsWithDetails.filter((result) => {
+          const profileName = `${result.profile?.first_name ?? ""} ${result.profile?.last_name ?? ""}`.toLowerCase();
+          const email = (result.profile?.email ?? "").toLowerCase();
+          const gymName = (result.gym?.name ?? "").toLowerCase();
+          const routeCode = (result.route?.code ?? "").toLowerCase();
+          const feedback = (result.feedback ?? "").toLowerCase();
+          return (
+            profileName.includes(query) ||
+            email.includes(query) ||
+            gymName.includes(query) ||
+            routeCode.includes(query) ||
+            feedback.includes(query)
+          );
+        });
 
-    // Suche
-    if (search.trim()) {
-      const query = search.toLowerCase();
-      filteredResults = filteredResults.filter((r) => {
-        const profileName = `${r.profile?.first_name ?? ""} ${r.profile?.last_name ?? ""}`.toLowerCase();
-        const email = (r.profile?.email ?? "").toLowerCase();
-        const gymName = (r.gym?.name ?? "").toLowerCase();
-        const routeCode = (r.route?.code ?? "").toLowerCase();
-        const feedback = (r.feedback ?? "").toLowerCase();
-        return profileName.includes(query) || email.includes(query) || gymName.includes(query) || routeCode.includes(query) || feedback.includes(query);
-      });
-    }
-
-    // Sortiere nach updated_at oder created_at (neueste zuerst)
-    return filteredResults.sort((a, b) => {
+    return [...filteredResults].sort((a, b) => {
       const dateA = a.updated_at || a.created_at;
       const dateB = b.updated_at || b.created_at;
-      const timeA = dateA ? new Date(dateA).getTime() : 0;
-      const timeB = dateB ? new Date(dateB).getTime() : 0;
-      return timeB - timeA;
+      return new Date(dateB ?? 0).getTime() - new Date(dateA ?? 0).getTime();
     });
   }, [resultsWithDetails, search]);
 
+  const openHistory = async (result: ResultWithDetails) => {
+    setHistoryLoading(true);
+    setSelectedHistory({ result, entries: [] });
+    const { data, error } = await listAuditEntries({
+      entityType: "result",
+      entityId: result.id,
+      limit: 20,
+    });
+    if (error) {
+      setSelectedHistory({
+        result,
+        entries: [],
+      });
+    } else {
+      setSelectedHistory({
+        result,
+        entries: data ?? [],
+      });
+    }
+    setHistoryLoading(false);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              backgroundRepeat: "repeat",
+            }}
+          />
         </div>
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
@@ -117,35 +164,30 @@ const LeagueResults = () => {
                 </Badge>
               </div>
               <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
-                Übersicht aller eingetragenen Ergebnisse · {results.length} {results.length === 1 ? 'Ergebnis' : 'Ergebnisse'} gesamt
+                Aktive Ergebnisse mit Verlauf · {results.length} gesamt
               </p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Suche */}
       <Card className="p-4 md:p-6 border-2 border-border/60">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Input
             placeholder="Suche nach Name, E-Mail, Halle oder Route..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             className="flex-1 touch-manipulation"
           />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="p-2 hover:bg-accent rounded-md transition-colors touch-manipulation flex-shrink-0"
-            >
+          {search ? (
+            <button onClick={() => setSearch("")} className="p-2 hover:bg-accent rounded-md transition-colors touch-manipulation">
               <X className="h-4 w-4" />
             </button>
-          )}
+          ) : null}
         </div>
       </Card>
 
-      {/* Ergebnisse-Liste */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-primary">
@@ -160,20 +202,20 @@ const LeagueResults = () => {
         ) : filtered.length === 0 ? (
           <Card className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">
-              {search ? "Keine Ergebnisse gefunden." : "Noch keine Ergebnisse vorhanden."}
+              {search ? "Keine Ergebnisse gefunden." : "Noch keine aktiven Ergebnisse vorhanden."}
             </p>
           </Card>
         ) : (
           <div className="space-y-3">
             {filtered.map((result) => {
-              const profileName = result.profile
-                ? `${result.profile.first_name ?? ""} ${result.profile.last_name ?? ""}`.trim() || result.profile.email || "Unbekannt"
-                : "Unbekannt";
+              const profileName =
+                result.profile
+                  ? `${result.profile.first_name ?? ""} ${result.profile.last_name ?? ""}`.trim() || result.profile.email || "Unbekannt"
+                  : "Unbekannt";
               const gymName = result.gym?.name ?? "Unbekannte Halle";
               const routeCode = result.route?.code ?? "Unbekannte Route";
               const displayDate = result.updated_at || result.created_at;
-              const date = displayDate ? new Date(displayDate).toLocaleDateString("de-DE") : "-";
-              const isEdited = result.updated_at && result.updated_at !== result.created_at;
+              const isEdited = Boolean(result.updated_at && result.updated_at !== result.created_at);
 
               return (
                 <Card
@@ -184,52 +226,63 @@ const LeagueResults = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <div className="font-semibold text-primary text-base md:text-lg break-words">{profileName}</div>
-                        {result.flash && (
-                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 text-xs flex-shrink-0">
+                        {result.flash ? (
+                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 text-xs">
                             Flash
                           </Badge>
-                        )}
-                        {isEdited && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            Bearbeitet
-                          </Badge>
-                        )}
+                        ) : null}
+                        {isEdited ? <Badge variant="outline" className="text-xs">Bearbeitet</Badge> : null}
                       </div>
                       <div className="text-sm text-muted-foreground break-words">
-                        {gymName} · Route {routeCode} · {date}
-                        {isEdited && (
-                          <span className="ml-1 text-xs">(bearbeitet)</span>
-                        )}
+                        {gymName} · Route {routeCode} · {formatDateTime(displayDate)}
                       </div>
-                      {result.feedback && (
-                        <button
-                          onClick={() => setSelectedFeedback({
-                            text: result.feedback!,
-                            route: `${gymName} · Route ${routeCode}`,
-                            profile: profileName
-                          })}
-                          className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {result.feedback ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedFeedback({
+                                text: result.feedback ?? "",
+                                route: `${gymName} · Route ${routeCode}`,
+                                profile: profileName,
+                              })
+                            }
+                            className="gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Feedback
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void openHistory(result)}
+                          className="gap-2"
+                          aria-label={`Verlauf fuer Ergebnis ${routeCode} von ${profileName} anzeigen`}
                         >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          <span>Feedback anzeigen</span>
-                        </button>
-                      )}
+                          <History className="h-4 w-4" />
+                          Verlauf
+                        </Button>
+                      </div>
                     </div>
+
                     <div className="text-left md:text-right flex-shrink-0">
                       <div className="text-lg font-semibold text-secondary">{result.points}</div>
                       <div className="text-xs text-muted-foreground">Punkte</div>
-                      {result.rating !== null && result.rating !== undefined && (
+                      {result.rating !== null && result.rating !== undefined ? (
                         <div className="mt-1 flex items-center justify-end gap-0.5">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <div
                               key={star}
-                              className={`h-3 w-3 ${star <= result.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                              className={star <= result.rating ? "h-3 w-3 text-yellow-400" : "h-3 w-3 text-gray-300"}
                             >
                               ★
                             </div>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </Card>
@@ -239,8 +292,7 @@ const LeagueResults = () => {
         )}
       </div>
 
-      {/* Feedback Dialog */}
-      <Dialog open={!!selectedFeedback} onOpenChange={(open) => !open && setSelectedFeedback(null)}>
+      <Dialog open={Boolean(selectedFeedback)} onOpenChange={(open) => !open && setSelectedFeedback(null)}>
         <DialogContent className="max-w-2xl p-6">
           <DialogHeader className="space-y-3">
             <DialogTitle className="flex items-center gap-2 text-left">
@@ -253,10 +305,50 @@ const LeagueResults = () => {
           </DialogHeader>
           <div className="mt-6">
             <Card className="p-5 bg-muted/50 border-border/60">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {selectedFeedback?.text}
-              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{selectedFeedback?.text}</p>
             </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(selectedHistory)} onOpenChange={(open) => !open && setSelectedHistory(null)}>
+        <DialogContent className="max-w-3xl p-6">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="flex items-center gap-2 text-left">
+              <History className="h-5 w-5 text-primary flex-shrink-0" />
+              Ergebnisverlauf
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              {selectedHistory
+                ? `${selectedHistory.result.gym?.name ?? "Unbekannte Halle"} · Route ${selectedHistory.result.route?.code ?? "?"}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-3">
+            {historyLoading ? (
+              <Card className="p-6 border border-border/60">
+                <p className="text-sm text-muted-foreground">Verlauf wird geladen...</p>
+              </Card>
+            ) : selectedHistory?.entries.length ? (
+              selectedHistory.entries.map((entry) => {
+                const changes = getAuditChanges(entry);
+                return (
+                  <Card key={entry.id} className="p-4 border border-border/60 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="outline">{entry.action === "insert" ? "Angelegt" : "Aktualisiert"}</Badge>
+                      <div className="text-xs text-muted-foreground">{formatDateTime(entry.created_at)}</div>
+                    </div>
+                    <div className="space-y-1 text-sm text-foreground">
+                      {changes.length ? changes.map((change) => <p key={change}>{change}</p>) : <p>Keine Feldänderungen protokolliert.</p>}
+                    </div>
+                  </Card>
+                );
+              })
+            ) : (
+              <Card className="p-6 border border-border/60">
+                <p className="text-sm text-muted-foreground">Für dieses Ergebnis liegt noch kein Verlauf vor.</p>
+              </Card>
+            )}
           </div>
         </DialogContent>
       </Dialog>
