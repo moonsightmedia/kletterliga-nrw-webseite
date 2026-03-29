@@ -1,5 +1,6 @@
 const GYM_NAME_LINE_OVERRIDES: Record<string, string[]> = {
   Chimpanzodrome: ["Chimpanzo", "drome"],
+  "Chimpanzodrome Frechen": ["Chimpanzo", "drome"],
   "Kletterfabrik Köln": ["Kletter", "fabrik", "Köln"],
   "Kletterzentrum OWL": ["Kletter", "zentrum", "OWL"],
 };
