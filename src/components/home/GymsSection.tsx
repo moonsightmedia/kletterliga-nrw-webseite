@@ -78,9 +78,9 @@ export const GymsSection = () => {
                     fallbackClassName="text-xl group-hover:text-secondary-foreground md:text-2xl"
                   />
 
-                  <h3 className="mb-1 min-h-[3.5rem] flex-shrink-0 font-headline text-[clamp(1.2rem,3.2vw,1.95rem)] leading-[0.96] text-primary">
+                  <h3 className="mb-2 min-h-[3.4rem] max-w-full flex-shrink-0 font-headline text-[1.05rem] leading-[0.96] tracking-[-0.02em] text-primary sm:text-[1.35rem] md:text-[1.6rem]">
                     {formatGymNameLines(gym.name).map((line) => (
-                      <span key={line} className="block text-balance">
+                      <span key={line} className="block [overflow-wrap:anywhere]">
                         {line}
                       </span>
                     ))}
