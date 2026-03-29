@@ -15,6 +15,8 @@ import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfile
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useParticipantUserResultsQuery } from "@/app/pages/participant/participantQueries";
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
+import { toast } from "@/components/ui/use-toast";
+import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 import type { Gym, Result, Route, Stage } from "@/services/appTypes";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
@@ -127,6 +129,8 @@ const Home = () => {
     getFinaleDate,
     getFinaleEnabled,
   } = useSeasonSettings();
+  const { participantFeatureLocked: featureLocked, unlockDate } = useLaunchSettings();
+  const unlockDateLabel = formatUnlockDate(unlockDate);
 
   useEffect(() => {
     if (role === "gym_admin") {
@@ -391,6 +395,12 @@ const Home = () => {
   );
   const quickActionTarget = getFinaleEnabled() ? "/app/finale" : "/app/rankings";
   const quickActionLabel = getFinaleEnabled() ? "Finale" : "Rangliste";
+  const showLockedFeatureNotice = (featureLabel: string) => {
+    toast({
+      title: "Bereich noch gesperrt",
+      description: `${featureLabel} öffnen am ${unlockDateLabel}. Bis dahin bleibt dein Dashboard für Profil und Vorbereitung offen.`,
+    });
+  };
   const homeError = competitionError || userResultsError;
   const homeLoading = competitionLoading || userResultsLoading;
 
@@ -431,8 +441,21 @@ const Home = () => {
               </p>
             </div>
 
-            <StitchButton asChild className="w-full justify-center rounded-xl py-4 text-[0.82rem]">
-              <Link to="/app/gyms/redeem">
+            <StitchButton
+              asChild
+              className={`w-full justify-center rounded-xl py-4 text-[0.82rem] ${
+                featureLocked ? "opacity-80" : ""
+              }`}
+            >
+              <Link
+                to="/app/gyms/redeem"
+                onClick={(event) => {
+                  if (!featureLocked) return;
+                  event.preventDefault();
+                  showLockedFeatureNotice("Hallen-Codes");
+                }}
+                aria-disabled={featureLocked}
+              >
                 <QrCode className="h-4 w-4" />
                 Hallen-Code einlösen
               </Link>
@@ -631,12 +654,19 @@ const Home = () => {
                     <button
                       key={stage.key}
                       type="button"
-                      onClick={() => navigate(`/app/rankings?tab=stage&stage=${stage.key}`)}
+                      onClick={() => {
+                        if (featureLocked) {
+                          showLockedFeatureNotice("Ranglisten und Etappen");
+                          return;
+                        }
+                        navigate(`/app/rankings?tab=stage&stage=${stage.key}`);
+                      }}
                       className={`min-w-[210px] rounded-xl border p-4 text-left transition-all ${
                         isCurrent
                           ? "border-[#a15523] bg-[#a15523] text-white shadow-[0_18px_28px_rgba(161,85,35,0.18)]"
                           : "border-[rgba(242,220,171,0.12)] bg-[rgba(0,38,55,0.12)] text-[#f2dcab]"
-                      }`}
+                      } ${featureLocked ? "opacity-80" : ""}`}
+                      aria-disabled={featureLocked}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -685,7 +715,15 @@ const Home = () => {
             <div className="mt-5 grid gap-3">
               <Link
                 to="/app/gyms"
-                className="flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
+                onClick={(event) => {
+                  if (!featureLocked) return;
+                  event.preventDefault();
+                  showLockedFeatureNotice("Partnerhallen");
+                }}
+                className={`flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)] ${
+                  featureLocked ? "opacity-80" : ""
+                }`}
+                aria-disabled={featureLocked}
               >
                 <span className="flex items-center gap-3 font-semibold">
                   <MapPinned className="h-5 w-5 text-[#f2dcab]" />
@@ -696,7 +734,15 @@ const Home = () => {
 
               <Link
                 to={quickActionTarget}
-                className="flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)]"
+                onClick={(event) => {
+                  if (!featureLocked) return;
+                  event.preventDefault();
+                  showLockedFeatureNotice(quickActionLabel);
+                }}
+                className={`flex items-center justify-between rounded-xl bg-[rgba(0,38,55,0.14)] px-4 py-4 text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.08)] ${
+                  featureLocked ? "opacity-80" : ""
+                }`}
+                aria-disabled={featureLocked}
               >
                 <span className="flex items-center gap-3 font-semibold">
                   <Trophy className="h-5 w-5 text-[#f2dcab]" />
