@@ -12,6 +12,8 @@ set
   force_participant_unlock = coalesce(force_participant_unlock, false)
 where true;
 
+drop function if exists public.get_public_admin_settings();
+
 create or replace function public.get_public_admin_settings()
 returns table (
   id uuid,
