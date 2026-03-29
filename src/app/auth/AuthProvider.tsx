@@ -4,7 +4,8 @@ import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supab
 import { fetchProfile, upsertProfile } from "@/services/appApi";
 import type { Profile, UserRole } from "@/services/appTypes";
 import { trackAuthEvent } from "@/services/authTelemetry";
-import { formatAccountCreationOpenDate, isBeforeAccountCreationOpen } from "@/config/launch";
+import { ensureLaunchSettingsLoaded, formatAccountCreationOpenDate, isBeforeAccountCreationOpen } from "@/config/launch";
+import { markArchivedAccountNotice } from "@/app/auth/archivedAccountNotice";
 
 type AuthContextValue = {
   session: Session | null;
@@ -30,6 +31,18 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error ?? "");
+
+const isObfuscatedExistingUserResponse = (data: {
+  user?: { identities?: unknown[] | null } | null;
+  session?: Session | null;
+} | null | undefined) =>
+  Boolean(data?.user) &&
+  Array.isArray(data.user?.identities) &&
+  data.user.identities.length === 0 &&
+  !data.session;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -63,33 +76,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return result as T;
   };
 
+  const handleArchivedProfile = useCallback(async (archivedProfile: Profile) => {
+    markArchivedAccountNotice();
+    setProfile(null);
+    setSession(null);
+    setUser(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Archived account sign-out failed", error);
+    }
+    return { profile: archivedProfile, archived: true as const };
+  }, []);
+
   const loadProfile = useCallback(async (user: User, email?: string | null) => {
     try {
+      const profileSeed = buildProfileSeed(user, email);
       const profileResult = await withTimeout(fetchProfile(user.id), 4000, "Profile fetch");
       if (profileResult && !profileResult.error && profileResult.data) {
-        setProfile(profileResult.data);
-        return;
+        const fetchedProfile = profileResult.data;
+        if (fetchedProfile.archived_at) {
+          return handleArchivedProfile(fetchedProfile);
+        }
+        const missingSeedPatch: Partial<Profile> & { id: string } = { id: fetchedProfile.id };
+
+        if (!fetchedProfile.email && profileSeed.email) missingSeedPatch.email = profileSeed.email;
+        if (!fetchedProfile.first_name && profileSeed.first_name) missingSeedPatch.first_name = profileSeed.first_name;
+        if (!fetchedProfile.last_name && profileSeed.last_name) missingSeedPatch.last_name = profileSeed.last_name;
+        if (!fetchedProfile.birth_date && profileSeed.birth_date) missingSeedPatch.birth_date = profileSeed.birth_date;
+        if (!fetchedProfile.gender && profileSeed.gender) missingSeedPatch.gender = profileSeed.gender;
+        if (!fetchedProfile.home_gym_id && profileSeed.home_gym_id) missingSeedPatch.home_gym_id = profileSeed.home_gym_id;
+        if (!fetchedProfile.league && profileSeed.league) missingSeedPatch.league = profileSeed.league;
+        if (!fetchedProfile.role && profileSeed.role) missingSeedPatch.role = profileSeed.role;
+
+        if (Object.keys(missingSeedPatch).length > 1) {
+          const syncedProfile = await withTimeout(
+            upsertProfile(missingSeedPatch),
+            4000,
+            "Profile metadata sync",
+          );
+          if (syncedProfile && !syncedProfile.error && syncedProfile.data) {
+            setProfile(syncedProfile.data);
+            return { profile: syncedProfile.data, archived: false as const };
+          }
+        }
+
+        setProfile(fetchedProfile);
+        return { profile: fetchedProfile, archived: false as const };
       }
 
       // Create the profile from auth metadata once a real session exists.
       const upsertResult = await withTimeout(
-        upsertProfile(buildProfileSeed(user, email)),
+        upsertProfile(profileSeed),
         4000,
         "Profile upsert",
       );
       if (upsertResult && upsertResult.data) {
         setProfile(upsertResult.data);
-        return;
+        return { profile: upsertResult.data, archived: false as const };
       }
 
       const fresh = await withTimeout(fetchProfile(user.id), 4000, "Profile refetch");
-      setProfile(fresh?.data ?? null);
+      const freshProfile = fresh?.data ?? null;
+      if (freshProfile?.archived_at) {
+        return handleArchivedProfile(freshProfile);
+      }
+      setProfile(freshProfile);
+      return { profile: freshProfile, archived: false as const };
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn("Profile load failed", error);
       setProfile(null);
+      return { profile: null, archived: false as const };
     }
-  }, [buildProfileSeed]);
+  }, [buildProfileSeed, handleArchivedProfile]);
 
   useEffect(() => {
     let mounted = true;
@@ -149,9 +210,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   async function withSingleRetry<T>(operation: () => Promise<T>): Promise<T> {
     try {
       return await operation();
-    } catch (error: any) {
-      const msg = String(error?.message || '').toLowerCase();
-      const looksTransient = msg.includes('network') || msg.includes('fetch') || msg.includes('timeout') || msg.includes('connection');
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error).toLowerCase();
+      const looksTransient =
+        msg.includes("network") ||
+        msg.includes("fetch") ||
+        msg.includes("timeout") ||
+        msg.includes("connection");
       if (!looksTransient) throw error;
       await new Promise((resolve) => setTimeout(resolve, 450));
       return await operation();
@@ -252,15 +317,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(result.data.session);
         setUser(result.data.session.user ?? null);
         if (result.data.session.user) {
-          void loadProfile(result.data.session.user, result.data.session.user.email);
+          const loadedProfile = await loadProfile(result.data.session.user, result.data.session.user.email);
+          if (loadedProfile.archived) {
+            trackAuthEvent("signin_error", {
+              email,
+              error: "archived_account",
+              context: "profile_archived",
+            });
+            return { error: "Dieses Konto wurde archiviert. Bitte kontaktiere die Liga." };
+          }
         }
       }
       trackAuthEvent("signin_success", { email, context: "login_form" });
       return {};
-    } catch (error: any) {
+    } catch (error: unknown) {
       // eslint-disable-next-line no-console
       console.warn("Sign in failed", error);
-      trackAuthEvent("signin_error", { email, error: String(error?.message || error), context: "exception" });
+      trackAuthEvent("signin_error", { email, error: getErrorMessage(error), context: "exception" });
       return { error: "Login fehlgeschlagen. Bitte erneut versuchen." };
     }
   };
@@ -276,6 +349,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     league: "toprope" | "lead" | null;
   }) => {
     const { email, password, firstName, lastName, birthDate, gender, homeGymId, league } = payload;
+    await ensureLaunchSettingsLoaded();
     if (isBeforeAccountCreationOpen()) {
       return { error: `Die Registrierung wird am ${formatAccountCreationOpenDate()} freigeschaltet.` };
     }
@@ -317,6 +391,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // - Der bestehende User hat ein älteres `created_at` Datum
     // - Wir prüfen, ob der User gerade erst erstellt wurde (< 2 Sekunden alt)
     
+    if (isObfuscatedExistingUserResponse(data)) {
+      trackAuthEvent("signup_error", {
+        email,
+        error: "existing_confirmed_user_obfuscated_signup",
+        context: "supabase_signup",
+      });
+      return {
+        error:
+          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestätigungslink an.",
+      };
+    }
+
     if (!data.user) {
       // Kein User zurückgegeben - sollte eigentlich nicht passieren, aber sicherheitshalber prüfen
       trackAuthEvent("signup_error", { email, error: "missing_user_after_signup", context: "signup_response" });
@@ -348,9 +434,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       trackAuthEvent("reset_success", { email, context: "login_reset" });
       return {};
-    } catch (error: any) {
-      trackAuthEvent("reset_error", { email, error: String(error?.message || error), context: "exception" });
-      return { error: translateAuthError(String(error?.message || 'Fehler beim Senden des Passwort-Links')) };
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error) || "Fehler beim Senden des Passwort-Links";
+      trackAuthEvent("reset_error", { email, error: errorMessage, context: "exception" });
+      return { error: translateAuthError(errorMessage) };
     }
   };
 
@@ -367,9 +454,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       trackAuthEvent("resend_success", { email, context: "login_resend_confirmation" });
       return {};
-    } catch (error: any) {
-      trackAuthEvent("resend_error", { email, error: String(error?.message || error), context: "exception" });
-      return { error: translateAuthError(String(error?.message || 'Fehler beim Senden der Bestätigung')) };
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error) || "Fehler beim Senden der Bestätigung";
+      trackAuthEvent("resend_error", { email, error: errorMessage, context: "exception" });
+      return { error: translateAuthError(errorMessage) };
     }
   };
 

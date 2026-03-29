@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { handlePublicParticipantAccess } from "@/lib/publicParticipantAccess";
 import { getPublicRankings } from "@/services/appApi";
-import { getUnlockDate, isPublicRankingsEnabled } from "@/config/launch";
+import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 
 const ageGroups = ["U15", "Ü15", "Ü40"] as const;
 const getCategoryFromFilters = (age: typeof ageGroups[number], gender: "m" | "w") => {
@@ -44,7 +44,8 @@ const Ranglisten = () => {
 
   const apiLeague = league === "vorstieg" ? "lead" : "toprope";
   const category = getCategoryFromFilters(ageFilter, genderFilter);
-  const publicRankingsEnabled = isPublicRankingsEnabled();
+  const { publicRankingsEnabled, unlockDate } = useLaunchSettings();
+  const unlockDateLabel = formatUnlockDate(unlockDate);
 
   useEffect(() => {
     if (!publicRankingsEnabled) {
@@ -77,12 +78,6 @@ const Ranglisten = () => {
   const categoryLabel = getCategoryLabel(ageFilter, genderFilter);
 
   if (!publicRankingsEnabled) {
-    const unlockDate = getUnlockDate().toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-
     return (
       <PageLayout>
         <PageHeader title="RANGLISTEN" subtitle="Die Ranglisten gehen zum Saisonstart live." />
@@ -91,7 +86,7 @@ const Ranglisten = () => {
             <AnimatedSection animation="fade-up">
               <div className="max-w-3xl mx-auto bg-accent/30 p-6 md:p-8 text-center -skew-x-3">
                 <div className="skew-x-3 space-y-4">
-                  <h2 className="font-headline text-2xl md:text-3xl text-primary">RANGLISTEN AB {unlockDate}</h2>
+                  <h2 className="font-headline text-2xl md:text-3xl text-primary">RANGLISTEN AB {unlockDateLabel}</h2>
                   <p className="text-muted-foreground">
                     Die öffentliche Rangliste ist aktuell pausiert. Registrierung und Dashboard sind bereits verfügbar,
                     die Wettbewerbsbereiche werden zum Saisonstart freigeschaltet.

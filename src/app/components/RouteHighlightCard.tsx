@@ -53,7 +53,7 @@ export const RouteHighlightCard = ({
   return (
     <div
       className={cn(
-        "stitch-glass-card flex items-center justify-between gap-4 rounded-[1.4rem] p-5",
+        "stitch-glass-card flex items-center justify-between gap-4 rounded-xl p-5",
         interactive && "transition-colors hover:bg-[rgba(242,220,171,0.07)]",
         className,
       )}
@@ -61,7 +61,7 @@ export const RouteHighlightCard = ({
       <div className="flex min-w-0 items-center gap-4">
         <div
           className={cn(
-            "flex h-12 min-w-12 shrink-0 items-center justify-center rounded-[1rem] px-2",
+            "flex h-12 min-w-12 shrink-0 items-center justify-center rounded-xl px-2",
             accent
               ? "bg-[#a15523]/18 text-[#a15523]"
               : "bg-[rgba(0,38,55,0.14)] text-[#f2dcab]",

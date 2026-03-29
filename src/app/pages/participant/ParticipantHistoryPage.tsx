@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
-import {
-  ParticipantHistoryContent,
-  ParticipantStateCard,
-} from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantHistoryContent } from "@/app/pages/participant/ParticipantHistoryContent";
 import { buildParticipantProfileData } from "@/app/pages/participant/participantData";
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import type { Profile } from "@/services/appTypes";
@@ -69,28 +67,26 @@ const ParticipantHistoryPage = () => {
   if (loading) {
     return (
       <ParticipantStateCard
-        title="Verlauf laedt"
+        title="Verlauf lädt"
         description="Die Chronik wird gerade mit den letzten geloggten Routen aufgebaut."
       />
     );
   }
 
   if (error) {
-    return <ParticipantStateCard title="Verlauf nicht verfuegbar" description={error} />;
+    return <ParticipantStateCard title="Verlauf nicht verfügbar" description={error} />;
   }
 
   if (!participantData) {
     return (
       <ParticipantStateCard
-        title="Verlauf nicht verfuegbar"
+        title="Verlauf nicht verfügbar"
         description="Zu diesem Teilnehmer konnte keine Chronik geladen werden."
       />
     );
   }
 
-  const backHref = profileId ? `/app/rankings/profile/${profileId}` : "/app/profile";
-
-  return <ParticipantHistoryContent data={participantData} backHref={backHref} />;
+  return <ParticipantHistoryContent data={participantData} />;
 };
 
 export default ParticipantHistoryPage;

@@ -1,19 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronRight, MapPin, Users } from "lucide-react";
 import { StitchCard } from "@/app/components/StitchPrimitives";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import {
+  useParticipantUnlockedGymsQuery,
+} from "@/app/pages/participant/participantQueries";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { cn } from "@/lib/utils";
 import { useSeasonSettings } from "@/services/seasonSettings";
-import {
-  checkGymCodeRedeemed,
-  listGyms,
-  listProfiles,
-  listResults,
-  listResultsForUser,
-  listRoutes,
-} from "@/services/appApi";
-import type { Gym, Profile, Result, Route } from "@/services/appTypes";
+import type { Gym, Route } from "@/services/appTypes";
 
 const OFFICIAL_GYMS = new Set([
   "2T Lindlar",
@@ -52,10 +49,6 @@ const GYM_NAME_ALIASES: Record<string, string> = {
   "kletterzentrum owl": "OWL",
   "dav kletterzentrum siegerland": "OWL",
 };
-
-const isAbortError = (error: unknown) =>
-  error instanceof Error &&
-  (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
 const getCanonicalGymName = (name: string) => {
   const cleaned = name.trim().replace(/\s+/g, " ");
@@ -113,112 +106,46 @@ type DisplayGym = Gym & {
 const Gyms = () => {
   const { profile } = useAuth();
   const { getQualificationEnd } = useSeasonSettings();
-  const [gyms, setGyms] = useState<DisplayGym[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [userResults, setUserResults] = useState<Result[]>([]);
-  const [allResults, setAllResults] = useState<Result[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [unlockedGyms, setUnlockedGyms] = useState<Set<string>>(new Set());
+  const {
+    gyms: competitionGyms,
+    routes,
+    results: allResults,
+    profiles,
+    loading: competitionLoading,
+    error: competitionError,
+  } = useParticipantCompetitionData();
 
-  useEffect(() => {
-    let active = true;
+  const gyms = useMemo(
+    () =>
+      competitionGyms
+        .map((gym) => {
+          const canonicalName = getCanonicalGymName(gym.name);
+          return {
+            ...gym,
+            canonicalName,
+            logo_url: gym.logo_url ?? LOGO_FALLBACKS[canonicalName] ?? null,
+          };
+        })
+        .filter((gym) => OFFICIAL_GYMS.has(gym.canonicalName))
+        .reduce<DisplayGym[]>((acc, gym) => {
+          const index = acc.findIndex(
+            (existing) => gymKey(existing.canonicalName) === gymKey(gym.canonicalName),
+          );
+          if (index === -1) acc.push(gym);
+          return acc;
+        }, [])
+        .sort((a, b) => a.name.localeCompare(b.name, "de")),
+    [competitionGyms],
+  );
+  const gymIds = useMemo(() => gyms.map((gym) => gym.id), [gyms]);
 
-    const loadData = async () => {
-      try {
-        const [{ data: gymsData }, { data: routesData }, { data: profilesData }, { data: resultsData }] =
-          await Promise.all([listGyms(), listRoutes(), listProfiles(), listResults()]);
+  const {
+    unlockedGymIds,
+    loading: unlockedGymsLoading,
+    error: unlockedGymsError,
+  } = useParticipantUnlockedGymsQuery(profile?.id, gymIds);
 
-        if (!active) return;
-
-        const cleanedGyms = (gymsData ?? [])
-          .map((gym) => {
-            const canonicalName = getCanonicalGymName(gym.name);
-            return {
-              ...gym,
-              canonicalName,
-              logo_url: gym.logo_url ?? LOGO_FALLBACKS[canonicalName] ?? null,
-            };
-          })
-          .filter((gym) => OFFICIAL_GYMS.has(gym.canonicalName))
-          .reduce<DisplayGym[]>((acc, gym) => {
-            const index = acc.findIndex(
-              (existing) => gymKey(existing.canonicalName) === gymKey(gym.canonicalName),
-            );
-            if (index === -1) acc.push(gym);
-            return acc;
-          }, [])
-          .sort((a, b) => a.name.localeCompare(b.name, "de"));
-
-        setGyms(cleanedGyms);
-        setRoutes(routesData ?? []);
-        setProfiles(profilesData ?? []);
-        setAllResults(resultsData ?? []);
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error("Failed to load participant gyms", error);
-        }
-      }
-    };
-
-    void loadData();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-    let active = true;
-
-    listResultsForUser(profile.id)
-      .then(({ data }) => {
-        if (active) {
-          setUserResults(data ?? []);
-        }
-      })
-      .catch((error) => {
-        if (!isAbortError(error)) {
-          console.error("Failed to load user results", error);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [profile?.id]);
-
-  useEffect(() => {
-    if (!profile?.id || gyms.length === 0) return;
-    let active = true;
-
-    const checkUnlocked = async () => {
-      const unlocked = new Set<string>();
-
-      await Promise.all(
-        gyms.map(async (gym) => {
-          const { data } = await checkGymCodeRedeemed(gym.id, profile.id);
-          if (data) {
-            unlocked.add(gym.id);
-          }
-        }),
-      );
-
-      if (active) {
-        setUnlockedGyms(unlocked);
-      }
-    };
-
-    void checkUnlocked().catch((error) => {
-      if (!isAbortError(error)) {
-        console.error("Failed to check unlocked gyms", error);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [profile?.id, gyms]);
+  const unlockedGyms = useMemo(() => new Set(unlockedGymIds), [unlockedGymIds]);
 
   const officialGymIds = useMemo(() => new Set(gyms.map((gym) => gym.id)), [gyms]);
 
@@ -282,12 +209,29 @@ const Gyms = () => {
     return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   }, [getQualificationEnd]);
 
+  const gymsError = competitionError || unlockedGymsError;
+  const gymsLoading = competitionLoading || unlockedGymsLoading;
+
+  if (gymsLoading) {
+    return (
+      <ParticipantStateCard
+        title="Partnerhallen laden"
+        description="Die Hallenübersicht wird gerade für den Teilnehmerbereich vorbereitet."
+      />
+    );
+  }
+
+  if (gymsError) {
+    return <ParticipantStateCard title="Partnerhallen nicht verfügbar" description={gymsError} />;
+  }
+
   return (
     <div className="mx-auto max-w-md space-y-4">
       <section className="space-y-4">
         <StitchCard
           tone="navy"
-          className="overflow-hidden rounded-[1.7rem] border border-[rgba(242,220,171,0.08)] bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.22)]"
+          className="overflow-hidden rounded-xl border border-[rgba(242,220,171,0.08)] bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.22)]"
+          style={{ borderRadius: "0.75rem" }}
         >
           <div className="space-y-3">
             <div className="stitch-headline text-[2rem] uppercase leading-[0.98] text-[#f2dcab]">
@@ -301,21 +245,21 @@ const Gyms = () => {
         </StitchCard>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+          <div className="rounded-xl bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
             <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
               Hallen
             </div>
             <div className="mt-1 stitch-headline text-[1.65rem] text-[#002637]">{gyms.length}</div>
           </div>
 
-          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+          <div className="rounded-xl bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
             <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
               Besucht
             </div>
             <div className="mt-1 stitch-headline text-[1.65rem] text-[#002637]">{unlockedGyms.size}</div>
           </div>
 
-          <div className="rounded-[1rem] bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
+          <div className="rounded-xl bg-white px-3 py-3 text-center shadow-[0_12px_28px_rgba(0,0,0,0.06)]">
             <div className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.46)]">
               Resttage
             </div>
@@ -342,13 +286,14 @@ const Gyms = () => {
             <Link key={gym.id} to={`/app/gyms/${gym.id}`} className="group block">
               <StitchCard
                 tone="surface"
-                className="overflow-hidden rounded-[1.35rem] border border-[rgba(242,220,171,0.3)] bg-white shadow-[0_16px_34px_rgba(0,0,0,0.08)] transition-transform duration-200 active:scale-[0.985] group-hover:-translate-y-0.5"
+                className="overflow-hidden rounded-xl border border-[rgba(242,220,171,0.3)] bg-white shadow-[0_16px_34px_rgba(0,0,0,0.08)] transition-transform duration-200 active:scale-[0.985] group-hover:-translate-y-0.5"
+                style={{ borderRadius: "0.75rem" }}
               >
                 <div className="relative h-40 overflow-hidden bg-[#f2dcab]">
 
                   <div className="absolute left-3 top-3 z-10">
                     <div
-                      className={`stitch-headline inline-flex items-center rounded-full px-3 py-1 text-[0.56rem] font-bold tracking-[0.2em] ${getDisciplineBadgeClass(
+                      className={`stitch-headline inline-flex items-center rounded-xl px-3 py-1 text-[0.56rem] font-bold tracking-[0.2em] ${getDisciplineBadgeClass(
                         gymRoutes,
                       )}`}
                     >
@@ -381,7 +326,7 @@ const Gyms = () => {
 
                     <div
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.5rem] font-bold uppercase tracking-[0.18em]",
+                        "inline-flex items-center gap-1 rounded-xl px-2 py-0.5 text-[0.5rem] font-bold uppercase tracking-[0.18em]",
                         unlocked
                           ? "bg-[#003d55] text-[#f2dcab]"
                           : "bg-[rgba(0,38,55,0.08)] text-[rgba(0,38,55,0.62)]",
@@ -420,7 +365,7 @@ const Gyms = () => {
                     {unlocked ? (
                       <ChevronRight className="h-5 w-5 text-[rgba(0,38,55,0.28)] transition-transform duration-200 group-hover:translate-x-0.5" />
                     ) : (
-                      <div className="inline-flex items-center gap-1 rounded-full border border-[rgba(0,38,55,0.12)] px-3 py-2 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#003d55]">
+                      <div className="inline-flex items-center gap-1 rounded-xl border border-[rgba(0,38,55,0.12)] px-3 py-2 text-[0.58rem] font-bold uppercase tracking-[0.18em] text-[#003d55]">
                         Details
                         <ArrowRight className="h-3.5 w-3.5" />
                       </div>
@@ -433,7 +378,7 @@ const Gyms = () => {
         })}
 
         {gyms.length === 0 ? (
-          <StitchCard tone="surface" className="rounded-[1.35rem] p-5 text-[#002637]">
+          <StitchCard tone="surface" className="rounded-xl p-5 text-[#002637]" style={{ borderRadius: "0.75rem" }}>
             <div className="flex items-start gap-3">
               <Users className="mt-0.5 h-5 w-5 text-[#a15523]" />
               <div>

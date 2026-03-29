@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, Lock } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
-import { checkGymCodeRedeemed, listResultsForUser, listRoutesByGym, upsertResult } from "@/services/appApi";
-import type { Route } from "@/services/appTypes";
+import {
+  participantQueryKeys,
+  useParticipantGymDetailQuery,
+} from "@/app/pages/participant/participantQueries";
+import { upsertResult } from "@/services/appApi";
 import { cn } from "@/lib/utils";
 
 type PointsOption = 0 | 2.5 | 5 | 7.5 | 10 | "flash";
@@ -29,59 +34,38 @@ const ResultEntry = () => {
   const { gymId, routeId } = useParams();
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [route, setRoute] = useState<Route | null>(null);
+  const queryClient = useQueryClient();
+  const { routes, results, codeRedeemed, loading: pageLoading, error } =
+    useParticipantGymDetailQuery(gymId, profile?.id);
   const [selectedOption, setSelectedOption] = useState<PointsOption>(0);
   const [rating, setRating] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
+  const route = useMemo(
+    () => routes.find((item) => item.id === routeId) ?? null,
+    [routeId, routes],
+  );
+  const existingResult = useMemo(
+    () => results.find((item) => item.route_id === routeId) ?? null,
+    [results, routeId],
+  );
 
   useEffect(() => {
-    if (!gymId || !routeId || !profile?.id) return;
-    let active = true;
+    if (existingResult) {
+      setSelectedOption(
+        existingResult.flash && existingResult.points === 10
+          ? "flash"
+          : ((existingResult.points ?? 0) as PointsOption),
+      );
+      setRating(existingResult.rating ?? null);
+      setFeedback(existingResult.feedback ?? "");
+      return;
+    }
 
-    const load = async () => {
-      setPageLoading(true);
-      try {
-        const [redeemedResult, routesResult, resultsResult] = await Promise.all([
-          checkGymCodeRedeemed(gymId, profile.id),
-          listRoutesByGym(gymId),
-          listResultsForUser(profile.id),
-        ]);
-
-        if (!active) return;
-
-        setCodeRedeemed(Boolean(redeemedResult.data));
-
-        const foundRoute = routesResult.data?.find((item) => item.id === routeId) ?? null;
-        setRoute(foundRoute);
-
-        const foundResult = resultsResult.data?.find((item) => item.route_id === routeId) ?? null;
-
-        if (foundResult) {
-          setSelectedOption(foundResult.flash && foundResult.points === 10 ? "flash" : ((foundResult.points ?? 0) as PointsOption));
-          setRating(foundResult.rating ?? null);
-          setFeedback(foundResult.feedback ?? "");
-        } else {
-          setSelectedOption(0);
-          setRating(null);
-          setFeedback("");
-        }
-      } catch (error) {
-        console.error("Failed to load result entry", error);
-        if (active) setCodeRedeemed(false);
-      } finally {
-        if (active) setPageLoading(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [gymId, routeId, profile?.id]);
+    setSelectedOption(0);
+    setRating(null);
+    setFeedback("");
+  }, [existingResult, routeId]);
 
   const routeMeta = useMemo(() => {
     if (!route) return null;
@@ -97,7 +81,7 @@ const ResultEntry = () => {
     if (!codeRedeemed) {
       toast({
         title: "Halle nicht freigeschaltet",
-        description: "Du musst zuerst einen Hallencode einloesen, bevor du Ergebnisse eintragen kannst.",
+        description: "Du musst zuerst einen Hallencode einlösen, bevor du Ergebnisse eintragen kannst.",
         variant: "destructive",
       });
       return;
@@ -123,6 +107,18 @@ const ResultEntry = () => {
       return;
     }
 
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: participantQueryKeys.competitionData }),
+      queryClient.invalidateQueries({
+        queryKey: participantQueryKeys.userResults(profile.id),
+      }),
+      gymId
+        ? queryClient.invalidateQueries({
+            queryKey: participantQueryKeys.gymDetail(gymId, profile.id),
+          })
+        : Promise.resolve(),
+    ]);
+
     toast({
       title: "Ergebnis gespeichert",
       description: "Dein Ergebnis wurde erfolgreich aktualisiert.",
@@ -132,7 +128,16 @@ const ResultEntry = () => {
   };
 
   if (pageLoading) {
-    return <div className="px-4 pt-6 text-sm text-[rgba(242,220,171,0.74)]">Ergebnisformular wird geladen...</div>;
+    return (
+      <ParticipantStateCard
+        title="Ergebnisformular lädt"
+        description="Die Route und dein bisheriger Eintrag werden gerade vorbereitet."
+      />
+    );
+  }
+
+  if (error) {
+    return <ParticipantStateCard title="Ergebnisformular nicht verfügbar" description={error} />;
   }
 
   if (!route) {
@@ -140,7 +145,7 @@ const ResultEntry = () => {
       <StitchCard tone="navy" className="mx-4 mt-6 p-6">
         <div className="stitch-headline text-2xl text-[#f2dcab]">Route nicht gefunden</div>
         <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-          Fuer diese Route konnten keine Details geladen werden.
+          Für diese Route konnten keine Details geladen werden.
         </p>
       </StitchCard>
     );
@@ -159,13 +164,13 @@ const ResultEntry = () => {
                 <div className="stitch-kicker text-[#a15523]">Aktuelle Route</div>
                 <div className="stitch-headline mt-2 text-3xl text-[#002637]">Punkte eintragen</div>
                 <p className="mt-3 text-sm leading-6 text-[rgba(27,28,26,0.66)]">
-                  Diese Halle ist noch gesperrt. Loese zuerst den Hallencode ein, bevor du ein Ergebnis fuer {route.code}
+                  Diese Halle ist noch gesperrt. Löse zuerst den Hallencode ein, bevor du ein Ergebnis für {route.code}
                   {" "}speichern kannst.
                 </p>
               </div>
 
               <StitchButton asChild size="sm">
-                <Link to={`/app/gyms/redeem?gymId=${encodeURIComponent(gymId ?? "")}`}>Code einloesen</Link>
+                <Link to={`/app/gyms/redeem?gymId=${encodeURIComponent(gymId ?? "")}`}>Code einlösen</Link>
               </StitchButton>
             </div>
           </div>
@@ -207,7 +212,7 @@ const ResultEntry = () => {
 
             <section>
               <div className="text-[0.86rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.52)]">
-                Punkte auswaehlen
+                Punkte auswählen
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 {POINTS_OPTIONS.map((option) => {
@@ -244,7 +249,7 @@ const ResultEntry = () => {
 
             <section>
               <div className="text-[0.86rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.52)]">
-                Routenqualitaet
+                Routenqualität
               </div>
               <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.4rem] border border-[rgba(113,120,125,0.18)] bg-white px-4 py-4">
                 <div className="max-w-[12.5rem] flex-1">

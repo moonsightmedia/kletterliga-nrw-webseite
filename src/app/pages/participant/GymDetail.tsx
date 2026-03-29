@@ -1,17 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowRight, Clock3, Globe, Lock, MapPin, Mountain, Star } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { RouteHighlightCard } from "@/app/components/RouteHighlightCard";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { useParticipantGymDetailQuery } from "@/app/pages/participant/participantQueries";
 import { Progress } from "@/components/ui/progress";
 import { StarRating } from "@/components/ui/star-rating";
 import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
-import { checkGymCodeRedeemed, getGym, listResults, listResultsForUser, listRoutesByGym } from "@/services/appApi";
 import type { Gym, Result, Route } from "@/services/appTypes";
-
-const isAbortError = (error: unknown) =>
-  error instanceof Error &&
-  (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
 const buildDirectionsLink = (address: string | null) => {
   if (!address) return null;
@@ -40,49 +37,8 @@ const formatAverageMetric = (value: number) => {
 const GymDetail = () => {
   const { gymId } = useParams();
   const { profile } = useAuth();
-  const [gym, setGym] = useState<Gym | null>(null);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [allResults, setAllResults] = useState<Result[]>([]);
-  const [codeRedeemed, setCodeRedeemed] = useState<boolean | null>(null);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    if (!gymId || !profile?.id) return;
-    let active = true;
-
-    const load = async () => {
-      setChecking(true);
-      try {
-        const [gymResult, routesResult, resultsResult, allResultsResult, redeemedResult] = await Promise.all([
-          getGym(gymId),
-          listRoutesByGym(gymId),
-          listResultsForUser(profile.id),
-          listResults(),
-          checkGymCodeRedeemed(gymId, profile.id),
-        ]);
-
-        if (!active) return;
-        setGym(gymResult.data ?? null);
-        setRoutes(routesResult.data ?? []);
-        setResults(resultsResult.data ?? []);
-        setAllResults(allResultsResult.data ?? []);
-        setCodeRedeemed(Boolean(redeemedResult.data));
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error("Failed to load gym detail", error);
-        }
-      } finally {
-        if (active) setChecking(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [gymId, profile?.id]);
+  const { gym, routes, results, allResults, codeRedeemed, loading, error } =
+    useParticipantGymDetailQuery(gymId, profile?.id);
 
   const resultMap = useMemo(
     () =>
@@ -204,8 +160,17 @@ const GymDetail = () => {
   const directionsLink = buildDirectionsLink(gym?.address ?? null);
   const mapEmbedLink = buildMapEmbedLink(gym?.address ?? null);
 
-  if (checking) {
-    return <div className="px-4 pt-6 text-sm text-[rgba(242,220,171,0.74)]">Hallenansicht wird geladen...</div>;
+  if (loading) {
+    return (
+      <ParticipantStateCard
+        title="Hallenansicht lädt"
+        description="Die Details dieser Partnerhalle werden gerade vorbereitet."
+      />
+    );
+  }
+
+  if (error) {
+    return <ParticipantStateCard title="Hallenansicht nicht verfügbar" description={error} />;
   }
 
   if (!gym) {

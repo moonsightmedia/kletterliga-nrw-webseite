@@ -5,6 +5,8 @@
     --stitch-navy-deep: #002637;
     --stitch-cream: #f2dcab;
     --stitch-terracotta: #a15523;
+    --stitch-radius-hero: 1.7rem;
+    --stitch-radius-content: 1.55rem;
     --stitch-surface: #ffffff;
     --stitch-surface-soft: #f8f4ee;
     --stitch-surface-muted: #ede8e1;
@@ -118,6 +120,14 @@
     color: var(--stitch-cream);
   }
 
+  .stitch-radius-hero {
+    border-radius: var(--stitch-radius-hero);
+  }
+
+  .stitch-radius-content {
+    border-radius: var(--stitch-radius-content);
+  }
+
   .stitch-metric {
     font-family: "Space Grotesk", system-ui, sans-serif;
     font-weight: 700;
@@ -136,9 +146,9 @@
   }
 
   .stitch-dock {
-    background: rgba(0, 38, 55, 0.92);
+    background: #003d55;
     border: 1px solid rgba(242, 220, 171, 0.14);
-    box-shadow: 0 24px 40px rgba(0, 38, 55, 0.28);
+    box-shadow: 0 -14px 32px rgba(0, 38, 55, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }

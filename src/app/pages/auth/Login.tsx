@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, KeyRound, Mail, MailCheck, RefreshCcw } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { consumeArchivedAccountNotice } from "@/app/auth/archivedAccountNotice";
 import { StitchButton } from "@/app/components/StitchPrimitives";
-import { formatUnlockDate } from "@/config/launch";
+import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
@@ -23,7 +24,12 @@ const Notice = ({
     )}
   >
     <div className="stitch-kicker text-[#a15523]">{title}</div>
-    <p className={cn("mt-2 text-sm leading-6", tone === "cream" ? "text-[rgba(27,28,26,0.68)]" : "text-[rgba(242,220,171,0.76)]")}>
+    <p
+      className={cn(
+        "mt-2 text-sm leading-6",
+        tone === "cream" ? "text-[rgba(27,28,26,0.68)]" : "text-[rgba(242,220,171,0.76)]",
+      )}
+    >
       {description}
     </p>
   </div>
@@ -40,13 +46,15 @@ const Login = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [archivedAccount, setArchivedAccount] = useState(false);
   const [showResetRequest, setShowResetRequest] = useState(false);
   const [resetRequestEmail, setResetRequestEmail] = useState("");
   const [resetRequestLoading, setResetRequestLoading] = useState(false);
   const [resetRequestMessage, setResetRequestMessage] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
-  const unlockDate = formatUnlockDate();
+  const { unlockDate, participantLaunchStarted } = useLaunchSettings();
+  const unlockDateLabel = formatUnlockDate(unlockDate);
 
   useEffect(() => {
     if (searchParams.get("confirmed") === "true") {
@@ -68,6 +76,12 @@ const Login = () => {
       navigate("/app/login", { replace: true });
     }
   }, [searchParams, navigate]);
+
+  useEffect(() => {
+    if (consumeArchivedAccountNotice()) {
+      setArchivedAccount(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && profile) {
@@ -127,12 +141,14 @@ const Login = () => {
       return;
     }
 
-    setResendMessage("Wenn ein unbestaetigter Account existiert, wurde ein neuer Bestaetigungslink gesendet.");
+    setResendMessage("Wenn ein unbestätigter Account existiert, wurde ein neuer Bestätigungslink gesendet.");
     setResendLoading(false);
   };
 
   const needsConfirmationResend =
-    error?.toLowerCase().includes("bestaetigt") || error?.toLowerCase().includes("bestatigt");
+    error?.toLowerCase().includes("bestätigt") ||
+    error?.toLowerCase().includes("bestaetigt") ||
+    error?.toLowerCase().includes("bestatigt");
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -145,7 +161,7 @@ const Login = () => {
           Kletterliga NRW
         </h1>
         <p className="mt-3 font-['Manrope'] text-sm font-semibold uppercase tracking-[0.22em] text-[rgba(242,220,171,0.64)]">
-          Dein Login fuer den Teilnehmerbereich
+          Dein Login für den Teilnehmerbereich
         </p>
       </div>
 
@@ -153,21 +169,33 @@ const Login = () => {
         {registered ? (
           <Notice
             title="Account erstellt"
-            description={`Bitte bestaetige jetzt deine E-Mail. Danach kannst du dich direkt einloggen. Hallen, Codes und Ranglisten oeffnen am ${unlockDate}.`}
+            description={
+              participantLaunchStarted
+                ? "Bitte bestätige jetzt deine E-Mail. Danach landest du direkt in deinem Profil. Hallen, Codes und Ranglisten sind dort bereits offen."
+                : `Bitte bestätige jetzt deine E-Mail. Danach landest du direkt in deinem Profil. Hallen, Codes und Ranglisten öffnen am ${unlockDateLabel}.`
+            }
           />
         ) : null}
 
         {confirmed ? (
           <Notice
-            title="E-Mail bestaetigt"
-            description="Deine Adresse wurde erfolgreich bestaetigt. Du kannst dich jetzt direkt anmelden."
+            title="E-Mail bestätigt"
+            description="Deine Adresse wurde erfolgreich bestätigt. Du kannst dich jetzt direkt anmelden."
           />
         ) : null}
 
         {passwordReset ? (
           <Notice
             title="Passwort aktualisiert"
-            description="Dein Passwort wurde zurueckgesetzt. Du kannst dich jetzt mit dem neuen Passwort einloggen."
+            description="Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt mit dem neuen Passwort einloggen."
+          />
+        ) : null}
+
+        {archivedAccount ? (
+          <Notice
+            title="Konto archiviert"
+            description="Dieses Konto wurde archiviert. Bitte kontaktiere die Liga, wenn du wieder freigeschaltet werden möchtest."
+            tone="navy"
           />
         ) : null}
       </div>
@@ -197,7 +225,7 @@ const Login = () => {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-3 px-1">
-                <label htmlFor="password" className="stitch-kicker text-[#002637]">
+              <label htmlFor="password" className="stitch-kicker text-[#002637]">
                 Passwort
               </label>
               <button
@@ -227,7 +255,7 @@ const Login = () => {
           {showResetRequest ? (
             <div className="rounded-[1.2rem] bg-white/75 p-4">
               <div className="space-y-3">
-                <div className="stitch-kicker text-[#002637]">E-Mail fuer Reset-Link</div>
+                <div className="stitch-kicker text-[#002637]">E-Mail für Reset-Link</div>
                 <input
                   type="email"
                   value={resetRequestEmail}
@@ -268,7 +296,7 @@ const Login = () => {
                   disabled={resendLoading}
                 >
                   <RefreshCcw className="h-4 w-4" />
-                  {resendLoading ? "Wird gesendet" : "Bestaetigungslink senden"}
+                  {resendLoading ? "Wird gesendet" : "Bestätigungslink senden"}
                 </StitchButton>
                 {resendMessage ? (
                   <p className="text-xs leading-5 text-[rgba(27,28,26,0.64)]">{resendMessage}</p>
@@ -304,7 +332,7 @@ const Login = () => {
         <div className="mt-5 flex items-center justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(242,220,171,0.08)] px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(242,220,171,0.62)]">
             <MailCheck className="h-4 w-4" />
-            Ligafunktionen ab {unlockDate}
+            {participantLaunchStarted ? "Ligafunktionen jetzt offen" : `Ligafunktionen ab ${unlockDateLabel}`}
           </div>
         </div>
       ) : null}
@@ -313,7 +341,7 @@ const Login = () => {
         <div className="mt-4 flex items-center justify-center text-[rgba(242,220,171,0.76)]">
           <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(242,220,171,0.08)] px-4 py-2 text-sm font-semibold">
             <CheckCircle2 className="h-4 w-4" />
-            Bestaetigung erfolgreich
+            Bestätigung erfolgreich
           </div>
         </div>
       ) : null}
@@ -322,3 +350,4 @@ const Login = () => {
 };
 
 export default Login;
+

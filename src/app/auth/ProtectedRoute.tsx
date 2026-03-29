@@ -1,22 +1,27 @@
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { AppRouteLoadingState } from "@/app/components/AppRouteLoadingState";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const [timedOut, setTimedOut] = useState(false);
+  const location = useLocation();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), 4000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading && !timedOut) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Lade...</div>;
+  if (loading) {
+    return (
+      <AppRouteLoadingState
+        pathname={location.pathname}
+        title={"Zugang wird gepr\u00fcft"}
+        description={
+          "Wir pr\u00fcfen gerade deine Anmeldung und leiten dich dann automatisch weiter."
+        }
+      />
+    );
   }
+
   if (!user) {
     return <Navigate to="/app/login" replace />;
   }
+
   return <>{children}</>;
 };
 
@@ -28,9 +33,18 @@ export const RoleGuard = ({
   children: React.ReactNode;
 }) => {
   const { role, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Lade...</div>;
+    return (
+      <AppRouteLoadingState
+        pathname={location.pathname}
+        title={"Berechtigung wird gepr\u00fcft"}
+        description={
+          "Wir pr\u00fcfen gerade deine Rolle, damit du auf den richtigen Bereich landest."
+        }
+      />
+    );
   }
 
   const hasAccess = allow.includes(role as "participant" | "gym_admin" | "league_admin");

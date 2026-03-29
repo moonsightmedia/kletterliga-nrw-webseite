@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Building2, ChartLine, ClipboardList, Cog, Flag, Settings, Shield, Users, LogOut, Trophy, Menu, X, FileText, Key, TicketCheck, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { Button } from "@/components/ui/button";
 
 const adminNav = [
@@ -28,6 +29,8 @@ const adminNav = [
 ];
 
 export const AdminLayout = () => {
+  useMarkAppStartupSplashSeen();
+
   const { role, signOut } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

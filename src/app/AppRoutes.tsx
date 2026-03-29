@@ -1,10 +1,10 @@
-import { lazy } from "react";
-import { Route, Navigate } from "react-router-dom";
+import { lazy, type ReactNode } from "react";
+import { Navigate, Route } from "react-router-dom";
 import { AuthLayout } from "@/app/layouts/AuthLayout";
 import { ParticipantLayout } from "@/app/layouts/ParticipantLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
-import { isParticipantFeatureLocked } from "@/config/launch";
+import { useLaunchSettings } from "@/config/launch";
 
 const Login = lazy(() => import("@/app/pages/auth/Login"));
 const Register = lazy(() => import("@/app/pages/auth/Register"));
@@ -20,17 +20,30 @@ const GymRedeem = lazy(() => import("@/app/pages/participant/GymRedeem"));
 const GymRoutes = lazy(() => import("@/app/pages/participant/GymRoutes"));
 const ResultEntry = lazy(() => import("@/app/pages/participant/ResultEntry"));
 const Rankings = lazy(() => import("@/app/pages/participant/Rankings"));
-const ParticipantProfilePage = lazy(() => import("@/app/pages/participant/ParticipantProfilePage"));
-const AgeGroupRankings = lazy(() => import("@/app/pages/participant/AgeGroupRankings"));
-const RankingParticipantHistory = lazy(() => import("@/app/pages/participant/RankingParticipantHistory"));
+const ParticipantProfilePage = lazy(
+  () => import("@/app/pages/participant/ParticipantProfilePage"),
+);
+const AgeGroupRankings = lazy(
+  () => import("@/app/pages/participant/AgeGroupRankings"),
+);
+const RankingParticipantHistory = lazy(
+  () => import("@/app/pages/participant/RankingParticipantHistory"),
+);
 const Profile = lazy(() => import("@/app/pages/participant/Profile"));
+const ProfileEditScreen = lazy(
+  () => import("@/app/pages/participant/ProfileEditScreen"),
+);
 const ProfileHistory = lazy(() => import("@/app/pages/participant/ProfileHistory"));
-const MastercodeRedeem = lazy(() => import("@/app/pages/participant/MastercodeRedeem"));
+const MastercodeRedeem = lazy(
+  () => import("@/app/pages/participant/MastercodeRedeem"),
+);
 const Finale = lazy(() => import("@/app/pages/participant/Finale"));
 const FeatureLocked = lazy(() => import("@/app/pages/participant/FeatureLocked"));
 
 const AdminHome = lazy(() => import("@/app/pages/admin/AdminHome"));
-const GymAdminDashboard = lazy(() => import("@/app/pages/admin/GymAdminDashboard"));
+const GymAdminDashboard = lazy(
+  () => import("@/app/pages/admin/GymAdminDashboard"),
+);
 const GymProfile = lazy(() => import("@/app/pages/admin/GymProfile"));
 const GymRoutesAdmin = lazy(() => import("@/app/pages/admin/GymRoutesAdmin"));
 const GymCodes = lazy(() => import("@/app/pages/admin/GymCodes"));
@@ -41,14 +54,35 @@ const LeagueSeason = lazy(() => import("@/app/pages/admin/LeagueSeason"));
 const LeagueGyms = lazy(() => import("@/app/pages/admin/LeagueGyms"));
 const LeagueClasses = lazy(() => import("@/app/pages/admin/LeagueClasses"));
 const LeagueResults = lazy(() => import("@/app/pages/admin/LeagueResults"));
-const LeagueParticipants = lazy(() => import("@/app/pages/admin/LeagueParticipants"));
-const LeagueFinaleRegistrations = lazy(() => import("@/app/pages/admin/LeagueFinaleRegistrations"));
-const LeagueChangeRequests = lazy(() => import("@/app/pages/admin/LeagueChangeRequests"));
+const LeagueParticipants = lazy(
+  () => import("@/app/pages/admin/LeagueParticipants"),
+);
+const LeagueFinaleRegistrations = lazy(
+  () => import("@/app/pages/admin/LeagueFinaleRegistrations"),
+);
+const LeagueChangeRequests = lazy(
+  () => import("@/app/pages/admin/LeagueChangeRequests"),
+);
 const LeagueCodes = lazy(() => import("@/app/pages/admin/LeagueCodes"));
-const LeagueMastercodes = lazy(() => import("@/app/pages/admin/LeagueMastercodes"));
+const LeagueMastercodes = lazy(
+  () => import("@/app/pages/admin/LeagueMastercodes"),
+);
 const LeagueRoutes = lazy(() => import("@/app/pages/admin/LeagueRoutes"));
 const LeagueSettings = lazy(() => import("@/app/pages/admin/LeagueSettings"));
-const LeagueRouteFeedback = lazy(() => import("@/app/pages/admin/LeagueRouteFeedback"));
+const LeagueRouteFeedback = lazy(
+  () => import("@/app/pages/admin/LeagueRouteFeedback"),
+);
+
+const LaunchLockedRoute = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) => {
+  const { participantFeatureLocked } = useLaunchSettings();
+  return participantFeatureLocked ? <FeatureLocked title={title} /> : <>{children}</>;
+};
 
 export const appRoutes = (
   <>
@@ -72,61 +106,94 @@ export const appRoutes = (
       <Route index element={<Home />} />
       <Route
         path="gyms"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Hallenbereich folgt zum Saisonstart" /> : <Gyms />}
+        element={
+          <LaunchLockedRoute title="Hallenbereich folgt zum Saisonstart">
+            <Gyms />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="gyms/redeem"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Code-Einlösung folgt zum Saisonstart" /> : <GymRedeem />}
+        element={
+          <LaunchLockedRoute title="Code-Einlösung folgt zum Saisonstart">
+            <GymRedeem />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="participation/redeem"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Mastercode-Einlösung folgt zum Saisonstart" /> : <MastercodeRedeem />}
+        element={
+          <LaunchLockedRoute title="Mastercode-Einlösung folgt zum Saisonstart">
+            <MastercodeRedeem />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="gyms/:gymId"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Hallen-Details folgen zum Saisonstart" /> : <GymDetail />}
+        element={
+          <LaunchLockedRoute title="Hallen-Details folgen zum Saisonstart">
+            <GymDetail />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="gyms/:gymId/routes"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Routenbereich folgt zum Saisonstart" /> : <GymRoutes />}
+        element={
+          <LaunchLockedRoute title="Routenbereich folgt zum Saisonstart">
+            <GymRoutes />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="gyms/:gymId/routes/:routeId/result"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Ergebniseintragung folgt zum Saisonstart" /> : <ResultEntry />}
+        element={
+          <LaunchLockedRoute title="Ergebniseintragung folgt zum Saisonstart">
+            <ResultEntry />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="rankings"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Ranglisten folgen zum Saisonstart" /> : <Rankings />}
+        element={
+          <LaunchLockedRoute title="Ranglisten folgen zum Saisonstart">
+            <Rankings />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="rankings/profile/:profileId"
         element={
-          isParticipantFeatureLocked() ? (
-            <FeatureLocked title="Teilnehmerprofile folgen zum Saisonstart" />
-          ) : (
+          <LaunchLockedRoute title="Teilnehmerprofile folgen zum Saisonstart">
             <ParticipantProfilePage />
-          )
+          </LaunchLockedRoute>
         }
       />
       <Route
         path="rankings/profile/:profileId/history"
         element={
-          isParticipantFeatureLocked() ? (
-            <FeatureLocked title="Teilnehmerverlaeufe folgen zum Saisonstart" />
-          ) : (
+          <LaunchLockedRoute title="Teilnehmerverläufe folgen zum Saisonstart">
             <RankingParticipantHistory />
-          )
+          </LaunchLockedRoute>
         }
       />
       <Route
         path="age-group-rankings"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Altersklassenranglisten folgen zum Saisonstart" /> : <AgeGroupRankings />}
+        element={
+          <LaunchLockedRoute title="Altersklassenranglisten folgen zum Saisonstart">
+            <AgeGroupRankings />
+          </LaunchLockedRoute>
+        }
       />
       <Route
         path="finale"
-        element={isParticipantFeatureLocked() ? <FeatureLocked title="Finale-Bereich folgt zum Saisonstart" /> : <Finale />}
+        element={
+          <LaunchLockedRoute title="Finale-Bereich folgt zum Saisonstart">
+            <Finale />
+          </LaunchLockedRoute>
+        }
       />
       <Route path="profile" element={<Profile />} />
+      <Route path="profile/edit" element={<ProfileEditScreen />} />
       <Route path="profile/history" element={<ProfileHistory />} />
     </Route>
 

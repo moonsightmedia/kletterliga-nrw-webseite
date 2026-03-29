@@ -1,9 +1,7 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import {
-  ParticipantHistoryContent,
-  ParticipantStateCard,
-} from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantHistoryContent } from "@/app/pages/participant/ParticipantHistoryContent";
 import { buildParticipantProfileData } from "@/app/pages/participant/participantData";
 import { useParticipantDataBundle } from "@/app/pages/participant/useParticipantDataBundle";
 import { useSeasonSettings } from "@/services/seasonSettings";
@@ -34,14 +32,14 @@ const RankingParticipantHistory = () => {
   if (loading) {
     return (
       <ParticipantStateCard
-        title="Verlauf laedt"
-        description="Die letzten Eintraege werden fuer die Chronik vorbereitet."
+        title="Verlauf lädt"
+        description="Die letzten Einträge werden für die Chronik vorbereitet."
       />
     );
   }
 
   if (error) {
-    return <ParticipantStateCard title="Verlauf nicht verfuegbar" description={error} />;
+    return <ParticipantStateCard title="Verlauf nicht verfügbar" description={error} />;
   }
 
   if (!participantData) {
@@ -53,12 +51,7 @@ const RankingParticipantHistory = () => {
     );
   }
 
-  return (
-    <ParticipantHistoryContent
-      data={participantData}
-      backHref={`/app/rankings/profile/${participantData.profile.id}`}
-    />
-  );
+  return <ParticipantHistoryContent data={participantData} />;
 };
 
 export default RankingParticipantHistory;

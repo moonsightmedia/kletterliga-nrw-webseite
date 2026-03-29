@@ -62,7 +62,7 @@ serve(async (req) => {
 
     const { data: gymCode, error: codeError } = await supabase
       .from("gym_codes")
-      .select("id, gym_id, redeemed_by, expires_at, gyms(name)")
+      .select("id, gym_id, redeemed_by, expires_at, gyms(name, archived_at)")
       .eq("code", code)
       .maybeSingle();
 
@@ -83,6 +83,18 @@ serve(async (req) => {
     if (gymCode.expires_at && new Date(gymCode.expires_at) < new Date()) {
       return new Response(JSON.stringify({ error: "Dieser Code ist nicht mehr gültig." }), {
         status: 410,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const gymRelation =
+      gymCode.gyms && typeof gymCode.gyms === "object"
+        ? (gymCode.gyms as { name?: string | null; archived_at?: string | null })
+        : null;
+
+    if (gymRelation?.archived_at) {
+      return new Response(JSON.stringify({ error: "Diese Halle ist derzeit nicht aktiv." }), {
+        status: 409,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }

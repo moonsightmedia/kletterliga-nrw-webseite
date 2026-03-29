@@ -1,9 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "@/app/auth/AuthProvider";
-import {
-  ParticipantHistoryContent,
-  ParticipantStateCard,
-} from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantHistoryContent } from "@/app/pages/participant/ParticipantHistoryContent";
 import { buildParticipantProfileData } from "@/app/pages/participant/participantData";
 import { useParticipantDataBundle } from "@/app/pages/participant/useParticipantDataBundle";
 import type { Profile } from "@/services/appTypes";
@@ -63,26 +61,26 @@ const ProfileHistory = () => {
   if (loading) {
     return (
       <ParticipantStateCard
-        title="Verlauf laedt"
-        description="Deine eingetragenen Routen werden gerade fuer die Chronik vorbereitet."
+        title="Verlauf lädt"
+        description="Deine eingetragenen Routen werden gerade für die Chronik vorbereitet."
       />
     );
   }
 
   if (error) {
-    return <ParticipantStateCard title="Verlauf nicht verfuegbar" description={error} />;
+    return <ParticipantStateCard title="Verlauf nicht verfügbar" description={error} />;
   }
 
   if (!participantData) {
     return (
       <ParticipantStateCard
-        title="Profil nicht verfuegbar"
-        description="Dein Teilnehmerprofil konnte fuer die Chronik noch nicht geladen werden."
+        title="Profil nicht verfügbar"
+        description="Dein Teilnehmerprofil konnte für die Chronik noch nicht geladen werden."
       />
     );
   }
 
-  return <ParticipantHistoryContent data={participantData} backHref="/app/profile" />;
+  return <ParticipantHistoryContent data={participantData} />;
 };
 
 export default ProfileHistory;

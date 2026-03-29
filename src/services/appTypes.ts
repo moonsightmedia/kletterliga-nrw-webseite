@@ -12,6 +12,9 @@ export type Profile = {
   league: "toprope" | "lead" | null;
   role: UserRole | null;
   participation_activated_at?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
 };
 
 export type Gym = {
@@ -23,6 +26,9 @@ export type Gym = {
   website: string | null;
   logo_url: string | null;
   opening_hours: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
 };
 
 export type Route = {
@@ -48,6 +54,19 @@ export type Result = {
   feedback: string | null;
   created_at: string;
   updated_at: string | null;
+};
+
+export type DataChangeAuditAction = "insert" | "update" | "archive" | "restore";
+
+export type DataChangeAudit = {
+  id: string;
+  entity_type: "profile" | "result" | "gym";
+  entity_id: string;
+  action: DataChangeAuditAction;
+  actor_user_id: string | null;
+  before_data: Record<string, unknown> | null;
+  after_data: Record<string, unknown> | null;
+  created_at: string;
 };
 
 export type ChangeRequest = {
@@ -102,6 +121,10 @@ export type Stage = {
 export type AdminSettings = {
   id: string;
   season_year: string | null;
+  account_creation_opens_at: string | null;
+  app_unlock_at: string | null;
+  force_account_creation_open: boolean | null;
+  force_participant_unlock: boolean | null;
   qualification_start: string | null;
   qualification_end: string | null;
   stage_months: string[] | null;

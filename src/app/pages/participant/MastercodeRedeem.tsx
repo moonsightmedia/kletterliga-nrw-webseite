@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, LineChart, Scan, ShieldCheck, TicketCheck, X } from "lucide-react";
 import {
   Drawer,
@@ -11,12 +12,14 @@ import {
 } from "@/components/ui/drawer";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { participantQueryKeys } from "@/app/pages/participant/participantQueries";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
 import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
 import { redeemMasterCode } from "@/services/appApi";
 
 const MastercodeRedeem = () => {
   const { profile, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
@@ -39,7 +42,10 @@ const MastercodeRedeem = () => {
       return;
     }
 
-    await refreshProfile();
+    await Promise.all([
+      refreshProfile(),
+      queryClient.invalidateQueries({ queryKey: participantQueryKeys.competitionData }),
+    ]);
     toast({
       title: "Teilnahme freigeschaltet",
       description: "Deine Ergebnisse zählen jetzt offiziell in der Liga-Wertung.",
@@ -143,7 +149,7 @@ const MastercodeRedeem = () => {
                   onChange={(event) => setCode(event.target.value.toUpperCase())}
                   placeholder="KL-MASTER-XXXXXX-XXXX"
                   maxLength={24}
-                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.22em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.24)]"
+                  className="w-full bg-transparent text-center font-['Space_Grotesk'] text-[0.82rem] font-bold uppercase tracking-[0.14em] text-[#002637] outline-none placeholder:text-[rgba(0,38,55,0.24)] sm:text-lg sm:tracking-[0.22em]"
                 />
               </div>
             </label>

@@ -1,12 +1,10 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import {
-  ParticipantProfileContent,
-  ParticipantStateCard,
-} from "@/app/pages/participant/ParticipantProfileContent";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
 import { buildParticipantProfileData } from "@/app/pages/participant/participantData";
 import { useParticipantDataBundle } from "@/app/pages/participant/useParticipantDataBundle";
 import { useSeasonSettings } from "@/services/seasonSettings";
+import ReadonlyParticipantProfileContent from "./ReadonlyParticipantProfileContent";
 
 const RankingParticipantProfile = () => {
   const { profileId } = useParams<{ profileId: string }>();
@@ -34,14 +32,14 @@ const RankingParticipantProfile = () => {
   if (loading) {
     return (
       <ParticipantStateCard
-        title="Profil laedt"
-        description="Die Teilnehmerdaten werden gerade fuer die neue Profilansicht vorbereitet."
+        title="Profil lädt"
+        description="Die Teilnehmerdaten werden gerade für die neue Profilansicht vorbereitet."
       />
     );
   }
 
   if (error) {
-    return <ParticipantStateCard title="Profil nicht verfuegbar" description={error} />;
+    return <ParticipantStateCard title="Profil nicht verfügbar" description={error} />;
   }
 
   if (!participantData) {
@@ -54,9 +52,8 @@ const RankingParticipantProfile = () => {
   }
 
   return (
-    <ParticipantProfileContent
+    <ReadonlyParticipantProfileContent
       data={participantData}
-      mode="readonly"
       historyHref={`/app/rankings/profile/${participantData.profile.id}/history`}
     />
   );
