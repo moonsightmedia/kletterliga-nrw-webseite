@@ -61,6 +61,9 @@ export const partnerSponsors: Sponsor[] = [
   {
     name: "Mantle Climbing",
     tier: "Bronze",
+    website: "https://www.mantle-climbing.de/",
     logoSrc: "/sponsors/mantle-climbing.png",
+    instagramUrl: "https://www.instagram.com/mantle_climbing/",
+    facebookUrl: "https://de-de.facebook.com/mantleclimbing/",
   },
 ];

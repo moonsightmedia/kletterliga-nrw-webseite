@@ -130,5 +130,18 @@ describe("sponsor presentation", () => {
           link.getAttribute("href") === "https://www.facebook.com/ProviantFruchtmanufaktur/",
       ),
     ).toBe(true);
+    expect(
+      links.some((link) => link.getAttribute("href") === "https://www.mantle-climbing.de/"),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) => link.getAttribute("href") === "https://www.instagram.com/mantle_climbing/",
+      ),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) => link.getAttribute("href") === "https://de-de.facebook.com/mantleclimbing/",
+      ),
+    ).toBe(true);
   });
 });
