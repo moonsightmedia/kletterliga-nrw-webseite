@@ -29,20 +29,10 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
       >
         {gym ? (
           <>
-            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/6 text-primary/72 transition-colors hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center text-primary/68 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
               <X className="h-4 w-4" strokeWidth={2.2} />
               <span className="sr-only">Schließen</span>
             </DialogClose>
-
-            <DialogHeader className="pt-3">
-              <DialogTitle className="font-headline text-[clamp(1.9rem,8vw,3.1rem)] leading-[0.9] text-primary">
-                {titleLines.map((line) => (
-                  <span key={line} className="block text-balance">
-                    {line}
-                  </span>
-                ))}
-              </DialogTitle>
-            </DialogHeader>
 
             <div className="space-y-6 pb-1">
               {gym.logo_url ? (
@@ -52,6 +42,16 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
                   </div>
                 </div>
               ) : null}
+
+              <DialogHeader className="px-0 pt-0">
+                <DialogTitle className="text-center font-headline text-[clamp(1.9rem,8vw,3.1rem)] leading-[0.9] text-primary">
+                  {titleLines.map((line) => (
+                    <span key={line} className="block text-balance">
+                      {line}
+                    </span>
+                  ))}
+                </DialogTitle>
+              </DialogHeader>
 
               <div className="space-y-5">
                 {gym.address ? (
