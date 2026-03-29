@@ -29,7 +29,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
       >
         {gym ? (
           <>
-            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center text-primary/68 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center bg-transparent text-primary/68 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
               <X className="h-4 w-4" strokeWidth={2.2} />
               <span className="sr-only">Schließen</span>
             </DialogClose>
@@ -38,13 +38,17 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
               {gym.logo_url ? (
                 <div className="flex justify-center">
                   <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-accent/45 md:h-28 md:w-28">
-                    <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-3" />
+                    <img
+                      src={gym.logo_url}
+                      alt={gym.name}
+                      className="h-full w-full object-contain p-3"
+                    />
                   </div>
                 </div>
               ) : null}
 
-              <DialogHeader className="px-0 pt-0">
-                <DialogTitle className="text-center font-headline text-[clamp(1.9rem,8vw,3.1rem)] leading-[0.9] text-primary">
+              <DialogHeader className="px-0 pt-0 text-center">
+                <DialogTitle className="pr-0 text-center font-headline text-[clamp(1.9rem,8vw,3.1rem)] leading-[0.9] text-primary sm:pr-0">
                   {titleLines.map((line) => (
                     <span key={line} className="block text-balance">
                       {line}
@@ -58,12 +62,16 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
                   <div className="flex items-start gap-3 sm:gap-4">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground sm:h-5 sm:w-5" />
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Adresse</div>
+                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">
+                        Adresse
+                      </div>
                       <div className="break-words text-sm leading-relaxed text-foreground text-pretty sm:text-base">
                         {gym.address}
                       </div>
                       {gym.city ? (
-                        <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{gym.city}</div>
+                        <div className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                          {gym.city}
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -87,7 +95,9 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
                   <div className="flex items-start gap-3 sm:gap-4">
                     <Globe className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground sm:h-5 sm:w-5" />
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Website</div>
+                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">
+                        Website
+                      </div>
                       <a
                         href={gym.website}
                         target="_blank"
@@ -116,6 +126,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
                     In Karte anzeigen
                   </a>
                 ) : null}
+
                 {gym.website ? (
                   <a
                     href={gym.website}
