@@ -12,16 +12,6 @@ const isAbortError = (error: unknown) =>
   error instanceof Error &&
   (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
-const getGymCardTitleClasses = (name: string) => {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  const longestWord = words.reduce((max, word) => Math.max(max, word.length), 0);
-  const needsCompactTitle = longestWord >= 13 || name.length >= 22;
-
-  return needsCompactTitle
-    ? "text-[0.76rem] sm:text-[1rem] md:text-[1.3rem]"
-    : "text-[0.92rem] sm:text-[1.18rem] md:text-[1.45rem]";
-};
-
 export const GymsSection = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,9 +79,7 @@ export const GymsSection = () => {
                   />
 
                   <h3
-                    className={`mb-2 min-h-[3.2rem] max-w-full flex-shrink-0 font-headline leading-[0.98] tracking-[-0.01em] text-primary ${getGymCardTitleClasses(
-                      gym.name,
-                    )}`}
+                    className="mb-2 min-h-[4.35rem] max-w-full flex-shrink-0 font-headline text-[0.92rem] leading-[0.98] tracking-[-0.01em] text-primary sm:min-h-[3.8rem] sm:text-[1.18rem] md:min-h-[3.6rem] md:text-[1.45rem]"
                   >
                     {formatGymNameLines(gym.name).map((line) => (
                       <span key={line} className="block">

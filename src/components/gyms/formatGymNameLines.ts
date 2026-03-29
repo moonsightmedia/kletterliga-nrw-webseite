@@ -1,4 +1,13 @@
+const GYM_NAME_LINE_OVERRIDES: Record<string, string[]> = {
+  Chimpanzodrome: ["Chimpanzo", "drome"],
+  "Kletterfabrik Köln": ["Kletter", "fabrik", "Köln"],
+  "Kletterzentrum OWL": ["Kletter", "zentrum", "OWL"],
+};
+
 export const formatGymNameLines = (name: string) => {
+  const override = GYM_NAME_LINE_OVERRIDES[name];
+  if (override) return override;
+
   const words = name.trim().split(/\s+/).filter(Boolean);
 
   if (words.length <= 1) return [name];
