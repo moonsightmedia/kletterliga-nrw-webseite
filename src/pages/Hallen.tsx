@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { MapPin, ExternalLink } from "lucide-react";
 import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
+import { formatGymNameLines } from "@/components/gyms/formatGymNameLines";
 import { GymLogoBadge } from "@/components/gyms/GymLogoBadge";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { preparePublicGyms } from "@/lib/publicGyms";
@@ -115,8 +116,12 @@ const Hallen = () => {
                   />
 
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <h3 className="mb-2 font-headline text-lg leading-tight text-primary [overflow-wrap:anywhere] sm:text-xl">
-                      {gym.name}
+                    <h3 className="mb-2 font-headline text-base leading-[0.96] text-primary sm:text-xl">
+                      {formatGymNameLines(gym.name).map((line) => (
+                        <span key={line} className="block text-balance">
+                          {line}
+                        </span>
+                      ))}
                     </h3>
 
                     <div className="mb-3 flex min-h-[20px] items-center gap-2 text-sm text-muted-foreground">

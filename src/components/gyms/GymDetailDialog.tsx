@@ -1,13 +1,14 @@
-import { MapPin, ExternalLink, Clock, Globe } from "lucide-react";
+import { Clock, ExternalLink, Globe, MapPin, X } from "lucide-react";
+import { formatGymNameLines } from "@/components/gyms/formatGymNameLines";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Gym } from "@/services/appTypes";
 
-/** Link zu Google Maps Suche nach Adresse */
 const mapSearchUrl = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -18,106 +19,119 @@ interface GymDetailDialogProps {
 }
 
 export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProps) => {
+  const titleLines = gym ? formatGymNameLines(gym.name) : [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:w-full sm:p-6">
-        {gym && (
+      <DialogContent
+        hideCloseButton
+        className="max-h-[90vh] max-w-2xl overflow-y-auto p-5 sm:w-full sm:p-6"
+      >
+        {gym ? (
           <>
-            <DialogHeader className="pt-4">
-              <DialogTitle className="text-2xl md:text-3xl font-headline">
-                {gym.name}
+            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/6 text-primary/72 transition-colors hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+              <X className="h-4 w-4" strokeWidth={2.2} />
+              <span className="sr-only">Schließen</span>
+            </DialogClose>
+
+            <DialogHeader className="pt-3">
+              <DialogTitle className="font-headline text-[clamp(1.9rem,8vw,3.1rem)] leading-[0.9] text-primary">
+                {titleLines.map((line) => (
+                  <span key={line} className="block text-balance">
+                    {line}
+                  </span>
+                ))}
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6 pb-1">
-              {/* Logo */}
-              {gym.logo_url && (
+              {gym.logo_url ? (
                 <div className="flex justify-center">
-                  <div className="w-20 h-20 md:w-28 md:h-28 bg-accent/50 flex items-center justify-center overflow-hidden rounded-md">
-                    <img 
-                      src={gym.logo_url} 
-                      alt={gym.name} 
-                      className="h-full w-full object-contain p-2" 
-                    />
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-accent/45 md:h-28 md:w-28">
+                    <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain p-3" />
                   </div>
                 </div>
-              )}
+              ) : null}
 
-              {/* Details */}
-              <div className="space-y-4">
-                {gym.address && (
+              <div className="space-y-5">
+                {gym.address ? (
                   <div className="flex items-start gap-3 sm:gap-4">
-                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Adresse</div>
-                      <div className="text-sm sm:text-base text-foreground break-words">{gym.address}</div>
-                      {gym.city && (
-                        <div className="text-xs sm:text-sm text-muted-foreground mt-1">{gym.city}</div>
-                      )}
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground sm:h-5 sm:w-5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Adresse</div>
+                      <div className="break-words text-sm leading-relaxed text-foreground text-pretty sm:text-base">
+                        {gym.address}
+                      </div>
+                      {gym.city ? (
+                        <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{gym.city}</div>
+                      ) : null}
                     </div>
                   </div>
-                )}
+                ) : null}
 
-                {gym.opening_hours && (
+                {gym.opening_hours ? (
                   <div className="flex items-start gap-3 sm:gap-4">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Öffnungszeiten</div>
-                      <div className="text-sm sm:text-base text-foreground whitespace-pre-line break-words">{gym.opening_hours}</div>
+                    <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground sm:h-5 sm:w-5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">
+                        Öffnungszeiten
+                      </div>
+                      <div className="whitespace-pre-line break-words text-sm leading-relaxed text-foreground text-pretty sm:text-base">
+                        {gym.opening_hours}
+                      </div>
                     </div>
                   </div>
-                )}
+                ) : null}
 
-                {gym.website && (
+                {gym.website ? (
                   <div className="flex items-start gap-3 sm:gap-4">
-                    <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Website</div>
-                      <a 
-                        href={gym.website} 
-                        target="_blank" 
+                    <Globe className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground sm:h-5 sm:w-5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 text-xs uppercase tracking-widest text-muted-foreground">Website</div>
+                      <a
+                        href={gym.website}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm sm:text-base text-primary underline-offset-4 hover:underline inline-flex items-center gap-1 break-all"
-                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 break-words text-sm text-primary underline-offset-4 hover:underline sm:text-base"
+                        onClick={(event) => event.stopPropagation()}
                       >
-                        {gym.website.replace(/^https?:\/\//, '')}
+                        {gym.website.replace(/^https?:\/\//, "")}
                         <ExternalLink size={14} />
                       </a>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
 
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                {(gym.address ?? gym.city) && (
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+                {(gym.address ?? gym.city) ? (
                   <a
                     href={mapSearchUrl(gym.address ?? gym.city ?? "")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-2.5 rounded-md hover:bg-secondary/90 transition-colors text-sm font-medium w-full sm:w-auto"
-                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/90 sm:w-auto"
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <MapPin size={16} />
                     In Karte anzeigen
                   </a>
-                )}
-                {gym.website && (
+                ) : null}
+                {gym.website ? (
                   <a
                     href={gym.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 border border-border bg-background px-4 py-2.5 rounded-md hover:bg-accent transition-colors text-sm font-medium w-full sm:w-auto"
-                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium transition-colors hover:bg-accent sm:w-auto"
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <Globe size={16} />
                     Website besuchen
                   </a>
-                )}
+                ) : null}
               </div>
             </div>
           </>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );

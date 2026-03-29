@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { GymLogoBadge } from "@/components/gyms/GymLogoBadge";
+import { formatGymNameLines } from "@/components/gyms/formatGymNameLines";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { preparePublicGyms } from "@/lib/publicGyms";
 import { listGyms } from "@/services/appApi";
@@ -77,10 +78,14 @@ export const GymsSection = () => {
                     fallbackClassName="text-xl group-hover:text-secondary-foreground md:text-2xl"
                   />
 
-                  <h3 className="font-medium text-sm leading-tight text-primary mb-1 flex-shrink-0 min-h-[2.75rem] [overflow-wrap:anywhere]">
-                    {gym.name}
+                  <h3 className="mb-1 min-h-[3.5rem] flex-shrink-0 font-headline text-[clamp(1.2rem,3.2vw,1.95rem)] leading-[0.96] text-primary">
+                    {formatGymNameLines(gym.name).map((line) => (
+                      <span key={line} className="block text-balance">
+                        {line}
+                      </span>
+                    ))}
                   </h3>
-                  <p className="text-xs text-muted-foreground flex-shrink-0">{gym.city ?? ""}</p>
+                  <p className="flex-shrink-0 text-sm text-muted-foreground md:text-base">{gym.city ?? ""}</p>
                 </div>
               ))}
             </StaggeredAnimation>
