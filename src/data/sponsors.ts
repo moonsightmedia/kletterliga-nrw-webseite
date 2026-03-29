@@ -58,4 +58,9 @@ export const partnerSponsors: Sponsor[] = [
     instagramUrl: "https://www.instagram.com/hillseyeboards/",
     facebookUrl: "https://www.facebook.com/hillseye.boards/",
   },
+  {
+    name: "Mantle Climbing",
+    tier: "Bronze",
+    logoSrc: "/sponsors/mantle-climbing.png",
+  },
 ];
