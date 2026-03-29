@@ -135,12 +135,14 @@ describe("sponsor presentation", () => {
     ).toBe(true);
     expect(
       links.some(
-        (link) => link.getAttribute("href") === "https://www.instagram.com/mantle_climbing/",
+        (link) => link.getAttribute("href") === "https://www.instagram.com/mantleclimbing/",
       ),
     ).toBe(true);
     expect(
       links.some(
-        (link) => link.getAttribute("href") === "https://de-de.facebook.com/mantleclimbing/",
+        (link) =>
+          link.getAttribute("href") ===
+          "https://de-de.facebook.com/Mantle-Climbing-GmbH-456045974427265/",
       ),
     ).toBe(true);
   });
