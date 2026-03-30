@@ -1,12 +1,24 @@
+const normalizeGymName = (name: string) =>
+  name
+    .trim()
+    .toLocaleLowerCase("de-DE")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
 const GYM_NAME_LINE_OVERRIDES: Record<string, string[]> = {
-  Chimpanzodrome: ["Chimpanzo", "drome"],
-  "Chimpanzodrome Frechen": ["Chimpanzo", "drome"],
-  "Kletterfabrik Köln": ["Kletter", "fabrik", "Köln"],
-  "Kletterzentrum OWL": ["Kletter", "zentrum", "OWL"],
+  chimpanzodrom: ["Chimpanzo", "drom"],
+  chimpanzodromfrechen: ["Chimpanzo", "drom"],
+  chimpanzodrome: ["Chimpanzo", "drome"],
+  chimpanzodromefrechen: ["Chimpanzo", "drome"],
+  schimpanzodrom: ["Schimpanzo", "drom"],
+  schimpanzodromfrechen: ["Schimpanzo", "drom"],
+  kletterfabrikkoln: ["Kletter", "fabrik", "Köln"],
+  kletterzentrumowl: ["Kletter", "zentrum", "OWL"],
 };
 
 export const formatGymNameLines = (name: string) => {
-  const override = GYM_NAME_LINE_OVERRIDES[name];
+  const override = GYM_NAME_LINE_OVERRIDES[normalizeGymName(name)];
   if (override) return override;
 
   const words = name.trim().split(/\s+/).filter(Boolean);

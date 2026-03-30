@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,17 +14,17 @@ import { AppRouteLoadingState } from "@/app/components/AppRouteLoadingState";
 import { AppStartupSplashOverlay } from "@/app/components/AppStartupSplashOverlay";
 import { isAppPathname } from "@/app/startup/appStartupSplash";
 import { initializeLaunchSettings } from "@/config/launch";
-const Index = lazy(() => import("./pages/Index"));
-const Liga = lazy(() => import("./pages/Liga"));
-const Modus = lazy(() => import("./pages/Modus"));
-const Regelwerk = lazy(() => import("./pages/Regelwerk"));
-const Hallen = lazy(() => import("./pages/Hallen"));
-const Ranglisten = lazy(() => import("./pages/Ranglisten"));
-const Sponsoren = lazy(() => import("./pages/Sponsoren"));
-const Impressum = lazy(() => import("./pages/Impressum"));
-const Datenschutz = lazy(() => import("./pages/Datenschutz"));
-const Kontakt = lazy(() => import("./pages/Kontakt"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import Index from "./pages/Index";
+import Liga from "./pages/Liga";
+import Modus from "./pages/Modus";
+import Regelwerk from "./pages/Regelwerk";
+import Hallen from "./pages/Hallen";
+import Ranglisten from "./pages/Ranglisten";
+import Sponsoren from "./pages/Sponsoren";
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
+import Kontakt from "./pages/Kontakt";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 const RouteFallback = () => {

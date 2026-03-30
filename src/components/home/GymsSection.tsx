@@ -68,7 +68,7 @@ export const GymsSection = () => {
               {gyms.map((gym) => (
                 <div
                   key={gym.id}
-                  className="card-kl flex flex-col items-center justify-center text-center p-4 md:p-6 group cursor-pointer hover:shadow-lg transition-shadow h-full min-h-[160px] md:min-h-[180px]"
+                  className="card-kl group flex h-full min-h-[160px] cursor-pointer flex-col items-center justify-center p-4 text-center transition-shadow hover:shadow-lg md:min-h-[180px] md:p-6"
                   onClick={() => setSelectedGym(gym)}
                 >
                   <GymLogoBadge
@@ -78,16 +78,12 @@ export const GymsSection = () => {
                     fallbackClassName="text-xl group-hover:text-secondary-foreground md:text-2xl"
                   />
 
-                  <h3 className="mb-2 min-h-[4.35rem] max-w-full flex-shrink-0 font-headline text-[0.92rem] leading-[0.98] tracking-[-0.01em] text-primary sm:min-h-[3.8rem] sm:text-[1.18rem] md:hidden">
+                  <h3 className="mb-2 min-h-[4.35rem] max-w-full flex-shrink-0 font-headline text-[0.92rem] leading-[0.98] tracking-[-0.01em] text-primary sm:min-h-[3.8rem] sm:text-[1.18rem] md:min-h-[3.2rem] md:text-[1.08rem] lg:text-[1.2rem]">
                     {formatGymNameLines(gym.name).map((line) => (
-                      <span key={line} className="block">
+                      <span key={line} className="block text-balance break-words">
                         {line}
                       </span>
                     ))}
-                  </h3>
-
-                  <h3 className="mb-2 hidden min-h-[3.2rem] max-w-full flex-shrink-0 font-headline text-[1.08rem] leading-[0.98] tracking-[-0.01em] text-primary md:block lg:text-[1.2rem]">
-                    <span className="block text-balance break-words">{gym.name}</span>
                   </h3>
                   <p className="flex-shrink-0 text-sm text-muted-foreground md:text-base">{gym.city ?? ""}</p>
                 </div>
