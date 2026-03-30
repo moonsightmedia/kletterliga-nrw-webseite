@@ -116,12 +116,16 @@ const Hallen = () => {
                   />
 
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <h3 className="mb-2 font-headline text-base leading-[0.96] text-primary sm:text-xl">
+                    <h3 className="mb-2 font-headline text-base leading-[1.02] text-primary sm:text-xl md:hidden">
                       {formatGymNameLines(gym.name).map((line) => (
                         <span key={line} className="block text-balance">
                           {line}
                         </span>
                       ))}
+                    </h3>
+
+                    <h3 className="mb-2 hidden font-headline text-base leading-[1.02] text-primary sm:text-xl md:block">
+                      <span className="block text-balance break-words">{gym.name}</span>
                     </h3>
 
                     <div className="mb-3 flex min-h-[20px] items-center gap-2 text-sm text-muted-foreground">
