@@ -322,7 +322,7 @@
       transform: translate3d(0, 0, 0);
     }
     to {
-      transform: translate3d(-50%, 0, 0);
+      transform: translate3d(var(--sponsor-marquee-shift, -50%), 0, 0);
     }
   }
 
@@ -382,6 +382,7 @@
   }
 
   .sponsor-marquee-track {
+    --sponsor-marquee-shift: -50%;
     display: flex;
     align-items: center;
     height: 100%;
@@ -395,5 +396,6 @@
     display: flex;
     flex-shrink: 0;
     align-items: center;
+    min-width: max-content;
   }
 }
