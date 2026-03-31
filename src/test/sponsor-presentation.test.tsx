@@ -104,6 +104,7 @@ describe("sponsor presentation", () => {
     expect(within(main).getByText("Mantle Climbing")).toBeInTheDocument();
     expect(within(main).getByText("Art by Glöckchen")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
+    expect(screen.getByAltText("Logo Art by Glöckchen")).toBeInTheDocument();
     expect(links.some((link) => link.getAttribute("href") === "https://www.proviant.de/")).toBe(
       true,
     );
@@ -135,8 +136,16 @@ describe("sponsor presentation", () => {
       links.some((link) => link.getAttribute("href") === "https://www.mantle-climbing.de/"),
     ).toBe(true);
     expect(
+      links.some((link) => link.getAttribute("href") === "https://www.etsy.com/de/shop/artbyGloeckchen"),
+    ).toBe(true);
+    expect(
       links.some(
         (link) => link.getAttribute("href") === "https://www.instagram.com/mantleclimbing/",
+      ),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) => link.getAttribute("href") === "https://www.instagram.com/art.by.gloeckchen/",
       ),
     ).toBe(true);
     expect(

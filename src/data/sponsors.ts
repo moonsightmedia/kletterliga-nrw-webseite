@@ -69,5 +69,9 @@ export const partnerSponsors: Sponsor[] = [
   {
     name: "Art by Glöckchen",
     tier: "Bronze",
+    website: "https://www.etsy.com/de/shop/artbyGloeckchen",
+    logoSrc: "/sponsors/art-by-gloeckchen.jpg",
+    claim: "Handbemalte und lasergravierte Bürsten für Kletterer",
+    instagramUrl: "https://www.instagram.com/art.by.gloeckchen/",
   },
 ];
