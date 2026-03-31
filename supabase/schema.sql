@@ -492,6 +492,12 @@ create policy "Results update own" on public.results
     )
   );
 
+drop policy if exists "Results update league admin" on public.results;
+create policy "Results update league admin" on public.results
+  for update
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
+
 -- Policies: change requests
 drop policy if exists "Change requests read own" on public.change_requests;
 create policy "Change requests read own" on public.change_requests
