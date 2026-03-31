@@ -36,9 +36,11 @@ describe("RegisterSuccess", () => {
     expect(screen.getByText("Postfach öffnen")).toBeInTheDocument();
     expect(screen.getByText("Direkt ins Profil")).toBeInTheDocument();
     expect(screen.getByText(/Saisonbereiche ab 01.05.2026/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Keine Mail da\? Im Login kannst du dir jederzeit einen neuen Bestätigungslink senden lassen./i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Wenn auch das nicht klappt,/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "info@kletterliga-nrw.de" })).toHaveAttribute(
+      "href",
+      "mailto:info@kletterliga-nrw.de",
+    );
     expect(screen.getByRole("link", { name: /Zum Login/i })).toHaveAttribute(
       "href",
       "/app/login?registered=true",

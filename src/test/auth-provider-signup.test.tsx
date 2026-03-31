@@ -6,6 +6,8 @@ const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(),
   signUp: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
+  resend: vi.fn(),
 }));
 
 const appApiMocks = vi.hoisted(() => ({
@@ -26,8 +28,8 @@ vi.mock("@/services/supabase", () => ({
       signUp: authMocks.signUp,
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
-      resend: vi.fn(),
+      resetPasswordForEmail: authMocks.resetPasswordForEmail,
+      resend: authMocks.resend,
     },
   },
 }));
@@ -76,6 +78,46 @@ const Harness = () => {
   );
 };
 
+const ResetHarness = () => {
+  const { resetPassword } = useAuth();
+  const [message, setMessage] = useState("idle");
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={async () => {
+          const result = await resetPassword("existing@example.com");
+          setMessage(result.error ?? "success");
+        }}
+      >
+        Reset password
+      </button>
+      <div>{message}</div>
+    </div>
+  );
+};
+
+const ResendHarness = () => {
+  const { resendConfirmation } = useAuth();
+  const [message, setMessage] = useState("idle");
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={async () => {
+          const result = await resendConfirmation("existing@example.com");
+          setMessage(result.error ?? "success");
+        }}
+      >
+        Resend confirmation
+      </button>
+      <div>{message}</div>
+    </div>
+  );
+};
+
 describe("AuthProvider signUp", () => {
   beforeEach(() => {
     authMocks.getSession.mockResolvedValue({ data: { session: null } });
@@ -88,6 +130,8 @@ describe("AuthProvider signUp", () => {
     });
     appApiMocks.fetchProfile.mockResolvedValue({ data: null, error: null });
     appApiMocks.upsertProfile.mockResolvedValue({ data: null, error: null });
+    authMocks.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+    authMocks.resend.mockResolvedValue({ data: {}, error: null });
   });
 
   afterEach(() => {
@@ -119,6 +163,75 @@ describe("AuthProvider signUp", () => {
       expect(
         screen.getByText(
           "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestätigungslink an.",
+        ),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("surfaces a helpful outage message when signup mail delivery fails", async () => {
+    authMocks.signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: "unexpected_failure" },
+    });
+
+    render(
+      <AuthProvider>
+        <Harness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
+        ),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("surfaces a helpful outage message when password reset mail delivery fails", async () => {
+    authMocks.resetPasswordForEmail.mockResolvedValue({
+      data: {},
+      error: { message: "Error sending recovery email" },
+    });
+
+    render(
+      <AuthProvider>
+        <ResetHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset password" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
+        ),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("surfaces a helpful outage message when resending confirmation mail fails", async () => {
+    authMocks.resend.mockResolvedValue({
+      data: {},
+      error: { message: "Error sending confirmation email" },
+    });
+
+    render(
+      <AuthProvider>
+        <ResendHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Resend confirmation" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
         ),
       ).toBeInTheDocument(),
     );

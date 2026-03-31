@@ -57,7 +57,7 @@ const RegisterSuccess = () => {
               Bestätige jetzt deine E-Mail.
             </h1>
             <p className="max-w-[30rem] text-base leading-7 text-[rgba(242,220,171,0.78)]">
-              Das ist der einzige Schritt, der jetzt noch fehlt. Danach landest du direkt in deinem Profil.
+              Sobald die Bestätigungsmail angekommen ist, fehlt nur noch ein Klick. Danach landest du direkt in deinem Profil.
             </p>
           </div>
 
@@ -102,7 +102,12 @@ const RegisterSuccess = () => {
         </div>
 
         <p className="text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-          Keine Mail da? Im Login kannst du dir jederzeit einen neuen Bestätigungslink senden lassen.
+          Keine Mail da? Im Login kannst du dir jederzeit einen neuen Bestätigungslink senden lassen. Wenn auch das nicht klappt,
+          melde dich unter{" "}
+          <a href="mailto:info@kletterliga-nrw.de" className="underline underline-offset-2">
+            info@kletterliga-nrw.de
+          </a>
+          .
         </p>
 
         <div className="flex flex-col gap-3 pt-1">
