@@ -400,7 +400,7 @@ const Register = () => {
                 </div>
               </StitchCard>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="hidden grid gap-4 md:grid-cols-2">
                 <StitchCard tone="navy" className="p-5">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(242,220,171,0.1)] text-[#f2dcab]">
@@ -435,8 +435,8 @@ const Register = () => {
             </div>
           ) : null}
           {currentStep === 2 ? (
-            <div className="overflow-hidden rounded-[2rem] bg-[#fbf9f6] shadow-[0_28px_64px_rgba(0,38,55,0.18)]">
-              <div className="bg-[#003d55] px-6 pb-20 pt-6 text-[#f2dcab] sm:px-8">
+            <div className="space-y-6">
+              <div className="hidden bg-[#003d55] px-6 pb-20 pt-6 text-[#f2dcab] sm:px-8">
                 <div className="flex items-end justify-between gap-4">
                   <div className="space-y-1">
                     <div className="stitch-headline text-3xl text-[#f2dcab] sm:text-4xl">Sicherheit</div>
@@ -446,14 +446,17 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="relative -mt-12 px-4 pb-6 sm:px-8 sm:pb-8">
-                <StitchCard tone="surface" className="border border-white/10 p-6 sm:p-8">
-                  <div className="space-y-8">
+              <div className="px-0 pb-0">
+                <StitchCard tone="cream" className="relative p-6 sm:p-8">
+                  <div className="absolute right-10 top-0 h-24 w-px bg-[#002637]/10" />
+                  <div className="absolute right-[34px] top-24 h-3 w-3 rounded-full border-2 border-[#002637]/10" />
+                  <div className="relative z-10 space-y-8">
                     <div className="space-y-3">
-                      <h2 className="stitch-headline text-3xl leading-[0.92] text-[#002637] sm:text-4xl">
+                      <div className="stitch-kicker text-[#a15523]">{steps[currentStep - 1]?.progressLabel}</div>
+                      <h2 className="stitch-headline max-w-2xl text-4xl leading-[0.9] text-[#002637] sm:text-5xl">
                         {steps[currentStep - 1]?.cardTitle}
                       </h2>
-                      <p className="max-w-2xl text-sm leading-7 text-[rgba(27,28,26,0.66)]">
+                      <p className="max-w-xl text-base leading-7 text-[rgba(27,28,26,0.68)]">
                         {steps[currentStep - 1]?.cardDescription}
                       </p>
                     </div>
@@ -499,7 +502,7 @@ const Register = () => {
                         </div>
                       </StitchCard>
 
-                      <div className="rounded-[1.4rem] border-l-4 border-[#fd9f66] bg-[#f5efe5] p-5">
+                      <div className="hidden rounded-[1.4rem] border-l-4 border-[#fd9f66] bg-[#f5efe5] p-5">
                         <div className="flex items-start gap-3">
                           <ShieldCheck className="mt-0.5 h-5 w-5 text-[#a15523]" />
                           <div className="space-y-2">
@@ -512,16 +515,30 @@ const Register = () => {
                           </div>
                         </div>
                       </div>
+                      <StitchCard tone="muted" className="p-5">
+                        <div className="space-y-2">
+                          <div className="stitch-kicker text-[#a15523]">Kurz geprüft</div>
+                          <ul className="space-y-2 text-sm leading-6 text-[rgba(27,28,26,0.68)]">
+                            <li>Mindestens 6 Zeichen</li>
+                            <li>Wiederholung gegen Tippfehler</li>
+                            <li>Bestätigung per E-Mail im Anschluss</li>
+                          </ul>
+                        </div>
+                      </StitchCard>
                     </div>
 
-                    <div className="flex flex-col gap-3 pt-2">
-                      <StitchButton type="submit" size="lg" className="w-full" disabled={!canAdvance}>
+                    <div className="flex flex-col gap-3 pt-2 md:flex-row md:items-center">
+                      <StitchButton type="button" variant="outline" size="lg" className="md:min-w-[11rem]" onClick={() => setCurrentStep(1)}>
+                        Zurück
+                      </StitchButton>
+                      <StitchButton type="submit" size="lg" className="md:min-w-[12rem]" disabled={!canAdvance}>
                         Weiter
                         <ArrowRight className="h-4 w-4" />
                       </StitchButton>
-                      <StitchButton type="button" variant="outline" size="lg" className="w-full" onClick={() => setCurrentStep(1)}>
-                        Zurück
-                      </StitchButton>
+                      <div className="hidden h-px flex-1 bg-[#002637]/8 md:block" />
+                      <p className="text-xs uppercase tracking-[0.18em] text-[rgba(27,28,26,0.46)]">
+                        Passwort setzen, E-Mail bestätigen und dann direkt weiter zu deiner Liga.
+                      </p>
                     </div>
                   </div>
                 </StitchCard>
@@ -548,7 +565,100 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <StitchCard tone="surface" className="p-5 sm:p-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <StitchTextField
+                    label="Geburtsdatum"
+                    type="date"
+                    value={form.birthDate}
+                    onChange={(event) => setForm((prev) => ({ ...prev, birthDate: event.target.value }))}
+                    required
+                    icon={<CalendarDays className="h-4 w-4" />}
+                  />
+                  <StitchSelectField
+                    label="Wertungsklasse"
+                    value={form.gender}
+                    onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
+                    required
+                  >
+                    <option value="">Auswählen</option>
+                    <option value="w">Weiblich</option>
+                    <option value="m">Männlich</option>
+                  </StitchSelectField>
+                </div>
+
+                <div className="mt-4">
+                  <StitchSelectField
+                    label="Heimathalle"
+                    value={form.homeGymId}
+                    onChange={(event) => setForm((prev) => ({ ...prev, homeGymId: event.target.value }))}
+                    hint="Optional. Du kannst die Halle auch später im Profil ergänzen."
+                  >
+                    <option value="">Keine Auswahl</option>
+                    {gyms.map((gym) => (
+                      <option key={gym.id} value={gym.id}>
+                        {gym.name} {gym.city ? `(${gym.city})` : ""}
+                      </option>
+                    ))}
+                  </StitchSelectField>
+                </div>
+              </StitchCard>
+
+              <div className="space-y-3">
+                <div className="stitch-kicker text-[#a15523]">Disziplin wählen</div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {[
+                    {
+                      value: "lead",
+                      title: "Vorstieg",
+                      description:
+                        "Für alle Teilnahmen in der Vorstiegsliga mit entsprechendem Fokus auf Technik und Routenlesen.",
+                      meta: "Lead",
+                    },
+                    {
+                      value: "toprope",
+                      title: "Toprope",
+                      description:
+                        "Der ideale Einstieg, wenn du im Toprope-Format antrittst und deine Saison sauber aufbauen willst.",
+                      meta: "Toprope",
+                    },
+                  ].map((option) => {
+                    const isSelected = form.league === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, league: option.value }))}
+                        className={cn(
+                          "group relative flex min-h-[11.5rem] flex-col items-start overflow-hidden rounded-[1.2rem] border-b-4 px-3 py-4 text-left transition-all sm:min-h-[16rem] sm:rounded-[1.4rem] sm:px-5 sm:py-6",
+                          isSelected
+                            ? "border-[#a15523] bg-[#ede8e1] shadow-[0_16px_30px_rgba(0,38,55,0.08)]"
+                            : "border-transparent bg-[#f5efe5] hover:border-[#a15523]",
+                        )}
+                      >
+                        <div className="absolute -right-5 -top-5 text-[#002637]/5 transition-opacity group-hover:text-[#002637]/10">
+                          {option.value === "lead" ? <Flag className="h-16 w-16 sm:h-24 sm:w-24" /> : <Sparkles className="h-16 w-16 sm:h-24 sm:w-24" />}
+                        </div>
+
+                        <div
+                          className={cn(
+                            "mb-4 flex h-10 w-10 items-center justify-center rounded-full sm:mb-6 sm:h-12 sm:w-12",
+                            isSelected ? "bg-[#a15523] text-white" : "bg-white text-[#a15523]",
+                          )}
+                        >
+                          {option.value === "lead" ? <Flag className="h-4 w-4 sm:h-5 sm:w-5" /> : <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />}
+                        </div>
+
+                        <div className="stitch-headline text-lg leading-tight text-[#002637] sm:text-2xl">{option.title}</div>
+                        <div className="mt-auto pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#002637] sm:pt-5 sm:text-xs sm:tracking-[0.18em]">{option.meta}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="hidden grid gap-4 md:grid-cols-3">
                 {[
                   { value: "lead", title: "Vorstieg", description: "Für alle Teilnahmen in der Vorstiegsliga mit entsprechendem Fokus auf Technik und Routenlesen.", meta: "Lead" },
                   { value: "toprope", title: "Toprope", description: "Der ideale Einstieg, wenn du im Toprope-Format antrittst und deine Saison sauber aufbauen willst.", meta: "Toprope" },
@@ -582,7 +692,7 @@ const Register = () => {
                 })}
               </div>
 
-              <StitchCard tone="surface" className="p-5 sm:p-6">
+              <StitchCard tone="surface" className="hidden p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <StitchTextField
                     label="Geburtsdatum"
@@ -664,7 +774,7 @@ const Register = () => {
             </div>
           ) : null}
 
-          <div className="rounded-[1.3rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] px-5 py-4 text-sm leading-6 text-[rgba(242,220,171,0.78)]">
+          <div className="hidden rounded-[1.3rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] px-5 py-4 text-sm leading-6 text-[rgba(242,220,171,0.78)]">
             <span className="font-semibold text-[#f2dcab]">Wichtig:</span> {stepNote}
           </div>
 
