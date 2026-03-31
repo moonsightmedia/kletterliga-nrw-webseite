@@ -1,53 +1,65 @@
-# E-Mails vom Kontaktformular an info@kletterliga-nrw.de (kostenlos)
+# E-Mail-Setup mit Brevo
 
-**Aktuell:** Ohne konfigurierten API-Key werden Anfragen nur in der Datenbank gespeichert – **es wird keine E-Mail an info@ versendet**.
+Diese App nutzt jetzt zwei Mail-Wege:
 
-Es gibt zwei **kostenlose** Wege, damit das Formular E-Mails an euch schickt:
+- `Supabase Auth` fuer Registrierungs-, Reset- und Invite-Mails per `Brevo SMTP`
+- `send-contact-email` fuer das Kontaktformular per `Brevo API`
 
----
+Ohne konfigurierte Mail-Credentials speichert das Kontaktformular Anfragen nur in `contact_requests`, und Supabase Auth bleibt auf dem eingebauten Test-SMTP mit sehr niedrigen Limits.
 
-## Option 1: Resend (empfohlen) – 3.000 E-Mails/Monat kostenlos
+## 1. Brevo vorbereiten
 
-Die bestehende Edge Function ist schon vorbereitet. Ihr müsst nur einen kostenlosen Resend-Account anlegen und den API-Key eintragen – **keine laufenden Kosten**.
+1. Brevo-Account anlegen.
+2. Eine Sender-Domain oder Subdomain verifizieren, zum Beispiel `mail.kletterliga-nrw.de`.
+3. Zwei Credential-Typen erstellen:
+   - `SMTP Key` fuer Supabase Auth
+   - `API Key` fuer die Edge Function `send-contact-email`
 
-### 1. Resend-Account und API-Key
+## 2. Supabase Auth auf Brevo SMTP umstellen
 
-1. Auf [resend.com](https://resend.com) registrieren (**kostenlos**, keine Kreditkarte nötig).
-2. Unter **API Keys** einen neuen Key erstellen und kopieren.
-3. Free Tier: **3.000 E-Mails pro Monat** kostenlos.
+Im Supabase Dashboard unter `Authentication -> Email -> SMTP Settings`:
 
-### 2. Secrets in Supabase setzen
+- `Enable Custom SMTP`: aktivieren
+- `Sender name`: `Kletterliga NRW`
+- `Sender email`: `no-reply@mail.kletterliga-nrw.de`
+- `Host`: `smtp-relay.brevo.com`
+- `Port`: `587`
+- `Username`: eure Brevo SMTP Login-Adresse
+- `Password`: euer Brevo SMTP Key
 
-1. [Supabase Dashboard](https://supabase.com/dashboard) → dein Projekt.
-2. **Project Settings** (Zahnrad) → **Edge Functions** → **Secrets** (oder direkt **Edge Functions** → **send-contact-email** → **Secrets**).
-3. Folgende Secrets anlegen:
-   - **Name:** `RESEND_API_KEY`  
-     **Value:** dein Resend API Key
-   - Optional, falls du andere Adressen nutzen willst:
-     - `CONTACT_TO` = `info@kletterliga-nrw.de` (Standard)
-     - `CONTACT_FROM` = z. B. `Kletterliga NRW <noreply@kletterliga-nrw.de>` (nur nach Domain-Verifizierung bei Resend; sonst z. B. `onboarding@resend.dev`)
+Danach speichern und testweise ausloesen:
 
-### 3. Edge Function neu deployen
+- Registrierung
+- Passwort-Reset
+- Gym-Invite
 
-Nach dem Setzen der Secrets die Function einmal neu deployen, damit die neuen Umgebungsvariablen geladen werden:
+## 3. Kontaktformular auf Brevo stellen
+
+Im Supabase-Projekt diese Secrets setzen:
+
+- `BREVO_API_KEY` = euer Brevo API Key
+- Optional: `CONTACT_TO` = `info@kletterliga-nrw.de`
+- Optional: `CONTACT_FROM` = `Kletterliga NRW <kontakt@mail.kletterliga-nrw.de>`
+
+Danach die Function neu deployen:
 
 ```bash
 supabase functions deploy send-contact-email
 ```
 
-Danach werden alle neuen Kontaktanfragen per E-Mail an **info@kletterliga-nrw.de** (oder an den in `CONTACT_TO` eingetragenen Wert) gesendet.
+## 4. Fallback-Verhalten
 
----
+- Wenn `BREVO_API_KEY` gesetzt ist, versendet das Kontaktformular E-Mails ueber Brevo.
+- Wenn nur `RESEND_API_KEY` gesetzt ist, nutzt das Formular weiter Resend.
+- Wenn kein Mail-Key gesetzt ist, werden Anfragen nur in `contact_requests` gespeichert.
 
-## Option 2: Formspree (ohne Supabase-Config)
+## 5. Wichtig vor dem Launch
 
-Falls ihr **gar nichts** in Supabase konfigurieren wollt: Mit [Formspree](https://formspree.io) schickt das Formular die Daten direkt an Formspree, und sie leiten die E-Mails an euch weiter.
-
-- **Kostenlos:** 50 Einsendungen/Monat im Free Tier.
-- **Setup:** Account auf formspree.io, neues Formular anlegen, die angezeigte Form-URL (z. B. `https://formspree.io/f/xxxxx`) ins Projekt eintragen. Dafür müsste das Kontaktformular im Frontend so umgebaut werden, dass es per `POST` an diese URL sendet statt an die Supabase Edge Function.
-
-Wenn ihr Option 2 nutzen wollt, kann das Formular entsprechend umgestellt werden (Submit-Ziel von Supabase auf Formspree).
-
----
-
-**Hinweis:** Wenn `RESEND_API_KEY` nicht gesetzt ist, speichert die Edge Function die Nachrichten nur in der Tabelle `contact_requests`. Diese könnt ihr im Supabase Dashboard unter **Table Editor** → **contact_requests** einsehen.
+- Testet mindestens einmal:
+  - neues Konto anlegen
+  - bestaetigungs-Mail erneut senden
+  - Passwort zuruecksetzen
+  - Gym-Invite verschicken
+  - Kontaktformular absenden
+- Prueft, ob die Mails im Spam landen.
+- Wenn ihr mit Launch-Peaks rechnet, behaltet das Tageslimit von Brevo im Blick.

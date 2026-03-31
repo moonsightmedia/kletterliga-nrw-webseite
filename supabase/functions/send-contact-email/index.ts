@@ -10,9 +10,13 @@ type Payload = {
   fill_time_ms?: number;
 };
 
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const CONTACT_TO = Deno.env.get("CONTACT_TO") || "info@kletterliga-nrw.de";
-const CONTACT_FROM = Deno.env.get("CONTACT_FROM") || "Kletterliga NRW <onboarding@resend.dev>";
+const CONTACT_FROM = Deno.env.get("CONTACT_FROM")
+  || (BREVO_API_KEY
+    ? "Kletterliga NRW <kontakt@mail.kletterliga-nrw.de>"
+    : "Kletterliga NRW <onboarding@resend.dev>");
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -55,6 +59,24 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/\n/g, "<br>");
+}
+
+function parseSender(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(?:"?([^"]+)"?\s*)?<([^>]+)>$/);
+
+  if (match) {
+    const [, name, email] = match;
+    return {
+      email: email.trim(),
+      name: name?.trim() || undefined,
+    };
+  }
+
+  return {
+    email: trimmed,
+    name: undefined,
+  };
 }
 
 function wrapEmail(previewText: string, content: string) {
@@ -325,6 +347,45 @@ async function sendResendEmail({
   return data;
 }
 
+async function sendBrevoEmail({
+  to,
+  replyTo,
+  subject,
+  html,
+}: {
+  to: string[];
+  replyTo?: string;
+  subject: string;
+  html: string;
+}) {
+  const sender = parseSender(CONTACT_FROM);
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "api-key": BREVO_API_KEY ?? "",
+    },
+    body: JSON.stringify({
+      sender,
+      to: to.map((email) => ({ email })),
+      replyTo: replyTo ? { email: replyTo } : undefined,
+      subject,
+      htmlContent: html,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Brevo error:", res.status, data);
+    throw new Error(data?.message ?? "E-Mail konnte nicht gesendet werden.");
+  }
+
+  return data;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -400,16 +461,18 @@ serve(async (req) => {
       );
     }
 
-    if (RESEND_API_KEY) {
+    if (BREVO_API_KEY || RESEND_API_KEY) {
+      const sendEmail = BREVO_API_KEY ? sendBrevoEmail : sendResendEmail;
+
       try {
-        const internalEmail = await sendResendEmail({
+        const internalEmail = await sendEmail({
           to: [CONTACT_TO],
           replyTo: email,
           subject: `[Kontaktformular] ${subject}`,
           html: buildInternalEmailHtml({ name, email, subject, message }),
         });
 
-        await sendResendEmail({
+        await sendEmail({
           to: [email],
           replyTo: CONTACT_TO,
           subject: `[Kontaktformular] ${subject}`,
@@ -417,7 +480,7 @@ serve(async (req) => {
         });
 
         return new Response(
-          JSON.stringify({ success: true, id: internalEmail?.id }),
+          JSON.stringify({ success: true, id: internalEmail?.messageId ?? internalEmail?.id }),
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       } catch (error) {
