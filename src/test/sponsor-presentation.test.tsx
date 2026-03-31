@@ -102,6 +102,7 @@ describe("sponsor presentation", () => {
     expect(within(main).getByText("Proviant")).toBeInTheDocument();
     expect(within(main).getByText("Hillseye Boards")).toBeInTheDocument();
     expect(within(main).getByText("Mantle Climbing")).toBeInTheDocument();
+    expect(within(main).getByText("Art by Glöckchen")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
     expect(links.some((link) => link.getAttribute("href") === "https://www.proviant.de/")).toBe(
       true,

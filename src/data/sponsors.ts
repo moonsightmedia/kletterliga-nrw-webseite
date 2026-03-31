@@ -66,4 +66,8 @@ export const partnerSponsors: Sponsor[] = [
     instagramUrl: "https://www.instagram.com/mantleclimbing/",
     facebookUrl: "https://de-de.facebook.com/Mantle-Climbing-GmbH-456045974427265/",
   },
+  {
+    name: "Art by Glöckchen",
+    tier: "Bronze",
+  },
 ];
