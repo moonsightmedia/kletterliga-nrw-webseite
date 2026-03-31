@@ -1,18 +1,11 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createServiceRoleClient, requireLeagueAdmin } from "../_shared/adminAuth.ts";
 
 type Payload = {
   gymId: string;
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createServiceRoleClient();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,30 +19,9 @@ serve(async (req) => {
   }
 
   try {
-    // Check authorization - only league admins can delete gyms
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid authorization" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (user.user_metadata?.role !== "league_admin") {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized: Only league admins can delete gyms" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    const authResult = await requireLeagueAdmin(req, supabase, corsHeaders, "delete gyms");
+    if (authResult instanceof Response) {
+      return authResult;
     }
 
     // Parse request body

@@ -12,7 +12,7 @@ create table if not exists public.profiles (
   gender text,
   home_gym_id uuid,
   league text,
-  role text default 'participant',
+  role text not null default 'participant',
   created_at timestamp with time zone default now()
 );
 
@@ -23,6 +23,17 @@ alter table public.profiles add column if not exists avatar_url text;
 
 do $$
 begin
+  update public.profiles
+  set role = 'participant'
+  where role is null
+     or role not in ('participant','gym_admin','league_admin');
+
+  alter table public.profiles
+    alter column role set default 'participant';
+
+  alter table public.profiles
+    alter column role set not null;
+
   if not exists (
     select 1 from pg_constraint where conname = 'profiles_gender_check'
   ) then
@@ -34,6 +45,12 @@ begin
   ) then
     alter table public.profiles
       add constraint profiles_league_check check (league in ('toprope','lead'));
+  end if;
+  if not exists (
+    select 1 from pg_constraint where conname = 'profiles_role_check'
+  ) then
+    alter table public.profiles
+      add constraint profiles_role_check check (role in ('participant','gym_admin','league_admin'));
   end if;
 end $$;
 
@@ -101,6 +118,15 @@ create table if not exists public.gym_admins (
   gym_id uuid references public.gyms(id) on delete cascade,
   created_at timestamp with time zone default now()
 );
+
+update public.profiles p
+set role = 'gym_admin'
+where p.role = 'participant'
+  and exists (
+    select 1
+    from public.gym_admins ga
+    where ga.profile_id = p.id
+  );
 
 -- Gym codes
 create table if not exists public.gym_codes (
@@ -222,6 +248,34 @@ select
   ]'::jsonb
 where not exists (select 1 from public.admin_settings);
 
+create or replace function public.current_user_role()
+returns text
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce(
+    (
+      select p.role
+      from public.profiles p
+      where p.id = auth.uid()
+      limit 1
+    ),
+    'participant'
+  );
+$$;
+
+create or replace function public.is_league_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select public.current_user_role() = 'league_admin';
+$$;
+
 create or replace function public.protect_profile_privileged_fields()
 returns trigger
 language plpgsql
@@ -229,7 +283,7 @@ security definer
 set search_path = public
 as $$
 declare
-  actor_role text := coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '');
+  actor_role text := public.current_user_role();
 begin
   if auth.uid() = old.id and actor_role <> 'league_admin' then
     if new.role is distinct from old.role then
@@ -287,7 +341,7 @@ create policy "Profiles read own" on public.profiles
 drop policy if exists "Profiles read authenticated" on public.profiles;
 drop policy if exists "Profiles read league admin" on public.profiles;
 create policy "Profiles read league admin" on public.profiles
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Profiles insert own" on public.profiles;
 create policy "Profiles insert own" on public.profiles
@@ -302,8 +356,13 @@ create policy "Profiles update own" on public.profiles
 drop policy if exists "Profiles update league admin" on public.profiles;
 create policy "Profiles update league admin" on public.profiles
   for update
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin')
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
+
+drop policy if exists "Profiles delete league admin" on public.profiles;
+create policy "Profiles delete league admin" on public.profiles
+  for delete
+  using (public.is_league_admin());
 
 -- Policies: gyms (public read, gym_admin + league_admin update)
 drop policy if exists "Gyms read" on public.gyms;
@@ -331,8 +390,8 @@ create policy "Gyms update gym admin" on public.gyms
 drop policy if exists "Gyms update league admin" on public.gyms;
 create policy "Gyms update league admin" on public.gyms
   for update
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin')
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
 
 -- Policies: routes (public read)
 drop policy if exists "Routes read" on public.routes;
@@ -364,8 +423,8 @@ create policy "Routes update own" on public.routes
 drop policy if exists "Routes update league admin" on public.routes;
 create policy "Routes update league admin" on public.routes
   for update
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin')
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
 
 drop policy if exists "Routes delete own" on public.routes;
 create policy "Routes delete own" on public.routes
@@ -381,12 +440,12 @@ create policy "Routes delete own" on public.routes
 drop policy if exists "Routes delete league admin" on public.routes;
 create policy "Routes delete league admin" on public.routes
   for delete
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin());
 
 drop policy if exists "Routes insert league admin" on public.routes;
 create policy "Routes insert league admin" on public.routes
   for insert
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  with check (public.is_league_admin());
 
 -- Policies: results (user owns)
 drop policy if exists "Results read own" on public.results;
@@ -396,7 +455,7 @@ create policy "Results read own" on public.results
 drop policy if exists "Results read authenticated" on public.results;
 drop policy if exists "Results read league admin" on public.results;
 create policy "Results read league admin" on public.results
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Results insert own" on public.results;
 create policy "Results insert own" on public.results
@@ -441,7 +500,7 @@ create policy "Change requests read own" on public.change_requests
 drop policy if exists "Change requests read authenticated" on public.change_requests;
 drop policy if exists "Change requests read league admin" on public.change_requests;
 create policy "Change requests read league admin" on public.change_requests
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Change requests insert own" on public.change_requests;
 create policy "Change requests insert own" on public.change_requests
@@ -524,15 +583,11 @@ create policy "Gym admins read own" on public.gym_admins
 
 drop policy if exists "Gym admins read league" on public.gym_admins;
 create policy "Gym admins read league" on public.gym_admins
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
-
-drop policy if exists "Gym admins insert own" on public.gym_admins;
-create policy "Gym admins insert own" on public.gym_admins
-  for insert with check (auth.uid() = profile_id);
+  for select using (public.is_league_admin());
 
 drop policy if exists "Gym admins insert league" on public.gym_admins;
 create policy "Gym admins insert league" on public.gym_admins
-  for insert with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for insert with check (public.is_league_admin());
 
 create index if not exists gym_admins_profile_id_idx on public.gym_admins (profile_id);
 create index if not exists gym_admins_gym_id_idx on public.gym_admins (gym_id);
@@ -546,40 +601,42 @@ drop policy if exists "Admin settings write league" on public.admin_settings;
 drop policy if exists "Admin settings update league" on public.admin_settings;
 
 create policy "Admin settings write league" on public.admin_settings
-  for insert with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for insert with check (public.is_league_admin());
 
 create policy "Admin settings update league" on public.admin_settings
   for update 
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin')
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
 
 -- Policies: profile overrides
 drop policy if exists "Profile overrides read league" on public.profile_overrides;
 create policy "Profile overrides read league" on public.profile_overrides
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Profile overrides write league" on public.profile_overrides;
 create policy "Profile overrides write league" on public.profile_overrides
-  for insert with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for insert with check (public.is_league_admin());
 
 drop policy if exists "Profile overrides update league" on public.profile_overrides;
 create policy "Profile overrides update league" on public.profile_overrides
-  for update using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for update
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
 
 -- Policies: gym_invites
 drop policy if exists "Gym invites read league" on public.gym_invites;
 create policy "Gym invites read league" on public.gym_invites
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Gym invites insert league" on public.gym_invites;
 create policy "Gym invites insert league" on public.gym_invites
-  for insert with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for insert with check (public.is_league_admin());
 
 drop policy if exists "Gym invites update league" on public.gym_invites;
 create policy "Gym invites update league" on public.gym_invites
   for update
-  using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin')
-  with check ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  using (public.is_league_admin())
+  with check (public.is_league_admin());
 
 -- Policy: gym_invites read by token (for public invite completion)
 drop policy if exists "Gym invites read by token" on public.gym_invites;
@@ -594,7 +651,7 @@ create policy "Finale registrations read own" on public.finale_registrations
 
 drop policy if exists "Finale registrations read league" on public.finale_registrations;
 create policy "Finale registrations read league" on public.finale_registrations
-  for select using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for select using (public.is_league_admin());
 
 drop policy if exists "Finale registrations insert own" on public.finale_registrations;
 create policy "Finale registrations insert own" on public.finale_registrations
@@ -606,7 +663,7 @@ create policy "Finale registrations delete own" on public.finale_registrations
 
 drop policy if exists "Finale registrations delete league" on public.finale_registrations;
 create policy "Finale registrations delete league" on public.finale_registrations
-  for delete using ((auth.jwt() -> 'user_metadata' ->> 'role') = 'league_admin');
+  for delete using (public.is_league_admin());
 
 create index if not exists finale_registrations_profile_id_idx on public.finale_registrations (profile_id);
 

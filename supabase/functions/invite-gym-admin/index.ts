@@ -1,13 +1,11 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createServiceRoleClient, requireLeagueAdmin } from "../_shared/adminAuth.ts";
 
 type Payload = {
   email: string;
   skip_email?: boolean; // Optional: Skip email sending for testing
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 // Frontend URL für Einladungslinks (z.B. https://kletterliga-nrw.de)
 // Falls nicht gesetzt, wird versucht, sie aus SUPABASE_URL abzuleiten
 // HARDCODED FALLBACK für Produktion
@@ -15,11 +13,7 @@ const frontendUrlRaw = Deno.env.get("FRONTEND_URL") || Deno.env.get("SITE_URL") 
 // Entferne alle trailing slashes
 const frontendUrl = frontendUrlRaw.replace(/\/+$/, "");
 
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createServiceRoleClient();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,32 +34,9 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const authToken = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authToken);
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid authorization" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (user.user_metadata?.role !== "league_admin") {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized: Only league admins can invite gym admins" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    const authResult = await requireLeagueAdmin(req, supabase, corsHeaders, "invite gym admins");
+    if (authResult instanceof Response) {
+      return authResult;
     }
 
     // Parse request body

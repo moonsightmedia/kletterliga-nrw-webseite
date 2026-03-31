@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createServiceRoleClient } from "../_shared/adminAuth.ts";
 
 type Payload = {
   token: string;
@@ -15,14 +15,7 @@ type Payload = {
   };
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createServiceRoleClient();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,9 +137,6 @@ serve(async (req) => {
       email: invite.email,
       password: password,
       email_confirm: true,
-      user_metadata: {
-        role: "gym_admin",
-      },
     });
 
     if (userError || !userData?.user) {

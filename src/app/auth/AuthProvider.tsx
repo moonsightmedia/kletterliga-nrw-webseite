@@ -44,6 +44,20 @@ const isObfuscatedExistingUserResponse = (data: {
   data.user.identities.length === 0 &&
   !data.session;
 
+const AUTH_EMAIL_DELIVERY_ERROR =
+  "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.";
+
+const isLikelyEmailDeliveryFailure = (errorMessage: string) => {
+  const errorLower = errorMessage.toLowerCase();
+  return (
+    errorLower.includes("unexpected_failure") ||
+    errorLower.includes("error sending") ||
+    errorLower.includes("confirmation email") ||
+    errorLower.includes("recovery email") ||
+    errorLower.includes("magic link email")
+  );
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -61,7 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       gender: metadata.gender === "m" || metadata.gender === "w" ? metadata.gender : null,
       home_gym_id: typeof metadata.home_gym_id === "string" ? metadata.home_gym_id : null,
       league: metadata.league === "toprope" || metadata.league === "lead" ? metadata.league : null,
-      role: (typeof metadata.role === "string" ? metadata.role : "participant") as UserRole,
     } satisfies Partial<Profile> & { id: string };
   }, []);
 
@@ -108,7 +121,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!fetchedProfile.gender && profileSeed.gender) missingSeedPatch.gender = profileSeed.gender;
         if (!fetchedProfile.home_gym_id && profileSeed.home_gym_id) missingSeedPatch.home_gym_id = profileSeed.home_gym_id;
         if (!fetchedProfile.league && profileSeed.league) missingSeedPatch.league = profileSeed.league;
-        if (!fetchedProfile.role && profileSeed.role) missingSeedPatch.role = profileSeed.role;
 
         if (Object.keys(missingSeedPatch).length > 1) {
           const syncedProfile = await withTimeout(
@@ -190,15 +202,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     init();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
-      const nextUser = nextSession?.user ?? null;
-      setUser(nextUser);
-      if (nextUser) {
-        void loadProfile(nextUser, nextUser.email);
-      } else {
-        setProfile(null);
-      }
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      void (async () => {
+        if (!mounted) return;
+
+        const shouldGateAccess = event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED";
+        if (shouldGateAccess) {
+          setLoading(true);
+        }
+        setSession(nextSession);
+        const nextUser = nextSession?.user ?? null;
+        setUser(nextUser);
+
+        try {
+          if (nextUser) {
+            await loadProfile(nextUser, nextUser.email);
+          } else {
+            setProfile(null);
+          }
+        } finally {
+          if (mounted && shouldGateAccess) {
+            setLoading(false);
+          }
+        }
+      })();
     });
 
     return () => {
@@ -377,6 +404,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }));
     
     if (error) {
+      if (isLikelyEmailDeliveryFailure(error.message)) {
+        trackAuthEvent("signup_error", { email, error: error.message, context: "supabase_signup" });
+        return { error: AUTH_EMAIL_DELIVERY_ERROR };
+      }
       const translatedError = translateAuthError(error.message);
       trackAuthEvent("signup_error", { email, error: error.message, context: "supabase_signup" });
       return { error: translatedError };
@@ -429,6 +460,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         redirectTo: resetUrl,
       }));
       if (error) {
+        if (isLikelyEmailDeliveryFailure(error.message)) {
+          trackAuthEvent("reset_error", { email, error: error.message, context: "supabase_reset" });
+          return { error: AUTH_EMAIL_DELIVERY_ERROR };
+        }
         trackAuthEvent("reset_error", { email, error: error.message, context: "supabase_reset" });
         return { error: translateAuthError(error.message) };
       }
@@ -436,6 +471,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return {};
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error) || "Fehler beim Senden des Passwort-Links";
+      if (isLikelyEmailDeliveryFailure(errorMessage)) {
+        trackAuthEvent("reset_error", { email, error: errorMessage, context: "exception" });
+        return { error: AUTH_EMAIL_DELIVERY_ERROR };
+      }
       trackAuthEvent("reset_error", { email, error: errorMessage, context: "exception" });
       return { error: translateAuthError(errorMessage) };
     }
@@ -449,6 +488,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
       }));
       if (error) {
+        if (isLikelyEmailDeliveryFailure(error.message)) {
+          trackAuthEvent("resend_error", { email, error: error.message, context: "supabase_resend" });
+          return { error: AUTH_EMAIL_DELIVERY_ERROR };
+        }
         trackAuthEvent("resend_error", { email, error: error.message, context: "supabase_resend" });
         return { error: translateAuthError(error.message) };
       }
@@ -456,6 +499,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return {};
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error) || "Fehler beim Senden der Bestätigung";
+      if (isLikelyEmailDeliveryFailure(errorMessage)) {
+        trackAuthEvent("resend_error", { email, error: errorMessage, context: "exception" });
+        return { error: AUTH_EMAIL_DELIVERY_ERROR };
+      }
       trackAuthEvent("resend_error", { email, error: errorMessage, context: "exception" });
       return { error: translateAuthError(errorMessage) };
     }
@@ -466,12 +513,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await loadProfile(user);
   };
 
-  // Priorisiere user_metadata.role über profile.role, da user_metadata die autoritative Quelle ist
-  // (wird beim User-Erstellen gesetzt und kann nicht einfach so geändert werden)
-  const role =
-    (user?.user_metadata?.role as UserRole | undefined) ??
-    profile?.role ??
-    (user ? "participant" : "guest");
+  const role = profile?.role ?? (user ? "participant" : "guest");
 
   const value = useMemo<AuthContextValue>(
     () => ({
