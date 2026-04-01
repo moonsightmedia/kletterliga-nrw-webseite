@@ -325,10 +325,10 @@ const ageOptions: Array<{ value: RankingAgeFilterValue; label: string }> = [
 ];
 
 const filterGroupClassName =
-  "flex min-w-0 items-center gap-0.5 rounded-xl bg-[#003D55]/5 p-0.5";
+  "flex min-w-0 items-center gap-0.5 rounded-sm bg-[#003D55]/5 p-0.5";
 
 const filterButtonClassName =
-  "inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2 py-1.5 font-['Space_Grotesk'] text-[7px] font-bold uppercase leading-none tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003D55]/18 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf9f6] min-[420px]:text-[8px]";
+  "inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-sm px-2 py-1.5 font-['Space_Grotesk'] text-[7px] font-bold uppercase leading-none tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003D55]/18 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf9f6] min-[420px]:text-[8px]";
 
 const filterActiveClassName =
   "bg-[#A15523] text-[#F2DCAB] shadow-sm";

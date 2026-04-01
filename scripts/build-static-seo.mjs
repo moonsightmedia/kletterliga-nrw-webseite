@@ -404,6 +404,13 @@ const buildSeoBody = (route) => {
   `;
 };
 
+const injectNoscriptFallback = (html, fallbackContent) =>
+  html.replace(
+    /<div id="root"><\/div>/i,
+    `<div id="root"></div>
+    <noscript>${fallbackContent}</noscript>`,
+  );
+
 const applyPageMeta = (html, route, robots = "index, follow") => {
   const title = route.title.includes("Kletterliga NRW")
     ? route.title
@@ -430,10 +437,7 @@ const applyPageMeta = (html, route, robots = "index, follow") => {
 };
 
 const writeRouteHtml = async (route, baseHtml) => {
-  const html = applyPageMeta(baseHtml, route).replace(
-    /<div id="root"><\/div>/i,
-    `<div id="root">${buildSeoBody(route)}</div>`,
-  );
+  const html = injectNoscriptFallback(applyPageMeta(baseHtml, route), buildSeoBody(route));
 
   if (route.path === "/") {
     await writeFile(path.join(distDir, "index.html"), html, "utf8");
@@ -464,14 +468,14 @@ const buildAppHtml = (baseHtml) => {
     "noindex, nofollow",
   );
 
-  return appHtml.replace(
-    /<div id="root"><\/div>/i,
-    `<div id="root">
+  return injectNoscriptFallback(
+    appHtml,
+    `
       <main data-seo-static="true" style="font-family:Inter,system-ui,sans-serif;max-width:56rem;margin:0 auto;padding:6rem 1.5rem 4rem;color:#12313a">
         <h1 style="font-size:2.5rem;line-height:1.1;margin:0 0 1rem;font-weight:800">${escapeHtml(appPage.title)}</h1>
         <p style="font-size:1.05rem;line-height:1.7;margin:0;color:#30414a">${escapeHtml(appPage.description)}</p>
       </main>
-    </div>`,
+    `,
   );
 };
 

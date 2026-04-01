@@ -184,6 +184,27 @@ const ProfileScreen = () => {
             </span>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/app/age-group-rankings")}
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#003d55] text-[#f2dcab]">
+              <MaterialIcon name="leaderboard" filled className="text-lg" />
+            </span>
+            <span className="min-w-0 text-left">
+              <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-[#71787d]">
+                Ranglisten
+              </span>
+              <span className="block font-['Space_Grotesk'] text-[0.78rem] font-bold uppercase leading-[1.2] tracking-[0.04em] text-[#003d55]">
+                Altersklassen und Etappenwertung anzeigen lassen
+              </span>
+            </span>
+          </span>
+          <MaterialIcon name="chevron_right" className="text-base text-[#a15523]" />
+        </button>
       </section>
 
       <section className="space-y-4">

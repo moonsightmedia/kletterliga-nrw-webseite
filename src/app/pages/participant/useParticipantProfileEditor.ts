@@ -4,51 +4,10 @@ import { useAuth } from "@/app/auth/AuthProvider";
 import { createChangeRequest, upsertProfile } from "@/services/appApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { supabase } from "@/services/supabase";
+import { resizeImageFile } from "@/lib/imageProcessing";
 import { buildParticipantProfileData } from "./participantData";
 import { useParticipantCompetitionData } from "./useParticipantCompetitionData";
 import type { ParticipantChangeRequestForm } from "./ParticipantProfileChangeRequestDialog";
-
-const resizeImage = (file: File, maxSize = 512, quality = 0.85) =>
-  new Promise<Blob>((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      const ctx = canvas.getContext("2d");
-
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("Canvas not available"));
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) {
-            reject(new Error("Bild konnte nicht verarbeitet werden"));
-            return;
-          }
-
-          resolve(blob);
-        },
-        "image/jpeg",
-        quality,
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Bild konnte nicht geladen werden"));
-    };
-
-    img.src = objectUrl;
-  });
 
 export const useParticipantProfileEditor = () => {
   const { profile, user, refreshProfile } = useAuth();
@@ -166,7 +125,7 @@ export const useParticipantProfileEditor = () => {
 
     try {
       setUploading(true);
-      const optimized = await resizeImage(file);
+      const optimized = await resizeImageFile(file, { maxSize: 512, quality: 0.85 });
       const filePath = `${user.id}/${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, optimized, {
         contentType: "image/jpeg",

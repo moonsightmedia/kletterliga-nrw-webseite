@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { fetchGymInvite } from "@/services/appApi";
+import { blobToDataUrl, resizeImageFile } from "@/lib/imageProcessing";
 import { Building2, Loader2, Upload, X } from "lucide-react";
 
 const GymInvite = () => {
@@ -141,8 +142,12 @@ const GymInvite = () => {
 
     setUploadingLogo(true);
     try {
-      const optimized = await resizeImage(file, 800, 0.85);
-      const previewUrl = URL.createObjectURL(optimized);
+      const optimized = await resizeImageFile(file, {
+        maxSize: 800,
+        quality: 0.85,
+        preserveTransparency: true,
+      });
+      const previewUrl = await blobToDataUrl(optimized);
       setLogoPreview(previewUrl);
       setLogoFile(file);
       setUploadingLogo(false);
@@ -156,9 +161,6 @@ const GymInvite = () => {
   };
 
   const handleRemoveLogo = () => {
-    if (logoPreview) {
-      URL.revokeObjectURL(logoPreview);
-    }
     setLogoPreview(null);
     setLogoFile(null);
     if (logoInputRef.current) {
@@ -196,19 +198,12 @@ const GymInvite = () => {
       let logoBase64: string | null = null;
       if (logoFile) {
         try {
-          const optimized = await resizeImage(logoFile, 800, 0.85);
-          logoBase64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              if (typeof reader.result === "string") {
-                resolve(reader.result);
-              } else {
-                reject(new Error("Failed to convert logo"));
-              }
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(optimized);
+          const optimized = await resizeImageFile(logoFile, {
+            maxSize: 800,
+            quality: 0.85,
+            preserveTransparency: true,
           });
+          logoBase64 = await blobToDataUrl(optimized);
         } catch (error) {
           console.error("Logo conversion error:", error);
         }

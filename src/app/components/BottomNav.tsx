@@ -19,6 +19,9 @@ export const BottomNav = () => {
   const isItemActive = (to: string) => {
     if (to === "/app") return location.pathname === "/app";
     if (isParticipantProfileScreen) return to === "/app/profile";
+    if (to === "/app/rankings" && location.pathname.startsWith("/app/age-group-rankings")) {
+      return true;
+    }
     return location.pathname === to || location.pathname.startsWith(`${to}/`);
   };
 

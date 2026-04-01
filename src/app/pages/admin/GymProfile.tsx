@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { listGymAdminsByProfile, getGym, updateGym } from "@/services/appApi";
+import { resizeImageFile } from "@/lib/imageProcessing";
 import { supabase } from "@/services/supabase";
 import type { Gym } from "@/services/appTypes";
 
@@ -97,7 +98,11 @@ const GymProfile = () => {
     if (!gymId) return;
     setUploadingLogo(true);
     try {
-      const optimized = await resizeImage(file, 800, 0.85);
+      const optimized = await resizeImageFile(file, {
+        maxSize: 800,
+        quality: 0.85,
+        preserveTransparency: true,
+      });
       const isPng = file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
       const extension = isPng ? "png" : "jpg";
       const filePath = `gyms/${gymId}/${Date.now()}.${extension}`;
