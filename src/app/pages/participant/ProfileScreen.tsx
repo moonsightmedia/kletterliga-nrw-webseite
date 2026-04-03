@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { MaterialIcon } from "@/app/components/MaterialIcon";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 import { supabase } from "@/services/supabase";
 import { useParticipantProfileEditor } from "./useParticipantProfileEditor";
 
@@ -20,12 +22,12 @@ const SettingsRow = ({
     onClick={() => {
       void onClick();
     }}
-    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f2dcab]/20"
+    className="group flex w-full items-center gap-3 rounded-[0.95rem] px-3 py-3.5 text-left transition-colors hover:bg-[#f2dcab]/16"
   >
-    <MaterialIcon name={icon} />
-    <span className="font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">
-      {label}
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[#f7e7bd] text-[#003d55] transition-colors group-hover:bg-[#edd39c]">
+      <MaterialIcon name={icon} />
     </span>
+    <span className="font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">{label}</span>
     <MaterialIcon
       name="chevron_right"
       className="ml-auto text-sm text-[#71787d]"
@@ -42,55 +44,58 @@ const getInitials = (name: string) =>
     .join("") || "?";
 
 const ProfileScreenSkeleton = () => (
-  <div className="mx-auto max-w-md animate-pulse space-y-6">
-    <section>
-      <div className="overflow-hidden rounded-xl bg-[#003d55] p-6 text-[#f2dcab] shadow-lg">
-        <div className="mx-auto h-24 w-24 rounded-xl bg-[#f2dcab]/14" />
-        <div className="mx-auto mt-5 h-9 w-44 rounded-[0.9rem] bg-[#f2dcab]/12" />
-        <div className="mx-auto mt-4 h-10 w-28 rounded-[0.9rem] bg-[#f2dcab]/12" />
-        <div className="mx-auto mt-3 h-7 w-24 rounded-[0.85rem] bg-[#f2dcab]/10" />
-        <div className="mx-auto mt-6 h-12 w-52 rounded-xl bg-[#f2dcab]/12" />
-      </div>
-    </section>
+  <div className="mx-auto max-w-md animate-pulse space-y-4">
+    <div className="rounded-[1.05rem] bg-[#003d55] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <div className="h-3 w-24 rounded-[0.65rem] bg-[#f2dcab]/18" />
+      <div className="mt-4 h-12 w-4/5 rounded-[0.95rem] bg-[#f2dcab]/12" />
+      <div className="mt-3 h-4 w-full rounded-[0.7rem] bg-[#f2dcab]/10" />
+      <div className="mt-2 h-4 w-5/6 rounded-[0.7rem] bg-[#f2dcab]/10" />
+      <div className="mt-5 h-9 w-40 rounded-[0.9rem] bg-[#f2dcab]/14" />
+    </div>
 
-    <section className="space-y-4">
-      <div className="flex items-center justify-between px-2">
-        <div className="h-5 w-28 rounded-full bg-[#003d55]/8" />
-        <div className="h-4 w-24 rounded-full bg-[#a15523]/10" />
+    <div className="rounded-[1.05rem] bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <div className="mx-auto h-24 w-24 rounded-[1rem] bg-[#f2dcab]/14" />
+      <div className="mx-auto mt-5 h-10 w-56 rounded-[0.95rem] bg-[#f2dcab]/12" />
+      <div className="mx-auto mt-4 flex w-full max-w-[14rem] flex-col items-center gap-2">
+        <div className="h-10 w-full rounded-[0.9rem] bg-[#f2dcab]/12" />
+        <div className="h-10 w-28 rounded-[0.9rem] bg-[#f2dcab]/10" />
       </div>
+    </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-          <div className="h-3 w-20 rounded-full bg-[#003d55]/8" />
-          <div className="mt-4 h-8 w-16 rounded-[0.85rem] bg-[#a15523]/10" />
-        </div>
-        <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-          <div className="h-3 w-16 rounded-full bg-[#003d55]/8" />
-          <div className="mt-4 h-8 w-14 rounded-[0.85rem] bg-[#003d55]/10" />
-        </div>
-        <div className="col-span-2 rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-          <div className="h-3 w-24 rounded-full bg-[#003d55]/8" />
-          <div className="mt-4 h-9 w-24 rounded-[0.9rem] bg-[#003d55]/10" />
-        </div>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-20 rounded-[0.65rem] bg-[#003d55]/8" />
+        <div className="mt-4 h-8 w-16 rounded-[0.85rem] bg-[#a15523]/10" />
       </div>
-    </section>
+      <div className="rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-16 rounded-[0.65rem] bg-[#003d55]/8" />
+        <div className="mt-4 h-8 w-14 rounded-[0.85rem] bg-[#003d55]/10" />
+      </div>
+      <div className="col-span-2 rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-24 rounded-[0.65rem] bg-[#003d55]/8" />
+        <div className="mt-4 h-9 w-24 rounded-[0.85rem] bg-[#003d55]/10" />
+      </div>
+    </div>
 
-    <section className="space-y-4">
-      <div className="h-5 w-32 rounded-full bg-[#003d55]/8" />
-      <div className="overflow-hidden rounded-xl border border-[#f2dcab]/30 bg-white p-1 shadow-sm">
-        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
-        <div className="mx-4 h-px bg-[#f2dcab]/30" />
-        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
-        <div className="mx-4 h-px bg-[#f2dcab]/30" />
-        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
+    <div className="rounded-[1rem] border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="h-11 w-11 rounded-[0.9rem] bg-[#003d55]/10" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-20 rounded-[0.65rem] bg-[#003d55]/8" />
+          <div className="h-4 w-full rounded-[0.7rem] bg-[#003d55]/8" />
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 );
 
 const ProfileScreen = () => {
   const navigate = useNavigate();
   const { signOut, loading: authLoading } = useAuth();
+  const {
+    beforeAppUnlock,
+    unlockDate,
+  } = useLaunchSettings();
   const {
     profile,
     user,
@@ -107,6 +112,9 @@ const ProfileScreen = () => {
     ? `/app/rankings/profile/${profile.id}`
     : "/app/rankings";
   const isParticipationActivated = Boolean(profile?.participation_activated_at);
+  const shouldShowPrelaunchNotice = beforeAppUnlock;
+  const shouldShowParticipationNotice = !beforeAppUnlock && !isParticipationActivated;
+  const unlockDateLabel = formatUnlockDate(unlockDate);
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
   const averagePointsPerRouteLabel =
     profileData && profileData.routesLogged > 0
@@ -180,21 +188,62 @@ const ProfileScreen = () => {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
-      <section>
-        <div className="relative overflow-hidden rounded-xl bg-[#003d55] p-6 text-center text-[#f2dcab] shadow-lg">
-          <MaterialIcon
-            name="person"
-            filled
-            className="absolute -bottom-6 -right-6 rotate-12 text-[120px] text-[#f2dcab]/5"
-          />
+    <div className="mx-auto max-w-md space-y-4">
+      {shouldShowPrelaunchNotice ? (
+        <StitchCard tone="navy" className="rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+          <div className="space-y-4">
+            <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
+            <div className="stitch-headline text-[2rem] leading-[0.92] text-[#f2dcab]">
+              Dein Dashboard ist offen, die Liga startet am {unlockDateLabel}.
+            </div>
+            <p className="text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+              Profil, Vorbereitung und persönliche Statistiken sind bereits verfügbar. Hallen,
+              Codes und Ranglisten öffnen gesammelt zum Saisonstart.
+            </p>
+            <div className="inline-flex items-center rounded-[0.9rem] bg-[#f2dcab] px-3.5 py-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#002637]">
+              Freischaltung {unlockDateLabel}
+            </div>
+          </div>
+        </StitchCard>
+      ) : null}
 
+      {shouldShowParticipationNotice ? (
+        <StitchCard tone="cream" className="rounded-[1.05rem] p-5">
+          <div className="space-y-4">
+            <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
+            <div className="space-y-2">
+              <div className="stitch-headline text-2xl leading-[0.95] text-[#002637]">
+                Deine Wertung ist noch nicht freigeschaltet.
+              </div>
+              <p className="text-sm leading-6 text-[rgba(27,28,26,0.7)]">
+                Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den Ranglisten
+                berücksichtigt.
+              </p>
+            </div>
+            <StitchButton
+              type="button"
+              size="lg"
+              className="w-full rounded-[1rem]"
+              onClick={() => navigate("/app/participation/redeem")}
+            >
+              Mastercode freischalten
+            </StitchButton>
+          </div>
+        </StitchCard>
+      ) : null}
+
+      <StitchCard tone="navy" className="relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+        <div className="absolute -right-8 -top-8 h-24 w-24 rotate-12 rounded-[1.1rem] bg-[#f2dcab]/6" />
+        <div className="absolute -bottom-10 -left-6 h-20 w-20 rotate-12 rounded-[1rem] bg-[#a15523]/18" />
+
+        <div className="relative z-10 flex flex-col items-center gap-5">
           <button
             type="button"
             onClick={() => navigate("/app/profile/edit")}
-            className="relative mb-4 inline-block"
+            className="group relative inline-block"
+            aria-label="Profil bearbeiten"
           >
-            <div className="mx-auto h-24 w-24 overflow-hidden rounded-xl border-4 border-[#a15523] shadow-xl">
+            <div className="mx-auto h-24 w-24 overflow-hidden rounded-[1rem] border-[3px] border-[#a15523] bg-[#184c64] shadow-[0_16px_30px_rgba(0,0,0,0.24)]">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -202,117 +251,92 @@ const ProfileScreen = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#184c64] font-['Space_Grotesk'] text-3xl font-bold uppercase text-[#f2dcab]">
+                <div className="flex h-full w-full items-center justify-center font-['Space_Grotesk'] text-3xl font-bold uppercase text-[#f2dcab]">
                   {getInitials(displayName)}
                 </div>
               )}
             </div>
-            <span className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-[#a15523] text-white shadow-lg">
+            <span className="absolute -bottom-2 -right-2 flex h-10 w-10 items-center justify-center rounded-[0.9rem] border-2 border-[#003d55] bg-[#a15523] text-white shadow-[0_12px_22px_rgba(0,0,0,0.24)] transition-transform group-hover:scale-[1.03]">
               <MaterialIcon name="edit" className="text-sm" />
             </span>
           </button>
 
-          <h2 className="mb-4 font-['Space_Grotesk'] text-3xl font-bold uppercase tracking-tight text-[#f2dcab]">
-            {displayName}
-          </h2>
-
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full bg-[#f2dcab] px-5 py-2 text-[#002637] shadow-md">
-              <MaterialIcon
-                name="emoji_events"
-                filled
-                className="text-sm text-[#a15523]"
-              />
-              <span className="font-['Space_Grotesk'] text-lg font-bold italic">
-                {rankLabel}
-              </span>
+          <div className="space-y-3">
+            <h2 className="font-['Space_Grotesk'] text-3xl font-bold uppercase tracking-tight text-[#f2dcab]">
+              {displayName}
+            </h2>
+            <div className="flex flex-col items-center gap-2">
+              <div className="inline-flex min-h-11 items-center gap-2 rounded-[0.72rem] bg-[#f2dcab] px-4 py-2 text-[#002637] shadow-[0_14px_28px_rgba(0,0,0,0.18)]">
+                <MaterialIcon
+                  name="emoji_events"
+                  filled
+                  className="text-sm text-[#a15523]"
+                />
+                <span className="font-['Space_Grotesk'] text-lg font-bold italic">{rankLabel}</span>
+              </div>
+              <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#f2dcab]/18 bg-[#f2dcab]/10 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]">
+                {leagueLabel}
+              </StitchBadge>
+              {!beforeAppUnlock && isParticipationActivated ? (
+                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#f2dcab]/18 bg-[#f2dcab]/10 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]">
+                  Teilnahme aktiv
+                </StitchBadge>
+              ) : null}
             </div>
-            <div className="rounded-full border border-[#f2dcab]/20 bg-[#f2dcab]/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#f2dcab] backdrop-blur-md">
-              {leagueLabel}
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                if (!isParticipationActivated) {
-                  navigate("/app/participation/redeem");
-                }
-              }}
-              disabled={isParticipationActivated}
-              className={[
-                "rounded-xl px-8 py-3 font-['Space_Grotesk'] text-xs font-bold uppercase tracking-widest shadow-md transition-all",
-                isParticipationActivated
-                  ? "flex items-center gap-2 border border-[#f2dcab]/20 bg-[#f2dcab] text-[#003d55]"
-                  : "bg-[#a15523] text-white hover:opacity-90 active:scale-95",
-              ].join(" ")}
-            >
-              {isParticipationActivated ? (
-                <>
-                  <MaterialIcon
-                    name="check_circle"
-                    filled
-                    className="text-sm text-[#a15523]"
-                  />
-                  Teilnahme aktiviert
-                </>
-              ) : (
-                "Mastercode freischalten"
-              )}
-            </button>
           </div>
         </div>
-      </section>
+      </StitchCard>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="font-['Space_Grotesk'] text-lg font-bold uppercase tracking-widest text-[#003d55]">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.08em] text-[#003d55]">
             Statistiken
           </h3>
           <button
             type="button"
             onClick={() => navigate(participantProfileHref)}
-            className="text-[10px] font-bold uppercase tracking-wider text-[#a15523] transition hover:underline"
+            className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#a15523] transition hover:underline"
           >
             Details ansehen
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+          <StitchCard tone="surface" className="rounded-[1rem] p-4">
+            <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Punkte/Route
             </span>
-            <span className="font-['Space_Grotesk'] text-2xl font-black italic leading-none text-[#a15523]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#a15523]">
               {averagePointsPerRouteLabel}
             </span>
-          </div>
-          <div className="flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+          </StitchCard>
+
+          <StitchCard tone="surface" className="rounded-[1rem] p-4">
+            <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Sessions
             </span>
-            <span className="font-['Space_Grotesk'] text-2xl font-black italic leading-none text-[#003d55]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#003d55]">
               {profileData?.sessionCount ?? 0}
             </span>
-          </div>
-          <div className="col-span-2 flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+          </StitchCard>
+
+          <StitchCard tone="surface" className="col-span-2 rounded-[1rem] p-4">
+            <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Gesamtpunkte
             </span>
-            <span className="font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#003d55]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-4xl font-black italic leading-none text-[#003d55]">
               {profileData?.formattedPoints ?? "0"}
             </span>
-          </div>
+          </StitchCard>
         </div>
 
         <button
           type="button"
           onClick={() => navigate("/app/age-group-rankings")}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
+          className="flex w-full items-center justify-between gap-3 rounded-[1rem] border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
         >
           <span className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#003d55] text-[#f2dcab]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] bg-[#003d55] text-[#f2dcab]">
               <MaterialIcon name="leaderboard" filled className="text-lg" />
             </span>
             <span className="min-w-0 text-left">
@@ -331,41 +355,43 @@ const ProfileScreen = () => {
         </button>
       </section>
 
-      <section className="space-y-4">
-        <h3 className="px-2 font-['Space_Grotesk'] text-lg font-bold uppercase tracking-widest text-[#003d55]">
+      <section className="space-y-3">
+        <h3 className="px-1 font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.08em] text-[#003d55]">
           Einstellungen
         </h3>
 
-        <div className="overflow-hidden rounded-xl border border-[#f2dcab]/30 bg-white p-1 shadow-sm">
+        <StitchCard tone="surface" className="rounded-[1rem] p-1">
           <SettingsRow
             icon="person_outline"
             label="Profil bearbeiten"
             onClick={() => navigate("/app/profile/edit")}
           />
-          <div className="mx-4 h-px bg-[#f2dcab]/30" />
+          <div className="mx-3 h-px bg-[#f2dcab]/40" />
           <SettingsRow
             icon="lock_open"
             label="Passwort ändern"
             onClick={handlePasswordReset}
           />
-          <div className="mx-4 h-px bg-[#f2dcab]/30" />
+          <div className="mx-3 h-px bg-[#f2dcab]/40" />
           <SettingsRow
             icon="notifications_none"
             label="Benachrichtigungen"
             onClick={() => navigate("/app/profile/notifications")}
           />
-        </div>
+        </StitchCard>
 
-        <button
+        <StitchButton
           type="button"
+          variant="cream"
+          size="lg"
+          className="w-full rounded-[1rem] border border-[#003d55]/10"
           onClick={() => {
             void signOut();
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#003d55]/10 bg-[#f2dcab] py-4 font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.2em] text-[#003d55] shadow-sm transition-all hover:bg-[#edd39c] active:scale-95"
         >
           <MaterialIcon name="logout" className="text-sm" />
           Logout
-        </button>
+        </StitchButton>
       </section>
     </div>
   );

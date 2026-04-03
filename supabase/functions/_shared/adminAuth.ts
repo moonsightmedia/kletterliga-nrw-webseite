@@ -37,6 +37,10 @@ export async function requireLeagueAdmin(
   }
 
   const token = authHeader.replace("Bearer ", "").trim();
+  if (!token) {
+    return jsonResponse(401, { error: "Missing authorization token" }, corsHeaders);
+  }
+
   const {
     data: { user },
     error: authError,

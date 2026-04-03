@@ -38,6 +38,13 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "").trim();
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Missing authorization token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const {
       data: { user },
       error: authError,

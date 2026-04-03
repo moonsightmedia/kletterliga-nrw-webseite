@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, LayoutDashboard, Lock, UserRound } from "lucide-react";
+import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { getUnlockDate } from "@/config/launch";
 
 type Props = {
@@ -37,56 +38,54 @@ const FeatureLocked = ({
 
   return (
     <div className="mx-auto max-w-md space-y-4 px-0 pb-6 pt-1">
-      <section className="relative overflow-hidden rounded-lg bg-[#003d55] p-5 text-[#f2dcab] shadow-lg">
+      <StitchCard tone="navy" className="relative overflow-hidden rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
         <div
           aria-hidden="true"
-          className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-[#f2dcab]/6 blur-2xl"
+          className="absolute -right-8 -top-8 h-24 w-24 rotate-12 rounded-[1rem] bg-[#f2dcab]/6"
         />
         <div
           aria-hidden="true"
-          className="absolute -bottom-10 -right-8 h-32 w-32 rotate-12 text-[#f2dcab]/5"
-        >
-          <Lock className="h-full w-full" strokeWidth={1.3} />
-        </div>
+          className="absolute -bottom-12 -right-8 h-24 w-24 rotate-12 rounded-[1rem] bg-[#a15523]/18"
+        />
 
-        <div className="relative z-10">
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center rounded-[0.85rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#f2dcab]">
+            Gesperrt bis Saisonstart
+          </div>
+
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#f2dcab] text-[#003d55] shadow-md">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[0.95rem] bg-[#f2dcab] text-[#003d55] shadow-[0_14px_24px_rgba(0,0,0,0.18)]">
               <Lock className="h-5 w-5" />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="inline-flex items-center rounded-md border border-[#f2dcab]/18 bg-[#f2dcab]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f2dcab]">
-                Gesperrt bis Saisonstart
-              </div>
-
-              <h2 className="mt-3 break-words font-['Space_Grotesk'] text-[1.95rem] font-bold uppercase leading-[0.92] tracking-tight text-[#f2dcab] sm:text-[2.2rem]">
+            <div className="min-w-0 flex-1 space-y-3">
+              <h2 className="font-['Space_Grotesk'] text-[1.95rem] font-bold uppercase leading-[0.92] tracking-tight text-[#f2dcab] sm:text-[2.2rem]">
                 {lockedAreaLabel}
               </h2>
 
-              <p className="mt-3 text-sm leading-6 text-[#f2dcab]/78">
+              <p className="text-sm leading-6 text-[rgba(242,220,171,0.76)]">
                 {description}
               </p>
             </div>
           </div>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-[#f2dcab] px-4 py-2 text-[#002637] shadow-md">
+          <div className="inline-flex items-center gap-2 rounded-[0.9rem] bg-[#f2dcab] px-4 py-2 text-[#002637] shadow-[0_14px_28px_rgba(0,0,0,0.16)]">
             <CalendarDays className="h-4 w-4 text-[#a15523]" />
             <span className="font-['Space_Grotesk'] text-[0.72rem] font-bold uppercase tracking-[0.08em]">
               Freischaltung am {formatDate(unlock)}
             </span>
           </div>
         </div>
-      </section>
+      </StitchCard>
 
-      <section className="rounded-lg border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+      <StitchCard tone="surface" className="rounded-[1rem] p-4">
         <div className="mb-3 text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
           Bis dahin schon offen
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-start gap-3 rounded-lg bg-[#f8f4eb] p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#003d55] text-[#f2dcab]">
+          <div className="flex items-start gap-3 rounded-[0.95rem] bg-[#f8f4eb] p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] bg-[#003d55] text-[#f2dcab]">
               <LayoutDashboard className="h-4 w-4" />
             </div>
             <div>
@@ -99,8 +98,8 @@ const FeatureLocked = ({
             </div>
           </div>
 
-          <div className="flex items-start gap-3 rounded-lg bg-[#f8f4eb] p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#003d55] text-[#f2dcab]">
+          <div className="flex items-start gap-3 rounded-[0.95rem] bg-[#f8f4eb] p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.85rem] bg-[#003d55] text-[#f2dcab]">
               <UserRound className="h-4 w-4" />
             </div>
             <div>
@@ -113,15 +112,14 @@ const FeatureLocked = ({
             </div>
           </div>
         </div>
-      </section>
+      </StitchCard>
 
-      <Link
-        to="/app"
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#003d55]/10 bg-[#f2dcab] py-4 font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.2em] text-[#003d55] shadow-sm transition-all hover:bg-[#edd39c] active:scale-95"
-      >
-        Zum Dashboard
-        <ArrowRight className="h-4 w-4" />
-      </Link>
+      <StitchButton asChild variant="cream" size="lg" className="w-full rounded-[1rem] border border-[#003d55]/10">
+        <Link to="/app">
+          Zum Dashboard
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </StitchButton>
     </div>
   );
 };

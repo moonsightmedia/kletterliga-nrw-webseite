@@ -2,10 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProfileScreen from "@/app/pages/participant/ProfileScreen";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { useLaunchSettings } from "@/config/launch";
 import { useParticipantProfileEditor } from "@/app/pages/participant/useParticipantProfileEditor";
 
 vi.mock("@/app/auth/AuthProvider", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("@/config/launch", () => ({
+  useLaunchSettings: vi.fn(),
+  formatUnlockDate: () => "01.05.2026",
 }));
 
 vi.mock("@/app/pages/participant/useParticipantProfileEditor", () => ({
@@ -13,6 +19,7 @@ vi.mock("@/app/pages/participant/useParticipantProfileEditor", () => ({
 }));
 
 const mockedUseAuth = vi.mocked(useAuth);
+const mockedUseLaunchSettings = vi.mocked(useLaunchSettings);
 const mockedUseParticipantProfileEditor = vi.mocked(useParticipantProfileEditor);
 
 const buildProfileEditorState = (overrides: Partial<ReturnType<typeof useParticipantProfileEditor>> = {}) =>
@@ -34,7 +41,7 @@ const buildProfileEditorState = (overrides: Partial<ReturnType<typeof usePartici
       formattedPoints: "2,5",
     },
     displayName: "Lukas Müller",
-    leagueLabel: "TOPROPE",
+    leagueLabel: "Toprope",
     avatarPreview: null,
     ...overrides,
   }) as ReturnType<typeof useParticipantProfileEditor>;
@@ -45,24 +52,48 @@ describe("ProfileScreen", () => {
       loading: false,
       signOut: vi.fn().mockResolvedValue(undefined),
     } as ReturnType<typeof useAuth>);
+    mockedUseLaunchSettings.mockReturnValue({
+      beforeAppUnlock: true,
+      unlockDate: new Date("2026-05-01T00:00:00+02:00"),
+    } as ReturnType<typeof useLaunchSettings>);
     mockedUseParticipantProfileEditor.mockReturnValue(buildProfileEditorState());
   });
 
-  it("renders the participant overview with statistics and settings", () => {
+  it("shows the prelaunch state before season unlock without the participation CTA", () => {
     render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ProfileScreen />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Lukas Müller" })).toBeInTheDocument();
-    expect(screen.getByText("Punkte/Route")).toBeInTheDocument();
-    expect(screen.getAllByText("2,5")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: "Mastercode freischalten" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Passwort ändern" })).toBeInTheDocument();
+    expect(screen.getByText("Pre-Launch")).toBeInTheDocument();
+    expect(screen.getByText(/die Liga startet am 01.05.2026/i)).toBeInTheDocument();
+    expect(screen.queryByText("Teilnahme fehlt")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mastercode freischalten" })).not.toBeInTheDocument();
   });
 
-  it("shows the activated mastercode state once participation is unlocked", () => {
+  it("shows the participation notice with CTA after unlock when the profile is not activated", () => {
+    mockedUseLaunchSettings.mockReturnValue({
+      beforeAppUnlock: false,
+      unlockDate: new Date("2026-05-01T00:00:00+02:00"),
+    } as ReturnType<typeof useLaunchSettings>);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ProfileScreen />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("Pre-Launch")).not.toBeInTheDocument();
+    expect(screen.getByText("Teilnahme fehlt")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mastercode freischalten" })).toBeEnabled();
+  });
+
+  it("shows the activated participation badge once the profile is unlocked", () => {
+    mockedUseLaunchSettings.mockReturnValue({
+      beforeAppUnlock: false,
+      unlockDate: new Date("2026-05-01T00:00:00+02:00"),
+    } as ReturnType<typeof useLaunchSettings>);
     mockedUseParticipantProfileEditor.mockReturnValue(
       buildProfileEditorState({
         profile: {
@@ -79,7 +110,8 @@ describe("ProfileScreen", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("button", { name: /Teilnahme aktiviert/i })).toBeDisabled();
+    expect(screen.queryByText("Teilnahme fehlt")).not.toBeInTheDocument();
+    expect(screen.getByText("Teilnahme aktiv")).toBeInTheDocument();
   });
 
   it("renders a skeleton while profile data is still loading", () => {
@@ -95,7 +127,7 @@ describe("ProfileScreen", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByRole("heading", { name: "Lukas MÃ¼ller" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Lukas Müller" })).not.toBeInTheDocument();
     expect(screen.getByText((_, element) => element?.className.includes("animate-pulse") ?? false)).toBeInTheDocument();
   });
 });

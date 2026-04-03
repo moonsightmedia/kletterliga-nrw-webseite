@@ -5,9 +5,6 @@ import { AuthProvider, useAuth } from "@/app/auth/AuthProvider";
 const authMocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(),
-  signUp: vi.fn(),
-  resetPasswordForEmail: vi.fn(),
-  resend: vi.fn(),
 }));
 
 const appApiMocks = vi.hoisted(() => ({
@@ -16,6 +13,9 @@ const appApiMocks = vi.hoisted(() => ({
   fetchProfileConsent: vi.fn(),
   upsertProfileConsent: vi.fn(),
   initializeParticipantConsent: vi.fn(),
+  requestSignupEmail: vi.fn(),
+  requestPasswordRecoveryEmail: vi.fn(),
+  requestConfirmationResendEmail: vi.fn(),
   resendMarketingOptInEmail: vi.fn(),
 }));
 
@@ -29,11 +29,8 @@ vi.mock("@/services/supabase", () => ({
     auth: {
       getSession: authMocks.getSession,
       onAuthStateChange: authMocks.onAuthStateChange,
-      signUp: authMocks.signUp,
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
-      resetPasswordForEmail: authMocks.resetPasswordForEmail,
-      resend: authMocks.resend,
     },
   },
 }));
@@ -42,6 +39,9 @@ vi.mock("@/services/appApi", () => ({
   fetchProfile: appApiMocks.fetchProfile,
   fetchProfileConsent: appApiMocks.fetchProfileConsent,
   initializeParticipantConsent: appApiMocks.initializeParticipantConsent,
+  requestSignupEmail: appApiMocks.requestSignupEmail,
+  requestPasswordRecoveryEmail: appApiMocks.requestPasswordRecoveryEmail,
+  requestConfirmationResendEmail: appApiMocks.requestConfirmationResendEmail,
   resendMarketingOptInEmail: appApiMocks.resendMarketingOptInEmail,
   upsertProfile: appApiMocks.upsertProfile,
   upsertProfileConsent: appApiMocks.upsertProfileConsent,
@@ -180,29 +180,35 @@ describe("AuthProvider signUp", () => {
       data: { ok: true, email_sent: true, marketing_email_status: "pending", consent: null },
       error: null,
     });
+    appApiMocks.requestSignupEmail.mockResolvedValue({
+      data: { ok: true, email_sent: true, user_id: "new-user" },
+      error: null,
+    });
+    appApiMocks.requestPasswordRecoveryEmail.mockResolvedValue({
+      data: { ok: true, email_sent: true },
+      error: null,
+    });
+    appApiMocks.requestConfirmationResendEmail.mockResolvedValue({
+      data: { ok: true, email_sent: true },
+      error: null,
+    });
     appApiMocks.resendMarketingOptInEmail.mockResolvedValue({
       data: { ok: true, email_sent: true, marketing_email_status: "pending", consent: null },
       error: null,
     });
-    authMocks.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
-    authMocks.resend.mockResolvedValue({ data: {}, error: null });
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it("returns a clear error when Supabase responds with an obfuscated existing-user signup", async () => {
-    authMocks.signUp.mockResolvedValue({
-      data: {
-        user: {
-          id: "existing-user",
-          email: "existing@example.com",
-          identities: [],
-        },
-        session: null,
+  it("returns a clear error when signup reports an existing confirmed account", async () => {
+    appApiMocks.requestSignupEmail.mockResolvedValue({
+      data: null,
+      error: {
+        message:
+          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestaetigungslink an.",
       },
-      error: null,
     });
 
     render(
@@ -221,9 +227,9 @@ describe("AuthProvider signUp", () => {
   });
 
   it("surfaces a helpful outage message when signup mail delivery fails", async () => {
-    authMocks.signUp.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { message: "unexpected_failure" },
+    appApiMocks.requestSignupEmail.mockResolvedValue({
+      data: null,
+      error: { message: "Unser E-Mail-Versand ist gerade gestoert." },
     });
 
     render(
@@ -236,21 +242,17 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestoert\./),
       ).toBeInTheDocument(),
     );
   });
 
   it("keeps signup successful when the optional marketing DOI mail cannot be sent", async () => {
-    authMocks.signUp.mockResolvedValue({
+    appApiMocks.requestSignupEmail.mockResolvedValue({
       data: {
-        user: {
-          id: "new-user",
-          email: "marketing@example.com",
-          identities: [{ id: "identity-1" }],
-          user_metadata: {},
-        },
-        session: null,
+        ok: true,
+        email_sent: true,
+        user_id: "new-user",
       },
       error: null,
     });
@@ -260,7 +262,7 @@ describe("AuthProvider signUp", () => {
         email_sent: false,
         marketing_email_status: "pending",
         consent: null,
-        message: "Die Bestätigungs-E-Mail konnte gerade nicht gesendet werden.",
+        message: "Die Bestaetigungs-E-Mail konnte gerade nicht gesendet werden.",
       },
       error: null,
     });
@@ -275,15 +277,15 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("false:Die Bestätigungs-E-Mail konnte gerade nicht gesendet werden."),
+        screen.getByText("false:Die Bestaetigungs-E-Mail konnte gerade nicht gesendet werden."),
       ).toBeInTheDocument(),
     );
   });
 
   it("surfaces a helpful outage message when password reset mail delivery fails", async () => {
-    authMocks.resetPasswordForEmail.mockResolvedValue({
-      data: {},
-      error: { message: "Error sending recovery email" },
+    appApiMocks.requestPasswordRecoveryEmail.mockResolvedValue({
+      data: null,
+      error: { message: "Unser E-Mail-Versand ist gerade gestoert." },
     });
 
     render(
@@ -296,15 +298,15 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestoert\./),
       ).toBeInTheDocument(),
     );
   });
 
   it("surfaces a helpful outage message when resending confirmation mail fails", async () => {
-    authMocks.resend.mockResolvedValue({
-      data: {},
-      error: { message: "Error sending confirmation email" },
+    appApiMocks.requestConfirmationResendEmail.mockResolvedValue({
+      data: null,
+      error: { message: "Unser E-Mail-Versand ist gerade gestoert." },
     });
 
     render(
@@ -317,7 +319,7 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestoert\./),
       ).toBeInTheDocument(),
     );
   });

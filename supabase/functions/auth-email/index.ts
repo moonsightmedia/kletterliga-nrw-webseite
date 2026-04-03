@@ -176,10 +176,10 @@ function buildActionEmailHtml({
                 <td style="padding:32px 24px;">
                   <div style="padding:20px;background:#f8fbfc;border:1px solid #cfd9de;border-left:6px solid #a15523;">
                     <p style="margin:0 0 12px;font-size:16px;line-height:1.75;color:#173947;">
-                      Der Link ist direkt fuer dein Konto erstellt worden und kann sofort genutzt werden.
+                      Der Link ist direkt f\u00fcr dein Konto erstellt worden und kann sofort genutzt werden.
                     </p>
                     <p style="margin:0;font-size:15px;line-height:1.7;color:#506a76;">
-                      Falls du diese Aktion nicht angestossen hast, kannst du diese E-Mail einfach ignorieren.
+                      Falls du diese Aktion nicht angesto\u00dfen hast, kannst du diese E-Mail einfach ignorieren.
                     </p>
                   </div>
                   <div style="margin:24px 0 0;">
@@ -188,7 +188,7 @@ function buildActionEmailHtml({
                     </a>
                   </div>
                   <p style="margin:24px 0 0;font-size:14px;line-height:1.75;color:#173947;">
-                    Falls der Button nicht funktioniert, kann dieser Link direkt im Browser geoeffnet werden:
+                    Falls der Button nicht funktioniert, kann dieser Link direkt im Browser ge\u00f6ffnet werden:
                     <br />
                     <a href="${actionUrl}" style="color:#7a421d;word-break:break-all;">${actionUrl}</a>
                   </p>
@@ -231,7 +231,7 @@ async function sendResendEmail({
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data?.message ?? "E-Mail konnte nicht ueber Resend gesendet werden.");
+    throw new Error(data?.message ?? "E-Mail konnte nicht \u00fcber Resend gesendet werden.");
   }
 }
 
@@ -265,7 +265,7 @@ async function sendBrevoEmail({
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data?.message ?? "E-Mail konnte nicht ueber Brevo gesendet werden.");
+    throw new Error(data?.message ?? "E-Mail konnte nicht \u00fcber Brevo gesendet werden.");
   }
 }
 
@@ -338,7 +338,7 @@ async function findUserByEmail(email: string): Promise<AuthUserSummary | null> {
     });
 
     if (error) {
-      throw new Error(error.message || "Bestehende Accounts konnten nicht geprueft werden.");
+      throw new Error(error.message || "Bestehende Accounts konnten nicht gepr\u00fcft werden.");
     }
 
     const found = (data?.users ?? []).find((user) => normalizeEmail(user.email ?? "") === email);
@@ -379,7 +379,7 @@ async function generateSignupEmail({
       error: {
         status: 409,
         message:
-          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestaetigungslink an.",
+          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Best\u00e4tigungslink an.",
       },
     };
   }
@@ -392,17 +392,17 @@ async function generateSignupEmail({
     });
 
     if (linkResult.error || !linkResult.data?.properties?.action_link) {
-      throw new Error(linkResult.error?.message || "Bestaetigungslink konnte nicht erzeugt werden.");
+      throw new Error(linkResult.error?.message || "Best\u00e4tigungslink konnte nicht erzeugt werden.");
     }
 
     await sendAuthEmail({
       to: email,
-      subject: "Kletterliga NRW - Bestaetigungslink",
+      subject: "Kletterliga NRW - Best\u00e4tigungslink",
       html: buildActionEmailHtml({
         eyebrow: "Account",
-        title: "Bestaetige deinen Zugang",
+        title: "Best\u00e4tige deinen Zugang",
         intro:
-          "Fuer diese E-Mail-Adresse existiert bereits ein unbestaetigter Account. Ueber diesen Link aktivierst du deinen Zugang sofort.",
+          "F\u00fcr diese E-Mail-Adresse existiert bereits ein unbest\u00e4tigter Account. \u00dcber diesen Link aktivierst du deinen Zugang sofort.",
         buttonLabel: "Zugang aktivieren",
         actionUrl: linkResult.data.properties.action_link,
         fallbackText: "Wenn du bereits einen Link angefordert hattest, kannst du ab sofort einfach den neuesten verwenden.",
@@ -435,7 +435,7 @@ async function generateSignupEmail({
         error: {
           status: 409,
           message:
-            "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestaetigungslink an.",
+          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Best\u00e4tigungslink an.",
         },
       };
     }
@@ -451,13 +451,13 @@ async function generateSignupEmail({
 
   await sendAuthEmail({
     to: email,
-    subject: "Kletterliga NRW - E-Mail bestaetigen",
+    subject: "Kletterliga NRW - E-Mail best\u00e4tigen",
     html: buildActionEmailHtml({
       eyebrow: "Registrierung",
-      title: "Bestaetige deine E-Mail",
+      title: "Best\u00e4tige deine E-Mail",
       intro:
-        "Dein Account fuer die Kletterliga NRW ist angelegt. Mit einem Klick bestaetigst du deine E-Mail-Adresse und landest direkt in deinem Profil.",
-      buttonLabel: "E-Mail bestaetigen",
+        "Dein Account f\u00fcr die Kletterliga NRW ist angelegt. Mit einem Klick best\u00e4tigst du deine E-Mail-Adresse und landest direkt in deinem Profil.",
+      buttonLabel: "E-Mail best\u00e4tigen",
       actionUrl: actionLink,
       fallbackText: "Wenn du dich nicht registriert hast, kannst du diese E-Mail ignorieren.",
     }),
@@ -492,20 +492,20 @@ async function sendConfirmationEmail(email: string, redirectTo: string) {
   });
 
   if (linkResult.error || !linkResult.data?.properties?.action_link) {
-    throw new Error(linkResult.error?.message || "Bestaetigungslink konnte nicht erzeugt werden.");
+    throw new Error(linkResult.error?.message || "Best\u00e4tigungslink konnte nicht erzeugt werden.");
   }
 
   await sendAuthEmail({
     to: email,
-    subject: "Kletterliga NRW - Neuer Bestaetigungslink",
+    subject: "Kletterliga NRW - Neuer Best\u00e4tigungslink",
     html: buildActionEmailHtml({
-      eyebrow: "Bestaetigung",
+      eyebrow: "Best\u00e4tigung",
       title: "Hier ist dein neuer Link",
       intro:
-        "Mit diesem Link kannst du deinen Zugang zur Kletterliga NRW bestaetigen und dich direkt anmelden.",
+        "Mit diesem Link kannst du deinen Zugang zur Kletterliga NRW best\u00e4tigen und dich direkt anmelden.",
       buttonLabel: "Link verwenden",
       actionUrl: linkResult.data.properties.action_link,
-      fallbackText: "Wenn du die E-Mail inzwischen bestaetigt hast, kannst du diese Nachricht ignorieren.",
+      fallbackText: "Wenn du die E-Mail inzwischen best\u00e4tigt hast, kannst du diese Nachricht ignorieren.",
     }),
   });
 
@@ -543,12 +543,12 @@ async function sendRecoveryEmail(email: string, redirectTo: string) {
 
   await sendAuthEmail({
     to: email,
-    subject: "Kletterliga NRW - Passwort zuruecksetzen",
+    subject: "Kletterliga NRW - Passwort zur\u00fccksetzen",
     html: buildActionEmailHtml({
       eyebrow: "Passwort",
       title: "Setze dein Passwort neu",
       intro:
-        "Ueber diesen Link kannst du ein neues Passwort fuer deinen Zugang zur Kletterliga NRW festlegen.",
+        "\u00dcber diesen Link kannst du ein neues Passwort f\u00fcr deinen Zugang zur Kletterliga NRW festlegen.",
       buttonLabel: "Passwort neu setzen",
       actionUrl: linkResult.data.properties.action_link,
       fallbackText: "Wenn du kein neues Passwort angefordert hast, kannst du diese E-Mail ignorieren.",
@@ -576,7 +576,7 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return jsonResponse(400, { error: "Ungueltige Anfrage." });
+      return jsonResponse(400, { error: "Ung\u00fcltige Anfrage." });
     }
 
     const payload = body as Payload;
@@ -584,11 +584,11 @@ serve(async (req) => {
     const email = normalizeEmail(String(payload.email ?? ""));
 
     if (action !== "signup" && action !== "resend_confirmation" && action !== "recovery") {
-      return jsonResponse(400, { error: "Ungueltige Aktion." });
+      return jsonResponse(400, { error: "Ung\u00fcltige Aktion." });
     }
 
     if (!isValidEmail(email)) {
-      return jsonResponse(400, { error: "Bitte gib eine gueltige E-Mail-Adresse ein." });
+      return jsonResponse(400, { error: "Bitte gib eine g\u00fcltige E-Mail-Adresse ein." });
     }
 
     const rateLimitKey = `${action}:${getClientIp(req)}:${email}`;

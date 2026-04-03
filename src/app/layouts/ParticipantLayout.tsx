@@ -1,13 +1,11 @@
-import { Suspense, useState, type TouchEvent } from "react";
+import { Suspense, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Share2, User } from "lucide-react";
 import { BottomNav } from "@/app/components/BottomNav";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/use-toast";
-import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
 import {
   getMarketingEmailStatusHint,
   getMarketingEmailStatusLabel,
@@ -33,8 +31,6 @@ const getPageTitle = (path: string) => {
   return "Dashboard";
 };
 
-const PARTICIPATION_DISMISS_THRESHOLD = 96;
-
 const isGymDetailPath = (path: string) =>
   /^\/app\/gyms\/[^/]+$/.test(path) && !path.startsWith("/app/gyms/redeem");
 
@@ -51,7 +47,8 @@ const getParticipantBackTarget = (path: string) => {
   return null;
 };
 
-const isShareableParticipantProfilePath = (path: string) => /^\/app\/rankings\/profile\/[^/]+$/.test(path);
+const isShareableParticipantProfilePath = (path: string) =>
+  /^\/app\/rankings\/profile\/[^/]+$/.test(path);
 const isParticipantProfileHistoryPath = (path: string) =>
   /^\/app\/rankings\/profile\/[^/]+\/history$/.test(path);
 
@@ -93,13 +90,16 @@ const ParticipantRouteFallback = ({
       <div
         className={cn(
           "overflow-hidden rounded-[1.7rem] border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.18)]",
-          home
-            ? "bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]"
-            : "bg-white/92 backdrop-blur",
+          home ? "bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]" : "bg-white/92 backdrop-blur",
         )}
       >
         <div className={cn("h-4 w-28 rounded-full", home ? "bg-[#f2dcab]/14" : "bg-[#003d55]/8")} />
-        <div className={cn("mt-4 h-12 w-3/4 rounded-[1rem]", home ? "bg-[#f2dcab]/12" : "bg-[#003d55]/10")} />
+        <div
+          className={cn(
+            "mt-4 h-12 w-3/4 rounded-[1rem]",
+            home ? "bg-[#f2dcab]/12" : "bg-[#003d55]/10",
+          )}
+        />
         <div className={cn("mt-5 h-4 w-full rounded-full", home ? "bg-[#f2dcab]/10" : "bg-[#003d55]/8")} />
         <div className={cn("mt-2 h-4 w-5/6 rounded-full", home ? "bg-[#f2dcab]/10" : "bg-[#003d55]/8")} />
       </div>
@@ -132,7 +132,7 @@ export const ParticipantLayout = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, profileConsent } = useAuth();
+  const { profileConsent } = useAuth();
   const title = getPageTitle(location.pathname);
   const isHome = location.pathname === "/app";
   const isGymDetail = isGymDetailPath(location.pathname);
@@ -149,37 +149,12 @@ export const ParticipantLayout = () => {
   const isParticipantProfileScreen =
     isShareableParticipantProfile || isParticipantProfileHistoryPath(location.pathname);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [participationNoticeDismissed, setParticipationNoticeDismissed] = useState(false);
-  const [participationTouchStartX, setParticipationTouchStartX] = useState<number | null>(null);
-  const [participationSwipeOffset, setParticipationSwipeOffset] = useState(0);
-  const participationInactive =
-    profile && profile.role === "participant" && !profile.participation_activated_at;
-  const { unlockDate, participantFeatureLocked: featureLocked } = useLaunchSettings();
-  const unlockDateLabel = formatUnlockDate(unlockDate);
   const notificationStatusLabel = getMarketingEmailStatusLabel(
     profileConsent?.marketing_email_status ?? "not_subscribed",
   );
   const notificationStatusHint = getMarketingEmailStatusHint(
     profileConsent?.marketing_email_status ?? "not_subscribed",
   );
-
-  const handleParticipationTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    setParticipationTouchStartX(event.touches[0]?.clientX ?? null);
-  };
-
-  const handleParticipationTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    if (participationTouchStartX === null) return;
-    const nextX = event.touches[0]?.clientX ?? participationTouchStartX;
-    setParticipationSwipeOffset(nextX - participationTouchStartX);
-  };
-
-  const handleParticipationTouchEnd = () => {
-    if (Math.abs(participationSwipeOffset) >= PARTICIPATION_DISMISS_THRESHOLD) {
-      setParticipationNoticeDismissed(true);
-    }
-    setParticipationTouchStartX(null);
-    setParticipationSwipeOffset(0);
-  };
 
   const handleSharePage = async () => {
     if (typeof navigator === "undefined") return;
@@ -381,81 +356,18 @@ export const ParticipantLayout = () => {
           isGymDetail || isRouteFlow || isParticipantProfileScreen
             ? "max-w-md px-0 pb-32 pt-0"
             : isHome
-                ? "max-w-md px-4 pb-32 pt-6 sm:px-6"
-                : "max-w-6xl px-4 pb-32 pt-6 sm:px-6",
+              ? "max-w-md px-4 pb-32 pt-6 sm:px-6"
+              : "max-w-6xl px-4 pb-32 pt-6 sm:px-6",
         )}
       >
-        {!isGymDetail && !isRouteFlow && !isParticipantProfileScreen && featureLocked ? (
-          <StitchCard
-            tone={isHome ? "glass" : "navy"}
-            className={cn(
-              "mb-4 px-4 py-4 sm:px-5 sm:py-4",
-              isHome && "border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.05)]",
-            )}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-2">
-                <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
-                <div className="stitch-headline text-xl text-[#f2dcab] sm:text-2xl">
-                  Dein Dashboard ist offen, die Liga startet am {unlockDateLabel}.
-                </div>
-                <p className="max-w-2xl text-sm leading-6 text-[rgba(242,220,171,0.72)]">
-                  Profil, Vorbereitung und persönliche Statistiken sind bereits verfügbar. Hallen,
-                  Codes und Ranglisten öffnen gesammelt zum Saisonstart.
-                </p>
-              </div>
-              <div className="stitch-headline inline-flex items-center rounded-full bg-[#f2dcab] px-3 py-1 text-[0.58rem] font-bold tracking-[0.22em] text-[#002637]">
-                Freischaltung {unlockDateLabel}
-              </div>
-            </div>
-          </StitchCard>
-        ) : null}
-
-        {!isGymDetail &&
-        !isRouteFlow &&
-        !isParticipantProfileScreen &&
-        participationInactive &&
-        !participationNoticeDismissed ? (
-          <StitchCard
-            tone={isHome ? "glass" : "cream"}
-            className={cn(
-              "mb-4 touch-pan-y px-4 py-4 transition-[transform,opacity] duration-200 sm:px-5 sm:py-4",
-              isHome &&
-                "border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.05)] text-[#f2dcab]",
-            )}
-            style={{
-              transform: `translateX(${participationSwipeOffset}px)`,
-              opacity:
-                participationTouchStartX === null
-                  ? 1
-                  : Math.max(0.35, 1 - Math.abs(participationSwipeOffset) / 180),
-            }}
-            onTouchStart={handleParticipationTouchStart}
-            onTouchMove={handleParticipationTouchMove}
-            onTouchEnd={handleParticipationTouchEnd}
-            onTouchCancel={handleParticipationTouchEnd}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
-                <div
-                  className={cn(
-                    "mt-1 text-sm leading-6",
-                    isHome ? "text-[rgba(242,220,171,0.78)]" : "text-[rgba(27,28,26,0.7)]",
-                  )}
-                >
-                  Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den Ranglisten
-                  berücksichtigt.
-                </div>
-              </div>
-              <StitchButton asChild size="sm" className={cn(isHome && "shrink-0")}>
-                <Link to="/app/participation/redeem">Mastercode einlösen</Link>
-              </StitchButton>
-            </div>
-          </StitchCard>
-        ) : null}
-
-        <Suspense fallback={<ParticipantRouteFallback home={isHome} immersive={isGymDetail || isRouteFlow || isParticipantProfileScreen} />}>
+        <Suspense
+          fallback={
+            <ParticipantRouteFallback
+              home={isHome}
+              immersive={isGymDetail || isRouteFlow || isParticipantProfileScreen}
+            />
+          }
+        >
           <Outlet />
         </Suspense>
       </main>
