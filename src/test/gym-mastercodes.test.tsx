@@ -114,8 +114,16 @@ describe("GymMastercodes", () => {
           columns: 4,
           pageMarginCm: 0.45,
           gridGapCm: 0.18,
-          qrImageSizeCm: 3.85,
-          cards: [expect.objectContaining({ code: "KL-MASTER-ABC1", qrLabel: "KL-MASTER-ABC1" })],
+          qrImageSizeCm: 2.55,
+          compactCodeFontSizePx: 9,
+          compactDetailFontSizePx: 7.5,
+          cards: [
+            expect.objectContaining({
+              code: "KL-MASTER-ABC1",
+              qrLabel: "KL-MASTER-ABC1",
+              detailLines: ["Erstellt: 03.04.2026"],
+            }),
+          ],
         }),
       );
     });

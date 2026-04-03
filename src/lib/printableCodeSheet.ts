@@ -21,6 +21,8 @@ type PrintableCodeSheetOptions = {
   pageMarginCm?: number;
   gridGapCm?: number;
   qrImageSizeCm?: number;
+  compactCodeFontSizePx?: number;
+  compactDetailFontSizePx?: number;
 };
 
 const escapeHtml = (value: string) =>
@@ -43,12 +45,16 @@ export async function printCodeSheet({
   pageMarginCm,
   gridGapCm,
   qrImageSizeCm,
+  compactCodeFontSizePx,
+  compactDetailFontSizePx,
 }: PrintableCodeSheetOptions) {
   const isCompactLayout = layout === "compact-qr";
   const safeColumns = Math.max(1, Math.min(columns, isCompactLayout ? 6 : 4));
   const safePageMarginCm = pageMarginCm ?? (isCompactLayout ? 0.45 : 1);
   const safeGridGapCm = gridGapCm ?? (isCompactLayout ? 0.18 : 0.4);
-  const safeQrImageSizeCm = qrImageSizeCm ?? (isCompactLayout ? 3.85 : 2.65);
+  const safeQrImageSizeCm = qrImageSizeCm ?? (isCompactLayout ? 2.55 : 2.65);
+  const safeCompactCodeFontSizePx = compactCodeFontSizePx ?? 9;
+  const safeCompactDetailFontSizePx = compactDetailFontSizePx ?? 7.5;
 
   const qrDataUrls = await Promise.all(
     cards.map((card) =>
@@ -195,10 +201,13 @@ export async function printCodeSheet({
           }
           .compact-code {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: ${safeQrImageSizeCm + 0.35}cm;
-            padding: 0.12cm;
+            justify-content: flex-start;
+            width: 100%;
+            padding: 0.14cm 0.1cm;
+            gap: 0.08cm;
+            border: 1px solid rgba(16, 33, 43, 0.14);
             page-break-inside: avoid;
             break-inside: avoid;
           }
@@ -206,6 +215,27 @@ export async function printCodeSheet({
             display: block;
             width: ${safeQrImageSizeCm}cm;
             height: ${safeQrImageSizeCm}cm;
+          }
+          .compact-code-text {
+            width: 100%;
+            font-size: ${safeCompactCodeFontSizePx}px;
+            line-height: 1.2;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-align: center;
+            word-break: break-all;
+          }
+          .compact-detail-lines {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+          }
+          .compact-detail-line {
+            font-size: ${safeCompactDetailFontSizePx}px;
+            color: #4a5963;
+            text-align: center;
+            line-height: 1.3;
           }
         </style>
       </head>
@@ -219,6 +249,16 @@ export async function printCodeSheet({
                 (card, index) => `
               <div class="compact-code">
                 <img src="${qrDataUrls[index]}" alt="${escapeHtml(card.qrLabel || card.code)}" />
+                <div class="compact-code-text">${escapeHtml(card.code)}</div>
+                ${
+                  card.detailLines && card.detailLines.length > 0
+                    ? `
+                  <div class="compact-detail-lines">
+                    ${card.detailLines.map((line) => `<div class="compact-detail-line">${escapeHtml(line)}</div>`).join("")}
+                  </div>
+                `
+                    : ""
+                }
               </div>
             `,
               )

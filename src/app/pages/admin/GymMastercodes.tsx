@@ -85,6 +85,19 @@ const GymMastercodes = () => {
   const generateCode = () =>
     `KL-MASTER-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
+  const formatCompactExportDate = (value: string | null) => {
+    if (!value) return null;
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+
+    return new Intl.DateTimeFormat("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(parsed);
+  };
+
   const exportToPDF = async () => {
     const availableCodes = codes.filter((code) => !code.redeemed_by);
     if (availableCodes.length === 0) {
@@ -104,10 +117,15 @@ const GymMastercodes = () => {
         columns: 4,
         pageMarginCm: 0.45,
         gridGapCm: 0.18,
-        qrImageSizeCm: 3.85,
+        qrImageSizeCm: 2.55,
+        compactCodeFontSizePx: 9,
+        compactDetailFontSizePx: 7.5,
         cards: availableCodes.map((code) => ({
           code: code.code,
           qrLabel: code.code,
+          detailLines: [
+            `Erstellt: ${formatCompactExportDate(code.created_at) ?? "-"}`,
+          ],
         })),
       });
     } catch (error) {
