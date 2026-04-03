@@ -79,7 +79,7 @@ function buildInviteEmailHtml({
       </head>
       <body style="margin:0;padding:0;background:#f4efe3;color:#0f2f3d;font-family:Arial,sans-serif;">
         <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-          Hallenzugang fuer ${escapeHtml(gymName)} einrichten
+          Hallenzugang für ${escapeHtml(gymName)} einrichten
         </div>
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>
@@ -96,10 +96,10 @@ function buildInviteEmailHtml({
                       Hallenzugang
                     </div>
                     <h1 style="margin:0 0 14px;font-size:30px;line-height:1.15;font-weight:800;text-transform:uppercase;color:#ffffff;">
-                      Zugang fuer ${escapeHtml(gymName)} einrichten
+                      Zugang für ${escapeHtml(gymName)} einrichten
                     </h1>
                     <p style="margin:0;max-width:560px;font-size:16px;line-height:1.75;color:#f4f7f8;">
-                      Ueber den folgenden Link kann der Hallenzugang eingerichtet und ein Passwort gesetzt werden.
+                      Über den folgenden Link kann der Hallenzugang eingerichtet und ein Passwort gesetzt werden.
                     </p>
                   </td>
                 </tr>
@@ -107,7 +107,7 @@ function buildInviteEmailHtml({
                   <td style="padding:32px 24px;">
                     <div style="padding:20px;background:#f8fbfc;border:1px solid #cfd9de;border-left:6px solid #a15523;">
                       <p style="margin:0 0 12px;font-size:16px;line-height:1.75;color:#173947;">
-                        Nach dem ersten Login koennen die Hallendaten direkt im internen Hallenbereich gepflegt werden.
+                        Nach dem ersten Login können die Hallendaten direkt im internen Hallenbereich gepflegt werden.
                       </p>
                       <p style="margin:0;font-size:15px;line-height:1.7;color:#506a76;">
                         Wenn ihr Fragen habt, meldet euch jederzeit gerne telefonisch.
@@ -119,12 +119,12 @@ function buildInviteEmailHtml({
                       </a>
                     </div>
                     <p style="margin:24px 0 0;font-size:14px;line-height:1.75;color:#173947;">
-                      Falls der Button nicht funktioniert, kann dieser Link direkt im Browser geoeffnet werden:
+                      Falls der Button nicht funktioniert, kann dieser Link direkt im Browser geöffnet werden:
                       <br />
                       <a href="${inviteUrl}" style="color:#7a421d;word-break:break-all;">${inviteUrl}</a>
                     </p>
                     <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:#506a76;">
-                      Der Link ist 7 Tage gueltig. Sollte er ablaufen, schicken wir gerne einen neuen.
+                      Der Link ist 7 Tage gültig. Sollte er ablaufen, schicken wir gerne einen neuen.
                     </p>
                   </td>
                 </tr>
@@ -209,7 +209,7 @@ async function sendClaimEmail({
   gymName: string;
   inviteUrl: string;
 }) {
-  const subject = `Kletterliga NRW - Hallenzugang fuer ${gymName}`;
+  const subject = `Kletterliga NRW - Hallenzugang für ${gymName}`;
   const html = buildInviteEmailHtml({ gymName, inviteUrl });
 
   if (BREVO_API_KEY) {

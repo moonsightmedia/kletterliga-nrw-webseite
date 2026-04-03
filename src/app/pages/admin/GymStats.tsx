@@ -229,7 +229,7 @@ const GymStats = () => {
           <div className="space-y-2">
             {codeRedemptionsTimeline.map((day) => (
               <div key={day.date} className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground w-20">
+                <div className="text-xs text-muted-foreground w-14 sm:w-20 flex-shrink-0">
                   {new Date(day.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </div>
                 <div className="flex-1 bg-accent/40 rounded h-4 relative">
@@ -238,7 +238,7 @@ const GymStats = () => {
                     style={{ width: `${(day.count / maxCodeRedemptions) * 100}%` }}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground w-8 text-right">{day.count}</div>
+                <div className="text-xs text-muted-foreground w-6 sm:w-8 text-right flex-shrink-0">{day.count}</div>
               </div>
             ))}
           </div>
@@ -252,7 +252,7 @@ const GymStats = () => {
           <div className="space-y-2">
             {resultsTimeline.map((day) => (
               <div key={day.date} className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground w-20">
+                <div className="text-xs text-muted-foreground w-14 sm:w-20 flex-shrink-0">
                   {new Date(day.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </div>
                 <div className="flex-1 bg-accent/40 rounded h-4 relative">
@@ -261,7 +261,7 @@ const GymStats = () => {
                     style={{ width: `${(day.count / maxResults) * 100}%` }}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground w-8 text-right">{day.count}</div>
+                <div className="text-xs text-muted-foreground w-6 sm:w-8 text-right flex-shrink-0">{day.count}</div>
               </div>
             ))}
           </div>
@@ -278,19 +278,19 @@ const GymStats = () => {
           <div className="space-y-3">
             {topRoutesByPoints.length > 0 ? (
               topRoutesByPoints.map((item, idx) => (
-                <div key={item.route.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={item.route.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                       {idx + 1}
                     </div>
-                    <div>
-                      <div className="font-medium text-primary">
+                    <div className="min-w-0">
+                      <div className="font-medium text-primary break-words">
                         {item.route.code} {item.route.name ? `· ${item.route.name}` : ""}
                       </div>
                       <div className="text-xs text-muted-foreground">{item.count} Ergebnisse</div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-mono">
+                  <Badge variant="outline" className="font-mono flex-shrink-0">
                     Ø {item.avgPoints.toFixed(1)}
                   </Badge>
                 </div>
@@ -309,13 +309,13 @@ const GymStats = () => {
           <div className="space-y-3">
             {popularRoutes.length > 0 ? (
               popularRoutes.map((item, idx) => (
-                <div key={item.route.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={item.route.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                       {idx + 1}
                     </div>
-                    <div>
-                      <div className="font-medium text-primary">
+                    <div className="min-w-0">
+                      <div className="font-medium text-primary break-words">
                         {item.route.code} {item.route.name ? `· ${item.route.name}` : ""}
                       </div>
                       <Badge variant="outline" className="text-xs mt-1">
@@ -323,7 +323,7 @@ const GymStats = () => {
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-primary">{item.count}</div>
+                  <div className="text-sm font-medium text-primary flex-shrink-0">{item.count}</div>
                 </div>
               ))
             ) : (
@@ -342,19 +342,19 @@ const GymStats = () => {
           </div>
           <div className="space-y-3">
             {topParticipants.map((item, idx) => (
-              <div key={item.profile?.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
-                <div className="flex items-center gap-3">
+              <div key={item.profile?.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                     {idx + 1}
                   </div>
-                  <div>
-                    <div className="font-medium text-primary">
+                  <div className="min-w-0">
+                    <div className="font-medium text-primary break-words">
                       {item.profile?.first_name} {item.profile?.last_name}
                     </div>
-                    <div className="text-xs text-muted-foreground">{item.profile?.email}</div>
+                    <div className="text-xs text-muted-foreground break-all">{item.profile?.email}</div>
                   </div>
                 </div>
-                <Badge variant="outline" className="font-mono">
+                <Badge variant="outline" className="font-mono flex-shrink-0">
                   {item.count} Ergebnisse
                 </Badge>
               </div>

@@ -7,21 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import {
-  listMasterCodes,
   createMasterCodes,
-  listGymAdminsByProfile,
   fetchProfile,
+  getGym,
+  listGymAdminsByProfile,
+  listMasterCodes,
   listProfiles,
 } from "@/services/appApi";
 import type { MasterCode, Profile } from "@/services/appTypes";
 import { CodeQrDisplay } from "@/components/CodeQrDisplay";
-import { User, Calendar, Plus, Filter, TicketCheck } from "lucide-react";
+import { printCodeSheet } from "@/lib/printableCodeSheet";
+import { Calendar, Download, Filter, Plus, TicketCheck, User } from "lucide-react";
 
 const GymMastercodes = () => {
   const { profile } = useAuth();
   const [codes, setCodes] = useState<MasterCode[]>([]);
   const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
   const [gymId, setGymId] = useState<string | null>(null);
+  const [gymName, setGymName] = useState<string>("");
   const [filter, setFilter] = useState<"all" | "available" | "redeemed">("all");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [batchSize, setBatchSize] = useState(10);
@@ -29,53 +32,103 @@ const GymMastercodes = () => {
 
   useEffect(() => {
     if (!profile?.id) return;
+
     listGymAdminsByProfile(profile.id).then(({ data }) => {
       const firstGym = data?.[0]?.gym_id ?? null;
       setGymId(firstGym);
-      if (firstGym) {
-        listMasterCodes(firstGym).then(({ data: codesData }) => {
-          setCodes(codesData ?? []);
-          const redeemedByIds = new Set((codesData ?? []).filter((c) => c.redeemed_by).map((c) => c.redeemed_by!));
-          Promise.all(Array.from(redeemedByIds).map((id) => fetchProfile(id))).then((results) => {
-            const profileMap = new Map<string, Profile>();
-            results.forEach(({ data }) => {
-              if (data) profileMap.set(data.id, data);
-            });
-            setProfiles(profileMap);
+
+      if (!firstGym) return;
+
+      Promise.all([
+        listMasterCodes(firstGym),
+        getGym(firstGym),
+        listProfiles(),
+      ]).then(([{ data: codesData }, { data: gymData }, { data: profilesData }]) => {
+        setCodes(codesData ?? []);
+        setGymName(gymData?.name ?? "");
+
+        const redeemedByIds = new Set(
+          (codesData ?? []).filter((code) => code.redeemed_by).map((code) => code.redeemed_by!),
+        );
+
+        Promise.all(Array.from(redeemedByIds).map((id) => fetchProfile(id))).then((results) => {
+          const profileMap = new Map<string, Profile>();
+          results.forEach(({ data }) => {
+            if (data) profileMap.set(data.id, data);
           });
+          (profilesData ?? []).forEach((item) => profileMap.set(item.id, item));
+          setProfiles(profileMap);
         });
-      }
-    });
-    listProfiles().then(({ data }) => {
-      const profileMap = new Map<string, Profile>();
-      (data ?? []).forEach((p) => profileMap.set(p.id, p));
-      setProfiles(profileMap);
+      });
     });
   }, [profile?.id]);
 
   const visibleCodes = useMemo(() => {
-    if (filter === "available") return codes.filter((c) => !c.redeemed_by);
-    if (filter === "redeemed") return codes.filter((c) => c.redeemed_by);
+    if (filter === "available") return codes.filter((code) => !code.redeemed_by);
+    if (filter === "redeemed") return codes.filter((code) => code.redeemed_by);
     return codes;
   }, [codes, filter]);
 
   const stats = useMemo(() => {
     const total = codes.length;
-    const available = codes.filter((c) => !c.redeemed_by).length;
+    const available = codes.filter((code) => !code.redeemed_by).length;
     const redeemed = total - available;
     return { total, available, redeemed };
   }, [codes]);
 
+  const availableCount = visibleCodes.filter((code) => !code.redeemed_by).length;
+  const redeemedCount = visibleCodes.filter((code) => code.redeemed_by).length;
+
   const getRedeemerName = (profileId: string | null) => {
     if (!profileId) return null;
-    const p = profiles.get(profileId);
-    if (!p) return "Unbekannt";
-    const name = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
-    return name || p.email || "Unbekannt";
+    const item = profiles.get(profileId);
+    if (!item) return "Unbekannt";
+    const name = `${item.first_name ?? ""} ${item.last_name ?? ""}`.trim();
+    return name || item.email || "Unbekannt";
   };
 
   const generateCode = () =>
     `KL-MASTER-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+  const exportToPDF = async () => {
+    const availableCodes = codes.filter((code) => !code.redeemed_by);
+    if (availableCodes.length === 0) {
+      toast({ title: "Keine Codes", description: "Es gibt keine freien Mastercodes zum Exportieren." });
+      return;
+    }
+
+    toast({ title: "PDF wird vorbereitet...", description: "QR-Codes werden erzeugt." });
+    try {
+      await printCodeSheet({
+        windowTitle: "Mastercodes - Kletterliga NRW",
+        heading: "Mastercodes - Teilnahmegebühr",
+        description:
+          "Der Mastercode ist ligaweit gültig, schaltet das gesamte Profil frei und wird einmalig für 15 € in einer Halle verkauft.",
+        calloutTitle: "Wichtig für die Ausgabe",
+        calloutLines: [
+          "Dieser Mastercode gilt für die gesamte Liga und nicht nur für deine Halle.",
+          "Der Hallen-Code wird separat eingelöst und schaltet nur die jeweilige Halle frei.",
+          "Ausgegeben von: " + (gymName || "deiner Halle"),
+        ],
+        cards: availableCodes.map((code) => ({
+          code: code.code,
+          qrLabel: "Mastercode (scannbar)",
+          badge: "Ligaweit gültig",
+          detailLines: [
+            `Ausgegeben von: ${gymName || "deiner Halle"}`,
+            "Teilnahmegebühr: 15 €",
+          ],
+          footerLabel: "Zum Ausschneiden",
+        })),
+      });
+    } catch (error) {
+      toast({
+        title: "PDF-Export fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Die Druckansicht konnte nicht geöffnet werden.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCreateBatch = async (count: number) => {
     if (!gymId) {
@@ -86,6 +139,7 @@ const GymMastercodes = () => {
       toast({ title: "Ungültige Anzahl", description: "Bitte eine Zahl größer 0 wählen." });
       return;
     }
+
     setCreating(true);
     const payload = Array.from({ length: count }, () => ({
       code: generateCode(),
@@ -97,19 +151,18 @@ const GymMastercodes = () => {
     }));
     const { data, error } = await createMasterCodes(payload);
     setCreating(false);
+
     if (error) {
       toast({ title: "Fehler", description: error.message });
       return;
     }
+
     if (data) {
       setCodes((prev) => [...data, ...prev]);
       setShowCreateForm(false);
       toast({ title: "Mastercodes erstellt", description: `${data.length} Mastercode(s) wurden angelegt.` });
     }
   };
-
-  const availableCount = visibleCodes.filter((c) => !c.redeemed_by).length;
-  const redeemedCount = visibleCodes.filter((c) => c.redeemed_by).length;
 
   if (!gymId) {
     return (
@@ -128,18 +181,61 @@ const GymMastercodes = () => {
         <div className="min-w-0">
           <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary break-words">Mastercodes</h1>
           <p className="text-sm text-muted-foreground mt-2 break-words">
-            Teilnahmegebühr – einmal pro Teilnehmer einlösbar. Diese Codes gelten für deine Halle.
+            Der Mastercode ist ligaweit gültig, schaltet das gesamte Profil frei und wird einmalig für 15 € in einer Halle verkauft.
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="hidden sm:inline-flex flex-shrink-0">
+        <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            onClick={exportToPDF}
+            disabled={stats.available === 0}
+            className="touch-manipulation"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            <span className="skew-x-6">PDF Export</span>
+          </Button>
+          <Button onClick={() => setShowCreateForm(!showCreateForm)} className="touch-manipulation">
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="skew-x-6">Neue Mastercodes</span>
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex sm:hidden flex-col gap-2">
+        <Button
+          variant="outline"
+          onClick={exportToPDF}
+          disabled={stats.available === 0}
+          className="w-full min-h-[44px] touch-manipulation"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          <span className="skew-x-6">PDF Export</span>
+        </Button>
+        <Button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="w-full min-h-[44px] touch-manipulation"
+        >
           <Plus className="h-4 w-4 mr-2" />
           <span className="skew-x-6">Neue Mastercodes</span>
         </Button>
       </div>
-      <Button onClick={() => setShowCreateForm(!showCreateForm)} className="sm:hidden w-full min-h-[44px] touch-manipulation">
-        <Plus className="h-4 w-4 mr-2" />
-        <span className="skew-x-6">Neue Mastercodes</span>
-      </Button>
+
+      <Card className="p-4 md:p-5 border-border/60 bg-muted/30">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-xs uppercase tracking-widest text-secondary">Mastercode</div>
+            <p className="text-sm text-foreground leading-6">
+              Gilt für die ganze Liga, schaltet das komplette Profil frei und deckt die Teilnahmegebühr von 15 € ab.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="text-xs uppercase tracking-widest text-secondary">Hallencode</div>
+            <p className="text-sm text-foreground leading-6">
+              Wird zusätzlich eingelöst und schaltet nur die jeweilige Halle frei, in der geklettert wird.
+            </p>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-3">
         <Card className="p-3 sm:p-4 border-border/60">
@@ -214,8 +310,9 @@ const GymMastercodes = () => {
       ) : (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {visibleCodes.map((code) => {
-            const isRedeemed = !!code.redeemed_by;
+            const isRedeemed = Boolean(code.redeemed_by);
             const redeemer = isRedeemed ? getRedeemerName(code.redeemed_by) : null;
+
             return (
               <Card
                 key={code.id}
@@ -226,6 +323,7 @@ const GymMastercodes = () => {
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
+                      <div className="text-xs text-muted-foreground mb-1">Ligaweit gültig · 15 € Teilnahmegebühr</div>
                       <div className="font-mono font-semibold text-sm md:text-base text-primary break-all">{code.code}</div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Erstellt: {code.created_at ? new Date(code.created_at).toLocaleDateString("de-DE") : "-"}
@@ -238,29 +336,32 @@ const GymMastercodes = () => {
                       <CodeQrDisplay value={code.code} size={64} />
                     </div>
                   </div>
-                  {isRedeemed && redeemer && (
+
+                  {isRedeemed && redeemer ? (
                     <div className="pt-2 border-t border-border/50 space-y-2">
                       <div className="flex items-start gap-2 text-sm">
                         <User className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <span className="text-muted-foreground">Eingelöst von: </span>
                           <span className="font-medium text-primary break-words">{redeemer}</span>
                         </div>
                       </div>
                       {code.redeemed_at && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(code.redeemed_at).toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          <Calendar className="h-3 w-3 flex-shrink-0" />
+                          <span>
+                            {new Date(code.redeemed_at).toLocaleDateString("de-DE", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </div>
                       )}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </Card>
             );

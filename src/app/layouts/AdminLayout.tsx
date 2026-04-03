@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Building2, ChartLine, ClipboardList, Cog, Flag, Settings, Shield, Users, LogOut, Trophy, Menu, X, FileText, Key, TicketCheck, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,9 @@ export const AdminLayout = () => {
   const visibleNav = adminNav.filter((item) => !item.role || item.role === role);
 
   // Schließe Mobile-Menü wenn Route wechselt
-  const currentPath = location.pathname;
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-muted/40 md:flex">

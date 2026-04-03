@@ -194,7 +194,7 @@ const GymProfile = () => {
       <Card className="p-4 md:p-5 border-border/60 space-y-4">
         <div className="space-y-2">
           <Label>Hallen-Logo</Label>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             <div className="relative">
               <button
                 type="button"
@@ -216,8 +216,8 @@ const GymProfile = () => {
                 </div>
               )}
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-muted-foreground break-words">
                 Klicke auf das Logo, um ein neues Bild hochzuladen. Empfohlene Größe: 800x800px
               </p>
             </div>
