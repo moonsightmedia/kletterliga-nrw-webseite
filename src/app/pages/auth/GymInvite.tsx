@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,25 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { fetchGymInvite } from "@/services/appApi";
-import { blobToDataUrl, resizeImageFile } from "@/lib/imageProcessing";
-import { Building2, Loader2, Upload, X } from "lucide-react";
+import { Building2, Loader2 } from "lucide-react";
 
 const GymInvite = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState<string>("");
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [gymName, setGymName] = useState("");
   const [form, setForm] = useState({
-    name: "",
-    city: "",
-    postal_code: "",
-    address: "",
-    website: "",
     password: "",
     passwordConfirm: "",
   });
@@ -70,6 +61,7 @@ const GymInvite = () => {
         }
 
         setInviteEmail(invite.email);
+        setGymName(invite.gym_name);
         setLoading(false);
       } catch {
         toast({
@@ -80,105 +72,12 @@ const GymInvite = () => {
       }
     };
 
-    loadInvite();
+    void loadInvite();
   }, [token, navigate]);
-
-  const resizeImage = (file: File, maxSize = 800, quality = 0.85) =>
-    new Promise<Blob>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const width = Math.round(img.width * scale);
-        const height = Math.round(img.height * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Canvas not available"));
-          return;
-        }
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const isPng = file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
-        const mimeType = isPng ? "image/png" : "image/jpeg";
-
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Bild konnte nicht verarbeitet werden"));
-              return;
-            }
-            resolve(blob);
-          },
-          mimeType,
-          isPng ? undefined : quality
-        );
-      };
-      img.onerror = () => reject(new Error("Bild konnte nicht geladen werden"));
-      img.src = URL.createObjectURL(file);
-    });
-
-  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Ungültiges Format",
-        description: "Bitte wähle eine Bilddatei aus.",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Datei zu groß",
-        description: "Das Logo darf maximal 5 MB groß sein.",
-      });
-      return;
-    }
-
-    setUploadingLogo(true);
-    try {
-      const optimized = await resizeImageFile(file, {
-        maxSize: 800,
-        quality: 0.85,
-        preserveTransparency: true,
-      });
-      const previewUrl = await blobToDataUrl(optimized);
-      setLogoPreview(previewUrl);
-      setLogoFile(file);
-      setUploadingLogo(false);
-    } catch (error) {
-      setUploadingLogo(false);
-      toast({
-        title: "Fehler",
-        description: error instanceof Error ? error.message : "Bild konnte nicht verarbeitet werden.",
-      });
-    }
-  };
-
-  const handleRemoveLogo = () => {
-    setLogoPreview(null);
-    setLogoFile(null);
-    if (logoInputRef.current) {
-      logoInputRef.current.value = "";
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name?.trim()) {
-      toast({ title: "Fehlende Angaben", description: "Bitte gib einen Hallennamen ein.", variant: "destructive" });
-      return;
-    }
-    if (!form.postal_code?.trim()) {
-      toast({ title: "Fehlende Angaben", description: "Bitte gib die Postleitzahl (PLZ) der Halle ein.", variant: "destructive" });
-      return;
-    }
     if (!form.password) {
       toast({ title: "Fehlende Angaben", description: "Bitte gib ein Passwort ein.", variant: "destructive" });
       return;
@@ -195,20 +94,6 @@ const GymInvite = () => {
     setSubmitting(true);
 
     try {
-      let logoBase64: string | null = null;
-      if (logoFile) {
-        try {
-          const optimized = await resizeImageFile(logoFile, {
-            maxSize: 800,
-            quality: 0.85,
-            preserveTransparency: true,
-          });
-          logoBase64 = await blobToDataUrl(optimized);
-        } catch (error) {
-          console.error("Logo conversion error:", error);
-        }
-      }
-
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -217,53 +102,39 @@ const GymInvite = () => {
         headers: {
           "Content-Type": "application/json",
           apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
           token,
           password: form.password,
-          gym: {
-            name: form.name.trim(),
-            city: form.city?.trim() || null,
-            postal_code: form.postal_code?.trim() || null,
-            address: form.address?.trim() || null,
-            website: form.website?.trim() || null,
-            logo_base64: logoBase64,
-          },
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       const apiError = typeof data?.error === "string" ? data.error : "";
 
-      if (!response.ok) {
-        const title = response.status === 400 ? "Eingabe prüfen" : "Fehler";
-        const desc = apiError || (response.status === 400 ? "Bitte prüfe die Pflichtfelder (Hallenname, PLZ, Passwort)." : "Die Registrierung ist fehlgeschlagen. Bitte versuche es erneut.");
-        toast({ title, description: desc, variant: "destructive" });
-        return;
-      }
-
-      if (!data?.success) {
-        toast({
-          title: "Fehler",
-          description: apiError || "Die Registrierung konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
-          variant: "destructive",
-        });
+      if (!response.ok || !data?.success) {
+        const title = response.status === 400 || response.status === 409 ? "Eingabe prüfen" : "Fehler";
+        const description = apiError || "Der Hallenzugang konnte nicht eingerichtet werden. Bitte versuche es erneut.";
+        toast({ title, description, variant: "destructive" });
         return;
       }
 
       toast({
-        title: "Erfolgreich registriert!",
-        description: "Deine Halle wurde erstellt. Du kannst dich jetzt anmelden.",
+        title: "Zugang eingerichtet",
+        description: "Der Hallenzugang ist jetzt aktiv. Du kannst dich direkt anmelden.",
         variant: "success",
       });
 
       navigate("/app/login", { state: { email: inviteEmail } });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "";
-      const isNetwork = /fetch|network|Failed to fetch/i.test(msg);
+      const message = error instanceof Error ? error.message : "";
+      const isNetwork = /fetch|network|Failed to fetch/i.test(message);
       toast({
         title: "Fehler",
-        description: isNetwork ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung und versuche es erneut." : (msg || "Registrierung fehlgeschlagen. Bitte versuche es erneut."),
+        description: isNetwork
+          ? "Verbindungsproblem. Bitte prüfe deine Internetverbindung und versuche es erneut."
+          : (message || "Der Hallenzugang konnte nicht eingerichtet werden. Bitte versuche es erneut."),
         variant: "destructive",
       });
     } finally {
@@ -286,195 +157,65 @@ const GymInvite = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8 md:py-12">
-      <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 space-y-6">
+      <Card className="w-full max-w-xl p-4 sm:p-6 md:p-8 space-y-6">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-headline text-primary">Halle registrieren</h1>
+            <h1 className="text-xl sm:text-2xl font-headline text-primary">Hallenzugang einrichten</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
               Einladung für: <span className="font-medium">{inviteEmail}</span>
             </p>
           </div>
         </div>
 
+        <div className="rounded-lg border border-border/60 bg-muted/40 px-4 py-3 space-y-1">
+          <p className="text-sm font-medium text-foreground">{gymName}</p>
+          <p className="text-xs text-muted-foreground">
+            Nach dem ersten Login können die Hallendaten direkt im internen Hallenbereich gepflegt werden.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Hallenname <span className="text-destructive">*</span>
+            <Label htmlFor="password" className="text-sm font-medium">
+              Passwort <span className="text-destructive">*</span>
             </Label>
             <Input
-              id="name"
-              placeholder="z. B. Kletterhalle Ruhr"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              id="password"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
               required
               className="w-full h-11"
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="city" className="text-sm font-medium">Stadt</Label>
-              <Input
-                id="city"
-                placeholder="z. B. Essen"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="w-full h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="postal_code" className="text-sm font-medium">PLZ <span className="text-destructive">*</span></Label>
-              <Input
-                id="postal_code"
-                placeholder="z. B. 45127"
-                value={form.postal_code}
-                onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
-                className="w-full h-11"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="address" className="text-sm font-medium">Adresse</Label>
-              <Input
-                id="address"
-                placeholder="z. B. Hauptstraße 123"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full h-11"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="website">Webseite</Label>
+            <Label htmlFor="passwordConfirm" className="text-sm font-medium">
+              Passwort wiederholen <span className="text-destructive">*</span>
+            </Label>
             <Input
-              id="website"
-              type="url"
-              placeholder="https://example.com"
-              value={form.website}
-              onChange={(e) => setForm({ ...form, website: e.target.value })}
-              className="w-full"
+              id="passwordConfirm"
+              type="password"
+              value={form.passwordConfirm}
+              onChange={(e) => setForm((prev) => ({ ...prev, passwordConfirm: e.target.value }))}
+              required
+              className="w-full h-11"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="logo">Logo</Label>
-            <input
-              ref={logoInputRef}
-              id="logo"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoSelect}
-              className="hidden"
-            />
-            {logoPreview ? (
-              <div className="relative">
-                <div className="relative w-full h-40 sm:h-48 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted/50">
-                  <img
-                    src={logoPreview}
-                    alt="Logo Vorschau"
-                    className="w-full h-full object-contain p-4"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemoveLogo}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-background/90 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors shadow-sm"
-                    aria-label="Logo entfernen"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+          <Button type="submit" disabled={submitting} className="w-full h-11">
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Richte Zugang ein...
+              </>
             ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => logoInputRef.current?.click()}
-                disabled={uploadingLogo}
-                className="w-full h-40 sm:h-48 flex flex-col items-center justify-center gap-3 border-2 border-dashed hover:border-primary/50 transition-colors bg-muted/30 hover:bg-muted/50"
-              >
-                {uploadingLogo ? (
-                  <>
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Wird verarbeitet...</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Upload className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-foreground">Logo hochladen</p>
-                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG (max. 5 MB)</p>
-                    </div>
-                  </>
-                )}
-              </Button>
+              "Zugang einrichten"
             )}
-          </div>
-
-          <div className="pt-5 border-t border-border space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Passwort <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mindestens 6 Zeichen"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                minLength={6}
-                className="w-full h-11"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="passwordConfirm" className="text-sm font-medium">
-                Passwort bestätigen <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="passwordConfirm"
-                type="password"
-                placeholder="Passwort wiederholen"
-                value={form.passwordConfirm}
-                onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
-                required
-                minLength={6}
-                className="w-full h-11"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 pt-6">
-            <Button
-              type="submit"
-              disabled={submitting || uploadingLogo}
-              className="min-w-0 flex-1 sm:flex-initial h-11 text-base font-medium"
-              size="lg"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Registriere...
-                </>
-              ) : (
-                "Halle registrieren"
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/app/login")}
-              disabled={submitting || uploadingLogo}
-              className="min-w-0 flex-1 sm:flex-initial h-11"
-            >
-              Abbrechen
-            </Button>
-          </div>
+          </Button>
         </form>
       </Card>
     </div>

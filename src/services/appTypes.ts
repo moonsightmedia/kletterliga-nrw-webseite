@@ -121,6 +121,25 @@ export type GymAdmin = {
   created_at: string;
 };
 
+export type GymInvite = {
+  id: string;
+  gym_id: string | null;
+  email: string;
+  expires_at: string;
+  created_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+};
+
+export type GymInvitePreview = {
+  email: string;
+  gym_id: string;
+  gym_name: string;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+};
+
 export type MasterCode = {
   id: string;
   code: string;

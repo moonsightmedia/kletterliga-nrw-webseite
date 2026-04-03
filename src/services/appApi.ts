@@ -7,6 +7,8 @@ import type {
   Gym,
   GymAdmin,
   GymCode,
+  GymInvite,
+  GymInvitePreview,
   InstagramPost,
   MarketingEmailStatus,
   MasterCode,
@@ -52,6 +54,14 @@ type ConsentActionResponse = {
   marketing_email_status?: MarketingEmailStatus;
   email_sent?: boolean;
   consent?: ProfileConsent | null;
+};
+
+type GymInviteDispatchResponse = {
+  success: boolean;
+  message?: string;
+  invite_url: string;
+  email_sent: boolean;
+  email_error: string | null;
 };
 
 async function getFunctionHeaders() {
@@ -599,6 +609,14 @@ export async function listGymAdminsByProfile(profileId: string) {
   return supabase.from("gym_admins").select("*").eq("profile_id", profileId).returns<{ gym_id: string }[]>();
 }
 
+export async function listGymInvites() {
+  return supabase
+    .from("gym_invites")
+    .select("id, gym_id, email, expires_at, created_at, used_at, revoked_at")
+    .order("created_at", { ascending: false })
+    .returns<GymInvite[]>();
+}
+
 export async function updateGym(gymId: string, patch: Partial<Gym>) {
   const { data, error } = await supabase
     .from("gyms")
@@ -677,27 +695,31 @@ export async function deleteGym(gymId: string) {
   }
 }
 
-export async function inviteGymAdmin(email: string, skipEmail: boolean = false) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  
-  try {
-    // Verwende fetch direkt, um bessere Fehlerbehandlung zu haben
-    const response = await fetch(`${supabaseUrl}/functions/v1/invite-gym-admin`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${supabaseAnonKey}`,
-        apikey: supabaseAnonKey,
+export async function inviteGymAdmin(gymIdOrEmail: string, emailOrSkip: string | boolean, skipEmail: boolean = false) {
+  if (typeof emailOrSkip === "boolean") {
+    return {
+      data: null,
+      error: {
+        message: "Bitte waehle zuerst eine Halle aus.",
+        code: "GYM_ID_REQUIRED",
       },
-      body: JSON.stringify({ email, skip_email: skipEmail }),
+    };
+  }
+
+  const gymId = gymIdOrEmail;
+  const email = emailOrSkip;
+
+  try {
+    const response = await fetch(`${supabaseConfig.url}/functions/v1/invite-gym-admin`, {
+      method: "POST",
+      headers: await getFunctionHeaders(),
+      body: JSON.stringify({ gym_id: gymId, email, skip_email: skipEmail }),
     });
 
-    const data = await response.json();
+    const data = (await response.json().catch(() => ({}))) as Partial<GymInviteDispatchResponse> & {
+      error?: string;
+      code?: string;
+    };
     
     if (!response.ok) {
       console.error("inviteGymAdmin error response:", data);
@@ -705,6 +727,7 @@ export async function inviteGymAdmin(email: string, skipEmail: boolean = false) 
         data: null,
         error: {
           message: data.error || `HTTP ${response.status}: ${response.statusText}`,
+          code: data.code,
         },
       };
     }
@@ -747,7 +770,7 @@ export async function fetchGymInvite(token: string) {
   }
 
   return {
-    data: body as { email: string; expires_at: string; used_at: string | null },
+    data: body as GymInvitePreview,
     error: null,
   };
 }

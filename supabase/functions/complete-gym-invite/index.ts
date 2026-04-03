@@ -4,15 +4,6 @@ import { createServiceRoleClient } from "../_shared/adminAuth.ts";
 type Payload = {
   token: string;
   password: string;
-  gym: {
-    name: string;
-    city?: string | null;
-    postal_code?: string | null;
-    address?: string | null;
-    website?: string | null;
-    logo_url?: string | null;
-    logo_base64?: string | null;
-  };
 };
 
 const supabase = createServiceRoleClient();
@@ -29,12 +20,10 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body
     let payload: Payload;
     try {
       const body = await req.json();
-      payload = typeof body === "object" && body !== null ? body : {};
-      console.log("Parsed payload:", { token: payload.token ? "***" : undefined, gym: payload.gym?.name });
+      payload = typeof body === "object" && body !== null ? body : {} as Payload;
     } catch (parseError) {
       console.error("Failed to parse request body:", parseError);
       return new Response(
@@ -42,112 +31,148 @@ serve(async (req) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        },
       );
     }
 
-    const { token, password, gym } = payload;
+    const { token, password } = payload;
 
-    const plz = gym?.postal_code != null ? String(gym.postal_code).trim() : "";
-    if (!token || !password || !gym?.name?.trim()) {
+    if (!token || !password) {
       return new Response(
-        JSON.stringify({ error: "Fehlende Pflichtfelder: Passwort und Hallenname sind erforderlich." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-    if (!plz) {
-      return new Response(
-        JSON.stringify({ error: "Bitte gib die Postleitzahl (PLZ) der Halle ein." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: "Fehlende Pflichtfelder: Token und Passwort sind erforderlich." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
-    // Validate token
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: "Das Passwort muss mindestens 6 Zeichen lang sein." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
     const { data: invite, error: inviteError } = await supabase
       .from("gym_invites")
       .select("*")
       .eq("token", token)
       .is("used_at", null)
+      .is("revoked_at", null)
       .single();
 
     if (inviteError || !invite) {
       console.error("Invalid invite token:", inviteError);
       return new Response(
-        JSON.stringify({ error: "Ungültiger oder abgelaufener Einladungslink" }),
+        JSON.stringify({ error: "Ungueltiger oder abgelaufener Einladungslink" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        },
       );
     }
 
-    // Check if token is expired
     const now = new Date();
     const expiresAt = new Date(invite.expires_at);
     if (now > expiresAt) {
-      console.error("Invite token expired:", { now, expiresAt });
       return new Response(
         JSON.stringify({ error: "Der Einladungslink ist abgelaufen" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        },
       );
     }
 
-    // Check if email already has a user account
-    const { data: existingUser } = await supabase.auth.admin.listUsers();
-    const userExists = existingUser?.users?.some((u) => u.email === invite.email);
-
-    if (userExists) {
-      console.error("User already exists:", invite.email);
+    if (!invite.gym_id) {
       return new Response(
-        JSON.stringify({ error: "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits" }),
+        JSON.stringify({ error: "Die Einladung ist keiner Halle zugeordnet." }),
         {
-          status: 400,
+          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        },
       );
     }
 
-    // Create gym (without logo first, we'll update it after upload)
     const { data: gymRow, error: gymError } = await supabase
       .from("gyms")
-      .insert({
-        name: gym.name.trim(),
-        city: gym.city ? String(gym.city).trim() || null : null,
-        postal_code: plz || null,
-        address: gym.address ? String(gym.address).trim() || null : null,
-        website: gym.website ? String(gym.website).trim() || null : null,
-        logo_url: gym.logo_url ?? null,
-      })
       .select("*")
-      .single();
+      .eq("id", invite.gym_id)
+      .maybeSingle();
 
     if (gymError || !gymRow) {
-      console.error("Failed to create gym:", gymError);
+      console.error("Failed to load gym for invite:", gymError);
       return new Response(
-        JSON.stringify({ error: gymError?.message ?? "Fehler beim Erstellen der Halle. Bitte prüfe die Angaben." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: "Die Halle zur Einladung wurde nicht gefunden." }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
-    // Create auth user
+    if (gymRow.archived_at) {
+      return new Response(
+        JSON.stringify({ error: "Die zugehoerige Halle ist archiviert." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
+    const { data: mappings, error: mappingLookupError } = await supabase
+      .from("gym_admins")
+      .select("profile_id")
+      .eq("gym_id", invite.gym_id);
+
+    if (mappingLookupError) {
+      console.error("Failed to inspect existing gym admins:", mappingLookupError);
+      return new Response(
+        JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
+    const mappingProfileIds = (mappings ?? [])
+      .map((mapping) => mapping.profile_id)
+      .filter((profileId): profileId is string => typeof profileId === "string");
+
+    if (mappingProfileIds.length > 0) {
+      const { data: activeProfiles, error: profileLookupError } = await supabase
+        .from("profiles")
+        .select("id")
+        .in("id", mappingProfileIds)
+        .is("archived_at", null);
+
+      if (profileLookupError) {
+        console.error("Failed to inspect mapped profiles:", profileLookupError);
+        return new Response(
+          JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        );
+      }
+
+      if ((activeProfiles ?? []).length > 0) {
+        return new Response(
+          JSON.stringify({ error: "Fuer diese Halle ist bereits ein Hallenzugang aktiv." }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        );
+      }
+    }
+
     const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email: invite.email,
-      password: password,
+      password,
       email_confirm: true,
     });
 
     if (userError || !userData?.user) {
       console.error("Failed to create user:", userError);
-      await supabase.from("gyms").delete().eq("id", gymRow.id);
-      const err = (userError?.message ?? "").toLowerCase();
-      const msg = err.includes("already") || err.includes("exist") ? "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits." : (userError?.message ?? "Fehler beim Erstellen des Benutzers.");
-      return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      const message = userError?.message ?? "";
+      const loweredMessage = message.toLowerCase();
+      const status = loweredMessage.includes("already") || loweredMessage.includes("exist") ? 409 : 500;
+      const resolvedMessage = status === 409
+        ? "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits."
+        : (message || "Fehler beim Erstellen des Benutzers.");
+      return new Response(
+        JSON.stringify({ error: resolvedMessage }),
+        { status, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
     }
 
-    // Create profile
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: userData.user.id,
       email: invite.email,
@@ -156,100 +181,47 @@ serve(async (req) => {
 
     if (profileError) {
       console.error("Failed to create profile:", profileError);
-      await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
       return new Response(
         JSON.stringify({ error: "Fehler beim Anlegen des Profils. Bitte versuche es erneut." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
-    // Create gym_admin mapping
     const { error: mappingError } = await supabase.from("gym_admins").insert({
       profile_id: userData.user.id,
-      gym_id: gymRow.id,
+      gym_id: invite.gym_id,
     });
 
     if (mappingError) {
       console.error("Failed to create gym_admin mapping:", mappingError);
-      await supabase.from("gyms").delete().eq("id", gymRow.id);
       await supabase.auth.admin.deleteUser(userData.user.id);
       await supabase.from("profiles").delete().eq("id", userData.user.id);
       return new Response(
         JSON.stringify({ error: "Fehler beim Zuordnen der Halle. Bitte versuche es erneut." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
-    // Upload logo if provided as base64
-    let finalLogoUrl = gym.logo_url;
-    if (gym.logo_base64) {
-      try {
-        // Convert base64 to blob
-        const base64Data = gym.logo_base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-        const binaryString = atob(base64Data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        // Determine file type
-        const isPng = gym.logo_base64.startsWith("data:image/png");
-        const extension = isPng ? "png" : "jpg";
-        const contentType = isPng ? "image/png" : "image/jpeg";
-        const filePath = `gyms/${gymRow.id}/${Date.now()}.${extension}`;
-        
-        // Upload to storage using service role (no auth needed)
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, bytes, {
-            contentType,
-            cacheControl: "3600",
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error("Logo upload failed:", uploadError);
-          // Continue without logo - don't fail the registration
-        } else {
-          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
-          finalLogoUrl = urlData.publicUrl;
-          
-          // Update gym with logo URL
-          await supabase
-            .from("gyms")
-            .update({ logo_url: finalLogoUrl })
-            .eq("id", gymRow.id);
-        }
-      } catch (logoError) {
-        console.error("Logo processing error:", logoError);
-        // Continue without logo - don't fail the registration
-      }
-    }
-
-    // Mark invite as used
-    await supabase
+    const { error: consumeInviteError } = await supabase
       .from("gym_invites")
       .update({ used_at: new Date().toISOString() })
       .eq("id", invite.id);
 
-    // Fetch updated gym with logo URL
-    const { data: updatedGym } = await supabase
-      .from("gyms")
-      .select("*")
-      .eq("id", gymRow.id)
-      .single();
+    if (consumeInviteError) {
+      console.error("Failed to mark invite as used:", consumeInviteError);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        gym: updatedGym || gymRow,
+        gym: gymRow,
         user_id: userData.user.id,
       }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      },
     );
   } catch (error) {
     console.error("Unexpected error:", error);
@@ -258,7 +230,7 @@ serve(async (req) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      },
     );
   }
 });

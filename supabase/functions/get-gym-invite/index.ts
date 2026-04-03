@@ -1,14 +1,7 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createServiceRoleClient } from "../_shared/adminAuth.ts";
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+const supabase = createServiceRoleClient();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,18 +34,39 @@ serve(async (req) => {
 
     const { data: invite, error } = await supabase
       .from("gym_invites")
-      .select("email, expires_at, used_at")
+      .select("email, expires_at, used_at, revoked_at, gym_id, gyms(name, archived_at)")
       .eq("token", token)
-      .maybeSingle();
+      .maybeSingle<{
+        email: string;
+        expires_at: string;
+        used_at: string | null;
+        revoked_at: string | null;
+        gym_id: string | null;
+        gyms: { name: string; archived_at: string | null } | null;
+      }>();
 
-    if (error || !invite) {
-      return new Response(JSON.stringify({ error: "Ungültiger oder abgelaufener Einladungslink" }), {
+    if (
+      error ||
+      !invite ||
+      !invite.gym_id ||
+      invite.revoked_at ||
+      !invite.gyms?.name ||
+      invite.gyms.archived_at
+    ) {
+      return new Response(JSON.stringify({ error: "Ungueltiger oder abgelaufener Einladungslink" }), {
         status: 404,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    return new Response(JSON.stringify(invite), {
+    return new Response(JSON.stringify({
+      email: invite.email,
+      expires_at: invite.expires_at,
+      used_at: invite.used_at,
+      revoked_at: invite.revoked_at,
+      gym_id: invite.gym_id,
+      gym_name: invite.gyms.name,
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

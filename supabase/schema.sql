@@ -199,11 +199,15 @@ create table if not exists public.gym_codes (
 -- Gym invites
 create table if not exists public.gym_invites (
   id uuid primary key default gen_random_uuid(),
+  gym_id uuid references public.gyms(id) on delete cascade,
   email text not null,
   token text unique not null,
   expires_at timestamp with time zone not null,
   created_at timestamp with time zone default now(),
-  used_at timestamp with time zone
+  used_at timestamp with time zone,
+  revoked_at timestamp with time zone,
+  constraint gym_invites_active_requires_gym_id
+    check (used_at is not null or revoked_at is not null or gym_id is not null)
 );
 
 -- Finale registrations
@@ -725,6 +729,10 @@ drop policy if exists "Gym invites read by token" on public.gym_invites;
 
 create index if not exists gym_invites_token_idx on public.gym_invites (token);
 create index if not exists gym_invites_email_idx on public.gym_invites (email);
+create index if not exists gym_invites_gym_id_idx on public.gym_invites (gym_id);
+create index if not exists gym_invites_active_lookup_idx
+  on public.gym_invites (gym_id, created_at desc)
+  where used_at is null and revoked_at is null;
 
 -- Policies: finale_registrations
 drop policy if exists "Finale registrations read own" on public.finale_registrations;

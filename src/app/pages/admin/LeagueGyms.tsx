@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
   archiveGym,
   createGymAdmin,
   inviteGymAdmin,
+  listGymInvites,
   listGymAdminsByGym,
   listGyms,
   listProfiles,
@@ -29,14 +30,23 @@ import {
   updateProfile,
 } from "@/services/appApi";
 import { supabase } from "@/services/supabase";
-import type { Gym, Profile } from "@/services/appTypes";
+import type { Gym, GymInvite, Profile } from "@/services/appTypes";
 import { Archive, Building2, Edit2, Mail, Plus, RotateCcw, UserPlus } from "lucide-react";
 
 const formatDate = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleDateString("de-DE") : "—";
 
+const formatProfileLabel = (profile: Profile) => {
+  const base =
+    `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() ||
+    profile.email ||
+    profile.id;
+  return profile.archived_at ? `${base} (archiviert)` : base;
+};
+
 const LeagueGyms = () => {
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [gymInvites, setGymInvites] = useState<GymInvite[]>([]);
   const [adminsByGym, setAdminsByGym] = useState<Record<string, string[]>>({});
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedGym, setSelectedGym] = useState("");
@@ -46,7 +56,7 @@ const LeagueGyms = () => {
   const [editingGym, setEditingGym] = useState<Gym | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Gym | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<Gym | null>(null);
-  const [createMode, setCreateMode] = useState<"direct" | "invite">("direct");
+  const [createMode, setCreateMode] = useState<"direct" | "invite">("invite");
   const [form, setForm] = useState({
     name: "",
     city: "",
@@ -58,6 +68,10 @@ const LeagueGyms = () => {
     adminPassword: "",
   });
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteForm, setInviteForm] = useState({
+    gymId: "",
+    email: "",
+  });
   const [skipEmail, setSkipEmail] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -68,43 +82,79 @@ const LeagueGyms = () => {
     logo_url: "",
   });
   const allowInviteLinkPreview = import.meta.env.DEV;
+  const inviteSectionRef = useRef<HTMLDivElement | null>(null);
 
   const loadData = async () => {
-    const [{ data: gymData }, { data: profileData }] = await Promise.all([
+    const [{ data: gymData }, { data: profileData }, { data: inviteData }] = await Promise.all([
       listGyms({ includeArchived: true }),
       listProfiles({ includeArchived: true }),
+      listGymInvites(),
     ]);
     setGyms(gymData ?? []);
     setProfiles(profileData ?? []);
+    setGymInvites(inviteData ?? []);
   };
 
   useEffect(() => {
     void loadData();
   }, []);
 
-  const loadAdmins = async (gymsToLoad: Gym[] = gyms) => {
-    if (gymsToLoad.length === 0) {
+  useEffect(() => {
+    if (gyms.length === 0) {
       setAdminsByGym({});
       return;
     }
 
-    const mapping: Record<string, string[]> = {};
-    await Promise.all(
-      gymsToLoad.map(async (gym) => {
-        const { data } = await listGymAdminsByGym(gym.id);
-        mapping[gym.id] = (data ?? []).map((item) => item.profile_id);
-      }),
-    );
-    setAdminsByGym(mapping);
-  };
+    const syncAdmins = async () => {
+      const mapping: Record<string, string[]> = {};
+      await Promise.all(
+        gyms.map(async (gym) => {
+          const { data } = await listGymAdminsByGym(gym.id);
+          mapping[gym.id] = (data ?? []).map((item) => item.profile_id);
+        }),
+      );
+      setAdminsByGym(mapping);
+    };
 
-  useEffect(() => {
-    void loadAdmins(gyms);
+    void syncAdmins();
   }, [gyms]);
 
   const activeGyms = useMemo(() => gyms.filter((gym) => !gym.archived_at), [gyms]);
   const archivedGyms = useMemo(() => gyms.filter((gym) => Boolean(gym.archived_at)), [gyms]);
   const activeProfiles = useMemo(() => profiles.filter((profile) => !profile.archived_at), [profiles]);
+  const gymProfilesByGym = useMemo(
+    () =>
+      gyms.reduce<Record<string, Profile[]>>((acc, gym) => {
+        acc[gym.id] = (adminsByGym[gym.id] ?? [])
+          .map((adminId) => profiles.find((profile) => profile.id === adminId))
+          .filter((profile): profile is Profile => Boolean(profile));
+        return acc;
+      }, {}),
+    [adminsByGym, gyms, profiles],
+  );
+  const openInvitesByGym = useMemo(() => {
+    const now = Date.now();
+    return gymInvites.reduce<Record<string, GymInvite>>((acc, invite) => {
+      if (!invite.gym_id || invite.used_at || invite.revoked_at) return acc;
+      if (new Date(invite.expires_at).getTime() <= now) return acc;
+      const current = acc[invite.gym_id];
+      if (!current || new Date(invite.created_at).getTime() > new Date(current.created_at).getTime()) {
+        acc[invite.gym_id] = invite;
+      }
+      return acc;
+    }, {});
+  }, [gymInvites]);
+
+  const getProfilesForGym = (gymId: string) =>
+    (adminsByGym[gymId] ?? [])
+      .map((adminId) => profiles.find((profile) => profile.id === adminId))
+      .filter((profile): profile is Profile => Boolean(profile));
+
+  const hasActiveAdmin = (gymId: string) => getProfilesForGym(gymId).some((profile) => !profile.archived_at);
+  const claimableGyms = useMemo(
+    () => activeGyms.filter((gym) => !(gymProfilesByGym[gym.id] ?? []).some((profile) => !profile.archived_at)),
+    [activeGyms, gymProfilesByGym],
+  );
 
   const getErrorCode = (value: unknown) => {
     if (typeof value !== "object" || value === null || !("code" in value)) return null;
@@ -122,6 +172,25 @@ const LeagueGyms = () => {
     if (msg.includes("user create") || msg.includes("user create failed")) return "Der Hallen-Admin konnte nicht angelegt werden.";
     if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("already exists")) return "Eine Halle oder E-Mail mit diesen Daten existiert bereits.";
     return errorMessage || "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.";
+  };
+
+  const prepareInviteForGym = (gym: Gym) => {
+    setCreateMode("invite");
+    setInviteForm((prev) => ({
+      gymId: gym.id,
+      email: openInvitesByGym[gym.id]?.email ?? prev.email,
+    }));
+    inviteSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const copyInviteUrlIfPossible = async (inviteUrl?: string) => {
+    if (!inviteUrl || !navigator.clipboard) return false;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const handleCreate = async () => {
@@ -219,7 +288,7 @@ const LeagueGyms = () => {
     }
   };
 
-  const handleInvite = async () => {
+  const handleLegacyInvite = async () => {
     if (!inviteEmail || !inviteEmail.includes("@")) {
       toast({ title: "Ungültige E-Mail-Adresse", description: "Bitte gib eine gültige E-Mail-Adresse ein." });
       return;
@@ -275,9 +344,113 @@ const LeagueGyms = () => {
     }
   };
 
+  const handleInvite = async () => {
+    if (!inviteForm.gymId) {
+      toast({ title: "Fehlende Halle", description: "Bitte wähle zuerst eine bestehende Halle aus." });
+      return;
+    }
+
+    if (!inviteForm.email || !inviteForm.email.includes("@")) {
+      toast({ title: "Ungültige E-Mail-Adresse", description: "Bitte gib eine gültige E-Mail-Adresse ein." });
+      return;
+    }
+
+    if (hasActiveAdmin(inviteForm.gymId)) {
+      toast({
+        title: "Zugang bereits aktiv",
+        description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
+      });
+      return;
+    }
+
+    setInviting(true);
+    try {
+      const shouldSkipEmail = allowInviteLinkPreview && skipEmail;
+      const { data, error } = await inviteGymAdmin(inviteForm.gymId, inviteForm.email.trim(), shouldSkipEmail);
+      if (error) {
+        const errorCode = getErrorCode(error);
+        const errorMessage = error.message || "";
+
+        if (errorCode === "GYM_ADMIN_ALREADY_EXISTS") {
+          toast({
+            title: "Zugang bereits aktiv",
+            description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
+          });
+        } else {
+          toast({
+            title: "Fehler",
+            description: errorMessage || "Claim-Link konnte nicht gesendet werden.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      const copied = await copyInviteUrlIfPossible(data?.invite_url);
+      await loadData();
+
+      toast({
+        title: shouldSkipEmail ? "Test-Link erzeugt" : (data?.email_sent ? "Claim-Link gesendet" : "Claim-Link erzeugt"),
+        description: shouldSkipEmail
+          ? `Für ${inviteForm.email} wurde ein Test-Link erzeugt${copied ? " und in die Zwischenablage kopiert." : "."}`
+          : data?.email_sent
+            ? `Der Claim-Link wurde an ${inviteForm.email} gesendet.`
+            : `Der Claim-Link für ${inviteForm.email} wurde erzeugt${copied ? " und in die Zwischenablage kopiert." : "."}`,
+        variant: shouldSkipEmail || !data?.email_sent ? "success" : "default",
+      });
+
+      setInviteForm((prev) => ({ ...prev, email: "" }));
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: error instanceof Error ? error.message : "Claim-Link konnte nicht gesendet werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleLegacyAssignAdmin = async () => {
+    if (!selectedGym || !selectedAdmin) {
+      toast({ title: "Fehlende Auswahl", description: "Bitte Halle und Admin wählen." });
+      return;
+    }
+
+    const { error: mappingError } = await createGymAdmin({
+      gym_id: selectedGym,
+      profile_id: selectedAdmin,
+    });
+    if (mappingError) {
+      toast({ title: "Fehler", description: mappingError.message, variant: "destructive" });
+      return;
+    }
+
+    const selectedProfile = profiles.find((profile) => profile.id === selectedAdmin);
+    if (selectedProfile && selectedProfile.role !== "gym_admin") {
+      const { error } = await updateProfile(selectedAdmin, { role: "gym_admin" });
+      if (error) {
+        console.warn("Gym admin role could not be synced", error);
+      }
+    }
+
+    await loadData();
+    setSelectedGym("");
+    setSelectedAdmin("");
+    toast({ title: "Zugeordnet", description: "Admin wurde der Halle zugeordnet." });
+  };
+
   const handleAssignAdmin = async () => {
     if (!selectedGym || !selectedAdmin) {
       toast({ title: "Fehlende Auswahl", description: "Bitte Halle und Admin wählen." });
+      return;
+    }
+
+    if (hasActiveAdmin(selectedGym)) {
+      toast({
+        title: "Zugang bereits aktiv",
+        description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
+      });
       return;
     }
 
@@ -361,7 +534,7 @@ const LeagueGyms = () => {
     toast({ title: "Wiederhergestellt", description: "Die Halle ist wieder aktiv." });
   };
 
-  const renderGymCard = (gym: Gym, archived: boolean) => {
+  const renderLegacyGymCard = (gym: Gym, archived: boolean) => {
     const admins = (adminsByGym[gym.id] ?? [])
       .map((adminId) => profiles.find((profile) => profile.id === adminId))
       .filter((profile): profile is Profile => Boolean(profile))
@@ -450,6 +623,139 @@ const LeagueGyms = () => {
     );
   };
 
+  const renderStatusBadge = (gym: Gym) => {
+    if (gym.archived_at) {
+      return <Badge variant="outline">Archiviert</Badge>;
+    }
+
+    if (hasActiveAdmin(gym.id)) {
+      return <Badge className="bg-emerald-600 hover:bg-emerald-600">Zugang aktiv</Badge>;
+    }
+
+    if (openInvitesByGym[gym.id]) {
+      return <Badge variant="secondary">Einladung offen</Badge>;
+    }
+
+    return <Badge variant="outline">Kein Zugang</Badge>;
+  };
+
+  const renderGymCard = (gym: Gym, archived: boolean) => {
+    const gymProfiles = gymProfilesByGym[gym.id] ?? [];
+    const activeAdminProfiles = gymProfiles.filter((profile) => !profile.archived_at);
+    const activeInvite = openInvitesByGym[gym.id] ?? null;
+    const adminLabels = gymProfiles.map(formatProfileLabel);
+
+    return (
+      <Card
+        key={gym.id}
+        className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="font-semibold text-primary text-base md:text-lg break-words">{gym.name}</div>
+              {renderStatusBadge(gym)}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {[gym.postal_code, gym.city].filter(Boolean).join(" ")}
+            </div>
+            {gym.address ? <div className="text-xs text-muted-foreground mt-1 break-words">{gym.address}</div> : null}
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {gym.logo_url ? (
+              <div className="hidden sm:block h-12 w-12 rounded-lg border border-border/60 overflow-hidden">
+                <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
+              </div>
+            ) : null}
+            {!archived && activeAdminProfiles.length === 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => prepareInviteForGym(gym)}
+                className="h-9 gap-2 px-3"
+                aria-label={`Claim-Link fuer ${gym.name} senden`}
+              >
+                <Mail className="h-4 w-4" />
+                {activeInvite ? "Neu senden" : "Claim-Link"}
+              </Button>
+            ) : null}
+            {!archived ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(gym)}
+                  className="h-9 w-9 p-0"
+                  aria-label={`Halle ${gym.name} bearbeiten`}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setArchiveTarget(gym)}
+                  className="h-9 w-9 p-0 text-amber-700 hover:text-amber-700 hover:bg-amber-500/10"
+                  aria-label={`Halle ${gym.name} archivieren`}
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRestoreTarget(gym)}
+                className="h-9 gap-2 px-3"
+                aria-label={`Halle ${gym.name} wiederherstellen`}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restore
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-border/60 space-y-2 text-xs text-muted-foreground">
+          <div>
+            <span className="font-medium">Admins:</span> {adminLabels.length ? adminLabels.join(", ") : "Keine"}
+          </div>
+          {!archived && activeInvite && activeAdminProfiles.length === 0 ? (
+            <>
+              <div>
+                <span className="font-medium">Offene Einladung:</span> {activeInvite.email}
+              </div>
+              <div>
+                <span className="font-medium">Gueltig bis:</span> {formatDate(activeInvite.expires_at)}
+              </div>
+            </>
+          ) : null}
+          {!archived && !activeInvite && activeAdminProfiles.length === 0 ? (
+            <div>
+              <span className="font-medium">Status:</span> Noch kein Hallenzugang eingerichtet.
+            </div>
+          ) : null}
+          {archived ? (
+            <>
+              <div>
+                <span className="font-medium">Archiviert am:</span> {formatDate(gym.archived_at)}
+              </div>
+              {gym.archive_reason ? (
+                <div>
+                  <span className="font-medium">Grund:</span> {gym.archive_reason}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      </Card>
+    );
+  };
+
+  void handleLegacyInvite;
+  void handleLegacyAssignAdmin;
+  void renderLegacyGymCard;
+
   return (
     <div className="space-y-6">
       <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
@@ -486,12 +792,12 @@ const LeagueGyms = () => {
       <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <Plus className="h-5 w-5 text-primary flex-shrink-0" />
-          <h2 className="text-base md:text-lg font-headline text-primary">Neue Halle erstellen</h2>
+          <h2 className="text-base md:text-lg font-headline text-primary">Hallenzugang einrichten</h2>
         </div>
         <Tabs value={createMode} onValueChange={(value) => setCreateMode(value as "direct" | "invite")}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="direct" className="text-xs md:text-sm">Direkt erstellen</TabsTrigger>
-            <TabsTrigger value="invite" className="text-xs md:text-sm">Per E-Mail einladen</TabsTrigger>
+            <TabsTrigger value="invite" className="text-xs md:text-sm">Claim-Link senden</TabsTrigger>
+            <TabsTrigger value="direct" className="text-xs md:text-sm">Notfall: Direkt anlegen</TabsTrigger>
           </TabsList>
 
           <TabsContent value="direct" className="space-y-4 mt-4">
@@ -535,19 +841,42 @@ const LeagueGyms = () => {
           </TabsContent>
 
           <TabsContent value="invite" className="space-y-4 mt-4">
+            <div ref={inviteSectionRef} className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="inviteGym">Bestehende Halle</Label>
+                <select
+                  id="inviteGym"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={inviteForm.gymId}
+                  onChange={(event) => setInviteForm((prev) => ({ ...prev, gymId: event.target.value }))}
+                >
+                  <option value="">Bitte wählen</option>
+                  {claimableGyms.map((gym) => (
+                    <option key={gym.id} value={gym.id}>
+                      {gym.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="inviteEmail">E-Mail-Adresse der Halle</Label>
               <Input
                 id="inviteEmail"
                 type="email"
                 placeholder="halle@example.com"
-                value={inviteEmail}
-                onChange={(event) => setInviteEmail(event.target.value)}
+                value={inviteForm.email}
+                onChange={(event) => setInviteForm((prev) => ({ ...prev, email: event.target.value }))}
               />
               <p className="text-xs text-muted-foreground">
                 Die Halle erhält einen Link zur Registrierung und kann ihre Daten selbst hinterlegen.
               </p>
             </div>
+            {inviteForm.gymId && openInvitesByGym[inviteForm.gymId] ? (
+              <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                Aktuell offene Einladung an {openInvitesByGym[inviteForm.gymId].email}, gültig bis {formatDate(openInvitesByGym[inviteForm.gymId].expires_at)}.
+              </div>
+            ) : null}
             {allowInviteLinkPreview ? (
               <div className="flex items-center space-x-2">
                 <input
@@ -562,10 +891,15 @@ const LeagueGyms = () => {
                 </Label>
               </div>
             ) : null}
-            <Button onClick={handleInvite} disabled={inviting}>
+            <Button onClick={handleInvite} disabled={inviting || claimableGyms.length === 0}>
               <Mail className="h-4 w-4 mr-2" />
-              {inviting ? "Erstelle..." : allowInviteLinkPreview && skipEmail ? "Link generieren" : "Einladung senden"}
+              {inviting ? "Erstelle..." : allowInviteLinkPreview && skipEmail ? "Link generieren" : "Claim-Link senden"}
             </Button>
+            {claimableGyms.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Für alle aktiven Hallen ist bereits ein Hallenzugang eingerichtet.
+              </p>
+            ) : null}
           </TabsContent>
         </Tabs>
       </Card>
@@ -573,8 +907,11 @@ const LeagueGyms = () => {
       <Card className="p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <UserPlus className="h-5 w-5 text-secondary" />
-          <h2 className="text-lg font-semibold text-primary">Admin zu Halle zuordnen</h2>
+          <h2 className="text-lg font-semibold text-primary">Fallback: Bestehenden Account zu Halle zuordnen</h2>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Nur für bestehende Accounts ohne aktiven Hallenzugang. Pro Halle ist aktuell genau ein primärer Zugang vorgesehen.
+        </p>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="assignGym">Halle</Label>
@@ -585,7 +922,7 @@ const LeagueGyms = () => {
               onChange={(event) => setSelectedGym(event.target.value)}
             >
               <option value="">Bitte wählen</option>
-              {activeGyms.map((gym) => (
+              {claimableGyms.map((gym) => (
                 <option key={gym.id} value={gym.id}>
                   {gym.name}
                 </option>
@@ -613,7 +950,7 @@ const LeagueGyms = () => {
             </select>
           </div>
         </div>
-        <Button onClick={handleAssignAdmin}>Zuordnen</Button>
+        <Button onClick={handleAssignAdmin} disabled={claimableGyms.length === 0}>Zuordnen</Button>
       </Card>
 
       <div className="space-y-4">
