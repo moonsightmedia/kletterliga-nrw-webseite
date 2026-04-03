@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
@@ -42,6 +42,126 @@ const getInitials = (name: string) =>
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("") || "?";
+
+const PRELAUNCH_NOTICE_STORAGE_KEY = "kl_profile_prelaunch_notice_dismissed_until";
+const PRELAUNCH_NOTICE_DISMISS_THRESHOLD = 96;
+
+const getPrelaunchDismissToken = (unlockDate: Date) => unlockDate.toISOString();
+
+const readPrelaunchNoticeDismissed = (unlockDate: Date) => {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(PRELAUNCH_NOTICE_STORAGE_KEY) === getPrelaunchDismissToken(unlockDate);
+};
+
+const writePrelaunchNoticeDismissed = (unlockDate: Date) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PRELAUNCH_NOTICE_STORAGE_KEY, getPrelaunchDismissToken(unlockDate));
+};
+
+const PrelaunchNoticeCard = ({
+  unlockDateLabel,
+  onDismiss,
+}: {
+  unlockDateLabel: string;
+  onDismiss: () => void;
+}) => {
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const startXRef = useRef<number | null>(null);
+
+  const resetSwipeState = () => {
+    startXRef.current = null;
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  };
+
+  const commitDismiss = () => {
+    resetSwipeState();
+    onDismiss();
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    startXRef.current = event.clientX;
+    setIsSwiping(true);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (startXRef.current === null) return;
+
+    const delta = event.clientX - startXRef.current;
+    if (!Number.isFinite(delta)) return;
+    const clampedDelta = Math.max(-168, Math.min(168, delta));
+    setSwipeOffset(clampedDelta);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (startXRef.current === null) return;
+
+    const delta = event.clientX - startXRef.current;
+    if (!Number.isFinite(delta)) {
+      resetSwipeState();
+      return;
+    }
+
+    if (Math.abs(delta) >= PRELAUNCH_NOTICE_DISMISS_THRESHOLD) {
+      commitDismiss();
+      return;
+    }
+
+    resetSwipeState();
+  };
+
+  return (
+    <StitchCard
+      tone="navy"
+      data-testid="profile-prelaunch-notice"
+      className="relative rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)] touch-pan-y select-none"
+      style={{
+        transform: `translateX(${swipeOffset}px)`,
+        opacity: Math.max(0.45, 1 - Math.abs(swipeOffset) / 240),
+        transition: isSwiping ? "opacity 120ms linear" : "transform 220ms ease, opacity 220ms ease",
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={resetSwipeState}
+    >
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Pre-Launch-Hinweis ausblenden"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-[0.72rem] border border-[#f2dcab]/12 bg-[#f2dcab]/8 text-[#f2dcab]/72 transition-colors hover:bg-[#f2dcab]/14 hover:text-[#f2dcab]"
+      >
+        <MaterialIcon name="close" className="text-base" />
+      </button>
+
+      <div className="space-y-4 pr-12">
+        <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
+        <div className="stitch-headline text-[2rem] leading-[0.92] text-[#f2dcab]">
+          Dein Dashboard ist offen, die Liga startet am {unlockDateLabel}.
+        </div>
+        <p className="hidden text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+          Profil, Vorbereitung und persÃ¶nliche Statistiken sind bereits verfÃ¼gbar. Hallen,
+          Codes und Ranglisten Ã¶ffnen gesammelt zum Saisonstart.
+        </p>
+        <p className="text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+          {"Profil, Vorbereitung und pers\u00f6nliche Statistiken sind bereits verf\u00fcgbar. Hallen, "}
+          {"Codes und Ranglisten \u00f6ffnen gesammelt zum Saisonstart."}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex min-h-10 items-center rounded-[0.72rem] border border-[#002637]/8 bg-[#f2dcab] px-3.5 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#002637]">
+            Freischaltung {unlockDateLabel}
+          </div>
+          <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(242,220,171,0.48)]">
+            Wische zum Ausblenden
+          </div>
+        </div>
+      </div>
+    </StitchCard>
+  );
+};
 
 const ProfileScreenSkeleton = () => (
   <div className="mx-auto max-w-md animate-pulse space-y-4">
@@ -107,12 +227,15 @@ const ProfileScreen = () => {
   } = useParticipantProfileEditor();
   const avatarUrl = avatarPreview ?? profile?.avatar_url ?? null;
   const [avatarReady, setAvatarReady] = useState(!avatarUrl);
+  const [isPrelaunchNoticeDismissed, setIsPrelaunchNoticeDismissed] = useState(() =>
+    readPrelaunchNoticeDismissed(unlockDate),
+  );
 
   const participantProfileHref = profile?.id
     ? `/app/rankings/profile/${profile.id}`
     : "/app/rankings";
   const isParticipationActivated = Boolean(profile?.participation_activated_at);
-  const shouldShowPrelaunchNotice = beforeAppUnlock;
+  const shouldShowPrelaunchNotice = beforeAppUnlock && !isPrelaunchNoticeDismissed;
   const shouldShowParticipationNotice = !beforeAppUnlock && !isParticipationActivated;
   const unlockDateLabel = formatUnlockDate(unlockDate);
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
@@ -152,7 +275,21 @@ const ProfileScreen = () => {
     };
   }, [avatarUrl]);
 
+  useEffect(() => {
+    if (!beforeAppUnlock) {
+      setIsPrelaunchNoticeDismissed(false);
+      return;
+    }
+
+    setIsPrelaunchNoticeDismissed(readPrelaunchNoticeDismissed(unlockDate));
+  }, [beforeAppUnlock, unlockDate]);
+
   const isScreenReady = Boolean(profile) && !authLoading && !loading && avatarReady;
+
+  const handleDismissPrelaunchNotice = () => {
+    writePrelaunchNoticeDismissed(unlockDate);
+    setIsPrelaunchNoticeDismissed(true);
+  };
 
   const handlePasswordReset = async () => {
     if (!user?.email) {
@@ -190,6 +327,10 @@ const ProfileScreen = () => {
   return (
     <div className="mx-auto max-w-md space-y-4">
       {shouldShowPrelaunchNotice ? (
+        <PrelaunchNoticeCard unlockDateLabel={unlockDateLabel} onDismiss={handleDismissPrelaunchNotice} />
+      ) : null}
+
+      {false ? (
         <StitchCard tone="navy" className="rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
           <div className="space-y-4">
             <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>

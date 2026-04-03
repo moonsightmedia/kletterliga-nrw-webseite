@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProfileScreen from "@/app/pages/participant/ProfileScreen";
 import { useAuth } from "@/app/auth/AuthProvider";
@@ -48,6 +48,8 @@ const buildProfileEditorState = (overrides: Partial<ReturnType<typeof usePartici
 
 describe("ProfileScreen", () => {
   beforeEach(() => {
+    window.localStorage.clear();
+
     mockedUseAuth.mockReturnValue({
       loading: false,
       signOut: vi.fn().mockResolvedValue(undefined),
@@ -68,8 +70,30 @@ describe("ProfileScreen", () => {
 
     expect(screen.getByText("Pre-Launch")).toBeInTheDocument();
     expect(screen.getByText(/die Liga startet am 01.05.2026/i)).toBeInTheDocument();
+    expect(screen.getByText("Wische zum Ausblenden")).toBeInTheDocument();
     expect(screen.queryByText("Teilnahme fehlt")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mastercode freischalten" })).not.toBeInTheDocument();
+  });
+
+  it("allows dismissing the prelaunch notice and keeps it hidden on remount", () => {
+    const firstRender = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ProfileScreen />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Pre-Launch-Hinweis ausblenden" }));
+    expect(screen.queryByText("Pre-Launch")).not.toBeInTheDocument();
+
+    firstRender.unmount();
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ProfileScreen />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("Pre-Launch")).not.toBeInTheDocument();
   });
 
   it("shows the participation notice with CTA after unlock when the profile is not activated", () => {
