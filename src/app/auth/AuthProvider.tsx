@@ -1,16 +1,44 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase, supabaseConfig } from "@/services/supabase";
-import { fetchProfile, upsertProfile } from "@/services/appApi";
-import type { Profile, UserRole } from "@/services/appTypes";
+import {
+  fetchProfile,
+  fetchProfileConsent,
+  initializeParticipantConsent,
+  resendMarketingOptInEmail,
+  upsertProfile,
+  upsertProfileConsent,
+} from "@/services/appApi";
+import type { Profile, ProfileConsent, UserRole } from "@/services/appTypes";
 import { trackAuthEvent } from "@/services/authTelemetry";
 import { ensureLaunchSettingsLoaded, formatAccountCreationOpenDate, isBeforeAccountCreationOpen } from "@/config/launch";
 import { markArchivedAccountNotice } from "@/app/auth/archivedAccountNotice";
+import {
+  MARKETING_EMAIL_SCOPE,
+  PARTICIPATION_TERMS_VERSION,
+  PRIVACY_NOTICE_VERSION,
+  hasAcceptedRequiredParticipationConsent,
+} from "@/data/participationConsent";
+
+type SignUpResult = {
+  error?: string;
+  marketingOptInRequested?: boolean;
+  marketingOptInEmailSent?: boolean;
+  marketingOptInEmailError?: string;
+};
+
+type SaveParticipationConsentResult = {
+  error?: string;
+  marketingOptInEmailSent?: boolean;
+  marketingOptInEmailError?: string;
+};
 
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  profileConsent: ProfileConsent | null;
+  hasAcceptedRequiredConsents: boolean;
   role: UserRole;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -23,11 +51,19 @@ type AuthContextValue = {
     gender: "m" | "w" | null;
     homeGymId: string | null;
     league: "toprope" | "lead" | null;
-  }) => Promise<{ error?: string }>;
+    requiredConsentAccepted: boolean;
+    marketingOptInRequested: boolean;
+  }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
   resendConfirmation: (email: string) => Promise<{ error?: string }>;
   refreshProfile: () => Promise<void>;
+  refreshProfileConsent: () => Promise<void>;
+  acceptParticipationConsents: (options: {
+    marketingOptInRequested: boolean;
+  }) => Promise<SaveParticipationConsentResult>;
+  requestMarketingOptInEmail: () => Promise<{ error?: string; emailSent?: boolean }>;
+  unsubscribeMarketingEmails: () => Promise<{ error?: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -62,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileConsent, setProfileConsent] = useState<ProfileConsent | null>(null);
   const [loading, setLoading] = useState(true);
 
   const buildProfileSeed = useCallback((user: User, email?: string | null) => {
@@ -78,6 +115,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } satisfies Partial<Profile> & { id: string };
   }, []);
 
+  const buildConsentSeed = useCallback((user: User) => {
+    const metadata = user.user_metadata ?? {};
+    const marketingRequested = metadata.marketing_opt_in_requested === true;
+    const acceptedAt =
+      typeof metadata.participation_terms_accepted_at === "string"
+        ? metadata.participation_terms_accepted_at
+        : null;
+    const privacyAcknowledgedAt =
+      typeof metadata.privacy_notice_acknowledged_at === "string"
+        ? metadata.privacy_notice_acknowledged_at
+        : acceptedAt;
+    const marketingRequestedAt =
+      typeof metadata.marketing_opt_in_requested_at === "string"
+        ? metadata.marketing_opt_in_requested_at
+        : acceptedAt;
+
+    return {
+      profile_id: user.id,
+      participation_terms_version:
+        typeof metadata.participation_terms_version === "string"
+          ? metadata.participation_terms_version
+          : null,
+      participation_terms_accepted_at: acceptedAt,
+      privacy_notice_version:
+        typeof metadata.privacy_notice_version === "string"
+          ? metadata.privacy_notice_version
+          : null,
+      privacy_notice_acknowledged_at: privacyAcknowledgedAt,
+      marketing_email_scope: marketingRequested
+        ? typeof metadata.marketing_email_scope === "string"
+          ? metadata.marketing_email_scope
+          : MARKETING_EMAIL_SCOPE
+        : null,
+      marketing_email_status: marketingRequested ? "pending" : "not_subscribed",
+      marketing_email_requested_at: marketingRequested ? marketingRequestedAt : null,
+      marketing_email_confirmed_at: null,
+      marketing_email_revoked_at: null,
+    } satisfies Partial<ProfileConsent> & { profile_id: string };
+  }, []);
+
   const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T | null> => {
     const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
     const result = await Promise.race([promise, timeout]);
@@ -92,6 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const handleArchivedProfile = useCallback(async (archivedProfile: Profile) => {
     markArchivedAccountNotice();
     setProfile(null);
+    setProfileConsent(null);
     setSession(null);
     setUser(null);
     try {
@@ -164,6 +242,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [buildProfileSeed, handleArchivedProfile]);
 
+  const loadProfileConsent = useCallback(async (user: User) => {
+    try {
+      const consentSeed = buildConsentSeed(user);
+      const consentResult = await withTimeout(fetchProfileConsent(user.id), 4000, "Profile consent fetch");
+
+      if (consentResult && !consentResult.error && consentResult.data) {
+        const fetchedConsent = consentResult.data;
+        const missingSeedPatch: Partial<ProfileConsent> & { profile_id: string } = {
+          profile_id: fetchedConsent.profile_id,
+        };
+
+        if (!fetchedConsent.participation_terms_accepted_at && consentSeed.participation_terms_accepted_at) {
+          missingSeedPatch.participation_terms_accepted_at = consentSeed.participation_terms_accepted_at;
+        }
+        if (!fetchedConsent.participation_terms_version && consentSeed.participation_terms_version) {
+          missingSeedPatch.participation_terms_version = consentSeed.participation_terms_version;
+        }
+        if (!fetchedConsent.privacy_notice_acknowledged_at && consentSeed.privacy_notice_acknowledged_at) {
+          missingSeedPatch.privacy_notice_acknowledged_at = consentSeed.privacy_notice_acknowledged_at;
+        }
+        if (!fetchedConsent.privacy_notice_version && consentSeed.privacy_notice_version) {
+          missingSeedPatch.privacy_notice_version = consentSeed.privacy_notice_version;
+        }
+        if (
+          (!fetchedConsent.marketing_email_status || fetchedConsent.marketing_email_status === "not_subscribed") &&
+          consentSeed.marketing_email_status === "pending"
+        ) {
+          missingSeedPatch.marketing_email_status = consentSeed.marketing_email_status;
+        }
+        if (!fetchedConsent.marketing_email_requested_at && consentSeed.marketing_email_requested_at) {
+          missingSeedPatch.marketing_email_requested_at = consentSeed.marketing_email_requested_at;
+        }
+        if (!fetchedConsent.marketing_email_scope && consentSeed.marketing_email_scope) {
+          missingSeedPatch.marketing_email_scope = consentSeed.marketing_email_scope;
+        }
+
+        if (Object.keys(missingSeedPatch).length > 1) {
+          const syncedConsent = await withTimeout(
+            upsertProfileConsent(missingSeedPatch),
+            4000,
+            "Profile consent metadata sync",
+          );
+          if (syncedConsent && !syncedConsent.error && syncedConsent.data) {
+            setProfileConsent(syncedConsent.data);
+            return syncedConsent.data;
+          }
+        }
+
+        setProfileConsent(fetchedConsent);
+        return fetchedConsent;
+      }
+
+      if (consentSeed.participation_terms_accepted_at || consentSeed.marketing_email_requested_at) {
+        const upsertResult = await withTimeout(
+          upsertProfileConsent(consentSeed),
+          4000,
+          "Profile consent upsert",
+        );
+        if (upsertResult && !upsertResult.error && upsertResult.data) {
+          setProfileConsent(upsertResult.data);
+          return upsertResult.data;
+        }
+      }
+
+      setProfileConsent(null);
+      return null;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Profile consent load failed", error);
+      setProfileConsent(null);
+      return null;
+    }
+  }, [buildConsentSeed]);
+
   useEffect(() => {
     let mounted = true;
     if (!isSupabaseConfigured) {
@@ -186,8 +338,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const sessionUser = session?.user ?? null;
         setUser(sessionUser);
         if (sessionUser) {
-          // Warte auf Profil-Laden, bevor loading auf false gesetzt wird
           await loadProfile(sessionUser, sessionUser.email);
+          await loadProfileConsent(sessionUser);
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -195,6 +347,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(null);
         setUser(null);
         setProfile(null);
+        setProfileConsent(null);
       } finally {
         setLoading(false);
       }
@@ -217,8 +370,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           if (nextUser) {
             await loadProfile(nextUser, nextUser.email);
+            await loadProfileConsent(nextUser);
           } else {
             setProfile(null);
+            setProfileConsent(null);
           }
         } finally {
           if (mounted && shouldGateAccess) {
@@ -232,7 +387,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, loadProfileConsent]);
 
   async function withSingleRetry<T>(operation: () => Promise<T>): Promise<T> {
     try {
@@ -353,6 +508,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             return { error: "Dieses Konto wurde archiviert. Bitte kontaktiere die Liga." };
           }
+          await loadProfileConsent(result.data.session.user);
         }
       }
       trackAuthEvent("signin_success", { email, context: "login_form" });
@@ -374,18 +530,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     gender: "m" | "w" | null;
     homeGymId: string | null;
     league: "toprope" | "lead" | null;
-  }) => {
-    const { email, password, firstName, lastName, birthDate, gender, homeGymId, league } = payload;
+    requiredConsentAccepted: boolean;
+    marketingOptInRequested: boolean;
+  }): Promise<SignUpResult> => {
+    if (!isSupabaseConfigured) {
+      return { error: "Supabase nicht konfiguriert. Prüfe VITE_SUPABASE_URL/ANON_KEY." };
+    }
+
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      birthDate,
+      gender,
+      homeGymId,
+      league,
+      requiredConsentAccepted,
+      marketingOptInRequested,
+    } = payload;
     await ensureLaunchSettingsLoaded();
     if (isBeforeAccountCreationOpen()) {
       return { error: `Die Registrierung wird am ${formatAccountCreationOpenDate()} freigeschaltet.` };
     }
+    if (!requiredConsentAccepted) {
+      return {
+        error: "Bitte akzeptiere zuerst die Teilnahmebedingungen und Datenschutzhinweise.",
+      };
+    }
     trackAuthEvent("signup_start", { email, context: "register_form" });
     // Bestimme die Frontend-URL für redirectTo nach E-Mail-Bestätigung
-    const frontendUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : 'https://kletterliga-nrw.de';
+    const frontendUrl =
+      typeof window !== "undefined" ? window.location.origin : "https://kletterliga-nrw.de";
     const confirmUrl = `${frontendUrl}/app/auth/confirm`;
+    const consentAcceptedAt = new Date().toISOString();
     
     const { data, error } = await withSingleRetry(() => supabase.auth.signUp({
       email,
@@ -399,6 +577,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           gender,
           home_gym_id: homeGymId,
           league,
+          participation_terms_version: PARTICIPATION_TERMS_VERSION,
+          participation_terms_accepted_at: consentAcceptedAt,
+          privacy_notice_version: PRIVACY_NOTICE_VERSION,
+          privacy_notice_acknowledged_at: consentAcceptedAt,
+          marketing_opt_in_requested: marketingOptInRequested,
+          marketing_opt_in_requested_at: marketingOptInRequested ? consentAcceptedAt : null,
+          marketing_email_scope: marketingOptInRequested ? MARKETING_EMAIL_SCOPE : null,
         },
       },
     }));
@@ -440,15 +625,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
     }
 
+    let marketingOptInEmailSent = !marketingOptInRequested;
+    let marketingOptInEmailError: string | undefined;
+
+    const consentInit = await initializeParticipantConsent({
+      profileId: data.user.id,
+      email,
+      name: `${firstName} ${lastName}`.trim(),
+      participationTermsVersion: PARTICIPATION_TERMS_VERSION,
+      privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
+      marketingOptInRequested,
+    });
+
+    if (consentInit.error) {
+      // eslint-disable-next-line no-console
+      console.warn("Participant consent initialization failed", consentInit.error);
+      if (marketingOptInRequested) {
+        marketingOptInEmailSent = false;
+        marketingOptInEmailError = consentInit.error.message;
+      }
+    } else if (marketingOptInRequested) {
+      marketingOptInEmailSent = Boolean(consentInit.data?.email_sent);
+      if (!marketingOptInEmailSent) {
+        marketingOptInEmailError =
+          consentInit.data?.message ??
+          "Die Bestätigungs-E-Mail für freiwillige Informationen konnte noch nicht gesendet werden.";
+      }
+    }
+
     if (data.session?.user) {
       await loadProfile(data.session.user, email);
+      await loadProfileConsent(data.session.user);
     }
     trackAuthEvent("signup_success", { email, context: "register_form" });
-    return {};
+    return {
+      marketingOptInRequested,
+      marketingOptInEmailSent,
+      marketingOptInEmailError,
+    };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setProfileConsent(null);
+    }
   };
 
   const resetPassword = async (email: string) => {
@@ -513,13 +738,204 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await loadProfile(user);
   };
 
+  const refreshProfileConsent = async () => {
+    if (!user) return;
+    await loadProfileConsent(user);
+  };
+
+  const acceptParticipationConsents = async ({
+    marketingOptInRequested,
+  }: {
+    marketingOptInRequested: boolean;
+  }): Promise<SaveParticipationConsentResult> => {
+    if (!user || !profile) {
+      return { error: "Bitte melde dich erneut an, um deine Teilnahme zu bestätigen." };
+    }
+
+    const acceptedAt = new Date().toISOString();
+    const consentPatch: Partial<ProfileConsent> & { profile_id: string } = {
+      profile_id: user.id,
+      participation_terms_version: PARTICIPATION_TERMS_VERSION,
+      participation_terms_accepted_at: acceptedAt,
+      privacy_notice_version: PRIVACY_NOTICE_VERSION,
+      privacy_notice_acknowledged_at: acceptedAt,
+    };
+
+    if (marketingOptInRequested) {
+      consentPatch.marketing_email_scope = MARKETING_EMAIL_SCOPE;
+      consentPatch.marketing_email_status =
+        profileConsent?.marketing_email_status === "subscribed" ? "subscribed" : "pending";
+      consentPatch.marketing_email_requested_at =
+        profileConsent?.marketing_email_requested_at ?? acceptedAt;
+      consentPatch.marketing_email_confirmed_at =
+        profileConsent?.marketing_email_status === "subscribed"
+          ? profileConsent?.marketing_email_confirmed_at
+          : null;
+      consentPatch.marketing_email_revoked_at = null;
+    }
+
+    const consentResult = await upsertProfileConsent(consentPatch);
+    if (consentResult.error) {
+      return {
+        error:
+          consentResult.error.message ??
+          "Die Teilnahmebedingungen konnten gerade nicht gespeichert werden.",
+      };
+    }
+
+    if (consentResult.data) {
+      setProfileConsent(consentResult.data);
+    }
+
+    if (!marketingOptInRequested || profileConsent?.marketing_email_status === "subscribed") {
+      return { marketingOptInEmailSent: !marketingOptInRequested };
+    }
+
+    const email = user.email ?? profile.email ?? null;
+    if (!email) {
+      return {
+        marketingOptInEmailSent: false,
+        marketingOptInEmailError:
+          "Deine freiwillige E-Mail-Anmeldung konnte noch nicht gestartet werden, weil keine E-Mail-Adresse vorliegt.",
+      };
+    }
+
+    const resendResult = await resendMarketingOptInEmail({
+      profileId: user.id,
+      email,
+      name: [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || null,
+    });
+
+    if (resendResult.error) {
+      return {
+        marketingOptInEmailSent: false,
+        marketingOptInEmailError: resendResult.error.message,
+      };
+    }
+
+    if (resendResult.data?.consent) {
+      setProfileConsent(resendResult.data.consent);
+    } else {
+      await loadProfileConsent(user);
+    }
+
+    return {
+      marketingOptInEmailSent: Boolean(resendResult.data?.email_sent),
+      marketingOptInEmailError: resendResult.data?.email_sent
+        ? undefined
+        : resendResult.data?.message ??
+          "Die Bestätigungs-E-Mail für freiwillige Informationen konnte noch nicht gesendet werden.",
+    };
+  };
+
+  const requestMarketingOptInEmail = async () => {
+    if (!user || !profile) {
+      return { error: "Bitte melde dich erneut an, um deine E-Mail-Einstellungen zu ändern." };
+    }
+
+    const email = user.email ?? profile.email ?? null;
+    if (!email) {
+      return { error: "Für dein Profil ist keine E-Mail-Adresse hinterlegt." };
+    }
+
+    const requestedAt = new Date().toISOString();
+    const seedResult = await upsertProfileConsent({
+      profile_id: user.id,
+      participation_terms_version:
+        profileConsent?.participation_terms_version ?? PARTICIPATION_TERMS_VERSION,
+      participation_terms_accepted_at:
+        profileConsent?.participation_terms_accepted_at ?? requestedAt,
+      privacy_notice_version:
+        profileConsent?.privacy_notice_version ?? PRIVACY_NOTICE_VERSION,
+      privacy_notice_acknowledged_at:
+        profileConsent?.privacy_notice_acknowledged_at ?? requestedAt,
+      marketing_email_scope: MARKETING_EMAIL_SCOPE,
+      marketing_email_status:
+        profileConsent?.marketing_email_status === "subscribed" ? "subscribed" : "pending",
+      marketing_email_requested_at: requestedAt,
+      marketing_email_confirmed_at:
+        profileConsent?.marketing_email_status === "subscribed"
+          ? profileConsent?.marketing_email_confirmed_at
+          : null,
+      marketing_email_revoked_at: null,
+    });
+
+    if (seedResult.error) {
+      return {
+        error:
+          seedResult.error.message ??
+          "Die E-Mail-Einstellungen konnten gerade nicht aktualisiert werden.",
+      };
+    }
+
+    const resendResult = await resendMarketingOptInEmail({
+      profileId: user.id,
+      email,
+      name: [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || null,
+    });
+
+    if (resendResult.error) {
+      return { error: resendResult.error.message, emailSent: false };
+    }
+
+    if (resendResult.data?.consent) {
+      setProfileConsent(resendResult.data.consent);
+    } else if (seedResult.data) {
+      setProfileConsent(seedResult.data);
+    } else {
+      await loadProfileConsent(user);
+    }
+
+    if (!resendResult.data?.email_sent) {
+      return {
+        error:
+          resendResult.data?.message ??
+          "Die Bestätigungs-E-Mail konnte gerade nicht gesendet werden.",
+        emailSent: false,
+      };
+    }
+
+    return { emailSent: true };
+  };
+
+  const unsubscribeMarketingEmails = async () => {
+    if (!user) {
+      return { error: "Bitte melde dich erneut an, um deine E-Mail-Einstellungen zu ändern." };
+    }
+
+    const unsubscribeResult = await upsertProfileConsent({
+      profile_id: user.id,
+      marketing_email_status: "unsubscribed",
+      marketing_email_revoked_at: new Date().toISOString(),
+    });
+
+    if (unsubscribeResult.error) {
+      return {
+        error:
+          unsubscribeResult.error.message ??
+          "Die freiwilligen E-Mails konnten gerade nicht abbestellt werden.",
+      };
+    }
+
+    if (unsubscribeResult.data) {
+      setProfileConsent(unsubscribeResult.data);
+    } else {
+      await loadProfileConsent(user);
+    }
+
+    return {};
+  };
+
   const role = profile?.role ?? (user ? "participant" : "guest");
+  const hasAcceptedRequiredConsents = Boolean(user) && Boolean(profile) && hasAcceptedRequiredParticipationConsent(profileConsent);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
       user,
       profile,
+      profileConsent,
+      hasAcceptedRequiredConsents,
       role,
       loading,
       signIn,
@@ -528,8 +944,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       resetPassword,
       resendConfirmation,
       refreshProfile,
+      refreshProfileConsent,
+      acceptParticipationConsents,
+      requestMarketingOptInEmail,
+      unsubscribeMarketingEmails,
     }),
-    [session, user, profile, role, loading],
+    [
+      session,
+      user,
+      profile,
+      profileConsent,
+      hasAcceptedRequiredConsents,
+      role,
+      loading,
+      acceptParticipationConsents,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -19,11 +19,13 @@ const buildProfileEditorState = (overrides: Partial<ReturnType<typeof usePartici
   ({
     profile: {
       id: "profile-1",
+      avatar_url: null,
       participation_activated_at: null,
     },
     user: {
       email: "lukas@example.com",
     },
+    loading: false,
     profileData: {
       rank: 14,
       routesLogged: 1,
@@ -40,6 +42,7 @@ const buildProfileEditorState = (overrides: Partial<ReturnType<typeof usePartici
 describe("ProfileScreen", () => {
   beforeEach(() => {
     mockedUseAuth.mockReturnValue({
+      loading: false,
       signOut: vi.fn().mockResolvedValue(undefined),
     } as ReturnType<typeof useAuth>);
     mockedUseParticipantProfileEditor.mockReturnValue(buildProfileEditorState());
@@ -64,6 +67,7 @@ describe("ProfileScreen", () => {
       buildProfileEditorState({
         profile: {
           id: "profile-1",
+          avatar_url: null,
           participation_activated_at: "2026-03-27T09:00:00+01:00",
         },
       }),
@@ -76,5 +80,22 @@ describe("ProfileScreen", () => {
     );
 
     expect(screen.getByRole("button", { name: /Teilnahme aktiviert/i })).toBeDisabled();
+  });
+
+  it("renders a skeleton while profile data is still loading", () => {
+    mockedUseParticipantProfileEditor.mockReturnValue(
+      buildProfileEditorState({
+        loading: true,
+      }),
+    );
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ProfileScreen />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("heading", { name: "Lukas MÃ¼ller" })).not.toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.className.includes("animate-pulse") ?? false)).toBeInTheDocument();
   });
 });

@@ -13,6 +13,10 @@ const authMocks = vi.hoisted(() => ({
 const appApiMocks = vi.hoisted(() => ({
   fetchProfile: vi.fn(),
   upsertProfile: vi.fn(),
+  fetchProfileConsent: vi.fn(),
+  upsertProfileConsent: vi.fn(),
+  initializeParticipantConsent: vi.fn(),
+  resendMarketingOptInEmail: vi.fn(),
 }));
 
 vi.mock("@/services/supabase", () => ({
@@ -36,7 +40,11 @@ vi.mock("@/services/supabase", () => ({
 
 vi.mock("@/services/appApi", () => ({
   fetchProfile: appApiMocks.fetchProfile,
+  fetchProfileConsent: appApiMocks.fetchProfileConsent,
+  initializeParticipantConsent: appApiMocks.initializeParticipantConsent,
+  resendMarketingOptInEmail: appApiMocks.resendMarketingOptInEmail,
   upsertProfile: appApiMocks.upsertProfile,
+  upsertProfileConsent: appApiMocks.upsertProfileConsent,
 }));
 
 vi.mock("@/services/authTelemetry", () => ({
@@ -67,11 +75,47 @@ const Harness = () => {
             gender: "w",
             homeGymId: null,
             league: "toprope",
+            requiredConsentAccepted: true,
+            marketingOptInRequested: false,
           });
           setMessage(result.error ?? "success");
         }}
       >
         Sign up
+      </button>
+      <div>{message}</div>
+    </div>
+  );
+};
+
+const MarketingHarness = () => {
+  const { signUp } = useAuth();
+  const [message, setMessage] = useState("idle");
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={async () => {
+          const result = await signUp({
+            email: "marketing@example.com",
+            password: "supersecret",
+            firstName: "Jana",
+            lastName: "Muster",
+            birthDate: "2000-01-01",
+            gender: "w",
+            homeGymId: null,
+            league: "toprope",
+            requiredConsentAccepted: true,
+            marketingOptInRequested: true,
+          });
+          setMessage(
+            result.error ??
+              `${String(result.marketingOptInEmailSent)}:${result.marketingOptInEmailError ?? "ok"}`,
+          );
+        }}
+      >
+        Sign up marketing
       </button>
       <div>{message}</div>
     </div>
@@ -130,6 +174,16 @@ describe("AuthProvider signUp", () => {
     });
     appApiMocks.fetchProfile.mockResolvedValue({ data: null, error: null });
     appApiMocks.upsertProfile.mockResolvedValue({ data: null, error: null });
+    appApiMocks.fetchProfileConsent.mockResolvedValue({ data: null, error: null });
+    appApiMocks.upsertProfileConsent.mockResolvedValue({ data: null, error: null });
+    appApiMocks.initializeParticipantConsent.mockResolvedValue({
+      data: { ok: true, email_sent: true, marketing_email_status: "pending", consent: null },
+      error: null,
+    });
+    appApiMocks.resendMarketingOptInEmail.mockResolvedValue({
+      data: { ok: true, email_sent: true, marketing_email_status: "pending", consent: null },
+      error: null,
+    });
     authMocks.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
     authMocks.resend.mockResolvedValue({ data: {}, error: null });
   });
@@ -161,9 +215,7 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich im Login an oder fordere dort einen neuen Bestätigungslink an.",
-        ),
+        screen.getByText(/Diese E-Mail-Adresse ist bereits registriert\./),
       ).toBeInTheDocument(),
     );
   });
@@ -184,9 +236,46 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
-        ),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("keeps signup successful when the optional marketing DOI mail cannot be sent", async () => {
+    authMocks.signUp.mockResolvedValue({
+      data: {
+        user: {
+          id: "new-user",
+          email: "marketing@example.com",
+          identities: [{ id: "identity-1" }],
+          user_metadata: {},
+        },
+        session: null,
+      },
+      error: null,
+    });
+    appApiMocks.initializeParticipantConsent.mockResolvedValue({
+      data: {
+        ok: true,
+        email_sent: false,
+        marketing_email_status: "pending",
+        consent: null,
+        message: "Die Bestätigungs-E-Mail konnte gerade nicht gesendet werden.",
+      },
+      error: null,
+    });
+
+    render(
+      <AuthProvider>
+        <MarketingHarness />
+      </AuthProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign up marketing" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("false:Die Bestätigungs-E-Mail konnte gerade nicht gesendet werden."),
       ).toBeInTheDocument(),
     );
   });
@@ -207,9 +296,7 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
-        ),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
       ).toBeInTheDocument(),
     );
   });
@@ -230,9 +317,7 @@ describe("AuthProvider signUp", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(
-          "Unser E-Mail-Versand ist gerade gestört. Bitte versuche es in ein paar Minuten erneut oder melde dich unter info@kletterliga-nrw.de.",
-        ),
+        screen.getByText(/Unser E-Mail-Versand ist gerade gestört\./),
       ).toBeInTheDocument(),
     );
   });

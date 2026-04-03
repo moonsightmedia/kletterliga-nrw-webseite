@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target, BookOpen } from "lucide-react";
+import { CheckCircle, Star, Users, Trophy, Calendar, Award, MapPin, Clock, Target, BookOpen, ShieldCheck } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { Button } from "@/components/ui/button";
@@ -549,6 +549,46 @@ const Modus = () => {
 
             <AnimatedSection animation="fade-up" delay={100}>
               <div className="space-y-6">
+                <div className="bg-primary p-6 rounded-lg border border-primary/10 text-primary-foreground">
+                  <div className="flex items-center gap-3 mb-3">
+                    <ShieldCheck className="text-accent" size={24} />
+                    <h3 className="font-headline text-xl leading-tight text-accent [overflow-wrap:anywhere]">Sicher klettern ist Pflicht</h3>
+                  </div>
+                  <p className="text-primary-foreground/80">
+                    Die Teilnahme setzt voraus, dass nur mit Sicherungsgeräten gesichert wird, deren Bedienung sicher beherrscht wird,
+                    vor jedem Versuch ein vollständiger Partnercheck erfolgt und alle Hallenregeln eingehalten werden.
+                    Wer nicht sicher sichern kann, darf nicht sichern.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3 text-sm">
+                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Partnercheck vor jedem Versuch</span>
+                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Hallenregeln verbindlich beachten</span>
+                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Sicherungsgerät sicher bedienen</span>
+                  </div>
+                  <div className="mt-5">
+                    <a
+                      href="https://www.alpenverein.de/artikel/sicher-klettern-sicherungsgeraete-richtig-bedienen_406d5638-0681-4e5e-8c12-c42e82e2ac59"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center rounded-[0.95rem] bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:bg-accent/90"
+                    >
+                      DAV-Hinweise zum sicheren Klettern
+                    </a>
+                  </div>
+                </div>
+
+                <div className="bg-background p-6 rounded-lg border border-primary/10">
+                  <h3 className="font-headline text-xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">Verbindliche Teilnahmebedingungen</h3>
+                  <p className="text-muted-foreground">
+                    Die vollständigen Teilnahmebedingungen mit der Trennung zwischen verpflichtenden Teilnahme-Mails und freiwilligen Liga-Infos findest du jetzt gesammelt auf einer eigenen Seite.
+                  </p>
+                  <div className="mt-5">
+                    <Button asChild variant="outline" className="-skew-x-6">
+                      <Link to="/teilnahmebedingungen" className="inline-flex items-center gap-2">
+                        <span className="skew-x-6">Teilnahmebedingungen ansehen</span>
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
                 <div className="bg-background p-6 rounded-lg">
                   <h3 className="font-headline text-xl leading-tight text-primary mb-3 [overflow-wrap:anywhere]">Anmeldung</h3>
                   <p className="text-muted-foreground">

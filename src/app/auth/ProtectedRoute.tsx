@@ -1,9 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { AppRouteLoadingState } from "@/app/components/AppRouteLoadingState";
+import { ParticipationConsentGate } from "@/app/auth/ParticipationConsentGate";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasAcceptedRequiredConsents } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -20,6 +21,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/app/login" replace />;
+  }
+
+  if (!hasAcceptedRequiredConsents) {
+    return <ParticipationConsentGate />;
   }
 
   return <>{children}</>;

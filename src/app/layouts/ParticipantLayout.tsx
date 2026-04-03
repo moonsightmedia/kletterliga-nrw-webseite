@@ -8,6 +8,10 @@ import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/use-toast";
 import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
+import {
+  getMarketingEmailStatusHint,
+  getMarketingEmailStatusLabel,
+} from "@/data/participationConsent";
 import { cn } from "@/lib/utils";
 
 const getPageTitle = (path: string) => {
@@ -22,6 +26,7 @@ const getPageTitle = (path: string) => {
   if (path.startsWith("/app/rankings")) return "Rangliste";
   if (path.startsWith("/app/age-group-rankings")) return "Altersklassen";
   if (path.startsWith("/app/finale")) return "Finale";
+  if (path === "/app/profile/notifications") return "Benachrichtigungen";
   if (path === "/app/profile/edit") return "Profil bearbeiten";
   if (path === "/app/profile/history") return "Verlauf";
   if (path.startsWith("/app/profile")) return "Profil";
@@ -127,7 +132,7 @@ export const ParticipantLayout = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, profileConsent } = useAuth();
   const title = getPageTitle(location.pathname);
   const isHome = location.pathname === "/app";
   const isGymDetail = isGymDetailPath(location.pathname);
@@ -151,6 +156,12 @@ export const ParticipantLayout = () => {
     profile && profile.role === "participant" && !profile.participation_activated_at;
   const { unlockDate, participantFeatureLocked: featureLocked } = useLaunchSettings();
   const unlockDateLabel = formatUnlockDate(unlockDate);
+  const notificationStatusLabel = getMarketingEmailStatusLabel(
+    profileConsent?.marketing_email_status ?? "not_subscribed",
+  );
+  const notificationStatusHint = getMarketingEmailStatusHint(
+    profileConsent?.marketing_email_status ?? "not_subscribed",
+  );
 
   const handleParticipationTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     setParticipationTouchStartX(event.touches[0]?.clientX ?? null);
@@ -322,11 +333,21 @@ export const ParticipantLayout = () => {
                         </div>
                         <div>
                           <div className="font-['Space_Grotesk'] text-lg font-bold text-[#002637]">
-                            Benachrichtigungen folgen
+                            Freiwillige E-Mail-Infos
                           </div>
                           <p className="mt-1 text-sm leading-6 text-[rgba(0,38,55,0.72)]">
-                            Sobald es echte Updates gibt, erscheinen sie hier direkt unter der Glocke.
+                            {notificationStatusLabel}: {notificationStatusHint}
                           </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNotificationsOpen(false);
+                              navigate("/app/profile/notifications");
+                            }}
+                            className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#003d55] underline decoration-[#003d55]/25 underline-offset-4"
+                          >
+                            Einstellungen öffnen
+                          </button>
                         </div>
                       </div>
                     </div>

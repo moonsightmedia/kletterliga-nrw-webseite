@@ -425,6 +425,22 @@ const Regelwerk = () => {
                 korrekter Sicherungstechniken nach den jeweils geltenden Hallen- und
                 Sicherheitsregeln.
               </p>
+              <p>
+                <strong className="text-foreground">Sicherheitsanforderung:</strong> Die sichere Bedienung
+                des jeweils verwendeten Sicherungsgeräts, der vollständige Partnercheck vor jedem
+                Versuch sowie die Einhaltung der Hallenregeln sind zwingende Voraussetzung für die
+                Teilnahme. Wer ein Sicherungsgerät nicht sicher beherrscht, darf in der Kletterliga
+                NRW nicht sichern. Ergänzend verweist die Liga auf die{" "}
+                <a
+                  href="https://www.alpenverein.de/artikel/sicher-klettern-sicherungsgeraete-richtig-bedienen_406d5638-0681-4e5e-8c12-c42e82e2ac59"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary underline decoration-primary/30 underline-offset-4"
+                >
+                  Sicherheitshinweise des DAV
+                </a>
+                .
+              </p>
             </div>
           </article>
         </AnimatedSection>

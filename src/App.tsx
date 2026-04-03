@@ -18,12 +18,15 @@ import Index from "./pages/Index";
 import Liga from "./pages/Liga";
 import Modus from "./pages/Modus";
 import Regelwerk from "./pages/Regelwerk";
+import Teilnahmebedingungen from "./pages/Teilnahmebedingungen";
 import Hallen from "./pages/Hallen";
 import Ranglisten from "./pages/Ranglisten";
 import Sponsoren from "./pages/Sponsoren";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Kontakt from "./pages/Kontakt";
+import MailBestaetigen from "./pages/MailBestaetigen";
+import MailAbbestellen from "./pages/MailAbbestellen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,12 +66,15 @@ const AppShell = () => {
               <Route path="/liga" element={<Liga />} />
               <Route path="/modus" element={<Modus />} />
               <Route path="/regelwerk" element={<Regelwerk />} />
+              <Route path="/teilnahmebedingungen" element={<Teilnahmebedingungen />} />
               <Route path="/hallen" element={<Hallen />} />
               <Route path="/ranglisten" element={<Ranglisten />} />
               <Route path="/sponsoren" element={<Sponsoren />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/kontakt" element={<Kontakt />} />
+              <Route path="/mail/bestaetigen" element={<MailBestaetigen />} />
+              <Route path="/mail/abbestellen" element={<MailAbbestellen />} />
               {appRoutes}
               <Route path="*" element={<NotFound />} />
             </Routes>

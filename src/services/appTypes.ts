@@ -1,5 +1,11 @@
 export type UserRole = "guest" | "participant" | "gym_admin" | "league_admin";
 
+export type MarketingEmailStatus =
+  | "not_subscribed"
+  | "pending"
+  | "subscribed"
+  | "unsubscribed";
+
 export type Profile = {
   id: string;
   email: string | null;
@@ -15,6 +21,21 @@ export type Profile = {
   archived_at?: string | null;
   archived_by?: string | null;
   archive_reason?: string | null;
+};
+
+export type ProfileConsent = {
+  profile_id: string;
+  participation_terms_version: string | null;
+  participation_terms_accepted_at: string | null;
+  privacy_notice_version: string | null;
+  privacy_notice_acknowledged_at: string | null;
+  marketing_email_scope: string | null;
+  marketing_email_status: MarketingEmailStatus | null;
+  marketing_email_requested_at: string | null;
+  marketing_email_confirmed_at: string | null;
+  marketing_email_revoked_at: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type Gym = {

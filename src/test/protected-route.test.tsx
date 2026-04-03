@@ -14,10 +14,20 @@ vi.mock("@/app/auth/AuthProvider", () => ({
 const mockedUseAuth = vi.mocked(useAuth);
 
 const setAuthState = (value: Partial<ReturnType<typeof useAuth>>) => {
-  mockedUseAuth.mockReturnValue(value as ReturnType<typeof useAuth>);
+  mockedUseAuth.mockReturnValue({
+    loading: false,
+    user: null,
+    profile: null,
+    profileConsent: null,
+    hasAcceptedRequiredConsents: false,
+    role: "guest",
+    acceptParticipationConsents: vi.fn(),
+    signOut: vi.fn(),
+    ...value,
+  } as ReturnType<typeof useAuth>);
 };
 
-const authUser = { id: "user-1" } as unknown as ReturnType<typeof useAuth>["user"];
+const authUser = { id: "user-1", email: "user@example.com" } as unknown as ReturnType<typeof useAuth>["user"];
 
 describe("route guards", () => {
   beforeEach(() => {
@@ -82,8 +92,36 @@ describe("route guards", () => {
     expect(screen.getByText("Login Seite")).toBeInTheDocument();
   });
 
-  it("renders protected content for authenticated users", () => {
-    setAuthState({ loading: false, user: authUser, role: "participant" });
+  it("shows the participation consent gate for authenticated users without stored consent", () => {
+    setAuthState({
+      loading: false,
+      user: authUser,
+      profile: { id: "user-1", first_name: "Jana", last_name: "Muster", role: "participant" },
+      role: "participant",
+      hasAcceptedRequiredConsents: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app"]}>
+        <ProtectedRoute>
+          <div>Geschuetzter Inhalt</div>
+        </ProtectedRoute>
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText("Einmal kurz bestätigen."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Geschuetzter Inhalt")).not.toBeInTheDocument();
+  });
+
+  it("renders protected content for authenticated users with consent", () => {
+    setAuthState({
+      loading: false,
+      user: authUser,
+      role: "participant",
+      hasAcceptedRequiredConsents: true,
+    });
 
     render(
       <MemoryRouter initialEntries={["/app"]}>
@@ -97,7 +135,12 @@ describe("route guards", () => {
   });
 
   it("redirects users without the required role back into the app", () => {
-    setAuthState({ loading: false, user: authUser, role: "participant" });
+    setAuthState({
+      loading: false,
+      user: authUser,
+      role: "participant",
+      hasAcceptedRequiredConsents: true,
+    });
 
     render(
       <MemoryRouter initialEntries={["/app/admin/league"]}>

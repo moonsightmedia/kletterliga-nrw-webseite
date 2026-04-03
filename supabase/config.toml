@@ -38,3 +38,7 @@ verify_jwt = false
 # send-contact-email: öffentlich (Kontaktformular ohne Login)
 [functions.send-contact-email]
 verify_jwt = false
+
+# participant-email-consent: öffentliche DOI-Links, Auth-Prüfung erfolgt je Aktion in der Function
+[functions.participant-email-consent]
+verify_jwt = false

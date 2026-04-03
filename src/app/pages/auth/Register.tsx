@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Building2,
   CalendarDays,
-  Check,
   Flag,
   LockKeyhole,
   Mail,
@@ -13,6 +12,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
 import {
@@ -30,6 +30,7 @@ import {
   formatUnlockDate,
   useLaunchSettings,
 } from "@/config/launch";
+import { MARKETING_OPT_IN_TEXT, REQUIRED_CONSENT_TEXT } from "@/data/participationConsent";
 import logo from "@/assets/logo.png";
 
 type RegisterFormState = {
@@ -73,6 +74,8 @@ const Register = () => {
     homeGymId: "",
     league: "",
   });
+  const [requiredConsentAccepted, setRequiredConsentAccepted] = useState(false);
+  const [marketingOptInRequested, setMarketingOptInRequested] = useState(false);
   const { accountCreationOpenDate, unlockDate, participantLaunchStarted, beforeAccountCreationOpen } = useLaunchSettings();
 
   useEffect(() => {
@@ -164,6 +167,8 @@ const Register = () => {
         gender: (form.gender as "m" | "w") || null,
         homeGymId: form.homeGymId || null,
         league: (form.league as "toprope" | "lead") || null,
+        requiredConsentAccepted,
+        marketingOptInRequested,
       });
       if (result.error) {
         toast({ title: "Registrierung fehlgeschlagen", description: result.error, variant: "destructive" });
@@ -171,7 +176,13 @@ const Register = () => {
         return;
       }
       toast({ title: "Account erstellt", description: "Im nächsten Schritt zeigen wir dir, wie es weitergeht.", variant: "success" });
-      navigate("/app/register/success");
+      navigate("/app/register/success", {
+        state: {
+          marketingOptInRequested: result.marketingOptInRequested ?? marketingOptInRequested,
+          marketingOptInEmailSent: result.marketingOptInEmailSent ?? !marketingOptInRequested,
+          marketingOptInEmailError: result.marketingOptInEmailError,
+        },
+      });
     } catch (error) {
       console.error("Registration error:", error);
       toast({ title: "Fehler", description: error instanceof Error ? error.message : "Ein unerwarteter Fehler ist aufgetreten.", variant: "destructive" });
@@ -390,7 +401,7 @@ const Register = () => {
                     </StitchButton>
                     <div className="hidden h-px flex-1 bg-[#002637]/8 md:block" />
                     <p className="text-xs uppercase tracking-[0.18em] text-[rgba(27,28,26,0.46)]">
-                      Durch das Fortfahren akzeptierst du unsere{" "}
+                      Die verbindliche Zustimmung gibst du erst im letzten Schritt. Vorab findest du hier schon unsere{" "}
                       <Link to="/datenschutz" className="font-bold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
                         Datenschutzhinweise
                       </Link>
@@ -731,23 +742,49 @@ const Register = () => {
                 </div>
               </StitchCard>
 
-              <div className="rounded-[1.5rem] bg-[#f5efe5] p-5 sm:p-6">
-                <label className="flex items-start gap-4">
-                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded border border-[rgba(0,38,55,0.24)] bg-white">
-                    <Check className="h-4 w-4 text-[#a15523]" />
-                  </span>
-                  <span className="text-sm leading-7 text-[rgba(27,28,26,0.68)]">
-                    Mit dem Erstellen bestätigst du die{" "}
-                    <Link to="/modus" className="font-semibold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
-                      Teilnahmebedingungen
-                    </Link>{" "}
-                    und die{" "}
-                    <Link to="/datenschutz" className="font-semibold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
-                      Datenschutzbestimmungen
-                    </Link>{" "}
-                    der Kletterliga NRW.
-                  </span>
-                </label>
+              <div className="rounded-[1.1rem] bg-[#f5efe5] p-5 sm:p-6">
+                <div className="space-y-4">
+                  <label className="flex items-start gap-4">
+                    <Checkbox
+                      checked={requiredConsentAccepted}
+                      onCheckedChange={(checked) => setRequiredConsentAccepted(checked === true)}
+                      className="mt-1 h-5 w-5 rounded border-[rgba(0,38,55,0.28)] data-[state=checked]:border-[#a15523] data-[state=checked]:bg-[#a15523]"
+                    />
+                    <span className="space-y-2 text-sm leading-6 text-[rgba(27,28,26,0.72)]">
+                      <span className="block font-semibold text-[#002637]">Teilnahme und Datenschutz</span>
+                      <span className="block">{REQUIRED_CONSENT_TEXT}</span>
+                      <span className="block text-xs font-medium tracking-[0.04em] text-[rgba(27,28,26,0.56)]">
+                        Mehr unter{" "}
+                        <Link to="/teilnahmebedingungen" className="font-bold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                          Teilnahmebedingungen
+                        </Link>
+                        ,{" "}
+                        <Link to="/regelwerk" className="font-bold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                          Regelwerk
+                        </Link>{" "}
+                        und{" "}
+                        <Link to="/datenschutz" className="font-bold text-[#a15523] underline decoration-[#a15523]/30 underline-offset-4">
+                          Datenschutzhinweisen
+                        </Link>
+                        .
+                      </span>
+                    </span>
+                  </label>
+
+                  <div className="h-px bg-[rgba(0,38,55,0.08)]" />
+
+                  <label className="flex items-start gap-4">
+                    <Checkbox
+                      checked={marketingOptInRequested}
+                      onCheckedChange={(checked) => setMarketingOptInRequested(checked === true)}
+                      className="mt-1 h-5 w-5 rounded border-[rgba(0,38,55,0.28)] data-[state=checked]:border-[#003d55] data-[state=checked]:bg-[#003d55]"
+                    />
+                    <span className="space-y-2 text-sm leading-6 text-[rgba(27,28,26,0.72)]">
+                      <span className="block font-semibold text-[#002637]">Optionale Liga-Infos</span>
+                      <span className="block">{MARKETING_OPT_IN_TEXT}</span>
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <StitchCard tone="muted" className="p-5">
@@ -767,7 +804,7 @@ const Register = () => {
                 <StitchButton type="button" variant="outline" size="lg" className="md:min-w-[11rem]" onClick={() => setCurrentStep(2)}>
                   Zurück
                 </StitchButton>
-                <StitchButton type="submit" size="lg" className="md:min-w-[16rem]" disabled={loading || !stepThreeComplete}>
+                <StitchButton type="submit" size="lg" className="md:min-w-[16rem]" disabled={loading || !stepThreeComplete || !requiredConsentAccepted}>
                   {loading ? "Account wird erstellt..." : "Jetzt registrieren"}
                 </StitchButton>
               </div>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   ArrowRight,
   CalendarDays,
@@ -10,9 +10,19 @@ import {
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
 import { formatUnlockDate, hasParticipantLaunchStarted } from "@/config/launch";
 
+type RegisterSuccessLocationState = {
+  marketingOptInRequested?: boolean;
+  marketingOptInEmailSent?: boolean;
+  marketingOptInEmailError?: string;
+};
+
 const RegisterSuccess = () => {
+  const location = useLocation();
+  const state = (location.state as RegisterSuccessLocationState | null) ?? null;
   const unlockDate = formatUnlockDate();
   const participantLaunchStarted = hasParticipantLaunchStarted();
+  const marketingOptInRequested = state?.marketingOptInRequested === true;
+  const marketingOptInEmailSent = state?.marketingOptInEmailSent !== false;
   const steps = [
     {
       title: "Postfach öffnen",
@@ -65,6 +75,15 @@ const RegisterSuccess = () => {
             <CalendarDays className="h-4 w-4 text-[#f2dcab]" />
             {participantLaunchStarted ? "Saisonbereiche jetzt offen" : `Saisonbereiche ab ${unlockDate}`}
           </div>
+
+          {marketingOptInRequested ? (
+            <div className="rounded-xl border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] px-4 py-3 text-sm leading-6 text-[rgba(242,220,171,0.76)]">
+              {marketingOptInEmailSent
+                ? "Du hast zusätzlich freiwillige Liga-Infos angefordert. Dafür erhältst du eine separate Bestätigungs-E-Mail. Erst nach diesem zweiten Klick schicken wir dir freiwillige Updates."
+                : state?.marketingOptInEmailError ||
+                  "Dein Account ist erstellt. Die Bestätigungs-E-Mail für freiwillige Liga-Infos konnte gerade noch nicht gesendet werden. Du kannst das später in deinem Profil erneut anstoßen."}
+            </div>
+          ) : null}
         </div>
       </section>
 

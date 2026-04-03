@@ -13,6 +13,7 @@ const footerLinks = {
   ],
   legal: [
     { label: "Impressum", href: "/impressum" },
+    { label: "Teilnahmebedingungen", href: "/teilnahmebedingungen" },
     { label: "Datenschutz", href: "/datenschutz" },
     { label: "Kontakt", href: "/kontakt" },
   ],

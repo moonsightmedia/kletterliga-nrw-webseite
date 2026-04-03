@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
@@ -22,8 +23,13 @@ const SettingsRow = ({
     className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f2dcab]/20"
   >
     <MaterialIcon name={icon} />
-    <span className="font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">{label}</span>
-    <MaterialIcon name="chevron_right" className="ml-auto text-sm text-[#71787d]" />
+    <span className="font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">
+      {label}
+    </span>
+    <MaterialIcon
+      name="chevron_right"
+      className="ml-auto text-sm text-[#71787d]"
+    />
   </button>
 );
 
@@ -35,13 +41,71 @@ const getInitials = (name: string) =>
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("") || "?";
 
+const ProfileScreenSkeleton = () => (
+  <div className="mx-auto max-w-md animate-pulse space-y-6">
+    <section>
+      <div className="overflow-hidden rounded-xl bg-[#003d55] p-6 text-[#f2dcab] shadow-lg">
+        <div className="mx-auto h-24 w-24 rounded-xl bg-[#f2dcab]/14" />
+        <div className="mx-auto mt-5 h-9 w-44 rounded-[0.9rem] bg-[#f2dcab]/12" />
+        <div className="mx-auto mt-4 h-10 w-28 rounded-[0.9rem] bg-[#f2dcab]/12" />
+        <div className="mx-auto mt-3 h-7 w-24 rounded-[0.85rem] bg-[#f2dcab]/10" />
+        <div className="mx-auto mt-6 h-12 w-52 rounded-xl bg-[#f2dcab]/12" />
+      </div>
+    </section>
+
+    <section className="space-y-4">
+      <div className="flex items-center justify-between px-2">
+        <div className="h-5 w-28 rounded-full bg-[#003d55]/8" />
+        <div className="h-4 w-24 rounded-full bg-[#a15523]/10" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+          <div className="h-3 w-20 rounded-full bg-[#003d55]/8" />
+          <div className="mt-4 h-8 w-16 rounded-[0.85rem] bg-[#a15523]/10" />
+        </div>
+        <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+          <div className="h-3 w-16 rounded-full bg-[#003d55]/8" />
+          <div className="mt-4 h-8 w-14 rounded-[0.85rem] bg-[#003d55]/10" />
+        </div>
+        <div className="col-span-2 rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+          <div className="h-3 w-24 rounded-full bg-[#003d55]/8" />
+          <div className="mt-4 h-9 w-24 rounded-[0.9rem] bg-[#003d55]/10" />
+        </div>
+      </div>
+    </section>
+
+    <section className="space-y-4">
+      <div className="h-5 w-32 rounded-full bg-[#003d55]/8" />
+      <div className="overflow-hidden rounded-xl border border-[#f2dcab]/30 bg-white p-1 shadow-sm">
+        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
+        <div className="mx-4 h-px bg-[#f2dcab]/30" />
+        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
+        <div className="mx-4 h-px bg-[#f2dcab]/30" />
+        <div className="h-14 rounded-[0.9rem] bg-[#003d55]/6" />
+      </div>
+    </section>
+  </div>
+);
+
 const ProfileScreen = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const { profile, user, profileData, displayName, leagueLabel, avatarPreview } =
-    useParticipantProfileEditor();
+  const { signOut, loading: authLoading } = useAuth();
+  const {
+    profile,
+    user,
+    loading,
+    profileData,
+    displayName,
+    leagueLabel,
+    avatarPreview,
+  } = useParticipantProfileEditor();
+  const avatarUrl = avatarPreview ?? profile?.avatar_url ?? null;
+  const [avatarReady, setAvatarReady] = useState(!avatarUrl);
 
-  const participantProfileHref = profile?.id ? `/app/rankings/profile/${profile.id}` : "/app/rankings";
+  const participantProfileHref = profile?.id
+    ? `/app/rankings/profile/${profile.id}`
+    : "/app/rankings";
   const isParticipationActivated = Boolean(profile?.participation_activated_at);
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
   const averagePointsPerRouteLabel =
@@ -52,31 +116,68 @@ const ProfileScreen = () => {
         })
       : "0.0";
 
+  useEffect(() => {
+    if (!avatarUrl) {
+      setAvatarReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    const image = new Image();
+    const finish = () => {
+      if (!cancelled) {
+        setAvatarReady(true);
+      }
+    };
+
+    setAvatarReady(false);
+    image.onload = finish;
+    image.onerror = finish;
+    image.src = avatarUrl;
+
+    if (image.complete) {
+      finish();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [avatarUrl]);
+
+  const isScreenReady = Boolean(profile) && !authLoading && !loading && avatarReady;
+
   const handlePasswordReset = async () => {
     if (!user?.email) {
       toast({ title: "Nicht möglich", description: "Keine E-Mail vorhanden." });
       return;
     }
 
-    const frontendUrl = typeof window !== "undefined" ? window.location.origin : "https://kletterliga-nrw.de";
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${frontendUrl}/app/auth/reset-password`,
-    });
+    const frontendUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://kletterliga-nrw.de";
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      user.email,
+      {
+        redirectTo: `${frontendUrl}/app/auth/reset-password`,
+      },
+    );
 
     if (resetError) {
       toast({ title: "Fehler", description: resetError.message });
       return;
     }
 
-    toast({ title: "E-Mail gesendet", description: "Bitte prüfe dein Postfach.", variant: "success" });
-  };
-
-  const handleNotificationsClick = () => {
     toast({
-      title: "Bald verfügbar",
-      description: "Benachrichtigungseinstellungen folgen in einem späteren Update.",
+      title: "E-Mail gesendet",
+      description: "Bitte prüfe dein Postfach.",
+      variant: "success",
     });
   };
+
+  if (!isScreenReady) {
+    return <ProfileScreenSkeleton />;
+  }
 
   return (
     <div className="mx-auto max-w-md space-y-6">
@@ -94,8 +195,12 @@ const ProfileScreen = () => {
             className="relative mb-4 inline-block"
           >
             <div className="mx-auto h-24 w-24 overflow-hidden rounded-xl border-4 border-[#a15523] shadow-xl">
-              {avatarPreview ? (
-                <img src={avatarPreview} alt={displayName} className="h-full w-full object-cover" />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-[#184c64] font-['Space_Grotesk'] text-3xl font-bold uppercase text-[#f2dcab]">
                   {getInitials(displayName)}
@@ -113,8 +218,14 @@ const ProfileScreen = () => {
 
           <div className="relative z-10 flex flex-col items-center gap-3">
             <div className="flex items-center gap-2 rounded-full bg-[#f2dcab] px-5 py-2 text-[#002637] shadow-md">
-              <MaterialIcon name="emoji_events" filled className="text-sm text-[#a15523]" />
-              <span className="font-['Space_Grotesk'] text-lg font-bold italic">{rankLabel}</span>
+              <MaterialIcon
+                name="emoji_events"
+                filled
+                className="text-sm text-[#a15523]"
+              />
+              <span className="font-['Space_Grotesk'] text-lg font-bold italic">
+                {rankLabel}
+              </span>
             </div>
             <div className="rounded-full border border-[#f2dcab]/20 bg-[#f2dcab]/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#f2dcab] backdrop-blur-md">
               {leagueLabel}
@@ -139,7 +250,11 @@ const ProfileScreen = () => {
             >
               {isParticipationActivated ? (
                 <>
-                  <MaterialIcon name="check_circle" filled className="text-sm text-[#a15523]" />
+                  <MaterialIcon
+                    name="check_circle"
+                    filled
+                    className="text-sm text-[#a15523]"
+                  />
                   Teilnahme aktiviert
                 </>
               ) : (
@@ -166,19 +281,25 @@ const ProfileScreen = () => {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">Punkte/Route</span>
+            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+              Punkte/Route
+            </span>
             <span className="font-['Space_Grotesk'] text-2xl font-black italic leading-none text-[#a15523]">
               {averagePointsPerRouteLabel}
             </span>
           </div>
           <div className="flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">Sessions</span>
+            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+              Sessions
+            </span>
             <span className="font-['Space_Grotesk'] text-2xl font-black italic leading-none text-[#003d55]">
               {profileData?.sessionCount ?? 0}
             </span>
           </div>
           <div className="col-span-2 flex flex-col items-center rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">Gesamtpunkte</span>
+            <span className="mb-1 text-[9px] font-bold uppercase tracking-widest text-[#71787d]">
+              Gesamtpunkte
+            </span>
             <span className="font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#003d55]">
               {profileData?.formattedPoints ?? "0"}
             </span>
@@ -203,7 +324,10 @@ const ProfileScreen = () => {
               </span>
             </span>
           </span>
-          <MaterialIcon name="chevron_right" className="text-base text-[#a15523]" />
+          <MaterialIcon
+            name="chevron_right"
+            className="text-base text-[#a15523]"
+          />
         </button>
       </section>
 
@@ -213,11 +337,23 @@ const ProfileScreen = () => {
         </h3>
 
         <div className="overflow-hidden rounded-xl border border-[#f2dcab]/30 bg-white p-1 shadow-sm">
-          <SettingsRow icon="person_outline" label="Profil bearbeiten" onClick={() => navigate("/app/profile/edit")} />
+          <SettingsRow
+            icon="person_outline"
+            label="Profil bearbeiten"
+            onClick={() => navigate("/app/profile/edit")}
+          />
           <div className="mx-4 h-px bg-[#f2dcab]/30" />
-          <SettingsRow icon="lock_open" label="Passwort ändern" onClick={handlePasswordReset} />
+          <SettingsRow
+            icon="lock_open"
+            label="Passwort ändern"
+            onClick={handlePasswordReset}
+          />
           <div className="mx-4 h-px bg-[#f2dcab]/30" />
-          <SettingsRow icon="notifications_none" label="Benachrichtigungen" onClick={handleNotificationsClick} />
+          <SettingsRow
+            icon="notifications_none"
+            label="Benachrichtigungen"
+            onClick={() => navigate("/app/profile/notifications")}
+          />
         </div>
 
         <button

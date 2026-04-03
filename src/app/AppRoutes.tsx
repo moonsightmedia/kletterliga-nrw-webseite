@@ -30,6 +30,9 @@ const RankingParticipantHistory = lazy(
   () => import("@/app/pages/participant/RankingParticipantHistory"),
 );
 const Profile = lazy(() => import("@/app/pages/participant/Profile"));
+const NotificationSettings = lazy(
+  () => import("@/app/pages/participant/NotificationSettings"),
+);
 const ProfileEditScreen = lazy(
   () => import("@/app/pages/participant/ProfileEditScreen"),
 );
@@ -193,6 +196,7 @@ export const appRoutes = (
         }
       />
       <Route path="profile" element={<Profile />} />
+      <Route path="profile/notifications" element={<NotificationSettings />} />
       <Route path="profile/edit" element={<ProfileEditScreen />} />
       <Route path="profile/history" element={<ProfileHistory />} />
     </Route>

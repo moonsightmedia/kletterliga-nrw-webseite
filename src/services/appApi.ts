@@ -8,8 +8,10 @@ import type {
   GymAdmin,
   GymCode,
   InstagramPost,
+  MarketingEmailStatus,
   MasterCode,
   Profile,
+  ProfileConsent,
   ProfileOverride,
   Result,
   Route,
@@ -33,6 +35,70 @@ const shouldExcludeArchived = (options?: ArchiveQueryOptions) => !options?.inclu
 
 const mapIds = <T extends { id: string }>(rows: T[] | null | undefined) => new Set((rows ?? []).map((row) => row.id));
 
+type ConsentActionPayload = {
+  action: "initialize" | "resend" | "confirm" | "unsubscribe";
+  profileId?: string;
+  email?: string;
+  name?: string | null;
+  participationTermsVersion?: string;
+  privacyNoticeVersion?: string;
+  marketingOptInRequested?: boolean;
+  token?: string;
+};
+
+type ConsentActionResponse = {
+  ok: boolean;
+  message?: string;
+  marketing_email_status?: MarketingEmailStatus;
+  email_sent?: boolean;
+  consent?: ProfileConsent | null;
+};
+
+async function getFunctionHeaders() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: session?.access_token
+      ? `Bearer ${session.access_token}`
+      : `Bearer ${supabaseConfig.anonKey}`,
+    apikey: supabaseConfig.anonKey,
+  };
+}
+
+async function invokeParticipantConsentAction(payload: ConsentActionPayload) {
+  const url = `${supabaseConfig.url}/functions/v1/participant-email-consent`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: await getFunctionHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const body = (await response.json().catch(() => ({}))) as
+    | ConsentActionResponse
+    | { error?: string; message?: string };
+
+  if (!response.ok) {
+    return {
+      data: null,
+      error: {
+        message:
+          body.error ??
+          body.message ??
+          response.statusText ??
+          "Die Aktion konnte nicht ausgeführt werden.",
+      },
+    };
+  }
+
+  return {
+    data: body as ConsentActionResponse,
+    error: null,
+  };
+}
+
 export async function fetchProfile(profileId: string) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
@@ -45,6 +111,33 @@ export async function upsertProfile(profile: Partial<Profile> & { id: string }) 
     return { data: null, error: missingSupabaseError() };
   }
   return supabase.from("profiles").upsert(profile).select("*").single<Profile>();
+}
+
+export async function fetchProfileConsent(profileId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  return supabase
+    .from("profile_consents")
+    .select("*")
+    .eq("profile_id", profileId)
+    .maybeSingle<ProfileConsent>();
+}
+
+export async function upsertProfileConsent(
+  consent: Partial<ProfileConsent> & { profile_id: string },
+) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+  return supabase
+    .from("profile_consents")
+    .upsert({
+      ...consent,
+      updated_at: new Date().toISOString(),
+    })
+    .select("*")
+    .single<ProfileConsent>();
 }
 
 export async function listGyms(options?: ArchiveQueryOptions) {
@@ -657,6 +750,45 @@ export async function fetchGymInvite(token: string) {
     data: body as { email: string; expires_at: string; used_at: string | null },
     error: null,
   };
+}
+
+export async function initializeParticipantConsent(payload: {
+  profileId: string;
+  email: string;
+  name?: string | null;
+  participationTermsVersion: string;
+  privacyNoticeVersion: string;
+  marketingOptInRequested: boolean;
+}) {
+  return invokeParticipantConsentAction({
+    action: "initialize",
+    ...payload,
+  });
+}
+
+export async function resendMarketingOptInEmail(payload: {
+  profileId: string;
+  email: string;
+  name?: string | null;
+}) {
+  return invokeParticipantConsentAction({
+    action: "resend",
+    ...payload,
+  });
+}
+
+export async function confirmMarketingOptInToken(token: string) {
+  return invokeParticipantConsentAction({
+    action: "confirm",
+    token,
+  });
+}
+
+export async function unsubscribeMarketingOptInToken(token: string) {
+  return invokeParticipantConsentAction({
+    action: "unsubscribe",
+    token,
+  });
 }
 
 export async function listGymAdminsByGym(gymId: string) {
