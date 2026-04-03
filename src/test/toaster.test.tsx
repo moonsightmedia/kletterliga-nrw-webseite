@@ -100,9 +100,11 @@ describe("Toaster", () => {
 
     const viewport = document.querySelector("[data-toast-viewport]");
     expect(viewport).toHaveClass("top-[3.8125rem]");
-    expect(viewport).toHaveClass("md:left-[calc(16rem+1.25rem)]");
+    expect(viewport).toHaveClass("md:left-auto");
     expect(viewport).toHaveClass("md:right-5");
+    expect(viewport).toHaveClass("md:w-[26rem]");
     expect(viewport).toHaveClass("lg:right-8");
+    expect(viewport).toHaveClass("lg:w-[28rem]");
   });
 
   it("verwendet Auth-Offsets fuer headerlose Screens", () => {

@@ -9,7 +9,6 @@ const appApiMocks = vi.hoisted(() => ({
   listGymAdminsByProfile: vi.fn(),
   fetchProfile: vi.fn(),
   listProfiles: vi.fn(),
-  getGym: vi.fn(),
 }));
 
 vi.mock("@/app/auth/AuthProvider", () => ({
@@ -22,7 +21,6 @@ vi.mock("@/services/appApi", () => ({
   listGymAdminsByProfile: appApiMocks.listGymAdminsByProfile,
   fetchProfile: appApiMocks.fetchProfile,
   listProfiles: appApiMocks.listProfiles,
-  getGym: appApiMocks.getGym,
 }));
 
 vi.mock("@/lib/printableCodeSheet", () => ({
@@ -77,19 +75,6 @@ describe("GymMastercodes", () => {
       ],
       error: null,
     });
-    appApiMocks.getGym.mockResolvedValue({
-      data: {
-        id: "gym-1",
-        name: "Kletterhalle Test",
-        city: "Dortmund",
-        postal_code: "44135",
-        address: "Testweg 1",
-        website: null,
-        logo_url: null,
-        opening_hours: null,
-      },
-      error: null,
-    });
     appApiMocks.listProfiles.mockResolvedValue({ data: [], error: null });
     appApiMocks.fetchProfile.mockResolvedValue({
       data: {
@@ -111,30 +96,26 @@ describe("GymMastercodes", () => {
     mockedPrintCodeSheet.mockResolvedValue(undefined);
   });
 
-  it("explains mastercodes correctly and exports a league-wide PDF sheet", async () => {
+  it("explains mastercodes correctly and exports a compact QR sheet", async () => {
     render(<GymMastercodes />);
 
     expect(await screen.findAllByRole("button", { name: /pdf export/i })).toHaveLength(2);
     expect(
       screen.getByText(/gilt für die ganze Liga, schaltet das komplette Profil frei/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/schaltet nur die jeweilige Halle frei/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/schaltet nur die jeweilige Halle frei/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: /pdf export/i })[0]);
 
     await waitFor(() => {
       expect(mockedPrintCodeSheet).toHaveBeenCalledWith(
         expect.objectContaining({
-          heading: "Mastercodes - Teilnahmegebühr",
-          description: expect.stringContaining("ligaweit gültig"),
-          cards: [
-            expect.objectContaining({
-              code: "KL-MASTER-ABC1",
-              badge: "Ligaweit gültig",
-            }),
-          ],
+          layout: "compact-qr",
+          columns: 4,
+          pageMarginCm: 0.45,
+          gridGapCm: 0.18,
+          qrImageSizeCm: 3.85,
+          cards: [expect.objectContaining({ code: "KL-MASTER-ABC1", qrLabel: "KL-MASTER-ABC1" })],
         }),
       );
     });

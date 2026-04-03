@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 
 type PrintableCodeCard = {
   code: string;
-  qrLabel: string;
+  qrLabel?: string;
   badge?: string;
   detailLines?: string[];
   footerLabel?: string;
@@ -10,13 +10,17 @@ type PrintableCodeCard = {
 
 type PrintableCodeSheetOptions = {
   windowTitle: string;
-  heading: string;
+  cards: PrintableCodeCard[];
+  heading?: string;
   description?: string;
   calloutTitle?: string;
   calloutLines?: string[];
-  cards: PrintableCodeCard[];
   columns?: number;
   codeFontSize?: number;
+  layout?: "cards" | "compact-qr";
+  pageMarginCm?: number;
+  gridGapCm?: number;
+  qrImageSizeCm?: number;
 };
 
 const escapeHtml = (value: string) =>
@@ -28,16 +32,31 @@ const escapeHtml = (value: string) =>
 
 export async function printCodeSheet({
   windowTitle,
+  cards,
   heading,
   description,
   calloutTitle,
   calloutLines = [],
-  cards,
   columns = 2,
   codeFontSize = 22,
+  layout = "cards",
+  pageMarginCm,
+  gridGapCm,
+  qrImageSizeCm,
 }: PrintableCodeSheetOptions) {
+  const isCompactLayout = layout === "compact-qr";
+  const safeColumns = Math.max(1, Math.min(columns, isCompactLayout ? 6 : 4));
+  const safePageMarginCm = pageMarginCm ?? (isCompactLayout ? 0.45 : 1);
+  const safeGridGapCm = gridGapCm ?? (isCompactLayout ? 0.18 : 0.4);
+  const safeQrImageSizeCm = qrImageSizeCm ?? (isCompactLayout ? 3.85 : 2.65);
+
   const qrDataUrls = await Promise.all(
-    cards.map((card) => QRCode.toDataURL(card.code, { width: 120, margin: 1 })),
+    cards.map((card) =>
+      QRCode.toDataURL(card.code, {
+        width: isCompactLayout ? 256 : 140,
+        margin: 1,
+      }),
+    ),
   );
 
   const printWindow = window.open("", "_blank");
@@ -52,13 +71,18 @@ export async function printCodeSheet({
         <meta charset="UTF-8" />
         <title>${escapeHtml(windowTitle)}</title>
         <style>
-          @page { size: A4; margin: 1cm; }
+          @page { size: A4; margin: ${safePageMarginCm}cm; }
           * { box-sizing: border-box; }
           body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
             color: #10212b;
+          }
+          body.card-sheet {
+            padding: 20px;
+          }
+          body.compact-sheet {
+            padding: 0;
           }
           .sheet-header {
             margin-bottom: 24px;
@@ -100,8 +124,8 @@ export async function printCodeSheet({
           }
           .grid {
             display: grid;
-            grid-template-columns: repeat(${columns}, minmax(0, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(${safeColumns}, minmax(0, 1fr));
+            gap: ${safeGridGapCm}cm;
           }
           .code-card {
             width: 100%;
@@ -163,47 +187,85 @@ export async function printCodeSheet({
             color: #6b7280;
             text-align: center;
           }
+          .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(${safeColumns}, minmax(0, 1fr));
+            gap: ${safeGridGapCm}cm;
+            align-content: start;
+          }
+          .compact-code {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: ${safeQrImageSizeCm + 0.35}cm;
+            padding: 0.12cm;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          .compact-code img {
+            display: block;
+            width: ${safeQrImageSizeCm}cm;
+            height: ${safeQrImageSizeCm}cm;
+          }
         </style>
       </head>
-      <body>
-        <div class="sheet-header">
-          <h1>${escapeHtml(heading)}</h1>
-          ${description ? `<p>${escapeHtml(description)}</p>` : ""}
-        </div>
+      <body class="${isCompactLayout ? "compact-sheet" : "card-sheet"}">
         ${
-          calloutTitle || calloutLines.length > 0
+          isCompactLayout
             ? `
-          <div class="callout">
-            ${calloutTitle ? `<p class="callout-title">${escapeHtml(calloutTitle)}</p>` : ""}
-            ${calloutLines.map((line) => `<p class="callout-line">${escapeHtml(line)}</p>`).join("")}
+          <div class="compact-grid">
+            ${cards
+              .map(
+                (card, index) => `
+              <div class="compact-code">
+                <img src="${qrDataUrls[index]}" alt="${escapeHtml(card.qrLabel || card.code)}" />
+              </div>
+            `,
+              )
+              .join("")}
           </div>
         `
-            : ""
-        }
-        <div class="grid">
-          ${cards
-            .map(
-              (card, index) => `
-            <div class="code-card">
-              ${card.badge ? `<div class="badge">${escapeHtml(card.badge)}</div>` : ""}
-              <div class="code-label">${escapeHtml(card.qrLabel)}</div>
-              <div class="qr-wrap"><img src="${qrDataUrls[index]}" alt="${escapeHtml(card.qrLabel)}" /></div>
-              <div class="code-text">${escapeHtml(card.code)}</div>
-              ${
-                card.detailLines && card.detailLines.length > 0
-                  ? `
-                <div class="detail-lines">
-                  ${card.detailLines.map((line) => `<div class="detail-line">${escapeHtml(line)}</div>`).join("")}
-                </div>
-              `
-                  : ""
-              }
-              ${card.footerLabel ? `<div class="footer-label">${escapeHtml(card.footerLabel)}</div>` : ""}
+            : `
+          <div class="sheet-header">
+            ${heading ? `<h1>${escapeHtml(heading)}</h1>` : ""}
+            ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+          </div>
+          ${
+            calloutTitle || calloutLines.length > 0
+              ? `
+            <div class="callout">
+              ${calloutTitle ? `<p class="callout-title">${escapeHtml(calloutTitle)}</p>` : ""}
+              ${calloutLines.map((line) => `<p class="callout-line">${escapeHtml(line)}</p>`).join("")}
             </div>
-          `,
-            )
-            .join("")}
-        </div>
+          `
+              : ""
+          }
+          <div class="grid">
+            ${cards
+              .map(
+                (card, index) => `
+              <div class="code-card">
+                ${card.badge ? `<div class="badge">${escapeHtml(card.badge)}</div>` : ""}
+                <div class="code-label">${escapeHtml(card.qrLabel || card.code)}</div>
+                <div class="qr-wrap"><img src="${qrDataUrls[index]}" alt="${escapeHtml(card.qrLabel || card.code)}" /></div>
+                <div class="code-text">${escapeHtml(card.code)}</div>
+                ${
+                  card.detailLines && card.detailLines.length > 0
+                    ? `
+                  <div class="detail-lines">
+                    ${card.detailLines.map((line) => `<div class="detail-line">${escapeHtml(line)}</div>`).join("")}
+                  </div>
+                `
+                    : ""
+                }
+                ${card.footerLabel ? `<div class="footer-label">${escapeHtml(card.footerLabel)}</div>` : ""}
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        `
+        }
       </body>
     </html>
   `;

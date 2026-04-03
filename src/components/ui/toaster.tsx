@@ -21,7 +21,7 @@ const isParticipantRoute = (pathname: string) =>
 
 const getViewportPlacementClasses = (pathname: string) => {
   if (isAdminRoute(pathname)) {
-    return "top-[3.8125rem] px-0 md:left-[calc(16rem+1.25rem)] md:right-5 md:top-5 lg:left-[calc(16rem+2rem)] lg:right-8 lg:top-8";
+    return "top-[3.8125rem] px-0 md:left-auto md:right-5 md:top-5 md:w-[26rem] lg:right-8 lg:top-8 lg:w-[28rem]";
   }
 
   if (isHeaderlessAuthRoute(pathname)) {
