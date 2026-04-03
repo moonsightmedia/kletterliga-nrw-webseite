@@ -64,6 +64,28 @@ type GymInviteDispatchResponse = {
   email_error: string | null;
 };
 
+type AuthEmailActionPayload =
+  | {
+      action: "signup";
+      email: string;
+      password: string;
+      metadata: Record<string, unknown>;
+      redirectTo?: string;
+    }
+  | {
+      action: "resend_confirmation" | "recovery";
+      email: string;
+      redirectTo?: string;
+    };
+
+type AuthEmailActionResponse = {
+  ok: boolean;
+  email_sent?: boolean;
+  user_id?: string;
+  message?: string;
+  already_exists?: boolean;
+};
+
 async function getFunctionHeaders() {
   const {
     data: { session },
@@ -75,6 +97,28 @@ async function getFunctionHeaders() {
       ? `Bearer ${session.access_token}`
       : `Bearer ${supabaseConfig.anonKey}`,
     apikey: supabaseConfig.anonKey,
+  };
+}
+
+async function getRequiredSessionAccessToken(message = "Bitte melde dich erneut an.") {
+  if (!isSupabaseConfigured) {
+    return { token: null, error: missingSupabaseError() };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      token: null,
+      error: { message },
+    };
+  }
+
+  return {
+    token: session.access_token,
+    error: null,
   };
 }
 
@@ -107,6 +151,69 @@ async function invokeParticipantConsentAction(payload: ConsentActionPayload) {
     data: body as ConsentActionResponse,
     error: null,
   };
+}
+
+async function invokeAuthEmailAction(payload: AuthEmailActionPayload) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const url = `${supabaseConfig.url}/functions/v1/auth-email`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: await getFunctionHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const body = (await response.json().catch(() => ({}))) as
+    | AuthEmailActionResponse
+    | { error?: string; message?: string };
+
+  if (!response.ok) {
+    return {
+      data: null,
+      error: {
+        message:
+          body.error ??
+          body.message ??
+          response.statusText ??
+          "Die E-Mail-Aktion konnte nicht ausgeführt werden.",
+      },
+    };
+  }
+
+  return {
+    data: body as AuthEmailActionResponse,
+    error: null,
+  };
+}
+
+export async function requestSignupEmail(payload: {
+  email: string;
+  password: string;
+  metadata: Record<string, unknown>;
+  redirectTo?: string;
+}) {
+  return invokeAuthEmailAction({
+    action: "signup",
+    ...payload,
+  });
+}
+
+export async function requestConfirmationResendEmail(email: string, redirectTo?: string) {
+  return invokeAuthEmailAction({
+    action: "resend_confirmation",
+    email,
+    redirectTo,
+  });
+}
+
+export async function requestPasswordRecoveryEmail(email: string, redirectTo?: string) {
+  return invokeAuthEmailAction({
+    action: "recovery",
+    email,
+    redirectTo,
+  });
 }
 
 export async function fetchProfile(profileId: string) {
@@ -359,17 +466,17 @@ export async function listAuditEntries(options?: AuditListOptions) {
 }
 
 export async function deleteProfile(profileId: string) {
-  // Delete auth user via Edge Function (this will cascade delete profile and results)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  
+  const auth = await getRequiredSessionAccessToken("Bitte melde dich erneut an, um das Konto zu löschen.");
+  if (auth.error || !auth.token) {
+    return { error: auth.error };
+  }
+
   const url = `${supabaseConfig.url}/functions/v1/delete-user`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      Authorization: `Bearer ${auth.token}`,
       apikey: supabaseConfig.anonKey,
     },
     body: JSON.stringify({ userId: profileId }),
@@ -532,16 +639,17 @@ export async function checkGymCodeRedeemed(gymId: string, profileId: string) {
 }
 
 export async function redeemGymCode(code: string) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const auth = await getRequiredSessionAccessToken("Bitte melde dich erneut an, um den Hallencode einzulösen.");
+  if (auth.error || !auth.token) {
+    return { data: null, error: auth.error };
+  }
 
   const url = `${supabaseConfig.url}/functions/v1/redeem-gym-code`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      Authorization: `Bearer ${auth.token}`,
       apikey: supabaseConfig.anonKey,
     },
     body: JSON.stringify({ code }),
@@ -581,16 +689,17 @@ export async function updateMasterCode(codeId: string, patch: Partial<MasterCode
 }
 
 export async function redeemMasterCode(code: string) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const auth = await getRequiredSessionAccessToken("Bitte melde dich erneut an, um den Mastercode einzulösen.");
+  if (auth.error || !auth.token) {
+    return { data: null, error: auth.error };
+  }
 
   const url = `${supabaseConfig.url}/functions/v1/redeem-master-code`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      Authorization: `Bearer ${auth.token}`,
       apikey: supabaseConfig.anonKey,
     },
     body: JSON.stringify({ code }),
@@ -651,21 +760,22 @@ export async function restoreGym(gymId: string) {
 }
 
 export async function deleteGym(gymId: string) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  
+  const auth = await getRequiredSessionAccessToken("Bitte melde dich erneut an, um die Halle zu löschen.");
+  if (auth.error || !auth.token) {
+    return {
+      data: null,
+      error: auth.error,
+    };
+  }
+
   try {
     // Use Edge Function to delete gym and associated auth users
-    const response = await fetch(`${supabaseUrl}/functions/v1/delete-gym`, {
+    const response = await fetch(`${supabaseConfig.url}/functions/v1/delete-gym`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: session?.access_token ? `Bearer ${session.access_token}` : `Bearer ${supabaseAnonKey}`,
-        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${auth.token}`,
+        apikey: supabaseConfig.anonKey,
       },
       body: JSON.stringify({ gymId }),
     });

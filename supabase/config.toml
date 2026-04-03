@@ -42,3 +42,6 @@ verify_jwt = false
 # participant-email-consent: öffentliche DOI-Links, Auth-Prüfung erfolgt je Aktion in der Function
 [functions.participant-email-consent]
 verify_jwt = false
+
+[functions.auth-email]
+verify_jwt = false

@@ -5,6 +5,9 @@ import {
   fetchProfile,
   fetchProfileConsent,
   initializeParticipantConsent,
+  requestConfirmationResendEmail,
+  requestPasswordRecoveryEmail,
+  requestSignupEmail,
   resendMarketingOptInEmail,
   upsertProfile,
   upsertProfileConsent,
@@ -565,12 +568,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const confirmUrl = `${frontendUrl}/app/auth/confirm`;
     const consentAcceptedAt = new Date().toISOString();
     
-    const { data, error } = await withSingleRetry(() => supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: confirmUrl,
-        data: {
+    const { data, error } = await withSingleRetry(() =>
+      requestSignupEmail({
+        email,
+        password,
+        redirectTo: confirmUrl,
+        metadata: {
           first_name: firstName,
           last_name: lastName,
           birth_date: birthDate,
@@ -585,17 +588,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           marketing_opt_in_requested_at: marketingOptInRequested ? consentAcceptedAt : null,
           marketing_email_scope: marketingOptInRequested ? MARKETING_EMAIL_SCOPE : null,
         },
-      },
-    }));
+      }),
+    );
     
     if (error) {
-      if (isLikelyEmailDeliveryFailure(error.message)) {
-        trackAuthEvent("signup_error", { email, error: error.message, context: "supabase_signup" });
-        return { error: AUTH_EMAIL_DELIVERY_ERROR };
-      }
-      const translatedError = translateAuthError(error.message);
-      trackAuthEvent("signup_error", { email, error: error.message, context: "supabase_signup" });
-      return { error: translatedError };
+      trackAuthEvent("signup_error", { email, error: error.message, context: "auth_email_signup" });
+      return { error: error.message || "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
     }
 
     // WICHTIG: Supabase gibt KEINEN Fehler zurück, wenn die E-Mail bereits existiert
@@ -619,9 +617,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
     }
 
-    if (!data.user) {
+    if (!data?.user_id) {
       // Kein User zurückgegeben - sollte eigentlich nicht passieren, aber sicherheitshalber prüfen
-      trackAuthEvent("signup_error", { email, error: "missing_user_after_signup", context: "signup_response" });
+      trackAuthEvent("signup_error", { email, error: "missing_user_after_signup", context: "auth_email_signup" });
       return { error: "Registrierung fehlgeschlagen. Bitte versuche es erneut." };
     }
 
@@ -629,7 +627,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let marketingOptInEmailError: string | undefined;
 
     const consentInit = await initializeParticipantConsent({
-      profileId: data.user.id,
+      profileId: data.user_id,
       email,
       name: `${firstName} ${lastName}`.trim(),
       participationTermsVersion: PARTICIPATION_TERMS_VERSION,
@@ -653,10 +651,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (data.session?.user) {
-      await loadProfile(data.session.user, email);
-      await loadProfileConsent(data.session.user);
-    }
     trackAuthEvent("signup_success", { email, context: "register_form" });
     return {
       marketingOptInRequested,
@@ -679,57 +673,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const resetPassword = async (email: string) => {
     trackAuthEvent("reset_start", { email, context: "login_reset" });
     try {
-      const frontendUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kletterliga-nrw.de';
+      const frontendUrl = typeof window !== "undefined" ? window.location.origin : "https://kletterliga-nrw.de";
       const resetUrl = `${frontendUrl}/app/auth/reset-password`;
-      const { error } = await withSingleRetry(() => supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: resetUrl,
-      }));
+      const { error } = await withSingleRetry(() => requestPasswordRecoveryEmail(email, resetUrl));
       if (error) {
-        if (isLikelyEmailDeliveryFailure(error.message)) {
-          trackAuthEvent("reset_error", { email, error: error.message, context: "supabase_reset" });
-          return { error: AUTH_EMAIL_DELIVERY_ERROR };
-        }
-        trackAuthEvent("reset_error", { email, error: error.message, context: "supabase_reset" });
-        return { error: translateAuthError(error.message) };
+        trackAuthEvent("reset_error", { email, error: error.message, context: "auth_email_reset" });
+        return { error: error.message || "Der Reset-Link konnte gerade nicht gesendet werden." };
       }
       trackAuthEvent("reset_success", { email, context: "login_reset" });
       return {};
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error) || "Fehler beim Senden des Passwort-Links";
-      if (isLikelyEmailDeliveryFailure(errorMessage)) {
-        trackAuthEvent("reset_error", { email, error: errorMessage, context: "exception" });
-        return { error: AUTH_EMAIL_DELIVERY_ERROR };
-      }
       trackAuthEvent("reset_error", { email, error: errorMessage, context: "exception" });
-      return { error: translateAuthError(errorMessage) };
+      return { error: errorMessage };
     }
   };
 
   const resendConfirmation = async (email: string) => {
     trackAuthEvent("resend_start", { email, context: "login_resend_confirmation" });
     try {
-      const { error } = await withSingleRetry(() => supabase.auth.resend({
-        type: "signup",
-        email,
-      }));
+      const frontendUrl = typeof window !== "undefined" ? window.location.origin : "https://kletterliga-nrw.de";
+      const confirmUrl = `${frontendUrl}/app/auth/confirm`;
+      const { error } = await withSingleRetry(() => requestConfirmationResendEmail(email, confirmUrl));
       if (error) {
-        if (isLikelyEmailDeliveryFailure(error.message)) {
-          trackAuthEvent("resend_error", { email, error: error.message, context: "supabase_resend" });
-          return { error: AUTH_EMAIL_DELIVERY_ERROR };
-        }
-        trackAuthEvent("resend_error", { email, error: error.message, context: "supabase_resend" });
-        return { error: translateAuthError(error.message) };
+        trackAuthEvent("resend_error", { email, error: error.message, context: "auth_email_resend" });
+        return { error: error.message || "Der BestÃ¤tigungslink konnte gerade nicht gesendet werden." };
       }
       trackAuthEvent("resend_success", { email, context: "login_resend_confirmation" });
       return {};
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error) || "Fehler beim Senden der Bestätigung";
-      if (isLikelyEmailDeliveryFailure(errorMessage)) {
-        trackAuthEvent("resend_error", { email, error: errorMessage, context: "exception" });
-        return { error: AUTH_EMAIL_DELIVERY_ERROR };
-      }
       trackAuthEvent("resend_error", { email, error: errorMessage, context: "exception" });
-      return { error: translateAuthError(errorMessage) };
+      return { error: errorMessage };
     }
   };
 

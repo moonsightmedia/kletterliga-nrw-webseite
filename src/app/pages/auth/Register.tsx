@@ -178,6 +178,7 @@ const Register = () => {
       toast({ title: "Account erstellt", description: "Im nächsten Schritt zeigen wir dir, wie es weitergeht.", variant: "success" });
       navigate("/app/register/success", {
         state: {
+          email: form.email,
           marketingOptInRequested: result.marketingOptInRequested ?? marketingOptInRequested,
           marketingOptInEmailSent: result.marketingOptInEmailSent ?? !marketingOptInRequested,
           marketingOptInEmailError: result.marketingOptInEmailError,

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   ArrowRight,
@@ -7,22 +8,27 @@ import {
   MailCheck,
   UserRound,
 } from "lucide-react";
+import { useAuth } from "@/app/auth/AuthProvider";
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
 import { formatUnlockDate, hasParticipantLaunchStarted } from "@/config/launch";
 
 type RegisterSuccessLocationState = {
+  email?: string;
   marketingOptInRequested?: boolean;
   marketingOptInEmailSent?: boolean;
   marketingOptInEmailError?: string;
 };
 
 const RegisterSuccess = () => {
+  const { resendConfirmation } = useAuth();
   const location = useLocation();
   const state = (location.state as RegisterSuccessLocationState | null) ?? null;
   const unlockDate = formatUnlockDate();
   const participantLaunchStarted = hasParticipantLaunchStarted();
   const marketingOptInRequested = state?.marketingOptInRequested === true;
   const marketingOptInEmailSent = state?.marketingOptInEmailSent !== false;
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const steps = [
     {
       title: "Postfach öffnen",
@@ -40,6 +46,22 @@ const RegisterSuccess = () => {
       icon: UserRound,
     },
   ] as const;
+
+  const handleResend = async () => {
+    if (!state?.email) {
+      return;
+    }
+
+    setResendLoading(true);
+    setResendMessage(null);
+
+    const result = await resendConfirmation(state.email);
+    setResendMessage(
+      result.error ??
+        "Wenn ein unbestaetigter Account existiert, wurde ein neuer Bestaetigungslink gesendet.",
+    );
+    setResendLoading(false);
+  };
 
   return (
     <div className="mx-auto max-w-md space-y-8 px-4 pb-10 pt-4">
@@ -128,6 +150,23 @@ const RegisterSuccess = () => {
           </a>
           .
         </p>
+
+        {state?.email ? (
+          <div className="space-y-3">
+            <StitchButton
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl border-[rgba(242,220,171,0.18)] bg-[rgba(242,220,171,0.08)] text-[#f2dcab]"
+              onClick={handleResend}
+              disabled={resendLoading}
+            >
+              {resendLoading ? "Wird gesendet..." : "Bestaetigungslink erneut senden"}
+            </StitchButton>
+            {resendMessage ? (
+              <p className="text-sm leading-6 text-[rgba(242,220,171,0.72)]">{resendMessage}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-3 pt-1">
           <StitchButton asChild variant="cream" className="w-full rounded-xl">
