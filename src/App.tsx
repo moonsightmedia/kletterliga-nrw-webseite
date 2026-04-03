@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppIndexability } from "./components/AppIndexability";
 import { AuthProvider } from "@/app/auth/AuthProvider";
+import { AuthCallbackRedirect } from "@/app/auth/AuthCallbackRedirect";
 import { ClosedGate } from "@/app/ClosedGate";
 import { appRoutes } from "@/app/AppRoutes";
 import { AppRouteLoadingState } from "@/app/components/AppRouteLoadingState";
@@ -59,6 +60,7 @@ const AppShell = () => {
       <ClosedGate>
         <AuthProvider>
           <AppStartupSplashOverlay />
+          <AuthCallbackRedirect />
           <ScrollToTop />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
