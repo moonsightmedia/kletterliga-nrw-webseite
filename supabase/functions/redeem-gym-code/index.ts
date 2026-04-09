@@ -67,6 +67,31 @@ serve(async (req) => {
       });
     }
 
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("participation_activated_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: "Profil nicht gefunden." }), {
+        status: 404,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!profile.participation_activated_at) {
+      return new Response(
+        JSON.stringify({
+          error: "Du musst zuerst deinen Mastercode einlösen, bevor du einen Hallencode aktivieren kannst.",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
+      );
+    }
+
     const { data: gymCode, error: codeError } = await supabase
       .from("gym_codes")
       .select("id, gym_id, redeemed_by, expires_at, gyms(name, archived_at)")

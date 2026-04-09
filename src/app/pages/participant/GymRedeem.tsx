@@ -33,6 +33,7 @@ const GymRedeem = () => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const isParticipationActivated = Boolean(profile?.participation_activated_at);
 
   useEffect(() => {
     if (!gymId) {
@@ -103,6 +104,28 @@ const GymRedeem = () => {
       navigate(`/app/gyms/${data.gym_id}`, { replace: true });
     }
   };
+
+  if (!isParticipationActivated) {
+    return (
+      <div className="mx-auto max-w-md">
+        <StitchCard
+          tone="cream"
+          className="rounded-[2.2rem] border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-6 shadow-[0_28px_70px_rgba(0,0,0,0.24)]"
+        >
+          <div className="space-y-4 text-center">
+            <div className="stitch-headline text-[2rem] leading-[1.02] text-[#002637]">Mastercode zuerst einlösen</div>
+            <p className="text-base leading-7 text-[rgba(0,38,55,0.72)]">
+              Bevor du eine Halle freischalten kannst, musst du zuerst deinen Mastercode einlösen.
+            </p>
+            <StitchButton type="button" size="lg" className="w-full" onClick={() => navigate("/app/participation/redeem")}>
+              Zum Mastercode
+              <KeyRound className="h-5 w-5" />
+            </StitchButton>
+          </div>
+        </StitchCard>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-md">

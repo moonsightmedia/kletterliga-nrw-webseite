@@ -133,6 +133,24 @@ serve(async (req) => {
       });
     }
 
+    const { error: profileUpdateError } = await supabase
+      .from("profiles")
+      .update({ participation_activated_at: new Date().toISOString() })
+      .eq("id", user.id);
+
+    if (profileUpdateError) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Mastercode wurde eingelöst, aber dein Profil konnte nicht aktiviert werden. Bitte kontaktiere den Support.",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
+      );
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

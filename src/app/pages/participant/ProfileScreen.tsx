@@ -447,16 +447,16 @@ const ProfileScreen = () => {
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Punkte/Route
             </span>
-            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#a15523]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black leading-none text-[#a15523]">
               {averagePointsPerRouteLabel}
             </span>
           </StitchCard>
 
           <StitchCard tone="surface" className="rounded-[1rem] p-4">
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
-              Sessions
+              Einheiten
             </span>
-            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black italic leading-none text-[#003d55]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-3xl font-black leading-none text-[#003d55]">
               {profileData?.sessionCount ?? 0}
             </span>
           </StitchCard>
@@ -465,7 +465,7 @@ const ProfileScreen = () => {
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Gesamtpunkte
             </span>
-            <span className="mt-4 block font-['Space_Grotesk'] text-4xl font-black italic leading-none text-[#003d55]">
+            <span className="mt-4 block font-['Space_Grotesk'] text-4xl font-black leading-none text-[#003d55]">
               {profileData?.formattedPoints ?? "0"}
             </span>
           </StitchCard>
@@ -531,7 +531,7 @@ const ProfileScreen = () => {
           }}
         >
           <MaterialIcon name="logout" className="text-sm" />
-          Logout
+          Abmelden
         </StitchButton>
       </section>
     </div>
