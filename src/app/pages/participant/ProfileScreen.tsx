@@ -245,6 +245,10 @@ const ProfileScreen = () => {
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
   const partnerVoucherRedeemed = Boolean(partnerVoucherRedeemedAt);
   const classLabel = profileData?.className ? getClassLabel(profileData.className) : "Klasse offen";
+  const rankBadgeClass =
+    "min-h-10 rounded-[0.72rem] border border-[#f2dcab]/55 bg-[#f2dcab] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#002637] shadow-[0_12px_24px_rgba(0,0,0,0.18)]";
+  const profileMetaBadgeClass =
+    "min-h-10 rounded-[0.72rem] border border-[#f2dcab]/24 bg-[#f2dcab]/12 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]";
   const averagePointsPerRouteLabel =
     profileData && profileData.routesLogged > 0
       ? profileData.averagePoints.toLocaleString("de-DE", {
@@ -424,20 +428,15 @@ const ProfileScreen = () => {
               {displayName}
             </h2>
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <div className="inline-flex min-h-11 items-center gap-2 rounded-[0.72rem] bg-[#f2dcab] px-4 py-2 text-[#002637] shadow-[0_14px_28px_rgba(0,0,0,0.18)]">
-                <MaterialIcon
-                  name="emoji_events"
-                  filled
-                  className="text-sm text-[#a15523]"
-                />
-                <span className="font-['Space_Grotesk'] text-lg font-bold italic">{rankLabel}</span>
-              </div>
-              <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#f2dcab]/18 bg-[#f2dcab]/10 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]">
+              <StitchBadge tone="ghost" className={rankBadgeClass}>
+                {rankLabel}
+              </StitchBadge>
+              <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
                 {leagueLabel}
               </StitchBadge>
               {!beforeAppUnlock && isParticipationActivated ? (
-                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#6fd1ac]/45 bg-[#6fd1ac]/14 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#d5f5e8]">
-                  Aktiv · {classLabel}
+                <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
+                  {classLabel}
                 </StitchBadge>
               ) : null}
               {!beforeAppUnlock && partnerVoucherRedeemed ? (

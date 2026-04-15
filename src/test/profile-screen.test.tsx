@@ -123,7 +123,7 @@ describe("ProfileScreen", () => {
     expect(screen.getByRole("button", { name: "Mastercode freischalten" })).toBeEnabled();
   });
 
-  it("shows active profile and class badge once the profile is unlocked", () => {
+  it("shows class badge once the profile is unlocked", () => {
     mockedUseLaunchSettings.mockReturnValue({
       beforeAppUnlock: false,
       unlockDate: new Date("2026-05-01T00:00:00+02:00"),
@@ -145,7 +145,7 @@ describe("ProfileScreen", () => {
     );
 
     expect(screen.queryByText("Teilnahme fehlt")).not.toBeInTheDocument();
-    expect(screen.getByText("Aktiv · Klasse offen")).toBeInTheDocument();
+    expect(screen.getByText("Klasse offen")).toBeInTheDocument();
   });
 
   it("shows the partner voucher settings action", () => {
