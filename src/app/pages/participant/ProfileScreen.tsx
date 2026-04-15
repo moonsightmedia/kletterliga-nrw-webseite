@@ -422,7 +422,7 @@ const ProfileScreen = () => {
       <StitchCard
         tone="navy"
         className={`relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
-          !beforeAppUnlock && isParticipationActivated
+          isParticipationActivated
             ? "ring-2 ring-[#63d3a8]/85"
             : ""
         }`}
@@ -466,7 +466,7 @@ const ProfileScreen = () => {
               <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
                 {leagueLabel}
               </StitchBadge>
-              {!beforeAppUnlock && isParticipationActivated ? (
+              {isParticipationActivated ? (
                 <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
                   {classLabel}
                 </StitchBadge>
