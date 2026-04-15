@@ -40,6 +40,9 @@ const ProfileHistory = lazy(() => import("@/app/pages/participant/ProfileHistory
 const MastercodeRedeem = lazy(
   () => import("@/app/pages/participant/MastercodeRedeem"),
 );
+const PartnerVoucherRedeem = lazy(
+  () => import("@/app/pages/participant/PartnerVoucherRedeem"),
+);
 const Finale = lazy(() => import("@/app/pages/participant/Finale"));
 const FeatureLocked = lazy(() => import("@/app/pages/participant/FeatureLocked"));
 
@@ -199,6 +202,7 @@ export const appRoutes = (
       <Route path="profile/notifications" element={<NotificationSettings />} />
       <Route path="profile/edit" element={<ProfileEditScreen />} />
       <Route path="profile/history" element={<ProfileHistory />} />
+      <Route path="profile/partner-voucher" element={<PartnerVoucherRedeem />} />
     </Route>
 
     <Route

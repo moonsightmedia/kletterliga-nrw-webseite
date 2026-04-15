@@ -12,6 +12,7 @@ import type {
   InstagramPost,
   MarketingEmailStatus,
   MasterCode,
+  PartnerVoucherRedemption,
   Profile,
   ProfileConsent,
   ProfileOverride,
@@ -86,6 +87,14 @@ type AuthEmailActionResponse = {
   already_exists?: boolean;
 };
 
+type PartnerVoucherRedeemResponse = {
+  success: true;
+  status: "redeemed_now" | "already_redeemed" | "not_eligible";
+  redeemed_at?: string;
+  season_year: string;
+  partner_slug: string;
+};
+
 async function getFunctionHeaders() {
   const {
     data: { session },
@@ -118,6 +127,22 @@ async function getRequiredSessionAccessToken(message = "Bitte melde dich erneut 
 
   return {
     token: session.access_token,
+    error: null,
+  };
+}
+
+async function resolveSeasonYearFallback() {
+  const settingsResult = await listAdminSettings();
+  if (settingsResult.error) {
+    return {
+      seasonYear: String(new Date().getFullYear()),
+      error: settingsResult.error,
+    };
+  }
+
+  const seasonYear = settingsResult.data?.[0]?.season_year?.trim();
+  return {
+    seasonYear: seasonYear && seasonYear.length > 0 ? seasonYear : String(new Date().getFullYear()),
     error: null,
   };
 }
@@ -712,6 +737,77 @@ export async function redeemMasterCode(code: string) {
   }
 
   return { data: body as { success: true }, error: null };
+}
+
+export async function redeemPartnerVoucher(payload: {
+  partnerSlug: string;
+  qrCodeValue: string;
+  scanSource?: string;
+}) {
+  const auth = await getRequiredSessionAccessToken("Bitte melde dich erneut an, um den Gutschein einzulösen.");
+  if (auth.error || !auth.token) {
+    return { data: null, error: auth.error };
+  }
+
+  const url = `${supabaseConfig.url}/functions/v1/redeem-partner-voucher`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${auth.token}`,
+      apikey: supabaseConfig.anonKey,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Gutschein konnte nicht eingelöst werden.";
+    return { data: null, error: { message } };
+  }
+
+  return {
+    data: body as PartnerVoucherRedeemResponse,
+    error: null,
+  };
+}
+
+export async function getMyPartnerVoucherRedemption(partnerSlug: string, seasonYear?: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const targetSeasonYear = (seasonYear ?? "").trim();
+  const resolvedSeason = targetSeasonYear || (await resolveSeasonYearFallback()).seasonYear;
+
+  return supabase
+    .from("partner_voucher_redemptions")
+    .select("*")
+    .eq("partner_slug", partnerSlug)
+    .eq("season_year", resolvedSeason)
+    .order("redeemed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<PartnerVoucherRedemption>();
+}
+
+export async function listPartnerVoucherRedemptions(options: {
+  partnerSlug: string;
+  seasonYear?: string;
+}) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const targetSeasonYear = (options.seasonYear ?? "").trim();
+  const resolvedSeason = targetSeasonYear || (await resolveSeasonYearFallback()).seasonYear;
+
+  return supabase
+    .from("partner_voucher_redemptions")
+    .select("*")
+    .eq("partner_slug", options.partnerSlug)
+    .eq("season_year", resolvedSeason)
+    .order("redeemed_at", { ascending: false })
+    .returns<PartnerVoucherRedemption[]>();
 }
 
 export async function listGymAdminsByProfile(profileId: string) {

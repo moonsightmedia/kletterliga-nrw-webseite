@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { listProfiles, listGyms, listResults, listRoutes } from "@/services/appApi";
-import { Users, Building2, BarChart3, Flag } from "lucide-react";
+import { listAdminSettings, listProfiles, listGyms, listResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
+import { Users, Building2, BarChart3, Flag, TicketPercent } from "lucide-react";
+
+const PARTNER_VOUCHER_SLUG = "kletterladen_nrw";
 
 const LeagueDashboard = () => {
   const [stats, setStats] = useState({
@@ -9,26 +11,36 @@ const LeagueDashboard = () => {
     totalGyms: 0,
     totalResults: 0,
     totalRoutes: 0,
+    totalPartnerVoucherRedemptions: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([listProfiles(), listGyms(), listResults(), listRoutes()]).then(
-      ([profilesResult, gymsResult, resultsResult, routesResult]) => {
+    Promise.all([listProfiles(), listGyms(), listResults(), listRoutes(), listAdminSettings()]).then(
+      async ([profilesResult, gymsResult, resultsResult, routesResult, adminSettingsResult]) => {
         const participants = (profilesResult.data ?? []).filter((p) => p.role === "participant").length;
         const gyms = (gymsResult.data ?? []).length;
         const results = (resultsResult.data ?? []).length;
         const activeRoutes = (routesResult.data ?? []).filter((r) => r.active === true).length;
+        const seasonYear = adminSettingsResult.data?.[0]?.season_year?.trim() || String(new Date().getFullYear());
+        const redemptionsResult = await listPartnerVoucherRedemptions({
+          partnerSlug: PARTNER_VOUCHER_SLUG,
+          seasonYear,
+        });
+        const totalPartnerVoucherRedemptions = (redemptionsResult.data ?? []).length;
 
         setStats({
           totalParticipants: participants,
           totalGyms: gyms,
           totalResults: results,
           totalRoutes: activeRoutes,
+          totalPartnerVoucherRedemptions,
         });
         setLoading(false);
       }
-    );
+    ).catch(() => {
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
@@ -50,7 +62,7 @@ const LeagueDashboard = () => {
         <p className="text-sm text-muted-foreground mt-2">Detaillierte Übersicht und Verwaltung der Liga.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors"></div>
           <div className="relative p-6">
@@ -111,6 +123,22 @@ const LeagueDashboard = () => {
               <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Routen</p>
               <div className="font-headline text-3xl text-purple-500">{stats.totalRoutes}</div>
               <p className="text-xs text-muted-foreground">Aktive Routen</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-amber-500/10 transition-colors"></div>
+          <div className="relative p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                <TicketPercent className="h-5 w-5 text-amber-500" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Partnergutscheine</p>
+              <div className="font-headline text-3xl text-amber-500">{stats.totalPartnerVoucherRedemptions}</div>
+              <p className="text-xs text-muted-foreground">Kletterladen NRW (Saison)</p>
             </div>
           </div>
         </Card>

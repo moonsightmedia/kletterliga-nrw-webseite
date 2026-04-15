@@ -18,6 +18,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.redeem-master-code]
 verify_jwt = false
+[functions.redeem-partner-voucher]
+verify_jwt = false
 
 # get-public-rankings: öffentlich (Ranglisten-Vorschau auf der Website ohne Login)
 [functions.get-public-rankings]

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LineChart, Scan, ShieldCheck, TicketCheck, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Scan, ShieldCheck, X } from "lucide-react";
 import {
   Drawer,
   DrawerClose,
@@ -19,6 +20,7 @@ import { redeemMasterCode } from "@/services/appApi";
 
 const MastercodeRedeem = () => {
   const { profile, refreshProfile } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,7 @@ const MastercodeRedeem = () => {
       variant: "success",
     });
     setCode("");
+    navigate("/app/profile", { replace: true });
   };
 
   if (isActivated) {
@@ -60,10 +63,10 @@ const MastercodeRedeem = () => {
         <StitchCard tone="navy" className="rounded-[1.05rem] overflow-hidden p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <StitchBadge tone="cream" className="rounded-[0.9rem] px-3.5 py-1.5">
+              <StitchBadge tone="cream" className="rounded-[0.72rem] px-3.5 py-1.5">
                 Teilnahme aktiv
               </StitchBadge>
-              <StitchBadge tone="ghost" className="rounded-[0.9rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
+              <StitchBadge tone="ghost" className="rounded-[0.72rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
                 Mastercode bestätigt
               </StitchBadge>
             </div>
@@ -75,38 +78,6 @@ const MastercodeRedeem = () => {
             />
           </div>
         </StitchCard>
-
-        <div className="grid gap-3">
-          <StitchCard tone="surface" className="rounded-[1rem] p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[0.95rem] bg-[rgba(0,61,85,0.08)] text-[#003d55]">
-                <TicketCheck className="h-5 w-5" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="stitch-kicker text-[#a15523]">Liga-Status</div>
-                <div className="text-lg font-semibold text-[#002637]">Wertung freigeschaltet</div>
-                <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-                  Deine Punkte werden ab sofort in allen relevanten Ranglisten berücksichtigt.
-                </p>
-              </div>
-            </div>
-          </StitchCard>
-
-          <StitchCard tone="surface" className="rounded-[1rem] p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[0.95rem] bg-[rgba(161,85,35,0.08)] text-[#a15523]">
-                <LineChart className="h-5 w-5" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="stitch-kicker text-[#a15523]">Statistiken</div>
-                <div className="text-lg font-semibold text-[#002637]">Analyse und Verlauf aktiv</div>
-                <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-                  Profil, Ranglisten und Verlauf zeigen jetzt deine volle Saisonleistung an.
-                </p>
-              </div>
-            </div>
-          </StitchCard>
-        </div>
       </div>
     );
   }
@@ -116,17 +87,17 @@ const MastercodeRedeem = () => {
       <StitchCard tone="navy" className="rounded-[1.05rem] overflow-hidden p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <StitchBadge tone="cream" className="rounded-[0.9rem] px-3.5 py-1.5">
+            <StitchBadge tone="cream" className="rounded-[0.72rem] px-3.5 py-1.5">
               Mastercode
             </StitchBadge>
-            <StitchBadge tone="ghost" className="rounded-[0.9rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
+            <StitchBadge tone="ghost" className="rounded-[0.72rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
               Teilnahme freischalten
             </StitchBadge>
           </div>
           <StitchSectionHeading
             eyebrow="Liga aktivieren"
             title="Dein Mastercode macht dein Profil offiziell"
-            description="Nach der Freischaltung zählen deine Ergebnisse in den Ranglisten. Den Code erhältst du nach der Teilnahmebestätigung in einer Partnerhalle."
+            description="Nach der Freischaltung zählen deine Ergebnisse in den Ranglisten. Den Code erhältst du in einer beliebigen Halle, nachdem die einmalige Teilnahmegebühr von 15 € bezahlt wurde."
             className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.68)] [&_p]:text-[rgba(242,220,171,0.76)]"
           />
         </div>
@@ -219,37 +190,6 @@ const MastercodeRedeem = () => {
         </form>
       </StitchCard>
 
-      <div className="grid gap-3">
-        <StitchCard tone="surface" className="rounded-[1rem] p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[0.95rem] bg-[rgba(0,61,85,0.08)] text-[#003d55]">
-              <TicketCheck className="h-5 w-5" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="stitch-kicker text-[#a15523]">Liga-Status</div>
-              <div className="text-lg font-semibold text-[#002637]">Offiziell in der Wertung</div>
-              <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-                Nach der Freischaltung erscheint dein Profil regulär in Klassen- und Gesamtwertungen.
-              </p>
-            </div>
-          </div>
-        </StitchCard>
-
-        <StitchCard tone="surface" className="rounded-[1rem] p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[0.95rem] bg-[rgba(161,85,35,0.08)] text-[#a15523]">
-              <LineChart className="h-5 w-5" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="stitch-kicker text-[#a15523]">Erweiterte Übersicht</div>
-              <div className="text-lg font-semibold text-[#002637]">Ranglisten und Verlauf</div>
-              <p className="text-sm leading-6 text-[rgba(27,28,26,0.64)]">
-                Punkte, Verlauf und persönliche Statistiken werden danach vollständig in der App sichtbar.
-              </p>
-            </div>
-          </div>
-        </StitchCard>
-      </div>
     </div>
   );
 };

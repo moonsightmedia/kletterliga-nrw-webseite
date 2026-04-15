@@ -4,6 +4,7 @@ import ProfileScreen from "@/app/pages/participant/ProfileScreen";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { useLaunchSettings } from "@/config/launch";
 import { useParticipantProfileEditor } from "@/app/pages/participant/useParticipantProfileEditor";
+import { getMyPartnerVoucherRedemption } from "@/services/appApi";
 
 vi.mock("@/app/auth/AuthProvider", () => ({
   useAuth: vi.fn(),
@@ -18,9 +19,14 @@ vi.mock("@/app/pages/participant/useParticipantProfileEditor", () => ({
   useParticipantProfileEditor: vi.fn(),
 }));
 
+vi.mock("@/services/appApi", () => ({
+  getMyPartnerVoucherRedemption: vi.fn(),
+}));
+
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseLaunchSettings = vi.mocked(useLaunchSettings);
 const mockedUseParticipantProfileEditor = vi.mocked(useParticipantProfileEditor);
+const mockedGetMyPartnerVoucherRedemption = vi.mocked(getMyPartnerVoucherRedemption);
 
 const buildProfileEditorState = (overrides: Partial<ReturnType<typeof useParticipantProfileEditor>> = {}) =>
   ({
@@ -59,6 +65,10 @@ describe("ProfileScreen", () => {
       unlockDate: new Date("2026-05-01T00:00:00+02:00"),
     } as ReturnType<typeof useLaunchSettings>);
     mockedUseParticipantProfileEditor.mockReturnValue(buildProfileEditorState());
+    mockedGetMyPartnerVoucherRedemption.mockResolvedValue({
+      data: null,
+      error: null,
+    } as Awaited<ReturnType<typeof getMyPartnerVoucherRedemption>>);
   });
 
   it("shows the prelaunch state before season unlock without the participation CTA", () => {
@@ -113,7 +123,7 @@ describe("ProfileScreen", () => {
     expect(screen.getByRole("button", { name: "Mastercode freischalten" })).toBeEnabled();
   });
 
-  it("shows the activated participation badge once the profile is unlocked", () => {
+  it("shows active profile and class badge once the profile is unlocked", () => {
     mockedUseLaunchSettings.mockReturnValue({
       beforeAppUnlock: false,
       unlockDate: new Date("2026-05-01T00:00:00+02:00"),
@@ -135,7 +145,22 @@ describe("ProfileScreen", () => {
     );
 
     expect(screen.queryByText("Teilnahme fehlt")).not.toBeInTheDocument();
-    expect(screen.getByText("Teilnahme aktiv")).toBeInTheDocument();
+    expect(screen.getByText("Aktiv · Klasse offen")).toBeInTheDocument();
+  });
+
+  it("shows the partner voucher settings action", () => {
+    mockedUseLaunchSettings.mockReturnValue({
+      beforeAppUnlock: false,
+      unlockDate: new Date("2026-05-01T00:00:00+02:00"),
+    } as ReturnType<typeof useLaunchSettings>);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ProfileScreen />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("button", { name: "Gutschein einlösen Kletterladen.NRW" })).toBeInTheDocument();
   });
 
   it("renders a skeleton while profile data is still loading", () => {

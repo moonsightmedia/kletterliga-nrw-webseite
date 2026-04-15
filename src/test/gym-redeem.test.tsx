@@ -49,6 +49,7 @@ describe("GymRedeem", () => {
     mockedUseAuth.mockReturnValue({
       profile: {
         id: "profile-1",
+        participation_activated_at: "2026-03-27T09:00:00+01:00",
       },
     } as ReturnType<typeof useAuth>);
     mockedGetGym.mockResolvedValue({ data: null, error: null } as Awaited<ReturnType<typeof getGym>>);

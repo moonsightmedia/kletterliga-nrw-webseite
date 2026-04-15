@@ -5,8 +5,10 @@ import { useAuth } from "@/app/auth/AuthProvider";
 import { MaterialIcon } from "@/app/components/MaterialIcon";
 import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
+import { getMyPartnerVoucherRedemption } from "@/services/appApi";
 import { supabase } from "@/services/supabase";
 import { useParticipantProfileEditor } from "./useParticipantProfileEditor";
+import { getClassLabel } from "./participantData";
 
 const SettingsRow = ({
   icon,
@@ -45,6 +47,7 @@ const getInitials = (name: string) =>
 
 const PRELAUNCH_NOTICE_STORAGE_KEY = "kl_profile_prelaunch_notice_dismissed_until";
 const PRELAUNCH_NOTICE_DISMISS_THRESHOLD = 96;
+const PARTNER_VOUCHER_SLUG = "kletterladen_nrw";
 
 const getPrelaunchDismissToken = (unlockDate: Date) => unlockDate.toISOString();
 
@@ -230,6 +233,7 @@ const ProfileScreen = () => {
   const [isPrelaunchNoticeDismissed, setIsPrelaunchNoticeDismissed] = useState(() =>
     readPrelaunchNoticeDismissed(unlockDate),
   );
+  const [partnerVoucherRedeemedAt, setPartnerVoucherRedeemedAt] = useState<string | null>(null);
 
   const participantProfileHref = profile?.id
     ? `/app/rankings/profile/${profile.id}`
@@ -239,6 +243,8 @@ const ProfileScreen = () => {
   const shouldShowParticipationNotice = !beforeAppUnlock && !isParticipationActivated;
   const unlockDateLabel = formatUnlockDate(unlockDate);
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
+  const partnerVoucherRedeemed = Boolean(partnerVoucherRedeemedAt);
+  const classLabel = profileData?.className ? getClassLabel(profileData.className) : "Klasse offen";
   const averagePointsPerRouteLabel =
     profileData && profileData.routesLogged > 0
       ? profileData.averagePoints.toLocaleString("de-DE", {
@@ -283,6 +289,28 @@ const ProfileScreen = () => {
 
     setIsPrelaunchNoticeDismissed(readPrelaunchNoticeDismissed(unlockDate));
   }, [beforeAppUnlock, unlockDate]);
+
+  useEffect(() => {
+    if (!profile?.id || !isParticipationActivated) {
+      setPartnerVoucherRedeemedAt(null);
+      return;
+    }
+
+    let active = true;
+    getMyPartnerVoucherRedemption(PARTNER_VOUCHER_SLUG)
+      .then(({ data, error }) => {
+        if (!active || error) return;
+        setPartnerVoucherRedeemedAt(data?.redeemed_at ?? null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setPartnerVoucherRedeemedAt(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [profile?.id, isParticipationActivated]);
 
   const isScreenReady = Boolean(profile) && !authLoading && !loading && avatarReady;
 
@@ -330,24 +358,6 @@ const ProfileScreen = () => {
         <PrelaunchNoticeCard unlockDateLabel={unlockDateLabel} onDismiss={handleDismissPrelaunchNotice} />
       ) : null}
 
-      {false ? (
-        <StitchCard tone="navy" className="rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
-          <div className="space-y-4">
-            <div className="stitch-kicker text-[rgba(242,220,171,0.68)]">Pre-Launch</div>
-            <div className="stitch-headline text-[2rem] leading-[0.92] text-[#f2dcab]">
-              Dein Dashboard ist offen, die Liga startet am {unlockDateLabel}.
-            </div>
-            <p className="text-sm leading-6 text-[rgba(242,220,171,0.76)]">
-              Profil, Vorbereitung und persönliche Statistiken sind bereits verfügbar. Hallen,
-              Codes und Ranglisten öffnen gesammelt zum Saisonstart.
-            </p>
-            <div className="inline-flex items-center rounded-[0.9rem] bg-[#f2dcab] px-3.5 py-2 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#002637]">
-              Freischaltung {unlockDateLabel}
-            </div>
-          </div>
-        </StitchCard>
-      ) : null}
-
       {shouldShowParticipationNotice ? (
         <StitchCard tone="cream" className="rounded-[1.05rem] p-5">
           <div className="space-y-4">
@@ -373,7 +383,14 @@ const ProfileScreen = () => {
         </StitchCard>
       ) : null}
 
-      <StitchCard tone="navy" className="relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <StitchCard
+        tone="navy"
+        className={`relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
+          !beforeAppUnlock && isParticipationActivated
+            ? "ring-1 ring-[#6fd1ac]/55"
+            : ""
+        }`}
+      >
         <div className="absolute -right-8 -top-8 h-24 w-24 rotate-12 rounded-[1.1rem] bg-[#f2dcab]/6" />
         <div className="absolute -bottom-10 -left-6 h-20 w-20 rotate-12 rounded-[1rem] bg-[#a15523]/18" />
 
@@ -406,7 +423,7 @@ const ProfileScreen = () => {
             <h2 className="font-['Space_Grotesk'] text-3xl font-bold uppercase tracking-tight text-[#f2dcab]">
               {displayName}
             </h2>
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <div className="inline-flex min-h-11 items-center gap-2 rounded-[0.72rem] bg-[#f2dcab] px-4 py-2 text-[#002637] shadow-[0_14px_28px_rgba(0,0,0,0.18)]">
                 <MaterialIcon
                   name="emoji_events"
@@ -419,8 +436,13 @@ const ProfileScreen = () => {
                 {leagueLabel}
               </StitchBadge>
               {!beforeAppUnlock && isParticipationActivated ? (
-                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#f2dcab]/18 bg-[#f2dcab]/10 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]">
-                  Teilnahme aktiv
+                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#6fd1ac]/45 bg-[#6fd1ac]/14 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#d5f5e8]">
+                  Aktiv · {classLabel}
+                </StitchBadge>
+              ) : null}
+              {!beforeAppUnlock && partnerVoucherRedeemed ? (
+                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#a8d6c2] bg-[#d8efe4] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#0a5a3c]">
+                  Gutschein eingelöst
                 </StitchBadge>
               ) : null}
             </div>
@@ -518,6 +540,16 @@ const ProfileScreen = () => {
             icon="notifications_none"
             label="Benachrichtigungen"
             onClick={() => navigate("/app/profile/notifications")}
+          />
+          <div className="mx-3 h-px bg-[#f2dcab]/40" />
+          <SettingsRow
+            icon="local_offer"
+            label={
+              partnerVoucherRedeemed
+                ? "Gutschein Kletterladen.NRW eingelöst"
+                : "Gutschein einlösen Kletterladen.NRW"
+            }
+            onClick={() => navigate("/app/profile/partner-voucher")}
           />
         </StitchCard>
 

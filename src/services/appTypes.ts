@@ -151,6 +151,16 @@ export type MasterCode = {
   status: string | null;
 };
 
+export type PartnerVoucherRedemption = {
+  id: string;
+  profile_id: string;
+  partner_slug: string;
+  season_year: string;
+  redeemed_at: string;
+  scan_source: string | null;
+  created_at: string;
+};
+
 export type Stage = {
   key: string;
   label: string;
