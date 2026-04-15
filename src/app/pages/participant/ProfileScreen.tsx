@@ -13,27 +13,51 @@ import { getClassLabel } from "./participantData";
 const SettingsRow = ({
   icon,
   label,
+  hint,
+  disabled = false,
   onClick,
 }: {
   icon: string;
   label: string;
+  hint?: string;
+  disabled?: boolean;
   onClick: () => void | Promise<void>;
 }) => (
   <button
     type="button"
     onClick={() => {
+      if (disabled) return;
       void onClick();
     }}
-    className="group flex w-full items-center gap-3 rounded-[0.95rem] px-3 py-3.5 text-left transition-colors hover:bg-[#f2dcab]/16"
+    disabled={disabled}
+    className={`group flex w-full items-center gap-3 rounded-[0.95rem] px-3 py-3.5 text-left transition-colors ${
+      disabled
+        ? "cursor-not-allowed opacity-85"
+        : "hover:bg-[#f2dcab]/16"
+    }`}
   >
     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[#f7e7bd] text-[#003d55] transition-colors group-hover:bg-[#edd39c]">
       <MaterialIcon name={icon} />
     </span>
-    <span className="font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">{label}</span>
-    <MaterialIcon
-      name="chevron_right"
-      className="ml-auto text-sm text-[#71787d]"
-    />
+    <span className="min-w-0">
+      <span className="block font-['Space_Grotesk'] text-sm font-bold text-[#003d55]">{label}</span>
+      {hint ? (
+        <span className="mt-0.5 block text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#6d7478]">
+          {hint}
+        </span>
+      ) : null}
+    </span>
+    {disabled ? (
+      <MaterialIcon
+        name="check_circle"
+        className="ml-auto text-base text-[#2f9d76]"
+      />
+    ) : (
+      <MaterialIcon
+        name="chevron_right"
+        className="ml-auto text-sm text-[#71787d]"
+      />
+    )}
   </button>
 );
 
@@ -50,6 +74,14 @@ const PRELAUNCH_NOTICE_DISMISS_THRESHOLD = 96;
 const PARTNER_VOUCHER_SLUG = "kletterladen_nrw";
 
 const getPrelaunchDismissToken = (unlockDate: Date) => unlockDate.toISOString();
+const formatVoucherTimestamp = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString("de-DE", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
 
 const readPrelaunchNoticeDismissed = (unlockDate: Date) => {
   if (typeof window === "undefined") return false;
@@ -391,7 +423,7 @@ const ProfileScreen = () => {
         tone="navy"
         className={`relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
           !beforeAppUnlock && isParticipationActivated
-            ? "ring-1 ring-[#6fd1ac]/55"
+            ? "ring-2 ring-[#63d3a8]/85"
             : ""
         }`}
       >
@@ -548,6 +580,12 @@ const ProfileScreen = () => {
                 ? "Gutschein Kletterladen.NRW eingelöst"
                 : "Gutschein einlösen Kletterladen.NRW"
             }
+            hint={
+              partnerVoucherRedeemed && partnerVoucherRedeemedAt
+                ? `am ${formatVoucherTimestamp(partnerVoucherRedeemedAt) ?? partnerVoucherRedeemedAt}`
+                : undefined
+            }
+            disabled={partnerVoucherRedeemed}
             onClick={() => navigate("/app/profile/partner-voucher")}
           />
         </StitchCard>
