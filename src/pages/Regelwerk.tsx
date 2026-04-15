@@ -124,7 +124,8 @@ const Regelwerk = () => {
             </div>
             <div className="prose prose-neutral dark:prose-invert max-w-none text-muted-foreground pl-0 md:pl-13 space-y-4">
               <p>
-                Die Kletterliga NRW wird in zwei getrennten <strong className="text-foreground">Ligen</strong> durchgeführt:
+                Die <strong className="text-foreground">Kletterliga NRW</strong> wird in zwei getrennten
+                Ligen durchgeführt:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
@@ -181,20 +182,22 @@ const Regelwerk = () => {
               <p>
                 <strong className="text-foreground">Versuch (Attempt):</strong> Ein Versuch beginnt,
                 sobald die Teilnehmer:in den Boden verlässt bzw. die Route aktiv startet. Ein Versuch
-                endet mit Sturz, Abbruch oder Rückkehr auf den Boden. Jeder
+                endet mit Sturz, Abbruch, Belastung des Seils oder Rückkehr auf den Boden. Jeder
                 neue Einstieg in dieselbe Route zählt als neuer Versuch.
               </p>
               <p>
                 <strong className="text-foreground">Flash-Bonus:</strong> Wird eine Route im ersten
-                Versuch bis zum Top geklettert, wird ein pauschaler Zusatzpunkt (+1)
-                gutgeschrieben. Der Flash-Bonus wird pro Route maximal einmal vergeben.
+                Versuch bis ganz zum Top geklettert, wird ein pauschaler Zusatzpunkt (+1)
+                gutgeschrieben. Ein erster Versuch bis nur Zone 1, Zone 2 oder Zone 3 ohne Top
+                löst keinen Flash-Bonus aus. Der Flash-Bonus wird pro Route maximal einmal
+                vergeben.
               </p>
               <p>
                 Pro Route wird nur das <strong className="text-foreground">beste Ergebnis</strong> einer
                 Teilnehmer:in innerhalb der Qualifikationsphase gewertet. Spätere Verbesserungen
                 ersetzen das vorherige Ergebnis für diese Route. Es werden nur Routen gewertet, die
-                in Partnerhallen der Kletterliga NRW ausgehängt, als „Kletterliga-NRW-Route"
-                gekennzeichnet und im System der Liga erfasst sind.
+                in Partnerhallen der Kletterliga NRW ausgehängt, mit einem
+                „Kletterliga-NRW"-Routeschild gekennzeichnet und im System der Liga erfasst sind.
               </p>
             </div>
           </article>
@@ -229,7 +232,7 @@ const Regelwerk = () => {
                 <li>Ü40: 40 Jahre und älter</li>
               </ul>
               <p>
-                Zusätzlich werden weitere Altersklassen (z. B. U9, U11, U13, Ü50) für Ranglisten
+                Zusätzlich werden weitere Altersklassen (z. B. U9, U11, U13, U50) für Ranglisten
                 ohne Finalrelevanz geführt. Für die Qualifikation zu Halbfinale und Finale
                 sind nur die in der Ausschreibung als „finalrelevant“ bezeichneten Wertungsklassen
                 maßgeblich (in der Regel U15 w/m, Ü15 w/m, Ü40 w/m).
@@ -278,12 +281,12 @@ const Regelwerk = () => {
                 <strong className="text-foreground">Anmeldung Halbfinale:</strong> Qualifizierte und
                 Wildcard-Gewinner:innen müssen sich bis zu einer festgelegten Frist verbindlich zum
                 Halbfinale anmelden. Ohne rechtzeitige Anmeldung verfällt der Startplatz; Nachrücker
-                werden berücksichtigt.
+                können berücksichtigt werden.
               </p>
               <p>
                 <strong className="text-foreground">Halbfinale:</strong> Im Halbfinale sind 5 Routen
                 in einem vorgegebenen Zeitfenster zu klettern. Pro Route gilt ein Kletterzeitlimit
-                von 5 Minuten. Die Top 6 pro Wertungsklasse ziehen ins Finale ein.
+                von fünf Minuten. Die Top 6 pro Wertungsklasse ziehen ins Finale ein.
               </p>
               <p>
                 <strong className="text-foreground">Finale:</strong> Im Finale wird je Wertungsklasse
@@ -323,7 +326,7 @@ const Regelwerk = () => {
                 <strong className="text-foreground"> Mastercodes</strong> freigeschaltet werden. Den
                 Mastercode erhalten Teilnehmer:innen nach Zahlung der Teilnahmegebühr in einer
                 der teilnehmenden Hallen. Der Mastercode ist einmalig pro Saison und Account
-                einzulösen. Ohne gültig eingelösten Mastercode können keine Ergebnisse eingetragen
+                einzulösen. Ohne gültigen eingelösten Mastercode können keine Ergebnisse eingetragen
                 werden.
               </p>
               <p>
@@ -336,8 +339,8 @@ const Regelwerk = () => {
               </p>
               <p>
                 Die Teilnahmegebühr und die Modalitäten des Mastercodes können je Saison angepasst
-                werden; die gültigen Beträge und Schritte können der aktuellen Ausschreibung und
-                der Website entnommen werden.
+                werden; die gültigen Beträge und Schritte sind der aktuellen Ausschreibung und der
+                Website zu entnehmen.
               </p>
             </div>
           </article>
@@ -473,7 +476,9 @@ const Regelwerk = () => {
                 <li>frühere Erreichung des Gesamtpunktestands (Zeitstempel der Eintragung)</li>
               </ol>
               <p>
-                Kann auch danach keine eindeutige Rangfolge bestimmt werden, erhalten die betroffenen Teilnehmer:innen denselben Rang. Für nachgelagerte Qualifikationsstufen (z. B. Halbfinale) können entsprechend zusätzliche Startplätze entstehen.
+                Kann auch danach keine eindeutige Rangfolge bestimmt werden, erhalten die
+                betroffenen Teilnehmer:innen denselben Rang. Bei punktgleichem Grenzplatz zur
+                Halbfinal-Qualifikation nehmen beide Teilnehmer:innen am Halbfinale teil.
               </p>
             </div>
           </article>

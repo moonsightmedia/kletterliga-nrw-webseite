@@ -18,7 +18,7 @@ const steps = [
     icon: TrendingUp,
     number: "03",
     title: "Punkte sammeln",
-    description: "Deine besten Ergebnisse zählen für die Rangliste. Flash-Bonus für Routen im ersten Versuch!",
+    description: "Deine besten Ergebnisse zählen für die Rangliste. Flash-Bonus gibt es nur für Routen im ersten Versuch bis zum Top.",
   },
   {
     icon: Award,

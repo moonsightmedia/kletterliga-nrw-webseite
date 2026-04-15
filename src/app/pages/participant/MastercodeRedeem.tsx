@@ -97,7 +97,7 @@ const MastercodeRedeem = () => {
           <StitchSectionHeading
             eyebrow="Liga aktivieren"
             title="Dein Mastercode macht dein Profil offiziell"
-            description="Nach der Freischaltung zählen deine Ergebnisse in den Ranglisten. Den Code erhältst du in einer beliebigen Halle, nachdem die einmalige Teilnahmegebühr von 15 € bezahlt wurde."
+            description="Nach der Freischaltung zählen deine Ergebnisse in den Ranglisten. Den Code erhältst du in einer beliebigen Halle nach Zahlung der einmaligen Teilnahmegebühr."
             className="[&_.stitch-headline]:text-[#f2dcab] [&_.stitch-kicker]:text-[rgba(242,220,171,0.68)] [&_p]:text-[rgba(242,220,171,0.76)]"
           />
         </div>

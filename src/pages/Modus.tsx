@@ -25,7 +25,7 @@ const additionalCategories = [
   { name: "U15", description: "14-15 Jahre" },
   { name: "Ü15", description: "15-39 Jahre" },
   { name: "Ü40", description: "40-49 Jahre" },
-  { name: "Ü50", description: "Ab 50 Jahre" },
+  { name: "U50", description: "Ab 50 Jahre" },
 ];
 
 const Modus = () => {
@@ -185,9 +185,9 @@ const Modus = () => {
               <div>
                 <h4 className="font-headline text-lg leading-tight text-primary mb-2 [overflow-wrap:anywhere]">Flash-Bonus: +1 Punkt</h4>
                 <p className="text-muted-foreground text-sm">
-                  Schaffst du eine Route im ersten Versuch (Flash), erhältst du pauschal 
-                  <strong className="text-secondary"> +1 Punkt</strong> obendrauf. Das belohnt sauberes, 
-                  überlegtes Klettern von Anfang an!
+                  Schaffst du eine Route im ersten Versuch bis ganz zum Top (Flash), erhältst du
+                  pauschal <strong className="text-secondary"> +1 Punkt</strong> obendrauf. Bei einem
+                  ersten Versuch nur bis Zone 1, 2 oder 3 gibt es keinen Flash-Bonus.
                 </p>
               </div>
             </div>
@@ -606,7 +606,7 @@ const Modus = () => {
                     Um an der Liga teilzunehmen und in den Ranglisten zu erscheinen, musst du zunächst 
                     deine <strong className="text-accent">Teilnahme freischalten</strong>. Dafür benötigst du einen 
                     <strong className="text-accent"> Mastercode</strong>, den du nach Zahlung der Teilnahmegebühr 
-                    (15 €) in einer der teilnehmenden Hallen erhältst. Den Mastercode löst du einmalig in deinem 
+                    in einer der teilnehmenden Hallen erhältst. Den Mastercode löst du einmalig in deinem 
                     Account ein. Erst danach werden deine Ergebnisse in den Ranglisten gezählt.
                   </p>
                 </div>
@@ -620,7 +620,7 @@ const Modus = () => {
                     Um Ergebnisse für eine Halle eintragen zu können, musst du zunächst den jeweiligen 
                     <strong className="text-secondary"> hallenspezifischen Code</strong> vor Ort in der Halle erhalten 
                     (kostenfrei). Diesen Code gibst du einmalig in deinem Account ein, um die Halle freizuschalten. 
-                    Erst dann kannst du Routen aus dieser Halle werten lassen.
+                    Ohne Freischaltung der Halle können keine Ergebnisse dieser Halle eingetragen werden.
                   </p>
                 </div>
 
