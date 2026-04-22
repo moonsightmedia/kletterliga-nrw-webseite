@@ -117,18 +117,18 @@ const Hallen = () => {
                 </span>
               </div>
               <h3 className="font-headline text-xl text-primary sm:text-2xl">
-                Alle Hallen zählen durchgehend
+                Dieses Jahr hängen die Liga-Routen durchgehend
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-foreground sm:text-base">
-                2026 gibt es keine Etappen-Freigabe pro Halle. Freigeschaltete Hallen zählen im
-                gesamten Qualifikationszeitraum.
+                Letztes Jahr waren die Hallen etappenweise dran. In 2026 ist es einfacher: In allen
+                teilnehmenden Hallen hängen die Liga-Routen über den gesamten Qualifikationszeitraum.
               </p>
               {(qualStart || qualEnd) && (
                 <p className="mt-4 inline-flex items-center gap-2 bg-background/80 px-3 py-2 text-sm font-medium text-primary">
                   <CalendarDays className="h-4 w-4 text-secondary" />
                   {qualStart && qualEnd
-                    ? `Qualifikationszeitraum: ${qualStart} bis ${qualEnd}`
-                    : `Qualifikationszeitraum: ${qualStart ?? qualEnd}`}
+                    ? `Routen hängen von ${qualStart} bis ${qualEnd}`
+                    : `Routen hängen ab ${qualStart ?? qualEnd}`}
                 </p>
               )}
             </div>

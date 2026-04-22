@@ -1,7 +1,7 @@
 const qualificationNoticeItems = [
   "Neu 2026",
   "Alle Hallen sind im gesamten Qualifikationszeitraum geöffnet",
-  "Keine Etappen-Freigabe pro Halle",
+  "In allen Hallen hängen Kletterliga-Routen über den gesamten Qualifikationszeitraum",
 ];
 
 const QualificationNoticeSequence = ({ suffix }: { suffix: string }) => (
