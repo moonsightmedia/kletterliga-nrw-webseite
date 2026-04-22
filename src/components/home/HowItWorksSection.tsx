@@ -12,7 +12,8 @@ const steps = [
     icon: MapPin,
     number: "02",
     title: "Hallen besuchen",
-    description: "Klettere in den teilnehmenden Hallen und sammle Punkte für jede geschaffte Route.",
+    description:
+      "Klettere in teilnehmenden Hallen und sammle Punkte. 2026 zählen alle Hallen durchgehend im Qualifikationszeitraum.",
   },
   {
     icon: TrendingUp,

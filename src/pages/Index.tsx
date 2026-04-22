@@ -1,5 +1,6 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { HeroSection } from "@/components/home/HeroSection";
+import { QualificationNoticeBanner } from "@/components/home/QualificationNoticeBanner";
 import { AboutSection } from "@/components/home/AboutSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { SeasonSection } from "@/components/home/SeasonSection";
@@ -33,6 +34,7 @@ const Index = () => {
   return (
     <PageLayout>
       <HeroSection />
+      <QualificationNoticeBanner />
       <AboutSection />
       <HowItWorksSection />
       <SeasonSection />

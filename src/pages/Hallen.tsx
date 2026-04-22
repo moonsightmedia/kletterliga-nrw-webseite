@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, CalendarDays, BadgeAlert } from "lucide-react";
 import { GymDetailDialog } from "@/components/gyms/GymDetailDialog";
 import { formatGymNameLines } from "@/components/gyms/formatGymNameLines";
 import { GymLogoBadge } from "@/components/gyms/GymLogoBadge";
+import { legalInfo } from "@/data/legal";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { preparePublicGyms } from "@/lib/publicGyms";
 import { listGyms } from "@/services/appApi";
+import { useSeasonSettings } from "@/services/seasonSettings";
 import type { Gym } from "@/services/appTypes";
 
 const mapSearchUrl = (address: string) =>
@@ -19,6 +21,20 @@ const isAbortError = (error: unknown) =>
   (error.name === "AbortError" || error.message.toLowerCase().includes("signal is aborted"));
 
 const Hallen = () => {
+  const { getQualificationStart, getQualificationEnd } = useSeasonSettings();
+
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const qualStart = formatDate(getQualificationStart());
+  const qualEnd = formatDate(getQualificationEnd());
+
   usePageMeta({
     title: "Teilnehmende Hallen",
     description:
@@ -90,6 +106,32 @@ const Hallen = () => {
                   ? "Hallenliste konnte nicht geladen werden."
                   : `${gyms.length} Hallen in ganz Nordrhein-Westfalen nehmen teil`}
             </p>
+          </AnimatedSection>
+
+          <AnimatedSection animation="fade-up" delay={60} className="mb-8">
+            <div className="border border-secondary/25 bg-secondary/10 p-5 sm:p-6">
+              <div className="mb-3 inline-flex items-center gap-2 bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground -skew-x-6">
+                <span className="inline-flex items-center gap-2 skew-x-6">
+                <BadgeAlert className="h-3.5 w-3.5" />
+                Neu in 2026
+                </span>
+              </div>
+              <h3 className="font-headline text-xl text-primary sm:text-2xl">
+                Alle Hallen zählen durchgehend
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-foreground sm:text-base">
+                2026 gibt es keine Etappen-Freigabe pro Halle. Freigeschaltete Hallen zählen im
+                gesamten Qualifikationszeitraum.
+              </p>
+              {(qualStart || qualEnd) && (
+                <p className="mt-4 inline-flex items-center gap-2 bg-background/80 px-3 py-2 text-sm font-medium text-primary">
+                  <CalendarDays className="h-4 w-4 text-secondary" />
+                  {qualStart && qualEnd
+                    ? `Qualifikationszeitraum: ${qualStart} bis ${qualEnd}`
+                    : `Qualifikationszeitraum: ${qualStart ?? qualEnd}`}
+                </p>
+              )}
+            </div>
           </AnimatedSection>
 
           {loading ? (
@@ -195,7 +237,7 @@ const Hallen = () => {
                 teilnimmt, sprich sie gerne an oder kontaktiere uns direkt.
               </p>
               <a
-                href="mailto:hallen@kletterliga-nrw.de"
+                href={`mailto:${legalInfo.contactEmail}`}
                 className="inline-flex min-h-12 items-center gap-2 bg-secondary px-8 py-4 -skew-x-6 font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
               >
                 <span className="skew-x-6">Halle anmelden →</span>

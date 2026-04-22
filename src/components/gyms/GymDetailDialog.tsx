@@ -25,7 +25,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         hideCloseButton
-        className="max-h-[90vh] max-w-2xl overflow-y-auto p-5 sm:w-full sm:p-6"
+        className="max-h-[calc(100dvh-0.75rem)] max-w-2xl overflow-y-auto overscroll-contain p-5 sm:w-full sm:max-h-[calc(100dvh-2rem)] sm:overflow-y-auto sm:p-6"
       >
         {gym ? (
           <>
@@ -34,7 +34,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
               <span className="sr-only">Schließen</span>
             </DialogClose>
 
-            <div className="space-y-6 pb-1">
+            <div className="space-y-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               {gym.logo_url ? (
                 <div className="flex justify-center">
                   <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-accent/45 md:h-28 md:w-28">
@@ -113,7 +113,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row">
+              <div className="sticky bottom-0 z-10 -mx-5 flex flex-col gap-3 border-t bg-background px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 sm:-mx-6 sm:flex-row sm:px-6">
                 {(gym.address ?? gym.city) ? (
                   <a
                     href={mapSearchUrl(gym.address ?? gym.city ?? "")}
