@@ -148,33 +148,55 @@ async function proxyImage(imageUrl: string): Promise<Response> {
   });
 }
 
-export default async function handler(req: Request): Promise<Response> {
+type VercelRequest = {
+  method?: string;
+  url?: string;
+};
+
+type VercelResponse = {
+  status: (code: number) => VercelResponse;
+  setHeader: (name: string, value: string) => void;
+  json: (body: unknown) => void;
+  send: (body?: unknown) => void;
+};
+
+async function sendWebResponse(res: VercelResponse, response: Response) {
+  response.headers.forEach((value, key) => res.setHeader(key, value));
+  res.status(response.status).send(Buffer.from(await response.arrayBuffer()));
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  Object.entries(corsHeaders).forEach(([key, value]) => res.setHeader(key, value));
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    res.status(204).send();
+    return;
   }
 
   if (req.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  try {
+    const url = new URL(req.url || "/api/instagram-feed", "https://kletterliga-nrw.de");
+    const imageUrl = url.searchParams.get("image");
+    if (imageUrl) {
+      await sendWebResponse(res, await proxyImage(imageUrl));
+      return;
+    }
+
+    const limit = Math.min(Math.max(1, Number.parseInt(url.searchParams.get("limit") || "3", 10)), 12);
+    const posts = await fetchPublicProfilePosts(limit);
+
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("instagram-feed api error:", error);
+    res.status(502).json({
+      error: "Instagram posts could not be loaded",
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
-
-  const url = new URL(req.url);
-  const imageUrl = url.searchParams.get("image");
-  if (imageUrl) {
-    return proxyImage(imageUrl);
-  }
-
-  const limit = Math.min(Math.max(1, Number.parseInt(url.searchParams.get("limit") || "3", 10)), 12);
-  const posts = await fetchPublicProfilePosts(limit);
-
-  return new Response(JSON.stringify(posts), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=300, s-maxage=300",
-      ...corsHeaders,
-    },
-  });
 }
