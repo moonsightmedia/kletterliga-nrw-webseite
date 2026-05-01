@@ -15,6 +15,7 @@ const authMocks = vi.hoisted(() => ({
 
 const appApiMocks = vi.hoisted(() => ({
   fetchProfile: vi.fn(),
+  fetchProfileConsent: vi.fn(),
   upsertProfile: vi.fn(),
 }));
 
@@ -39,6 +40,7 @@ vi.mock("@/services/supabase", () => ({
 
 vi.mock("@/services/appApi", () => ({
   fetchProfile: appApiMocks.fetchProfile,
+  fetchProfileConsent: appApiMocks.fetchProfileConsent,
   upsertProfile: appApiMocks.upsertProfile,
 }));
 
@@ -121,6 +123,7 @@ describe("AuthProvider role source", () => {
     authMocks.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
     authMocks.resend.mockResolvedValue({ data: {}, error: null });
     appApiMocks.fetchProfile.mockResolvedValue({ data: null, error: null });
+    appApiMocks.fetchProfileConsent.mockResolvedValue({ data: null, error: null });
     appApiMocks.upsertProfile.mockResolvedValue({ data: null, error: null });
   });
 

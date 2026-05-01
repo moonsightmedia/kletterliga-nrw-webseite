@@ -31,7 +31,7 @@ describe("GymInvite page", () => {
         email: "halle@example.com",
         gym_id: "gym-1",
         gym_name: "Kletterhalle Test",
-        expires_at: "2026-04-10T12:00:00.000Z",
+        expires_at: "2026-12-10T12:00:00.000Z",
         used_at: null,
         revoked_at: null,
       },

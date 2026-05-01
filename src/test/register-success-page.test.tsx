@@ -6,6 +6,12 @@ const { hasParticipantLaunchStartedMock } = vi.hoisted(() => ({
   hasParticipantLaunchStartedMock: vi.fn(),
 }));
 
+vi.mock("@/app/auth/AuthProvider", () => ({
+  useAuth: () => ({
+    resendConfirmation: vi.fn().mockResolvedValue({}),
+  }),
+}));
+
 vi.mock("@/config/launch", async () => {
   const actual = await vi.importActual<typeof import("@/config/launch")>("@/config/launch");
   return {

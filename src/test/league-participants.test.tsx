@@ -4,7 +4,9 @@ import LeagueParticipants from "@/app/pages/admin/LeagueParticipants";
 const appApiMocks = vi.hoisted(() => ({
   listProfiles: vi.fn(),
   listGyms: vi.fn(),
+  listGymAdmins: vi.fn(),
   listGymAdminsByGym: vi.fn(),
+  getParticipantActivityStats: vi.fn(),
   updateProfile: vi.fn(),
   archiveProfile: vi.fn(),
   restoreProfile: vi.fn(),
@@ -14,7 +16,9 @@ const appApiMocks = vi.hoisted(() => ({
 vi.mock("@/services/appApi", () => ({
   listProfiles: appApiMocks.listProfiles,
   listGyms: appApiMocks.listGyms,
+  listGymAdmins: appApiMocks.listGymAdmins,
   listGymAdminsByGym: appApiMocks.listGymAdminsByGym,
+  getParticipantActivityStats: appApiMocks.getParticipantActivityStats,
   updateProfile: appApiMocks.updateProfile,
   archiveProfile: appApiMocks.archiveProfile,
   restoreProfile: appApiMocks.restoreProfile,
@@ -61,7 +65,9 @@ describe("LeagueParticipants", () => {
       data: [{ id: "gym-1", name: "Kletterhalle Mitte", archived_at: null }],
       error: null,
     });
+    appApiMocks.listGymAdmins.mockResolvedValue({ data: [], error: null });
     appApiMocks.listGymAdminsByGym.mockResolvedValue({ data: [], error: null });
+    appApiMocks.getParticipantActivityStats.mockResolvedValue({ data: [], error: null });
     appApiMocks.updateProfile.mockResolvedValue({ data: null, error: null });
     appApiMocks.archiveProfile.mockResolvedValue({
       data: {

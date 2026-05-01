@@ -132,7 +132,7 @@ describe("LeagueGyms", () => {
           id: "invite-1",
           gym_id: "gym-invite",
           email: "halle@example.com",
-          expires_at: "2026-04-10T12:00:00.000Z",
+          expires_at: "2026-12-10T12:00:00.000Z",
           created_at: "2026-04-03T10:00:00.000Z",
           used_at: null,
           revoked_at: null,
