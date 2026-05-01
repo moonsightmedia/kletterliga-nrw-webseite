@@ -29,7 +29,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
       >
         {gym ? (
           <>
-            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center bg-transparent text-primary/68 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <DialogClose className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center border-0 bg-transparent p-0 text-primary/68 shadow-none outline-none transition-colors hover:text-primary focus:border-0 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
               <X className="h-4 w-4" strokeWidth={2.2} />
               <span className="sr-only">Schließen</span>
             </DialogClose>

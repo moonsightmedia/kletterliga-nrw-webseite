@@ -61,6 +61,170 @@ type InstagramGraphResponse = {
   data?: InstagramGraphPost[];
 };
 
+const defaultFallbackPosts: InstagramPost[] = [
+  {
+    id: "fallback-1",
+    caption:
+      "Aktuelle Infos, Events und Highlights findest du direkt auf unserem Instagram-Profil.",
+    media_type: "IMAGE",
+    media_url: "/placeholder.svg",
+    permalink: "https://www.instagram.com/kletterliga_nrw/",
+    timestamp: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+    username: "kletterliga_nrw",
+  },
+  {
+    id: "fallback-2",
+    caption:
+      "Du willst keine Updates verpassen? Folge uns auf Instagram und bleib bei allen Terminen dabei.",
+    media_type: "IMAGE",
+    media_url: "/placeholder.svg",
+    permalink: "https://www.instagram.com/kletterliga_nrw/",
+    timestamp: new Date("2026-01-02T00:00:00.000Z").toISOString(),
+    username: "kletterliga_nrw",
+  },
+  {
+    id: "fallback-3",
+    caption:
+      "Von Quali bis Finale: Alle News und Einblicke laufen ueber @kletterliga_nrw.",
+    media_type: "IMAGE",
+    media_url: "/placeholder.svg",
+    permalink: "https://www.instagram.com/kletterliga_nrw/",
+    timestamp: new Date("2026-01-03T00:00:00.000Z").toISOString(),
+    username: "kletterliga_nrw",
+  },
+];
+
+function parseFallbackPosts(limit: number): InstagramPost[] {
+  const rawValue = Deno.env.get("INSTAGRAM_FALLBACK_POSTS_JSON");
+  if (!rawValue) {
+    return defaultFallbackPosts.slice(0, limit);
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) {
+      return defaultFallbackPosts.slice(0, limit);
+    }
+
+    const sanitized: InstagramPost[] = parsed
+      .filter((item) => item && typeof item === "object")
+      .map((item, index) => {
+        const post = item as Record<string, unknown>;
+        const permalink =
+          typeof post.permalink === "string" && post.permalink.trim().length > 0
+            ? post.permalink.trim()
+            : "https://www.instagram.com/kletterliga_nrw/";
+        const mediaUrl =
+          typeof post.media_url === "string" && post.media_url.trim().length > 0
+            ? post.media_url.trim()
+            : "/placeholder.svg";
+        const caption = typeof post.caption === "string" ? post.caption : null;
+        const timestamp =
+          typeof post.timestamp === "string" && post.timestamp.trim().length > 0
+            ? post.timestamp
+            : new Date().toISOString();
+        const mediaTypeValue =
+          typeof post.media_type === "string" ? post.media_type.toUpperCase() : "IMAGE";
+        const mediaType: InstagramPost["media_type"] =
+          mediaTypeValue === "VIDEO" || mediaTypeValue === "CAROUSEL_ALBUM"
+            ? mediaTypeValue
+            : "IMAGE";
+
+        return {
+          id:
+            typeof post.id === "string" && post.id.trim().length > 0
+              ? post.id
+              : `fallback-${index + 1}`,
+          caption,
+          media_type: mediaType,
+          media_url: mediaUrl,
+          permalink,
+          thumbnail_url:
+            typeof post.thumbnail_url === "string" && post.thumbnail_url.trim().length > 0
+              ? post.thumbnail_url
+              : undefined,
+          timestamp,
+          like_count:
+            typeof post.like_count === "number" && Number.isFinite(post.like_count)
+              ? post.like_count
+              : undefined,
+          comments_count:
+            typeof post.comments_count === "number" && Number.isFinite(post.comments_count)
+              ? post.comments_count
+              : undefined,
+          username:
+            typeof post.username === "string" && post.username.trim().length > 0
+              ? post.username
+              : "kletterliga_nrw",
+        };
+      });
+
+    if (sanitized.length === 0) {
+      return defaultFallbackPosts.slice(0, limit);
+    }
+
+    return sanitized.slice(0, limit);
+  } catch (error) {
+    console.error("Failed to parse INSTAGRAM_FALLBACK_POSTS_JSON:", error);
+    return defaultFallbackPosts.slice(0, limit);
+  }
+}
+
+async function fetchInstagramMedia(
+  accessToken: string,
+  validLimit: number,
+): Promise<{ data: InstagramGraphResponse | null; errorResponse: Response | null }> {
+  const fieldsWithInsights =
+    "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count";
+  const baseFields = "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp";
+
+  const primaryUrl = `https://graph.instagram.com/me/media?fields=${fieldsWithInsights}&limit=${validLimit}&access_token=${accessToken}`;
+  console.log("Fetching Instagram posts from:", primaryUrl.replace(accessToken, "***"));
+  const primaryResponse = await fetch(primaryUrl);
+
+  if (primaryResponse.ok) {
+    return { data: await primaryResponse.json(), errorResponse: null };
+  }
+
+  const primaryError = await primaryResponse.json().catch(() => ({}));
+  console.warn(
+    "Instagram API request with insights fields failed, retrying without insights fields",
+    primaryResponse.status,
+    primaryError,
+  );
+
+  const fallbackUrl = `https://graph.instagram.com/me/media?fields=${baseFields}&limit=${validLimit}&access_token=${accessToken}`;
+  console.log("Retry Instagram posts without insights fields:", fallbackUrl.replace(accessToken, "***"));
+  const fallbackResponse = await fetch(fallbackUrl);
+
+  if (!fallbackResponse.ok) {
+    const fallbackError = await fallbackResponse.json().catch(() => ({}));
+    console.error("Instagram API error:", fallbackResponse.status, fallbackError);
+
+    const errorCode = String((fallbackError as { error?: { code?: number | string } })?.error?.code ?? "");
+    const errorMessage = String(
+      (fallbackError as { error?: { message?: string } })?.error?.message ?? "",
+    ).toLowerCase();
+    const tokenInvalid = errorCode === "190" || errorMessage.includes("access token");
+
+    // If token is currently invalid, keep endpoint stable and return fallback posts.
+    if (tokenInvalid) {
+      console.warn("Instagram token invalid. Returning fallback feed instead of hard error.");
+      return { data: { data: parseFallbackPosts(validLimit) }, errorResponse: null };
+    }
+
+    return {
+      data: null,
+      errorResponse: new Response(
+        JSON.stringify({ error: "Failed to fetch Instagram posts", details: fallbackError }),
+        { status: fallbackResponse.status, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      ),
+    };
+  }
+
+  return { data: await fallbackResponse.json(), errorResponse: null };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -107,20 +271,20 @@ serve(async (req) => {
     }
 
     // Normale Feed-Anfrage
-    const accessToken = Deno.env.get("INSTAGRAM_ACCESS_TOKEN");
-    const instagramBusinessAccountId = Deno.env.get("INSTAGRAM_BUSINESS_ACCOUNT_ID");
-    
-    if (!accessToken) {
-      console.error("INSTAGRAM_ACCESS_TOKEN not configured");
-      return new Response(
-        JSON.stringify({ error: "Instagram access token not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     // Get limit from query params (default: 6)
     const limit = parseInt(url.searchParams.get("limit") || "6", 10);
     const validLimit = Math.min(Math.max(1, limit), 12); // Between 1 and 12
+
+    const accessToken = Deno.env.get("INSTAGRAM_ACCESS_TOKEN");
+    const instagramBusinessAccountId = Deno.env.get("INSTAGRAM_BUSINESS_ACCOUNT_ID");
+
+    if (!accessToken) {
+      console.warn("INSTAGRAM_ACCESS_TOKEN not configured. Returning fallback feed.");
+      return new Response(JSON.stringify(parseFallbackPosts(validLimit)), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     // Check if hashtag search is requested
     const hashtag = url.searchParams.get("hashtag");
@@ -190,21 +354,12 @@ serve(async (req) => {
       data = await response.json();
     } else {
       // Normale Feed-Anfrage (eigene Posts)
-      apiUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count&limit=${validLimit}&access_token=${accessToken}`;
-      
-      console.log("Fetching Instagram posts from:", apiUrl.replace(accessToken, "***"));
-      response = await fetch(apiUrl);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Instagram API error:", response.status, errorData);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch Instagram posts", details: errorData }),
-          { status: response.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+      const mediaFetch = await fetchInstagramMedia(accessToken, validLimit);
+      if (mediaFetch.errorResponse) {
+        return mediaFetch.errorResponse;
       }
 
-      data = await response.json();
+      data = mediaFetch.data ?? { data: [] };
     }
     
     // Debug: Log first post to see what fields are available

@@ -121,6 +121,13 @@ export type GymAdmin = {
   created_at: string;
 };
 
+export type ParticipantActivityStats = {
+  profile_id: string;
+  results_count: number;
+  flash_count: number;
+  last_result_at: string | null;
+};
+
 export type GymInvite = {
   id: string;
   gym_id: string | null;

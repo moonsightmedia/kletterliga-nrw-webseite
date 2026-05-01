@@ -13,6 +13,7 @@ import type {
   MarketingEmailStatus,
   MasterCode,
   PartnerVoucherRedemption,
+  ParticipantActivityStats,
   Profile,
   ProfileConsent,
   ProfileOverride,
@@ -426,6 +427,38 @@ export async function listResults(options?: ArchiveQueryOptions) {
   };
 }
 
+export async function getParticipantActivityStats(options?: ArchiveQueryOptions) {
+  const { data, error } = await listResults(options);
+  if (error) {
+    return { data: null, error };
+  }
+
+  const summary = new Map<string, ParticipantActivityStats>();
+  (data ?? []).forEach((result) => {
+    const current = summary.get(result.profile_id) ?? {
+      profile_id: result.profile_id,
+      results_count: 0,
+      flash_count: 0,
+      last_result_at: null,
+    };
+
+    current.results_count += 1;
+    if (result.flash) {
+      current.flash_count += 1;
+    }
+    if (!current.last_result_at || result.created_at > current.last_result_at) {
+      current.last_result_at = result.created_at;
+    }
+
+    summary.set(result.profile_id, current);
+  });
+
+  return {
+    data: Array.from(summary.values()),
+    error: null,
+  };
+}
+
 export async function listProfiles(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
@@ -812,6 +845,10 @@ export async function listPartnerVoucherRedemptions(options: {
 
 export async function listGymAdminsByProfile(profileId: string) {
   return supabase.from("gym_admins").select("*").eq("profile_id", profileId).returns<{ gym_id: string }[]>();
+}
+
+export async function listGymAdmins() {
+  return supabase.from("gym_admins").select("*").returns<GymAdmin[]>();
 }
 
 export async function listGymInvites() {
