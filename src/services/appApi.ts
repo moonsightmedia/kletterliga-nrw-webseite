@@ -1128,6 +1128,14 @@ export async function getInstagramFeed(limit: number = 6) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
+  const localRes = await fetch(`/api/instagram-feed?limit=${limit}`).catch(() => null);
+  if (localRes?.ok) {
+    const localBody = await localRes.json().catch(() => []);
+    if (Array.isArray(localBody) && localBody.length > 0) {
+      return { data: localBody as InstagramPost[], error: null };
+    }
+  }
+
   const url = `${supabaseConfig.url}/functions/v1/get-instagram-feed`;
   const res = await fetch(`${url}?limit=${limit}`, {
     method: "GET",

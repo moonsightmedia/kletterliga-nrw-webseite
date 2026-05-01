@@ -23,6 +23,10 @@ export const getInstagramImageSource = (imageUrl: string | null | undefined) => 
       return trimmed;
     }
 
+    if (typeof window !== "undefined") {
+      return `/api/instagram-feed?image=${encodeURIComponent(trimmed)}`;
+    }
+
     return `${supabaseConfig.url}/functions/v1/get-instagram-feed?image=${encodeURIComponent(trimmed)}`;
   } catch {
     return trimmed;

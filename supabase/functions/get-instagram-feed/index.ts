@@ -61,6 +61,33 @@ type InstagramGraphResponse = {
   data?: InstagramGraphPost[];
 };
 
+type InstagramPublicMediaNode = {
+  id?: string;
+  shortcode?: string;
+  display_url?: string;
+  thumbnail_src?: string;
+  is_video?: boolean;
+  taken_at_timestamp?: number;
+  edge_media_to_caption?: {
+    edges?: Array<{ node?: { text?: string } }>;
+  };
+  edge_liked_by?: { count?: number };
+  edge_media_to_comment?: { count?: number };
+  __typename?: string;
+};
+
+type InstagramPublicProfileResponse = {
+  data?: {
+    user?: {
+      edge_owner_to_timeline_media?: {
+        edges?: Array<{ node?: InstagramPublicMediaNode }>;
+      };
+    };
+  };
+};
+
+const instagramUsername = "kletterliga_nrw";
+
 const defaultFallbackPosts: InstagramPost[] = [
   {
     id: "fallback-1",
@@ -170,6 +197,84 @@ function parseFallbackPosts(limit: number): InstagramPost[] {
   }
 }
 
+function mapPublicProfilePost(node: InstagramPublicMediaNode): InstagramPost | null {
+  const shortcode = typeof node.shortcode === "string" ? node.shortcode : "";
+  const mediaUrl =
+    typeof node.display_url === "string" && node.display_url.trim().length > 0
+      ? node.display_url.trim()
+      : typeof node.thumbnail_src === "string" && node.thumbnail_src.trim().length > 0
+        ? node.thumbnail_src.trim()
+        : "";
+
+  if (!shortcode || !mediaUrl) {
+    return null;
+  }
+
+  const caption = node.edge_media_to_caption?.edges?.[0]?.node?.text ?? null;
+  const timestamp =
+    typeof node.taken_at_timestamp === "number"
+      ? new Date(node.taken_at_timestamp * 1000).toISOString()
+      : new Date().toISOString();
+  const mediaType: InstagramPost["media_type"] =
+    node.is_video
+      ? "VIDEO"
+      : node.__typename === "GraphSidecar"
+        ? "CAROUSEL_ALBUM"
+        : "IMAGE";
+
+  return {
+    id: typeof node.id === "string" && node.id ? node.id : shortcode,
+    caption,
+    media_type: mediaType,
+    media_url: mediaUrl,
+    permalink: `https://www.instagram.com/p/${shortcode}/`,
+    thumbnail_url:
+      typeof node.thumbnail_src === "string" && node.thumbnail_src.trim().length > 0
+        ? node.thumbnail_src.trim()
+        : undefined,
+    timestamp,
+    like_count:
+      typeof node.edge_liked_by?.count === "number" ? node.edge_liked_by.count : undefined,
+    comments_count:
+      typeof node.edge_media_to_comment?.count === "number"
+        ? node.edge_media_to_comment.count
+        : undefined,
+    username: instagramUsername,
+  };
+}
+
+async function fetchInstagramPublicProfilePosts(limit: number): Promise<InstagramPost[] | null> {
+  const profileUrl = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${instagramUsername}`;
+
+  try {
+    const response = await fetch(profileUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "application/json,text/plain,*/*",
+        "X-IG-App-ID": "936619743392459",
+        "Referer": `https://www.instagram.com/${instagramUsername}/`,
+      },
+    });
+
+    if (!response.ok) {
+      console.warn("Instagram public profile fallback failed:", response.status);
+      return null;
+    }
+
+    const data = (await response.json()) as InstagramPublicProfileResponse;
+    const posts = (data.data?.user?.edge_owner_to_timeline_media?.edges ?? [])
+      .map((edge) => edge.node ? mapPublicProfilePost(edge.node) : null)
+      .filter((post): post is InstagramPost => post !== null)
+      .slice(0, limit);
+
+    return posts.length > 0 ? posts : null;
+  } catch (error) {
+    console.error("Instagram public profile fallback error:", error);
+    return null;
+  }
+}
+
 async function fetchInstagramMedia(
   accessToken: string,
   validLimit: number,
@@ -209,8 +314,9 @@ async function fetchInstagramMedia(
 
     // If token is currently invalid, keep endpoint stable and return fallback posts.
     if (tokenInvalid) {
-      console.warn("Instagram token invalid. Returning fallback feed instead of hard error.");
-      return { data: { data: parseFallbackPosts(validLimit) }, errorResponse: null };
+      console.warn("Instagram token invalid. Trying public profile fallback.");
+      const publicPosts = await fetchInstagramPublicProfilePosts(validLimit);
+      return { data: { data: publicPosts ?? parseFallbackPosts(validLimit) }, errorResponse: null };
     }
 
     return {
@@ -279,8 +385,9 @@ serve(async (req) => {
     const instagramBusinessAccountId = Deno.env.get("INSTAGRAM_BUSINESS_ACCOUNT_ID");
 
     if (!accessToken) {
-      console.warn("INSTAGRAM_ACCESS_TOKEN not configured. Returning fallback feed.");
-      return new Response(JSON.stringify(parseFallbackPosts(validLimit)), {
+      console.warn("INSTAGRAM_ACCESS_TOKEN not configured. Trying public profile fallback.");
+      const publicPosts = await fetchInstagramPublicProfilePosts(validLimit);
+      return new Response(JSON.stringify(publicPosts ?? parseFallbackPosts(validLimit)), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
