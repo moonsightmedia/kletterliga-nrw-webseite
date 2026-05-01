@@ -24,7 +24,6 @@ const getPageTitle = (path: string) => {
   if (path.startsWith("/app/rankings")) return "Rangliste";
   if (path.startsWith("/app/age-group-rankings")) return "Altersklassen";
   if (path.startsWith("/app/finale")) return "Finale";
-  if (path === "/app/profile/notifications") return "Benachrichtigungen";
   if (path === "/app/profile/edit") return "Profil bearbeiten";
   if (path === "/app/profile/history") return "Verlauf";
   if (path.startsWith("/app/profile")) return "Profil";
@@ -313,16 +312,9 @@ export const ParticipantLayout = () => {
                           <p className="mt-1 text-sm leading-6 text-[rgba(0,38,55,0.72)]">
                             {notificationStatusLabel}: {notificationStatusHint}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setNotificationsOpen(false);
-                              navigate("/app/profile/notifications");
-                            }}
-                            className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#003d55] underline decoration-[#003d55]/25 underline-offset-4"
-                          >
-                            Einstellungen öffnen
-                          </button>
+                          <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#003d55]">
+                            Einstellungen vorübergehend pausiert
+                          </p>
                         </div>
                       </div>
                     </div>

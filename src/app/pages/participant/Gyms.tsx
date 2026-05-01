@@ -39,6 +39,7 @@ const GYM_NAME_ALIASES: Record<string, string> = {
   "2t lindlar": "2T Lindlar",
   "canyon chorweiler": "Canyon Chorweiler",
   chimpanzodrom: "Chimpanzodrom",
+  chimpanzodrome: "Chimpanzodrom",
   "chimpanzodrome frechen": "Chimpanzodrom",
   "dav alpinzentrum bielefeld": "Kletterhalle Bielefeld",
   "kletterhalle bielefeld": "Kletterhalle Bielefeld",

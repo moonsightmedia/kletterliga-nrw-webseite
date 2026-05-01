@@ -423,7 +423,7 @@ const ProfileScreen = () => {
         tone="navy"
         className={`relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
           isParticipationActivated
-            ? "ring-2 ring-[#63d3a8]/85"
+            ? "outline outline-2 outline-[#63d3a8] outline-offset-2"
             : ""
         }`}
       >
@@ -565,12 +565,6 @@ const ProfileScreen = () => {
             icon="lock_open"
             label="Passwort ändern"
             onClick={handlePasswordReset}
-          />
-          <div className="mx-3 h-px bg-[#f2dcab]/40" />
-          <SettingsRow
-            icon="notifications_none"
-            label="Benachrichtigungen"
-            onClick={() => navigate("/app/profile/notifications")}
           />
           <div className="mx-3 h-px bg-[#f2dcab]/40" />
           <SettingsRow

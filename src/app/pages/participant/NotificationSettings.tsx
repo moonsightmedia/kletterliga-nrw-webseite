@@ -59,9 +59,9 @@ const NotificationSettings = () => {
 
   return (
     <div className="mx-auto max-w-md space-y-6">
-      <section className="rounded-xl bg-[#003d55] p-6 text-[#f2dcab] shadow-lg">
+      <section className="rounded-[1.05rem] bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f2dcab] text-[#003d55]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[0.72rem] bg-[#f2dcab] text-[#003d55]">
             <Mail className="h-5 w-5" />
           </div>
           <div className="space-y-2">
@@ -76,46 +76,48 @@ const NotificationSettings = () => {
         </div>
       </section>
 
-      <StitchCard tone="surface" className="p-5">
-        <div className="space-y-4">
-          <div className="rounded-[1.2rem] bg-[#f5efe5] p-4">
+      <StitchCard tone="surface" className="p-5 sm:p-6">
+        <div className="space-y-5">
+          <section className="space-y-3 border-b border-[#003d55]/10 pb-5">
             <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#71787d]">Aktueller Status</div>
-            <div className="mt-2 font-['Space_Grotesk'] text-2xl font-bold text-[#003d55]">{statusLabel}</div>
-            <p className="mt-2 text-sm leading-6 text-[rgba(27,28,26,0.68)]">{statusHint}</p>
+            <div className="font-['Space_Grotesk'] text-3xl font-bold text-[#003d55]">{statusLabel}</div>
+            <p className="text-sm leading-7 text-[rgba(27,28,26,0.68)]">{statusHint}</p>
             {user?.email ? (
-              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(27,28,26,0.46)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(27,28,26,0.46)]">
                 Adresse: {user.email}
               </p>
             ) : null}
-          </div>
+          </section>
 
-          <div className="rounded-[1.2rem] border border-[rgba(0,38,55,0.1)] bg-white p-4">
+          <section className="space-y-2 border-b border-[#003d55]/10 pb-5">
             <div className="font-['Space_Grotesk'] text-lg font-bold text-[#003d55]">Pflicht-Mails</div>
-            <p className="mt-2 text-sm leading-6 text-[rgba(27,28,26,0.68)]">
+            <p className="text-sm leading-7 text-[rgba(27,28,26,0.68)]">
               Dazu gehören Login, Passwort-Reset, Qualifikation, Halbfinale, Finale, Fristen und wesentliche
               organisatorische Änderungen. Diese Nachrichten kannst du hier nicht abschalten.
             </p>
+          </section>
+
+          <div className="space-y-3 pt-1">
+            {status === "subscribed" ? (
+              <StitchButton type="button" variant="outline" className="w-full" onClick={() => void handleUnsubscribe()} disabled={loadingAction !== null}>
+                <MailMinus className="h-4 w-4" />
+                {loadingAction === "unsubscribe" ? "Wird abbestellt..." : "Freiwillige Infos abbestellen"}
+              </StitchButton>
+            ) : (
+              <StitchButton type="button" className="w-full" onClick={() => void handleActivate()} disabled={loadingAction !== null}>
+                {status === "pending" ? <MailCheck className="h-4 w-4" /> : <MailPlus className="h-4 w-4" />}
+                {loadingAction === "activate" || loadingAction === "resend"
+                  ? "Wird gesendet..."
+                  : status === "pending"
+                    ? "Bestätigungs-E-Mail erneut senden"
+                    : "Freiwillige Infos aktivieren"}
+              </StitchButton>
+            )}
+
+            <StitchButton type="button" variant="ghost" className="w-full" onClick={() => navigate("/app/profile")}>
+              Zurück zum Profil
+            </StitchButton>
           </div>
-
-          {status === "subscribed" ? (
-            <StitchButton type="button" variant="outline" className="w-full" onClick={() => void handleUnsubscribe()} disabled={loadingAction !== null}>
-              <MailMinus className="h-4 w-4" />
-              {loadingAction === "unsubscribe" ? "Wird abbestellt..." : "Freiwillige Infos abbestellen"}
-            </StitchButton>
-          ) : (
-            <StitchButton type="button" className="w-full" onClick={() => void handleActivate()} disabled={loadingAction !== null}>
-              {status === "pending" ? <MailCheck className="h-4 w-4" /> : <MailPlus className="h-4 w-4" />}
-              {loadingAction === "activate" || loadingAction === "resend"
-                ? "Wird gesendet..."
-                : status === "pending"
-                  ? "Bestätigungs-E-Mail erneut senden"
-                  : "Freiwillige Infos aktivieren"}
-            </StitchButton>
-          )}
-
-          <StitchButton type="button" variant="ghost" className="w-full" onClick={() => navigate("/app/profile")}>
-            Zurück zum Profil
-          </StitchButton>
         </div>
       </StitchCard>
     </div>
