@@ -67,7 +67,7 @@ const defaultFallbackPosts: InstagramPost[] = [
     caption:
       "Aktuelle Infos, Events und Highlights findest du direkt auf unserem Instagram-Profil.",
     media_type: "IMAGE",
-    media_url: "/placeholder.svg",
+    media_url: "",
     permalink: "https://www.instagram.com/kletterliga_nrw/",
     timestamp: new Date("2026-01-01T00:00:00.000Z").toISOString(),
     username: "kletterliga_nrw",
@@ -77,7 +77,7 @@ const defaultFallbackPosts: InstagramPost[] = [
     caption:
       "Du willst keine Updates verpassen? Folge uns auf Instagram und bleib bei allen Terminen dabei.",
     media_type: "IMAGE",
-    media_url: "/placeholder.svg",
+    media_url: "",
     permalink: "https://www.instagram.com/kletterliga_nrw/",
     timestamp: new Date("2026-01-02T00:00:00.000Z").toISOString(),
     username: "kletterliga_nrw",
@@ -87,7 +87,7 @@ const defaultFallbackPosts: InstagramPost[] = [
     caption:
       "Von Quali bis Finale: Alle News und Einblicke laufen ueber @kletterliga_nrw.",
     media_type: "IMAGE",
-    media_url: "/placeholder.svg",
+    media_url: "",
     permalink: "https://www.instagram.com/kletterliga_nrw/",
     timestamp: new Date("2026-01-03T00:00:00.000Z").toISOString(),
     username: "kletterliga_nrw",
@@ -115,9 +115,9 @@ function parseFallbackPosts(limit: number): InstagramPost[] {
             ? post.permalink.trim()
             : "https://www.instagram.com/kletterliga_nrw/";
         const mediaUrl =
-          typeof post.media_url === "string" && post.media_url.trim().length > 0
+          typeof post.media_url === "string"
             ? post.media_url.trim()
-            : "/placeholder.svg";
+            : "";
         const caption = typeof post.caption === "string" ? post.caption : null;
         const timestamp =
           typeof post.timestamp === "string" && post.timestamp.trim().length > 0

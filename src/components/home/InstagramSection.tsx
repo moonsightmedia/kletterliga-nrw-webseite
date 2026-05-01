@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Instagram, ExternalLink, Heart, MessageCircle } from "lucide-react";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { getInstagramFeed } from "@/services/appApi";
-import { supabaseConfig } from "@/services/supabase";
+import { getInstagramImageSource } from "@/components/home/instagramMedia";
 import type { InstagramPost } from "@/services/appTypes";
 
 export const InstagramSection = () => {
@@ -73,7 +73,7 @@ export const InstagramSection = () => {
               animation="scale"
             >
               {posts.map((post) => {
-                const imageUrl = post.thumbnail_url || post.media_url;
+                const imageUrl = getInstagramImageSource(post.thumbnail_url || post.media_url);
                 const caption = post.caption || null;
                 const likeCount = post.like_count ?? 0;
                 const commentCount = post.comments_count ?? 0;
@@ -89,7 +89,6 @@ export const InstagramSection = () => {
                   >
                     {imageUrl ? (
                       <>
-                        {/* Bild - Seitenverhältnis 4:5 (Portrait) */}
                         <div className="relative aspect-[4/5] overflow-hidden">
                           <img
                             src={imageUrl}
@@ -99,9 +98,7 @@ export const InstagramSection = () => {
                           />
                         </div>
                         
-                        {/* Instagram-Post-ähnlicher Footer (immer sichtbar) */}
                         <div className="p-4 space-y-3">
-                          {/* Likes und Kommentare */}
                           <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
                               <Heart className="text-foreground" size={20} />
@@ -113,7 +110,6 @@ export const InstagramSection = () => {
                             </div>
                           </div>
                           
-                          {/* Caption */}
                           {caption && (
                             <div className="text-sm text-foreground">
                               <span className="font-semibold">@{username}</span>{" "}
@@ -123,9 +119,40 @@ export const InstagramSection = () => {
                         </div>
                       </>
                     ) : (
-                      <div className="aspect-square flex items-center justify-center bg-muted">
-                        <Instagram className="text-muted-foreground" size={32} />
-                      </div>
+                      <>
+                        <div className="relative aspect-[4/5] overflow-hidden bg-[radial-gradient(circle_at_24%_18%,rgba(242,220,171,0.72),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(161,85,35,0.32),transparent_26%),linear-gradient(145deg,#003d55_0%,#002637_100%)]">
+                          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_34%,rgba(242,220,171,0.12)_100%)]" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center text-[#f2dcab]">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.22)] backdrop-blur">
+                              <Instagram size={34} />
+                            </div>
+                            <div>
+                              <div className="font-headline text-2xl uppercase leading-none">@kletterliga_nrw</div>
+                              <div className="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#f2dcab]/72">
+                                Auf Instagram ansehen
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                              <Heart className="text-foreground" size={20} />
+                              <span className="text-sm font-semibold">{likeCount.toLocaleString("de-DE")}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MessageCircle className="text-foreground" size={20} />
+                              <span className="text-sm font-semibold">{commentCount.toLocaleString("de-DE")}</span>
+                            </div>
+                          </div>
+                          {caption && (
+                            <div className="text-sm text-foreground">
+                              <span className="font-semibold">@{username}</span>{" "}
+                              <span className="whitespace-pre-line line-clamp-3">{caption}</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
                   </a>
                 );
