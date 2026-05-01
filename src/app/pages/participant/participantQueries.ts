@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   checkGymCodeRedeemed,
   getGym,
+  listGymCommunityStats,
   listGyms,
   listProfiles,
   listResults,
@@ -10,13 +11,14 @@ import {
   listRoutes,
   listRoutesByGym,
 } from "@/services/appApi";
-import type { Gym, Profile, Result, Route } from "@/services/appTypes";
+import type { Gym, GymCommunityStats, Profile, Result, Route } from "@/services/appTypes";
 
 export type ParticipantCompetitionData = {
   profiles: Profile[];
   results: Result[];
   routes: Route[];
   gyms: Gym[];
+  gymStats: GymCommunityStats[];
 };
 
 export type ParticipantGymDetailData = {
@@ -35,6 +37,7 @@ const EMPTY_COMPETITION_DATA: ParticipantCompetitionData = {
   results: [],
   routes: [],
   gyms: [],
+  gymStats: [],
 };
 
 const EMPTY_GYM_DETAIL_DATA: ParticipantGymDetailData = {
@@ -79,10 +82,10 @@ const buildQueryState = <T,>({
 };
 
 const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetitionData> => {
-  const responses = await Promise.all([listProfiles(), listResults(), listRoutes(), listGyms()]);
-  const [{ data: profiles }, { data: results }, { data: routes }, { data: gyms }] = responses;
+  const responses = await Promise.all([listProfiles(), listResults(), listRoutes(), listGyms(), listGymCommunityStats()]);
+  const [{ data: profiles }, { data: results }, { data: routes }, { data: gyms }, { data: gymStats }] = responses;
 
-  if (!profiles || !results || !routes || !gyms) {
+  if (!profiles || !results || !routes || !gyms || !gymStats) {
     throw new Error(
       getResponseErrorMessage(
         responses,
@@ -91,7 +94,7 @@ const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetition
     );
   }
 
-  return { profiles, results, routes, gyms };
+  return { profiles, results, routes, gyms, gymStats };
 };
 
 const fetchParticipantUserResults = async (profileId: string): Promise<Result[]> => {

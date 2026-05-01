@@ -128,6 +128,12 @@ export type ParticipantActivityStats = {
   last_result_at: string | null;
 };
 
+export type GymCommunityStats = {
+  gym_id: string;
+  visitor_count: number;
+  average_points_per_route: number | null;
+};
+
 export type GymInvite = {
   id: string;
   gym_id: string | null;

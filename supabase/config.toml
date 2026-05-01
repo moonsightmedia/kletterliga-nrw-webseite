@@ -37,6 +37,9 @@ verify_jwt = false
 [functions.get-instagram-feed]
 verify_jwt = false
 
+[functions.get-gym-community-stats]
+verify_jwt = false
+
 # send-contact-email: öffentlich (Kontaktformular ohne Login)
 [functions.send-contact-email]
 verify_jwt = false

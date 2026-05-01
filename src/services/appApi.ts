@@ -7,6 +7,7 @@ import type {
   Gym,
   GymAdmin,
   GymCode,
+  GymCommunityStats,
   GymInvite,
   GymInvitePreview,
   InstagramPost,
@@ -457,6 +458,30 @@ export async function getParticipantActivityStats(options?: ArchiveQueryOptions)
     data: Array.from(summary.values()),
     error: null,
   };
+}
+
+export async function listGymCommunityStats() {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const url = `${supabaseConfig.url}/functions/v1/get-gym-community-stats`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${supabaseConfig.anonKey}`,
+      apikey: supabaseConfig.anonKey,
+    },
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (body as { error?: string })?.error ?? res.statusText ?? "Hallenstatistiken konnten nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+
+  return { data: (Array.isArray(body) ? body : []) as GymCommunityStats[], error: null };
 }
 
 export async function listProfiles(options?: ArchiveQueryOptions) {

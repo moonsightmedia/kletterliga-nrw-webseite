@@ -110,8 +110,7 @@ const Gyms = () => {
   const {
     gyms: competitionGyms,
     routes,
-    results: allResults,
-    profiles,
+    gymStats,
     loading: competitionLoading,
     error: competitionError,
   } = useParticipantCompetitionData();
@@ -165,38 +164,9 @@ const Gyms = () => {
     [officialRoutes],
   );
 
-  const routeMap = useMemo(
-    () => new Map(officialRoutes.map((route) => [route.id, route])),
-    [officialRoutes],
-  );
-
-  const participantIds = useMemo(
-    () => new Set(profiles.filter((item) => item.role === "participant").map((item) => item.id)),
-    [profiles],
-  );
-
   const communityStatsByGym = useMemo(() => {
-    const stats = new Map<string, { visitorIds: Set<string>; totalPoints: number; resultCount: number }>();
-
-    allResults.forEach((result) => {
-      if (!participantIds.has(result.profile_id)) return;
-      const route = routeMap.get(result.route_id);
-      if (!route) return;
-
-      const current = stats.get(route.gym_id) ?? {
-        visitorIds: new Set<string>(),
-        totalPoints: 0,
-        resultCount: 0,
-      };
-
-      current.visitorIds.add(result.profile_id);
-      current.totalPoints += (result.points ?? 0) + (result.flash ? 1 : 0);
-      current.resultCount += 1;
-      stats.set(route.gym_id, current);
-    });
-
-    return stats;
-  }, [allResults, participantIds, routeMap]);
+    return new Map(gymStats.map((stat) => [stat.gym_id, stat]));
+  }, [gymStats]);
 
   const qualificationDaysLeft = useMemo(() => {
     const qualificationEnd = getQualificationEnd();
@@ -278,9 +248,8 @@ const Gyms = () => {
           const disciplineLabel = getDisciplineLabel(gymRoutes);
           const community = communityStatsByGym.get(gym.id);
           const communityStats: CommunityStats = {
-            visitors: community?.visitorIds.size ?? 0,
-            averagePoints:
-              community && community.resultCount > 0 ? community.totalPoints / community.resultCount : null,
+            visitors: community?.visitor_count ?? 0,
+            averagePoints: community?.average_points_per_route ?? null,
           };
 
           return (
