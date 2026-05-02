@@ -142,7 +142,7 @@ const Ranglisten = () => {
                     variant="secondary"
                     size="lg"
                     className="w-auto max-w-full px-4 sm:px-8 text-sm sm:text-lg"
-                    onClick={(event) => handlePublicParticipantAccess(event, "/app/ranglisten")}
+                    onClick={(event) => handlePublicParticipantAccess(event, "/app/rankings")}
                   >
                     <span className="inline-flex items-center justify-center gap-2 text-center whitespace-normal sm:whitespace-nowrap">
                       <span className="skew-x-6 inline-block leading-tight">Zum Teilnehmerbereich</span>
