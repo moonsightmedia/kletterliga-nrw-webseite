@@ -63,7 +63,7 @@ const Ranglisten = () => {
           setError(err.message ?? "Rangliste konnte nicht geladen werden.");
           setCurrentData([]);
         } else {
-          const rows = (data ?? []).slice(0, 20).map((row, index) => ({
+          const rows = (data ?? []).slice(0, 5).map((row, index) => ({
             rank: row.rank,
             name: row.display_name,
             points: Number(row.points),
