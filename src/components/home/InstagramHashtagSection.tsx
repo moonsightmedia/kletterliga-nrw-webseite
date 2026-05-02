@@ -104,7 +104,7 @@ export const InstagramHashtagSection = ({
                   >
                     {imageUrl ? (
                       <>
-                        <div className="relative aspect-[5/4] overflow-hidden bg-muted/40">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-muted/40">
                           <img
                             src={imageUrl}
                             alt={caption || "Instagram Post"}
@@ -138,7 +138,7 @@ export const InstagramHashtagSection = ({
                       </>
                     ) : (
                       <>
-                        <div className="relative aspect-[5/4] overflow-hidden bg-[radial-gradient(circle_at_24%_18%,rgba(242,220,171,0.72),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(161,85,35,0.32),transparent_26%),linear-gradient(145deg,#003d55_0%,#002637_100%)]">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-[radial-gradient(circle_at_24%_18%,rgba(242,220,171,0.72),transparent_28%),radial-gradient(circle_at_78%_20%,rgba(161,85,35,0.32),transparent_26%),linear-gradient(145deg,#003d55_0%,#002637_100%)]">
                           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_34%,rgba(242,220,171,0.12)_100%)]" />
                           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center text-[#f2dcab]">
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.22)] backdrop-blur">
