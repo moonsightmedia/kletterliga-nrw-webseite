@@ -89,11 +89,11 @@ export const InstagramSection = () => {
                   >
                     {imageUrl ? (
                       <>
-                        <div className="relative aspect-[4/5] overflow-hidden">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-muted/40">
                           <img
                             src={imageUrl}
                             alt={caption || "Instagram Post"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
                           />
                         </div>

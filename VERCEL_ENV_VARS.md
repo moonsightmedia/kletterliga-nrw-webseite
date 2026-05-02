@@ -42,6 +42,15 @@ Wenn die Webseite vor dem offiziellen Start (z. B. bis 1. März) nur für Test
 4. Optional (Closed-Seite): `VITE_SITE_LIVE` (z. B. `true` ab Go-Live), `VITE_PREVIEW_PASSWORD` (Passwort für Tester).
 5. Stelle sicher, dass die Variablen für die gewünschten Environments aktiviert sind (Production, Preview, Development).
 
+### Instagram Feed
+
+Für den offiziellen Instagram Graph API Feed benötigt die Vercel API Route zusätzlich:
+
+- Name: `INSTAGRAM_ACCESS_TOKEN`, Value: Long-Lived Meta Graph API Token mit `instagram_basic`, `pages_show_list`, `pages_read_engagement` und ggf. `business_management`
+- Name: `INSTAGRAM_BUSINESS_ACCOUNT_ID`, Value: `17841473418662189`
+
+Wenn diese Variablen fehlen oder Meta vorübergehend nicht erreichbar ist, nutzt die API automatisch die lokal hinterlegten letzten Posts als Fallback.
+
 ### Über Vercel CLI:
 ```bash
 vercel env add VITE_SUPABASE_URL
