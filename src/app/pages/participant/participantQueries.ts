@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   checkGymCodeRedeemed,
+  fetchViewerMasterRedemptionForViewer,
   getGym,
   getParticipantCompetitionData,
   listGymCommunityStats,
@@ -91,21 +92,48 @@ const buildQueryState = <T,>({
 };
 
 const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetitionData> => {
-  const responses = await Promise.all([getParticipantCompetitionData(), listGymCommunityStats()]);
-  const [{ data: competitionData }, { data: gymStats }] = responses;
+  const [compResp, gymStatsResp, viewerRedeemResp] = await Promise.all([
+    getParticipantCompetitionData(),
+    listGymCommunityStats(),
+    fetchViewerMasterRedemptionForViewer(),
+  ]);
+
+  const responsesForMessage = [
+    compResp,
+    gymStatsResp,
+    { error: viewerRedeemResp.error },
+  ];
+
+  const { data: competitionData } = compResp;
+  const { data: gymStats } = gymStatsResp;
 
   if (!competitionData || !gymStats) {
     throw new Error(
       getResponseErrorMessage(
-        responses,
+        responsesForMessage,
         "Die Teilnehmerdaten konnten nicht geladen werden.",
       ),
     );
   }
 
+  const edgeViewer =
+    competitionData.viewerMasterRedemption?.redeemed_at != null
+      ? competitionData.viewerMasterRedemption
+      : null;
+
+  let dbViewer: ParticipantCompetitionData["viewerMasterRedemption"] | null = null;
+  if (viewerRedeemResp.error) {
+    console.warn(
+      "[participantQueries] Fallback Mastercode nach Profil konnte nicht geladen werden:",
+      (viewerRedeemResp.error as { message?: string }).message ?? viewerRedeemResp.error,
+    );
+  } else {
+    dbViewer = viewerRedeemResp.data ?? null;
+  }
+
   return {
     ...competitionData,
-    viewerMasterRedemption: competitionData.viewerMasterRedemption ?? null,
+    viewerMasterRedemption: edgeViewer ?? dbViewer,
     gymStats,
   };
 };

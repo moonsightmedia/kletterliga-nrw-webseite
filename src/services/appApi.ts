@@ -518,6 +518,44 @@ export async function getParticipantCompetitionData() {
   };
 }
 
+/** Eigene Mastercode-Einlösung über RLS; Fallback wenn Edge-Function `viewerMasterRedemption` noch fehlt/alt ist. */
+export async function fetchViewerMasterRedemptionForViewer() {
+  if (!isSupabaseConfigured) {
+    return { data: null as ViewerMasterRedemption | null, error: null };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) {
+    return { data: null, error: null };
+  }
+
+  const { data, error } = await supabase
+    .from("master_codes")
+    .select("redeemed_at, gym_id")
+    .eq("redeemed_by", uid)
+    .not("redeemed_at", "is", null)
+    .order("redeemed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ redeemed_at: string; gym_id: string | null }>();
+
+  if (error) {
+    return { data: null, error };
+  }
+  if (!data?.redeemed_at) {
+    return { data: null, error: null };
+  }
+  return {
+    data: {
+      redeemed_at: data.redeemed_at,
+      gym_id: data.gym_id ?? null,
+    } satisfies ViewerMasterRedemption,
+    error: null,
+  };
+}
+
 export async function listProfiles(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
