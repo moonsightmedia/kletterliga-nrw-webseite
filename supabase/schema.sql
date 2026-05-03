@@ -574,9 +574,9 @@ create policy "Results insert own" on public.results
     auth.uid() = profile_id
     and exists (
       select 1
-      from public.profiles
-      where profiles.id = auth.uid()
-        and profiles.participation_activated_at is not null
+      from public.master_codes mc
+      where mc.redeemed_by = auth.uid()
+        and mc.redeemed_at is not null
     )
     and exists (
       select 1 from public.routes
@@ -598,9 +598,9 @@ create policy "Results update own" on public.results
     auth.uid() = profile_id
     and exists (
       select 1
-      from public.profiles
-      where profiles.id = auth.uid()
-        and profiles.participation_activated_at is not null
+      from public.master_codes mc
+      where mc.redeemed_by = auth.uid()
+        and mc.redeemed_at is not null
     )
     and exists (
       select 1 from public.routes

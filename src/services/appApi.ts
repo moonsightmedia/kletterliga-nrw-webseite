@@ -20,6 +20,7 @@ import type {
   ProfileOverride,
   Result,
   Route,
+  ViewerMasterRedemption,
 } from "@/services/appTypes";
 
 const missingSupabaseError = () => ({
@@ -41,6 +42,8 @@ export type ParticipantCompetitionDataPayload = {
   results: Result[];
   routes: Route[];
   gyms: Gym[];
+  /** Redemption-Datensatz für den eingeloggten Teilnehmer (Service-Role über Edge Function); null = keine Zeile */
+  viewerMasterRedemption: ViewerMasterRedemption | null;
 };
 
 const shouldExcludeArchived = (options?: ArchiveQueryOptions) => !options?.includeArchived;

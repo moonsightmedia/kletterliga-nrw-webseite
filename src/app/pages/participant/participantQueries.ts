@@ -11,7 +11,14 @@ import {
   listRoutes,
   listRoutesByGym,
 } from "@/services/appApi";
-import type { Gym, GymCommunityStats, Profile, Result, Route } from "@/services/appTypes";
+import type {
+  Gym,
+  GymCommunityStats,
+  Profile,
+  Result,
+  Route,
+  ViewerMasterRedemption,
+} from "@/services/appTypes";
 
 export type ParticipantCompetitionData = {
   profiles: Profile[];
@@ -19,6 +26,7 @@ export type ParticipantCompetitionData = {
   routes: Route[];
   gyms: Gym[];
   gymStats: GymCommunityStats[];
+  viewerMasterRedemption: ViewerMasterRedemption | null;
 };
 
 export type ParticipantGymDetailData = {
@@ -38,6 +46,7 @@ const EMPTY_COMPETITION_DATA: ParticipantCompetitionData = {
   routes: [],
   gyms: [],
   gymStats: [],
+  viewerMasterRedemption: null,
 };
 
 const EMPTY_GYM_DETAIL_DATA: ParticipantGymDetailData = {
@@ -94,7 +103,11 @@ const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetition
     );
   }
 
-  return { ...competitionData, gymStats };
+  return {
+    ...competitionData,
+    viewerMasterRedemption: competitionData.viewerMasterRedemption ?? null,
+    gymStats,
+  };
 };
 
 const fetchParticipantUserResults = async (profileId: string): Promise<Result[]> => {

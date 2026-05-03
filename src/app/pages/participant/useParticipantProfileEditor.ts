@@ -12,7 +12,9 @@ import type { ParticipantChangeRequestForm } from "./ParticipantProfileChangeReq
 export const useParticipantProfileEditor = () => {
   const { profile, user, refreshProfile } = useAuth();
   const { getClassName } = useSeasonSettings();
-  const { profiles, results, routes, gyms, loading, error, reload } = useParticipantCompetitionData();
+  const { profiles, results, routes, gyms, viewerMasterRedemption, loading, error, reload } =
+    useParticipantCompetitionData();
+  const hasOfficialMasterRedemption = Boolean(viewerMasterRedemption?.redeemed_at);
 
   const firstName = profile?.first_name || (user?.user_metadata?.first_name as string | undefined);
   const lastName = profile?.last_name || (user?.user_metadata?.last_name as string | undefined);
@@ -231,6 +233,9 @@ export const useParticipantProfileEditor = () => {
     profile,
     user,
     gyms,
+    viewerMasterRedemption,
+    hasOfficialMasterRedemption,
+    participationMasterMismatch: Boolean(profile?.participation_activated_at) && !hasOfficialMasterRedemption,
     loading,
     error,
     profileData,

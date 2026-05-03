@@ -23,6 +23,12 @@ export type Profile = {
   archive_reason?: string | null;
 };
 
+/** Eintrag in master_codes für den eingeloggten Nutzer (kein Klartext-Code; nur Nachvollziehbarkeit in der App). */
+export type ViewerMasterRedemption = {
+  redeemed_at: string;
+  gym_id: string | null;
+};
+
 export type ProfileConsent = {
   profile_id: string;
   participation_terms_version: string | null;

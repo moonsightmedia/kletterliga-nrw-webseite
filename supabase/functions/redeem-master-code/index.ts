@@ -97,7 +97,22 @@ serve(async (req) => {
       });
     }
 
-    if (profile.participation_activated_at) {
+    const { data: alreadyRedeemedMaster, error: priorRedeemError } = await supabase
+      .from("master_codes")
+      .select("id")
+      .eq("redeemed_by", user.id)
+      .not("redeemed_at", "is", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (priorRedeemError) {
+      return new Response(JSON.stringify({ error: "Mastercode konnte nicht geprüft werden." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (alreadyRedeemedMaster) {
       return new Response(JSON.stringify({ error: "Deine Teilnahme ist bereits aktiviert." }), {
         status: 409,
         headers: { "Content-Type": "application/json", ...corsHeaders },

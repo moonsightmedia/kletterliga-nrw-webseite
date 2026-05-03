@@ -4,9 +4,14 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ResultEntry from "@/app/pages/participant/ResultEntry";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { useParticipantGymDetailQuery } from "@/app/pages/participant/participantQueries";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 
 vi.mock("@/app/auth/AuthProvider", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("@/app/pages/participant/useParticipantCompetitionData", () => ({
+  useParticipantCompetitionData: vi.fn(),
 }));
 
 vi.mock("@/app/pages/participant/participantQueries", () => {
@@ -26,6 +31,7 @@ vi.mock("@/services/appApi", () => ({
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseParticipantGymDetailQuery = vi.mocked(useParticipantGymDetailQuery);
+const mockedUseParticipantCompetitionData = vi.mocked(useParticipantCompetitionData);
 
 const renderPage = () => {
   const queryClient = new QueryClient({
@@ -51,6 +57,19 @@ const renderPage = () => {
 
 describe("ResultEntry mastercode gate", () => {
   beforeEach(() => {
+    mockedUseParticipantCompetitionData.mockReturnValue({
+      viewerMasterRedemption: null,
+      loading: false,
+      isInitialLoading: false,
+      profiles: [],
+      results: [],
+      routes: [],
+      gyms: [],
+      gymStats: [],
+      error: null,
+      reload: vi.fn(),
+      isRefreshing: false,
+    } as ReturnType<typeof useParticipantCompetitionData>);
     mockedUseAuth.mockReturnValue({
       profile: {
         id: "profile-1",

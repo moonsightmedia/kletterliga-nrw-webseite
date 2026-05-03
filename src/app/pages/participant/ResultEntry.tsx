@@ -12,6 +12,7 @@ import {
   participantQueryKeys,
   useParticipantGymDetailQuery,
 } from "@/app/pages/participant/participantQueries";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { upsertResult } from "@/services/appApi";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,8 @@ const ResultEntry = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { viewerMasterRedemption } = useParticipantCompetitionData();
+  const hasOfficialMasterRedemption = Boolean(viewerMasterRedemption?.redeemed_at);
   const { routes, results, codeRedeemed, loading: pageLoading, error } =
     useParticipantGymDetailQuery(gymId, profile?.id);
   const [selectedOption, setSelectedOption] = useState<PointsOption>(0);
@@ -49,7 +52,6 @@ const ResultEntry = () => {
     () => results.find((item) => item.route_id === routeId) ?? null,
     [results, routeId],
   );
-  const isParticipationActivated = Boolean(profile?.participation_activated_at);
 
   useEffect(() => {
     if (existingResult) {
@@ -79,7 +81,7 @@ const ResultEntry = () => {
   const handleSave = async () => {
     if (!profile?.id || !routeId) return;
 
-    if (!isParticipationActivated) {
+    if (!hasOfficialMasterRedemption) {
       toast({
         title: "Mastercode fehlt",
         description: "Du musst zuerst deinen Mastercode einlösen, bevor du Ergebnisse eintragen kannst.",
@@ -161,7 +163,7 @@ const ResultEntry = () => {
     );
   }
 
-  if (!isParticipationActivated) {
+  if (!hasOfficialMasterRedemption) {
     return (
       <div className="px-4 pt-6">
         <StitchCard tone="cream" className="p-6">
@@ -224,7 +226,7 @@ const ResultEntry = () => {
       <div className="relative mx-auto w-full max-w-[24rem]">
         <StitchCard
           tone="surface"
-          className="rounded-[2rem] border-b-[4px] border-[rgba(161,85,35,0.18)] px-5 pb-6 pt-6 shadow-[0_28px_56px_rgba(0,0,0,0.2)] sm:px-6 sm:pt-7"
+          className="rounded-xl border-b-[4px] border-[rgba(161,85,35,0.18)] px-5 pb-6 pt-6 shadow-[0_28px_56px_rgba(0,0,0,0.2)] sm:px-6 sm:pt-7"
         >
           <div className="space-y-8">
             <section className="flex items-start justify-between gap-4">
@@ -242,7 +244,7 @@ const ResultEntry = () => {
                 </div>
               </div>
 
-              <div className="rounded-[0.95rem] bg-[#ffdbc9] px-4 py-3 font-['Space_Grotesk'] text-[1.9rem] font-bold leading-none tracking-[-0.05em] text-[#331200]">
+              <div className="rounded-xl bg-[#ffdbc9] px-4 py-3 font-['Space_Grotesk'] text-[1.9rem] font-bold leading-none tracking-[-0.05em] text-[#331200]">
                 {route.code}
               </div>
             </section>
@@ -261,7 +263,7 @@ const ResultEntry = () => {
                       type="button"
                       onClick={() => setSelectedOption(option.value)}
                       className={cn(
-                        "rounded-[1rem] border-2 px-2 py-4 text-center transition-all active:scale-[0.98]",
+                        "rounded-xl border-2 px-2 py-4 text-center transition-all active:scale-[0.98]",
                         isActive
                           ? "border-[#002637] bg-[#002637] text-white shadow-[0_16px_24px_rgba(0,38,55,0.18)]"
                           : "border-transparent bg-[#f5f3f0] text-[#002637] hover:border-[rgba(0,38,55,0.12)] hover:bg-[#efeeeb]",
@@ -288,7 +290,7 @@ const ResultEntry = () => {
               <div className="text-[0.86rem] font-bold uppercase tracking-[0.22em] text-[rgba(0,38,55,0.52)]">
                 Routenqualität
               </div>
-              <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.4rem] border border-[rgba(113,120,125,0.18)] bg-white px-4 py-4">
+              <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-[rgba(113,120,125,0.18)] bg-white px-4 py-4">
                 <div className="max-w-[12.5rem] flex-1">
                   <StarRating value={rating} onChange={setRating} size="lg" />
                 </div>
@@ -303,7 +305,7 @@ const ResultEntry = () => {
                 Feedback & Kommentare
               </div>
               <div className="relative mt-4">
-                <div className="rounded-t-[1rem] bg-[#f5f3f0] px-4 pb-6 pt-4">
+                <div className="rounded-t-xl bg-[#f5f3f0] px-4 pb-6 pt-4">
                   <Textarea
                     value={feedback}
                     onChange={(event) => setFeedback(event.target.value)}
@@ -323,7 +325,7 @@ const ResultEntry = () => {
                 type="button"
                 onClick={handleSave}
                 disabled={loading}
-                className="flex h-[4.5rem] w-full items-center justify-between rounded-[1.25rem] bg-[#a15523] px-5 text-left font-['Space_Grotesk'] text-[1.1rem] font-bold uppercase tracking-[0.14em] text-[#f2dcab] shadow-[0_18px_28px_rgba(161,85,35,0.22)] transition-colors hover:bg-[#8f4b20] disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex h-[4.5rem] w-full items-center justify-between rounded-xl bg-[#a15523] px-5 text-left font-['Space_Grotesk'] text-[1.1rem] font-bold uppercase tracking-[0.14em] text-[#f2dcab] shadow-[0_18px_28px_rgba(161,85,35,0.22)] transition-colors hover:bg-[#8f4b20] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <span>{loading ? "Speichern..." : "Ergebnis speichern"}</span>
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#a15523]">

@@ -88,6 +88,28 @@ serve(async (req) => {
     auth: { persistSession: false },
   });
 
+  const redemptionResult = await supabase
+    .from("master_codes")
+    .select("redeemed_at, gym_id")
+    .eq("redeemed_by", user.id)
+    .not("redeemed_at", "is", null)
+    .order("redeemed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ redeemed_at: string; gym_id: string | null }>();
+
+  let viewerMasterRedemption: { redeemed_at: string; gym_id: string | null } | null = null;
+  if (redemptionResult.error) {
+    console.error("viewer master redemption lookup failed:", redemptionResult.error);
+  } else {
+    const rawViewer = redemptionResult.data;
+    if (rawViewer && rawViewer.redeemed_at) {
+      viewerMasterRedemption = {
+        redeemed_at: rawViewer.redeemed_at,
+        gym_id: rawViewer.gym_id ?? null,
+      };
+    }
+  }
+
   const [profilesResult, routesResult, gymsResult] = await Promise.all([
     supabase
       .from("profiles")
@@ -135,6 +157,7 @@ serve(async (req) => {
   }
 
   return jsonResponse({
+    viewerMasterRedemption,
     profiles: visibleProfiles.map((profile) => ({
       ...profile,
       email: profile.id === user.id ? profile.email : null,

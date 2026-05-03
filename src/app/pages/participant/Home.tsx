@@ -112,6 +112,7 @@ const Home = () => {
     routes,
     profiles: allProfiles,
     results: allResults,
+    viewerMasterRedemption,
     loading: competitionLoading,
     error: competitionError,
   } = useParticipantCompetitionData();
@@ -131,7 +132,9 @@ const Home = () => {
   } = useSeasonSettings();
   const { participantFeatureLocked: featureLocked, unlockDate } = useLaunchSettings();
   const unlockDateLabel = formatUnlockDate(unlockDate);
-  const isParticipationActivated = Boolean(profile?.participation_activated_at);
+  const hasOfficialMasterRedemption = Boolean(viewerMasterRedemption?.redeemed_at);
+  const participationMasterMismatch =
+    Boolean(profile?.participation_activated_at) && !hasOfficialMasterRedemption;
 
   useEffect(() => {
     if (role === "gym_admin") {
@@ -421,9 +424,28 @@ const Home = () => {
   return (
     <>
       <div className="space-y-7">
+        {participationMasterMismatch ? (
+          <div className="rounded-xl border border-amber-500/55 bg-amber-500/14 px-4 py-4 text-sm leading-relaxed text-[rgba(242,220,171,0.92)] shadow-[inset_0_0_0_1px_rgba(245,158,11,0.15)]">
+            <div className="font-['Space_Grotesk'] text-[0.65rem] font-bold uppercase tracking-[0.22em] text-amber-200">
+              Mastercode fehlt in der Datenbank
+            </div>
+            <p className="mt-2 font-medium">
+              Für deinen Account liegt kein eingelöster Mastercode vor. Bitte löse jetzt denselben Code ein wie bei der
+              Zahlung, damit deine Teilnahme nachvollziehbar ist.
+            </p>
+            {!featureLocked ? (
+              <StitchButton
+                asChild
+                className="mt-4 w-full justify-center rounded-xl border border-amber-300/55 bg-transparent py-4 text-[#f2dcab]"
+              >
+                <Link to="/app/participation/redeem">Zum Mastercode einlösen</Link>
+              </StitchButton>
+            ) : null}
+          </div>
+        ) : null}
         <section className="space-y-6">
           <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-[0.65rem] bg-[#a15523] px-3 py-1.5 text-[0.58rem] font-bold uppercase tracking-[0.22em] text-white">
+            <div className="inline-flex items-center gap-2 rounded-xl bg-[#a15523] px-3 py-1.5 text-[0.58rem] font-bold uppercase tracking-[0.22em] text-white">
               <span>{leagueLabel}</span>
               <span className="h-1 w-1 rounded-full bg-white/75" />
               <span>{classLabel}</span>
@@ -449,16 +471,16 @@ const Home = () => {
               }`}
             >
               <Link
-                to={isParticipationActivated ? "/app/gyms/redeem" : "/app/participation/redeem"}
+                to={hasOfficialMasterRedemption ? "/app/gyms/redeem" : "/app/participation/redeem"}
                 onClick={(event) => {
                   if (!featureLocked) return;
                   event.preventDefault();
-                  showLockedFeatureNotice(isParticipationActivated ? "Hallen-Codes" : "Mastercode");
+                  showLockedFeatureNotice(hasOfficialMasterRedemption ? "Hallen-Codes" : "Mastercode");
                 }}
                 aria-disabled={featureLocked}
               >
                 <QrCode className="h-4 w-4" />
-                {isParticipationActivated ? "Hallen-Code einlösen" : "Mastercode freischalten"}
+                {hasOfficialMasterRedemption ? "Hallen-Code einlösen" : "Mastercode freischalten"}
               </Link>
             </StitchButton>
           </div>

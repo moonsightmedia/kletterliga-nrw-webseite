@@ -573,7 +573,9 @@ const LeagueParticipants = () => {
     const { profile } = item;
     const isParticipationActivated = Boolean(profile.participation_activated_at);
     const assignedMasterCode = masterCodeByProfileId.get(profile.id) ?? null;
-    const canAssignLeagueMasterCode = item.tabGroup === "participants" && !archived && !isParticipationActivated;
+    const hasMasterProof = Boolean(assignedMasterCode);
+    const participationMasterMismatch = isParticipationActivated && !hasMasterProof;
+    const canAssignLeagueMasterCode = item.tabGroup === "participants" && !archived && !hasMasterProof;
     return (
       <Card
         key={profile.id}
@@ -585,9 +587,14 @@ const LeagueParticipants = () => {
               <div className="font-semibold text-primary text-base md:text-lg break-words">{getFullName(profile)}</div>
               {getRoleBadge(item)}
               {archived ? <Badge variant="outline">Archiviert</Badge> : null}
-              {!archived && isParticipationActivated ? (
+              {!archived && isParticipationActivated && hasMasterProof ? (
                 <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
                   Teilnahme aktiv
+                </Badge>
+              ) : null}
+              {!archived && participationMasterMismatch ? (
+                <Badge variant="secondary" className="bg-rose-500/12 text-rose-900 border-rose-500/25">
+                  Aktiv ohne Mastercode-Datensatz
                 </Badge>
               ) : null}
               {!archived && assignedMasterCode && !isParticipationActivated ? (

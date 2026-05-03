@@ -35,6 +35,9 @@ const buildProfileEditorState = (overrides: Partial<ReturnType<typeof usePartici
       avatar_url: null,
       participation_activated_at: null,
     },
+    viewerMasterRedemption: null,
+    hasOfficialMasterRedemption: false,
+    participationMasterMismatch: false,
     user: {
       email: "lukas@example.com",
     },
@@ -136,6 +139,9 @@ describe("ProfileScreen", () => {
           avatar_url: null,
           participation_activated_at: "2026-03-27T09:00:00+01:00",
         },
+        viewerMasterRedemption: { redeemed_at: "2026-03-27T09:00:00+01:00", gym_id: null },
+        hasOfficialMasterRedemption: true,
+        participationMasterMismatch: false,
       }),
     );
 

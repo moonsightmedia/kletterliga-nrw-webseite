@@ -30,13 +30,13 @@ const SettingsRow = ({
       void onClick();
     }}
     disabled={disabled}
-    className={`group flex w-full items-center gap-3 rounded-[0.95rem] px-3 py-3.5 text-left transition-colors ${
+    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors ${
       disabled
         ? "cursor-not-allowed opacity-85"
         : "hover:bg-[#f2dcab]/16"
     }`}
   >
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[#f7e7bd] text-[#003d55] transition-colors group-hover:bg-[#edd39c]">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f7e7bd] text-[#003d55] transition-colors group-hover:bg-[#edd39c]">
       <MaterialIcon name={icon} />
     </span>
     <span className="min-w-0">
@@ -152,7 +152,7 @@ const PrelaunchNoticeCard = ({
     <StitchCard
       tone="navy"
       data-testid="profile-prelaunch-notice"
-      className="relative rounded-[1.05rem] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)] touch-pan-y select-none"
+      className="relative rounded-xl p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)] touch-pan-y select-none"
       style={{
         transform: `translateX(${swipeOffset}px)`,
         opacity: Math.max(0.45, 1 - Math.abs(swipeOffset) / 240),
@@ -167,7 +167,7 @@ const PrelaunchNoticeCard = ({
         type="button"
         onClick={onDismiss}
         aria-label="Pre-Launch-Hinweis ausblenden"
-        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-[0.72rem] border border-[#f2dcab]/12 bg-[#f2dcab]/8 text-[#f2dcab]/72 transition-colors hover:bg-[#f2dcab]/14 hover:text-[#f2dcab]"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-[#f2dcab]/12 bg-[#f2dcab]/8 text-[#f2dcab]/72 transition-colors hover:bg-[#f2dcab]/14 hover:text-[#f2dcab]"
       >
         <MaterialIcon name="close" className="text-base" />
       </button>
@@ -186,7 +186,7 @@ const PrelaunchNoticeCard = ({
           {"Codes und Ranglisten \u00f6ffnen gesammelt zum Saisonstart."}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex min-h-10 items-center rounded-[0.72rem] border border-[#002637]/8 bg-[#f2dcab] px-3.5 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#002637]">
+          <div className="inline-flex min-h-10 items-center rounded-xl border border-[#002637]/8 bg-[#f2dcab] px-3.5 py-2.5 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#002637]">
             Freischaltung {unlockDateLabel}
           </div>
           <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[rgba(242,220,171,0.48)]">
@@ -200,44 +200,44 @@ const PrelaunchNoticeCard = ({
 
 const ProfileScreenSkeleton = () => (
   <div className="mx-auto max-w-md animate-pulse space-y-4">
-    <div className="rounded-[1.05rem] bg-[#003d55] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
-      <div className="h-3 w-24 rounded-[0.65rem] bg-[#f2dcab]/18" />
-      <div className="mt-4 h-12 w-4/5 rounded-[0.95rem] bg-[#f2dcab]/12" />
-      <div className="mt-3 h-4 w-full rounded-[0.7rem] bg-[#f2dcab]/10" />
-      <div className="mt-2 h-4 w-5/6 rounded-[0.7rem] bg-[#f2dcab]/10" />
-      <div className="mt-5 h-9 w-40 rounded-[0.9rem] bg-[#f2dcab]/14" />
+    <div className="rounded-xl bg-[#003d55] p-5 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <div className="h-3 w-24 rounded-xl bg-[#f2dcab]/18" />
+      <div className="mt-4 h-12 w-4/5 rounded-xl bg-[#f2dcab]/12" />
+      <div className="mt-3 h-4 w-full rounded-xl bg-[#f2dcab]/10" />
+      <div className="mt-2 h-4 w-5/6 rounded-xl bg-[#f2dcab]/10" />
+      <div className="mt-5 h-9 w-40 rounded-xl bg-[#f2dcab]/14" />
     </div>
 
-    <div className="rounded-[1.05rem] bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
-      <div className="mx-auto h-24 w-24 rounded-[1rem] bg-[#f2dcab]/14" />
-      <div className="mx-auto mt-5 h-10 w-56 rounded-[0.95rem] bg-[#f2dcab]/12" />
+    <div className="rounded-xl bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <div className="mx-auto h-24 w-24 rounded-xl bg-[#f2dcab]/14" />
+      <div className="mx-auto mt-5 h-10 w-56 rounded-xl bg-[#f2dcab]/12" />
       <div className="mx-auto mt-4 flex w-full max-w-[14rem] flex-col items-center gap-2">
-        <div className="h-10 w-full rounded-[0.9rem] bg-[#f2dcab]/12" />
-        <div className="h-10 w-28 rounded-[0.9rem] bg-[#f2dcab]/10" />
+        <div className="h-10 w-full rounded-xl bg-[#f2dcab]/12" />
+        <div className="h-10 w-28 rounded-xl bg-[#f2dcab]/10" />
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3">
-      <div className="rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-        <div className="h-3 w-20 rounded-[0.65rem] bg-[#003d55]/8" />
-        <div className="mt-4 h-8 w-16 rounded-[0.85rem] bg-[#a15523]/10" />
+      <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-20 rounded-xl bg-[#003d55]/8" />
+        <div className="mt-4 h-8 w-16 rounded-xl bg-[#a15523]/10" />
       </div>
-      <div className="rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-        <div className="h-3 w-16 rounded-[0.65rem] bg-[#003d55]/8" />
-        <div className="mt-4 h-8 w-14 rounded-[0.85rem] bg-[#003d55]/10" />
+      <div className="rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-16 rounded-xl bg-[#003d55]/8" />
+        <div className="mt-4 h-8 w-14 rounded-xl bg-[#003d55]/10" />
       </div>
-      <div className="col-span-2 rounded-[1rem] border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
-        <div className="h-3 w-24 rounded-[0.65rem] bg-[#003d55]/8" />
-        <div className="mt-4 h-9 w-24 rounded-[0.85rem] bg-[#003d55]/10" />
+      <div className="col-span-2 rounded-xl border border-[#f2dcab]/30 bg-white p-4 shadow-sm">
+        <div className="h-3 w-24 rounded-xl bg-[#003d55]/8" />
+        <div className="mt-4 h-9 w-24 rounded-xl bg-[#003d55]/10" />
       </div>
     </div>
 
-    <div className="rounded-[1rem] border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm">
+    <div className="rounded-xl border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-[0.9rem] bg-[#003d55]/10" />
+        <div className="h-11 w-11 rounded-xl bg-[#003d55]/10" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-20 rounded-[0.65rem] bg-[#003d55]/8" />
-          <div className="h-4 w-full rounded-[0.7rem] bg-[#003d55]/8" />
+          <div className="h-3 w-20 rounded-xl bg-[#003d55]/8" />
+          <div className="h-4 w-full rounded-xl bg-[#003d55]/8" />
         </div>
       </div>
     </div>
@@ -259,6 +259,8 @@ const ProfileScreen = () => {
     displayName,
     leagueLabel,
     avatarPreview,
+    hasOfficialMasterRedemption,
+    participationMasterMismatch,
   } = useParticipantProfileEditor();
   const avatarUrl = avatarPreview ?? profile?.avatar_url ?? null;
   const [avatarReady, setAvatarReady] = useState(!avatarUrl);
@@ -270,17 +272,16 @@ const ProfileScreen = () => {
   const participantProfileHref = profile?.id
     ? `/app/rankings/profile/${profile.id}`
     : "/app/rankings";
-  const isParticipationActivated = Boolean(profile?.participation_activated_at);
   const shouldShowPrelaunchNotice = beforeAppUnlock && !isPrelaunchNoticeDismissed;
-  const shouldShowParticipationNotice = !beforeAppUnlock && !isParticipationActivated;
+  const shouldShowParticipationNotice = !beforeAppUnlock && !hasOfficialMasterRedemption;
   const unlockDateLabel = formatUnlockDate(unlockDate);
   const rankLabel = profileData?.rank ? `Platz #${profileData.rank}` : "Platz offen";
   const partnerVoucherRedeemed = Boolean(partnerVoucherRedeemedAt);
   const classLabel = profileData?.className ? getClassLabel(profileData.className) : "Klasse offen";
   const rankBadgeClass =
-    "min-h-10 rounded-[0.72rem] border border-[#f2dcab]/55 bg-[#f2dcab] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#002637] shadow-[0_12px_24px_rgba(0,0,0,0.18)]";
+    "min-h-10 rounded-xl border border-[#f2dcab]/55 bg-[#f2dcab] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#002637] shadow-[0_12px_24px_rgba(0,0,0,0.18)]";
   const profileMetaBadgeClass =
-    "min-h-10 rounded-[0.72rem] border border-[#f2dcab]/24 bg-[#f2dcab]/12 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]";
+    "min-h-10 rounded-xl border border-[#f2dcab]/24 bg-[#f2dcab]/12 px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#f2dcab]";
   const averagePointsPerRouteLabel =
     profileData && profileData.routesLogged > 0
       ? profileData.averagePoints.toLocaleString("de-DE", {
@@ -327,7 +328,7 @@ const ProfileScreen = () => {
   }, [beforeAppUnlock, unlockDate]);
 
   useEffect(() => {
-    if (!profile?.id || !isParticipationActivated) {
+    if (!profile?.id || !hasOfficialMasterRedemption) {
       setPartnerVoucherRedeemedAt(null);
       return;
     }
@@ -346,7 +347,7 @@ const ProfileScreen = () => {
     return () => {
       active = false;
     };
-  }, [profile?.id, isParticipationActivated]);
+  }, [profile?.id, hasOfficialMasterRedemption]);
 
   const isScreenReady = Boolean(profile) && !authLoading && !loading && avatarReady;
 
@@ -395,25 +396,45 @@ const ProfileScreen = () => {
       ) : null}
 
       {shouldShowParticipationNotice ? (
-        <StitchCard tone="cream" className="rounded-[1.05rem] p-5">
+        <StitchCard
+          tone="cream"
+          className={`rounded-xl p-5 ${participationMasterMismatch ? "border-2 border-amber-700/55 shadow-md" : ""}`}
+        >
           <div className="space-y-4">
-            <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
+            <div className={`stitch-kicker ${participationMasterMismatch ? "text-amber-800" : "text-[#a15523]"}`}>
+              {participationMasterMismatch ? "Teilnahmedaten prüfen" : "Teilnahme fehlt"}
+            </div>
             <div className="space-y-2">
               <div className="stitch-headline text-2xl leading-[0.95] text-[#002637]">
-                Deine Wertung ist noch nicht freigeschaltet.
+                {participationMasterMismatch
+                  ? "Bitte löse noch deinen Mastercode ein."
+                  : "Deine Wertung ist noch nicht freigeschaltet."}
               </div>
               <p className="text-sm leading-6 text-[rgba(27,28,26,0.7)]">
-                Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den Ranglisten
-                berücksichtigt.
+                {participationMasterMismatch ? (
+                  <>
+                    Deinem Profil fehlt der Nachweis eines eingelösten Mastercodes — ohne diesen gilt die Teilnahme
+                    nicht als verkauft bestätigt. Bitte löse jetzt denselben Code ein wie bei der Bezahlung. Wenn der
+                    Fehler bestehen bleibt, schreib bitte an{" "}
+                    <a href="mailto:info@kletterliga-nrw.de" className="font-semibold text-[#a15523] underline">
+                      info@kletterliga-nrw.de
+                    </a>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Deine Ergebnisse werden erst nach dem Einlösen des Mastercodes in den Ranglisten berücksichtigt.
+                  </>
+                )}
               </p>
             </div>
             <StitchButton
               type="button"
               size="lg"
-              className="w-full rounded-[1rem]"
+              className="w-full rounded-xl"
               onClick={() => navigate("/app/participation/redeem")}
             >
-              Mastercode freischalten
+              {participationMasterMismatch ? "Mastercode jetzt einlösen" : "Mastercode freischalten"}
             </StitchButton>
           </div>
         </StitchCard>
@@ -422,13 +443,13 @@ const ProfileScreen = () => {
       <StitchCard
         tone="navy"
         className={`relative overflow-hidden rounded-xl p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
-          isParticipationActivated
+          hasOfficialMasterRedemption
             ? "outline outline-2 outline-[#63d3a8] outline-offset-2"
             : ""
         }`}
       >
-        <div className="absolute -right-8 -top-8 h-24 w-24 rotate-12 rounded-[1.1rem] bg-[#f2dcab]/6" />
-        <div className="absolute -bottom-10 -left-6 h-20 w-20 rotate-12 rounded-[1rem] bg-[#a15523]/18" />
+        <div className="absolute -right-8 -top-8 h-24 w-24 rotate-12 rounded-xl bg-[#f2dcab]/6" />
+        <div className="absolute -bottom-10 -left-6 h-20 w-20 rotate-12 rounded-xl bg-[#a15523]/18" />
 
         <div className="relative z-10 flex flex-col items-center gap-5">
           <button
@@ -437,20 +458,22 @@ const ProfileScreen = () => {
             className="group relative inline-block"
             aria-label="Profil bearbeiten"
           >
-            <div className="mx-auto h-24 w-24 overflow-hidden rounded-[1rem] border-[3px] border-[#a15523] bg-[#184c64] shadow-[0_16px_30px_rgba(0,0,0,0.24)]">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center font-['Space_Grotesk'] text-3xl font-bold uppercase text-[#f2dcab]">
-                  {getInitials(displayName)}
-                </div>
-              )}
+            <div className="mx-auto h-24 w-24 rounded-xl bg-[#a15523] p-[3px] shadow-[0_16px_30px_rgba(0,0,0,0.24)]">
+              <div className="h-full w-full overflow-hidden rounded-[calc(0.75rem-3px)] bg-[#184c64]">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-['Space_Grotesk'] text-3xl font-bold uppercase text-[#f2dcab]">
+                    {getInitials(displayName)}
+                  </div>
+                )}
+              </div>
             </div>
-            <span className="absolute -bottom-2 -right-2 flex h-10 w-10 items-center justify-center rounded-[0.9rem] border-2 border-[#003d55] bg-[#a15523] text-white shadow-[0_12px_22px_rgba(0,0,0,0.24)] transition-transform group-hover:scale-[1.03]">
+            <span className="absolute -bottom-2 -right-2 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#003d55] bg-[#a15523] text-white shadow-[0_12px_22px_rgba(0,0,0,0.24)] transition-transform group-hover:scale-[1.03]">
               <MaterialIcon name="edit" className="text-sm" />
             </span>
           </button>
@@ -466,13 +489,13 @@ const ProfileScreen = () => {
               <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
                 {leagueLabel}
               </StitchBadge>
-              {isParticipationActivated ? (
+              {hasOfficialMasterRedemption ? (
                 <StitchBadge tone="ghost" className={profileMetaBadgeClass}>
                   {classLabel}
                 </StitchBadge>
               ) : null}
               {!beforeAppUnlock && partnerVoucherRedeemed ? (
-                <StitchBadge tone="ghost" className="min-h-10 rounded-[0.72rem] border border-[#a8d6c2] bg-[#d8efe4] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#0a5a3c]">
+                <StitchBadge tone="ghost" className="min-h-10 rounded-xl border border-[#a8d6c2] bg-[#d8efe4] px-3.5 py-2 text-[0.62rem] tracking-[0.18em] text-[#0a5a3c]">
                   Gutschein eingelöst
                 </StitchBadge>
               ) : null}
@@ -530,7 +553,7 @@ const ProfileScreen = () => {
           className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
         >
           <span className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] bg-[#003d55] text-[#f2dcab]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#003d55] text-[#f2dcab]">
               <MaterialIcon name="leaderboard" filled className="text-lg" />
             </span>
             <span className="min-w-0 text-left">

@@ -3,9 +3,14 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MastercodeRedeem from "@/app/pages/participant/MastercodeRedeem";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 
 vi.mock("@/app/auth/AuthProvider", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("@/app/pages/participant/useParticipantCompetitionData", () => ({
+  useParticipantCompetitionData: vi.fn(),
 }));
 
 vi.mock("@/components/CodeQrScanner", () => ({
@@ -17,6 +22,7 @@ vi.mock("@/services/appApi", () => ({
 }));
 
 const mockedUseAuth = vi.mocked(useAuth);
+const mockedUseParticipantCompetitionData = vi.mocked(useParticipantCompetitionData);
 
 const renderPage = () => {
   const queryClient = new QueryClient({
@@ -37,6 +43,19 @@ const renderPage = () => {
 
 describe("MastercodeRedeem", () => {
   beforeEach(() => {
+    mockedUseParticipantCompetitionData.mockReturnValue({
+      viewerMasterRedemption: null,
+      loading: false,
+      isInitialLoading: false,
+      isRefreshing: false,
+      error: null,
+      reload: vi.fn(),
+      profiles: [],
+      results: [],
+      routes: [],
+      gyms: [],
+      gymStats: [],
+    } as ReturnType<typeof useParticipantCompetitionData>);
     mockedUseAuth.mockReturnValue({
       profile: {
         id: "profile-1",
@@ -54,7 +73,35 @@ describe("MastercodeRedeem", () => {
     expect(screen.getByRole("button", { name: "Jetzt freischalten" })).toBeDisabled();
   });
 
+  it("shows the redemption form when the profile flag is active but no mastercode row exists (recovery)", () => {
+    mockedUseAuth.mockReturnValue({
+      profile: {
+        id: "profile-1",
+        participation_activated_at: "2026-03-27T09:00:00+01:00",
+      },
+      refreshProfile: vi.fn().mockResolvedValue(undefined),
+    } as ReturnType<typeof useAuth>);
+
+    renderPage();
+
+    expect(screen.getByPlaceholderText("KL-MASTER-XXXXXX-XXXX")).toBeInTheDocument();
+    expect(screen.queryByText("Dein Profil ist offiziell freigeschaltet")).not.toBeInTheDocument();
+  });
+
   it("renders the activated summary once the profile is unlocked", () => {
+    mockedUseParticipantCompetitionData.mockReturnValue({
+      viewerMasterRedemption: { redeemed_at: "2026-03-27T09:00:00+01:00", gym_id: null },
+      loading: false,
+      isInitialLoading: false,
+      isRefreshing: false,
+      error: null,
+      reload: vi.fn(),
+      profiles: [],
+      results: [],
+      routes: [],
+      gyms: [],
+      gymStats: [],
+    } as ReturnType<typeof useParticipantCompetitionData>);
     mockedUseAuth.mockReturnValue({
       profile: {
         id: "profile-1",
