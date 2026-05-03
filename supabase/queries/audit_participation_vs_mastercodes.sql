@@ -54,7 +54,25 @@ select mc.id, mc.code, mc.redeemed_by, mc.redeemed_at, mc.status
 from public.master_codes mc
 where mc.redeemed_by is not null and mc.redeemed_at is null;
 
--- 5) Kurzüberblick Zahlen (Teilnehmer, nicht archiviert)
+-- 5) Dateninkonsistenz C: gültige Einlösung (redeemed_by + redeemed_at), aber kein Teilnahme-Timestamp auf dem Profil
+--    → sollte nie vorkommen, wenn Redeem-Flow / Edge Function immer das Profil setzt (DB-Trigger feuert nur bei UPDATE auf master_codes, nicht bei INSERT).
+select
+  p.id,
+  p.email,
+  p.first_name,
+  p.last_name,
+  p.participation_activated_at,
+  mc.code,
+  mc.redeemed_at as mastercode_redeemed_at
+from public.master_codes mc
+join public.profiles p on p.id = mc.redeemed_by
+where mc.redeemed_by is not null
+  and mc.redeemed_at is not null
+  and p.archived_at is null
+  and coalesce(lower(p.role::text), '') = 'participant'
+  and p.participation_activated_at is null;
+
+-- 6) Kurzüberblick Zahlen (Teilnehmer, nicht archiviert)
 with base as (
   select p.id, p.participation_activated_at
   from public.profiles p
@@ -74,4 +92,9 @@ select
     select count(*) from base b
     where b.participation_activated_at is not null
       and not exists (select 1 from with_mc w where w.profile_id = b.id)
-  )::int as inkonsistent_teilnahme_ohne_mastercode;
+  )::int as inkonsistent_teilnahme_ohne_mastercode,
+  (
+    select count(*) from base b
+    where b.participation_activated_at is null
+      and exists (select 1 from with_mc w where w.profile_id = b.id)
+  )::int as inkonsistent_mastercode_ohne_teilnahme_timestamp;

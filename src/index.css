@@ -121,6 +121,19 @@
     overflow-x: hidden;
   }
 
+  /* Mobile / Tablet: Scrollbars ausblenden (Touch-Scrolling bleibt) */
+  @media (max-width: 1023px) {
+    * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    *::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Heavitas', 'Arial Black', sans-serif;
     font-weight: 700;

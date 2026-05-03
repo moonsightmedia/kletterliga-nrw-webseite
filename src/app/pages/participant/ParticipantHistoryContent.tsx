@@ -96,7 +96,7 @@ export const ParticipantHistoryContent = ({
         </h2>
 
         <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="relative col-span-2 overflow-hidden rounded-[1.35rem] bg-[#f2dcab] p-6 shadow-[0_12px_26px_rgba(0,38,55,0.06)]">
+          <div className="relative col-span-2 overflow-hidden rounded-xl bg-[#f2dcab] p-6 shadow-[0_12px_26px_rgba(0,38,55,0.06)]">
             <div className="relative z-10">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#a15523]">Beste Halle</p>
               {bestGymGroup ? (
@@ -125,18 +125,18 @@ export const ParticipantHistoryContent = ({
               )}
             </div>
 
-            <div className="absolute -bottom-8 -right-2 h-28 w-28 rotate-45 rounded-[1.5rem] bg-[#002637]/5" />
-            <div className="absolute bottom-6 right-16 h-14 w-14 rotate-45 rounded-[1rem] bg-[#002637]/5" />
+            <div className="absolute -bottom-8 -right-2 h-28 w-28 rotate-45 rounded-xl bg-[#002637]/5" />
+            <div className="absolute bottom-6 right-16 h-14 w-14 rotate-45 rounded-xl bg-[#002637]/5" />
           </div>
 
-          <div className="rounded-[1.15rem] bg-[#f5f3f0] p-5 shadow-[0_10px_24px_rgba(0,38,55,0.04)]">
+          <div className="rounded-xl bg-[#f5f3f0] p-5 shadow-[0_10px_24px_rgba(0,38,55,0.04)]">
             <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#71787d]">Sessions</p>
             <p className="mt-3 font-['Space_Grotesk'] text-[2.45rem] font-bold leading-none text-[#002637]">
               {integerFormatter.format(historySessionCount)}
             </p>
           </div>
 
-          <div className="rounded-[1.15rem] bg-[#f5f3f0] p-5 shadow-[0_10px_24px_rgba(0,38,55,0.04)]">
+          <div className="rounded-xl bg-[#f5f3f0] p-5 shadow-[0_10px_24px_rgba(0,38,55,0.04)]">
             <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#71787d]">Total Points</p>
             <p className="mt-3 font-['Space_Grotesk'] text-[2.45rem] font-bold leading-none text-[#a15523]">
               {data.formattedPoints}
@@ -146,17 +146,17 @@ export const ParticipantHistoryContent = ({
       </section>
 
       <section className="pb-2">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <h2 className="font-['Space_Grotesk'] text-[2.1rem] font-bold tracking-tight text-[#002637]">
+        <div className="mb-8 flex items-end justify-between gap-3 pr-0 sm:gap-4">
+          <h2 className="min-w-0 flex-1 font-['Space_Grotesk'] text-[2.1rem] font-bold tracking-tight text-[#002637]">
             Chronologischer Verlauf
           </h2>
-          <span className="text-right text-[0.82rem] font-bold uppercase tracking-[0.2em] text-[#a15523]">
+          <span className="shrink-0 text-right leading-tight text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#a15523] sm:text-[0.72rem] sm:tracking-[0.18em]">
             Saison {seasonYear}
           </span>
         </div>
 
         {monthGroups.length === 0 ? (
-          <StitchCard tone="surface" className="stitch-radius-content p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+          <StitchCard tone="surface" className="p-5 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
             Noch keine eingetragenen Routen vorhanden.
           </StitchCard>
         ) : (
@@ -185,7 +185,7 @@ export const ParticipantHistoryContent = ({
                         </div>
                       </div>
 
-                      <div className="flex-1 rounded-[1.15rem] bg-white p-5 shadow-[0_10px_24px_rgba(0,38,55,0.05)]">
+                      <div className="flex-1 rounded-xl bg-white p-5 shadow-[0_10px_24px_rgba(0,38,55,0.05)]">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <h4 className="font-['Space_Grotesk'] text-[1.75rem] font-bold leading-tight tracking-tight text-[#002637]">

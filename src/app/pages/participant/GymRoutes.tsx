@@ -168,7 +168,7 @@ const GymRoutes = () => {
               </div>
             </div>
 
-            <div className="flex h-[5.75rem] w-[5.75rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] bg-[#a15523] px-3 text-center text-[#f2dcab] shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
+            <div className="flex h-[5.75rem] w-[5.75rem] shrink-0 flex-col items-center justify-center rounded-xl bg-[#a15523] px-3 text-center text-[#f2dcab] shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
               <div className="font-['Space_Grotesk'] text-[1.8rem] font-bold leading-none tracking-[-0.05em]">
                 {disciplineBadge.short}
               </div>
@@ -180,7 +180,7 @@ const GymRoutes = () => {
 
       <section className="relative z-10 -mt-6 px-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-[1.05rem] border-b-[3px] border-[rgba(161,85,35,0.2)] bg-white p-5 shadow-[0_8px_18px_rgba(0,38,55,0.08)]">
+          <div className="rounded-xl border-b-[3px] border-[rgba(161,85,35,0.2)] bg-white p-5 shadow-[0_8px_18px_rgba(0,38,55,0.08)]">
             <Rocket className="mb-2 h-5 w-5 text-[#a15523]" />
             <div className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-[rgba(0,38,55,0.56)]">
               Dein Fortschritt
@@ -190,7 +190,7 @@ const GymRoutes = () => {
             </div>
           </div>
 
-          <div className="rounded-[1.05rem] border-b-[3px] border-[rgba(0,61,85,0.18)] bg-white p-5 shadow-[0_8px_18px_rgba(0,38,55,0.08)]">
+          <div className="rounded-xl border-b-[3px] border-[rgba(0,61,85,0.18)] bg-white p-5 shadow-[0_8px_18px_rgba(0,38,55,0.08)]">
             <Trophy className="mb-2 h-5 w-5 text-[#003d55]" />
             <div className="text-[0.72rem] font-bold uppercase tracking-[0.2em] text-[rgba(0,38,55,0.56)]">
               Deine Punkte
@@ -245,7 +245,7 @@ const GymRoutes = () => {
               const content = (
                 <div
                   className={cn(
-                    "flex items-center gap-5 rounded-[1.05rem] border border-[rgba(0,38,55,0.04)] p-4 shadow-[0_8px_18px_rgba(0,38,55,0.04)] transition-colors",
+                    "flex items-center gap-5 rounded-xl border border-[rgba(0,38,55,0.04)] p-4 shadow-[0_8px_18px_rgba(0,38,55,0.04)] transition-colors",
                     status.rowClass,
                     codeRedeemed && "hover:bg-[#f5f3f0]",
                     !codeRedeemed && "opacity-90",
@@ -253,7 +253,7 @@ const GymRoutes = () => {
                 >
                   <div
                     className={cn(
-                      "flex h-14 w-14 shrink-0 items-center justify-center rounded-[1rem] font-['Space_Grotesk'] text-[1.35rem] font-bold",
+                      "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl font-['Space_Grotesk'] text-[1.35rem] font-bold",
                       status.badgeClass,
                     )}
                   >

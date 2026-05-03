@@ -123,7 +123,7 @@ const PartnerVoucherRedeem = () => {
   if (!isParticipationActivated) {
     return (
       <div className="mx-auto max-w-md">
-        <StitchCard tone="cream" className="rounded-[1.05rem] p-6">
+        <StitchCard tone="cream" className="rounded-xl p-6">
           <div className="space-y-4 text-center">
             <div className="stitch-headline text-[2rem] leading-[1.02] text-[#002637]">
               Mastercode zuerst einlösen
@@ -148,13 +148,13 @@ const PartnerVoucherRedeem = () => {
   if (redeemedAt) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <StitchCard tone="navy" className="rounded-[1.05rem] p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+        <StitchCard tone="navy" className="rounded-xl p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <StitchBadge tone="cream" className="rounded-[0.72rem] px-3.5 py-1.5">
+              <StitchBadge tone="cream" className="rounded-xl px-3.5 py-1.5">
                 Gutschein aktiv
               </StitchBadge>
-              <StitchBadge tone="ghost" className="rounded-[0.72rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
+              <StitchBadge tone="ghost" className="rounded-xl border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
                 Kletterladen NRW
               </StitchBadge>
             </div>
@@ -176,13 +176,13 @@ const PartnerVoucherRedeem = () => {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <StitchCard tone="navy" className="rounded-[1.05rem] p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <StitchCard tone="navy" className="rounded-xl p-6 shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <StitchBadge tone="cream" className="rounded-[0.72rem] px-3.5 py-1.5">
+            <StitchBadge tone="cream" className="rounded-xl px-3.5 py-1.5">
               Partnergutschein
             </StitchBadge>
-            <StitchBadge tone="ghost" className="rounded-[0.72rem] border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
+            <StitchBadge tone="ghost" className="rounded-xl border border-[#f2dcab]/16 bg-[#f2dcab]/10 px-3.5 py-1.5 text-[#f2dcab]">
               15 % Kletterladen NRW
             </StitchBadge>
           </div>
@@ -195,10 +195,10 @@ const PartnerVoucherRedeem = () => {
         </div>
       </StitchCard>
 
-      <StitchCard tone="cream" className="rounded-[1rem] p-5 sm:p-6">
+      <StitchCard tone="cream" className="rounded-xl p-5 sm:p-6">
         <form onSubmit={handleRedeem} className="space-y-6">
           <div className="space-y-3 text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1rem] bg-[rgba(0,61,85,0.06)] text-[#a15523]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl bg-[rgba(0,61,85,0.06)] text-[#a15523]">
               <TicketPercent className="h-9 w-9" />
             </div>
             <div className="stitch-headline text-3xl text-[#002637]">Gutschein einlösen</div>
@@ -209,7 +209,7 @@ const PartnerVoucherRedeem = () => {
 
           <label className="block space-y-2">
             <span className="stitch-kicker text-[#a15523]">QR-Inhalt</span>
-            <div className="rounded-[1rem] bg-white px-5 py-4 shadow-[inset_0_-3px_0_rgba(0,61,85,0.22)]">
+            <div className="rounded-xl bg-white px-5 py-4 shadow-[inset_0_-3px_0_rgba(0,61,85,0.22)]">
               <input
                 value={qrCodeValue}
                 onChange={(event) => setQrCodeValue(event.target.value)}
@@ -220,23 +220,23 @@ const PartnerVoucherRedeem = () => {
           </label>
 
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <StitchButton type="submit" size="lg" className="w-full rounded-[1rem]" disabled={loading || !qrCodeValue.trim()}>
+            <StitchButton type="submit" size="lg" className="w-full rounded-xl" disabled={loading || !qrCodeValue.trim()}>
               {loading ? "Wird geprüft..." : "Gutschein bestätigen"}
               <Store className="h-4 w-4" />
             </StitchButton>
 
             <Drawer open={scanOpen} onOpenChange={setScanOpen}>
               <DrawerTrigger asChild>
-                <StitchButton type="button" variant="outline" size="lg" className="w-full rounded-[1rem] sm:w-auto">
+                <StitchButton type="button" variant="outline" size="lg" className="w-full rounded-xl sm:w-auto">
                   <Scan className="h-4 w-4" />
                   Scannen
                 </StitchButton>
               </DrawerTrigger>
               <DrawerContent
                 showHandle={false}
-                className="mx-auto max-w-md rounded-t-[1.25rem] border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
+                className="mx-auto max-w-md rounded-t-xl border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
               >
-                <div className="mx-auto mt-3 h-1.5 w-16 rounded-[0.6rem] bg-[rgba(242,220,171,0.24)]" />
+                <div className="mx-auto mt-3 h-1.5 w-16 rounded-xl bg-[rgba(242,220,171,0.24)]" />
 
                 <DrawerHeader className="px-7 pb-0 pt-4 text-left">
                   <div className="flex items-start justify-between gap-4">
@@ -252,7 +252,7 @@ const PartnerVoucherRedeem = () => {
                     <DrawerClose asChild>
                       <button
                         type="button"
-                        className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
+                        className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
                         aria-label="Scanner schließen"
                       >
                         <X className="h-5 w-5" />
@@ -262,7 +262,7 @@ const PartnerVoucherRedeem = () => {
                 </DrawerHeader>
 
                 <div className="px-7 pt-5">
-                  <div className="overflow-hidden rounded-[1rem] bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
+                  <div className="overflow-hidden rounded-xl bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
                     <CodeQrScanner
                       onScan={(value) => {
                         setQrCodeValue(value.trim());

@@ -203,7 +203,7 @@ const Register = () => {
               <div className="space-y-3">
                 <StitchBadge tone="cream">Registrierung folgt</StitchBadge>
                 <div className="flex items-center gap-3">
-                  <div className="rounded-[1rem] bg-[#f2dcab] p-2.5 shadow-[0_18px_30px_rgba(0,0,0,0.18)]">
+                  <div className="rounded-xl bg-[#f2dcab] p-2.5 shadow-[0_18px_30px_rgba(0,0,0,0.18)]">
                     <img src={logo} alt="Kletterliga NRW" className="h-8 w-8 object-contain" />
                   </div>
                   <div>
@@ -215,7 +215,7 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] text-[#f2dcab]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] text-[#f2dcab]">
                 <CalendarDays className="h-5 w-5" />
               </div>
             </div>
@@ -231,14 +231,14 @@ const Register = () => {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[1.15rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
+              <div className="rounded-xl border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
                 <div className="stitch-kicker text-[rgba(242,220,171,0.6)]">Ab Registrierung</div>
                 <div className="mt-2 font-['Space_Grotesk'] text-lg font-bold text-[#f2dcab]">Account anlegen</div>
                 <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.74)]">
                   Profil erstellen, E-Mail bestätigen und direkt einloggen.
                 </p>
               </div>
-              <div className="rounded-[1.15rem] border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
+              <div className="rounded-xl border border-[rgba(242,220,171,0.14)] bg-[rgba(242,220,171,0.08)] p-4 backdrop-blur-md">
                 <div className="stitch-kicker text-[rgba(242,220,171,0.6)]">Ab Saisonstart</div>
                 <div className="mt-2 font-['Space_Grotesk'] text-lg font-bold text-[#f2dcab]">{unlockDateLabel}</div>
                 <p className="mt-2 text-sm leading-6 text-[rgba(242,220,171,0.74)]">
@@ -283,9 +283,9 @@ const Register = () => {
               return (
                 <div
                   key={item.title}
-                  className="flex items-start gap-3 rounded-[1.1rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] p-4 backdrop-blur-md"
+                  className="flex items-start gap-3 rounded-xl border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] p-4 backdrop-blur-md"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#f2dcab] text-[#003d55] shadow-[0_12px_22px_rgba(0,0,0,0.12)]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f2dcab] text-[#003d55] shadow-[0_12px_22px_rgba(0,0,0,0.12)]">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="space-y-1">
@@ -319,7 +319,7 @@ const Register = () => {
               Zurück
             </button>
             <div className="flex min-w-0 items-center gap-3">
-              <div className="rounded-[0.95rem] bg-[#f2dcab] p-2.5 shadow-[0_16px_28px_rgba(0,0,0,0.2)]">
+              <div className="rounded-xl bg-[#f2dcab] p-2.5 shadow-[0_16px_28px_rgba(0,0,0,0.2)]">
                 <img src={logo} alt="Kletterliga NRW" className="h-8 w-8 object-contain" />
               </div>
               <div className="min-w-0">
@@ -427,7 +427,7 @@ const Register = () => {
                   </div>
                 </StitchCard>
 
-                <div className="relative overflow-hidden rounded-[1.5rem] border border-[rgba(242,220,171,0.14)] bg-[linear-gradient(135deg,rgba(242,220,171,0.12),rgba(0,61,85,0.4))] p-5">
+                <div className="relative overflow-hidden rounded-xl border border-[rgba(242,220,171,0.14)] bg-[linear-gradient(135deg,rgba(242,220,171,0.12),rgba(0,61,85,0.4))] p-5">
                   <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f2dcab]/10 blur-2xl" />
                   <div className="relative">
                     <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">
@@ -514,7 +514,7 @@ const Register = () => {
                         </div>
                       </StitchCard>
 
-                      <div className="hidden rounded-[1.4rem] border-l-4 border-[#fd9f66] bg-[#f5efe5] p-5">
+                      <div className="hidden rounded-xl border-l-4 border-[#fd9f66] bg-[#f5efe5] p-5">
                         <div className="flex items-start gap-3">
                           <ShieldCheck className="mt-0.5 h-5 w-5 text-[#a15523]" />
                           <div className="space-y-2">
@@ -558,7 +558,7 @@ const Register = () => {
             </div>
           ) : null}
           {currentStep === 3 ? (
-            <div className="space-y-6 rounded-[2rem] bg-[#fbf9f6] p-6 shadow-[0_28px_64px_rgba(0,38,55,0.18)] sm:p-8">
+            <div className="space-y-6 rounded-xl bg-[#fbf9f6] p-6 shadow-[0_28px_64px_rgba(0,38,55,0.18)] sm:p-8">
               <div className="space-y-4">
                 <div className="flex items-end justify-between gap-4">
                   <div className="space-y-2">
@@ -643,7 +643,7 @@ const Register = () => {
                         type="button"
                         onClick={() => setForm((prev) => ({ ...prev, league: option.value }))}
                         className={cn(
-                          "group relative flex min-h-[11.5rem] flex-col items-start overflow-hidden rounded-[1.2rem] border-b-4 px-3 py-4 text-left transition-all sm:min-h-[16rem] sm:rounded-[1.4rem] sm:px-5 sm:py-6",
+                          "group relative flex min-h-[11.5rem] flex-col items-start overflow-hidden rounded-xl border-b-4 px-3 py-4 text-left transition-all sm:min-h-[16rem] sm:rounded-xl sm:px-5 sm:py-6",
                           isSelected
                             ? "border-[#a15523] bg-[#ede8e1] shadow-[0_16px_30px_rgba(0,38,55,0.08)]"
                             : "border-transparent bg-[#f5efe5] hover:border-[#a15523]",
@@ -686,7 +686,7 @@ const Register = () => {
                       onClick={() => {
                         if (isLeagueCard) setForm((prev) => ({ ...prev, league: option.value }));
                       }}
-                      className={cn("group relative flex min-h-[16rem] flex-col items-start overflow-hidden rounded-[1.4rem] border-b-4 px-5 py-6 text-left transition-all", isSelected ? "border-[#a15523] bg-[#ede8e1] shadow-[0_16px_30px_rgba(0,38,55,0.08)]" : "border-transparent bg-[#f5efe5] hover:border-[#a15523]", !isLeagueCard && "cursor-default")}
+                      className={cn("group relative flex min-h-[16rem] flex-col items-start overflow-hidden rounded-xl border-b-4 px-5 py-6 text-left transition-all", isSelected ? "border-[#a15523] bg-[#ede8e1] shadow-[0_16px_30px_rgba(0,38,55,0.08)]" : "border-transparent bg-[#f5efe5] hover:border-[#a15523]", !isLeagueCard && "cursor-default")}
                     >
                       <div className="absolute -right-5 -top-5 text-[#002637]/5 transition-opacity group-hover:text-[#002637]/10">
                         {option.value === "lead" ? <Flag className="h-24 w-24" /> : option.value === "toprope" ? <Sparkles className="h-24 w-24" /> : <Building2 className="h-24 w-24" />}
@@ -743,7 +743,7 @@ const Register = () => {
                 </div>
               </StitchCard>
 
-              <div className="rounded-[1.1rem] bg-[#f5efe5] p-5 sm:p-6">
+              <div className="rounded-xl bg-[#f5efe5] p-5 sm:p-6">
                 <div className="space-y-4">
                   <label className="flex items-start gap-4">
                     <Checkbox
@@ -812,7 +812,7 @@ const Register = () => {
             </div>
           ) : null}
 
-          <div className="hidden rounded-[1.3rem] border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] px-5 py-4 text-sm leading-6 text-[rgba(242,220,171,0.78)]">
+          <div className="hidden rounded-xl border border-[rgba(242,220,171,0.12)] bg-[rgba(242,220,171,0.06)] px-5 py-4 text-sm leading-6 text-[rgba(242,220,171,0.78)]">
             <span className="font-semibold text-[#f2dcab]">Wichtig:</span> {stepNote}
           </div>
 

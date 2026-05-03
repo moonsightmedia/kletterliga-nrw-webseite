@@ -63,18 +63,18 @@ const ParticipantRouteFallback = ({
       <div className="animate-pulse">
         <div className="h-72 bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]" />
         <div className="-mt-8 space-y-4 px-4 pb-4">
-          <div className="rounded-[1.6rem] bg-white/95 p-5 shadow-[0_16px_34px_rgba(0,38,55,0.08)]">
+          <div className="rounded-xl bg-white/95 p-5 shadow-[0_16px_34px_rgba(0,38,55,0.08)]">
             <div className="h-5 w-24 rounded-full bg-[#003d55]/10" />
             <div className="mt-4 h-10 w-2/3 rounded-full bg-[#003d55]/10" />
             <div className="mt-6 h-4 w-full rounded-full bg-[#003d55]/8" />
             <div className="mt-2 h-4 w-4/5 rounded-full bg-[#003d55]/8" />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-[1.25rem] bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
+            <div className="rounded-xl bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
               <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
               <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
             </div>
-            <div className="rounded-[1.25rem] bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
+            <div className="rounded-xl bg-white/90 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)]">
               <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
               <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
             </div>
@@ -88,14 +88,14 @@ const ParticipantRouteFallback = ({
     <div className="mx-auto max-w-md animate-pulse space-y-5">
       <div
         className={cn(
-          "overflow-hidden rounded-[1.7rem] border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.18)]",
+          "overflow-hidden rounded-xl border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.18)]",
           home ? "bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)]" : "bg-white/92 backdrop-blur",
         )}
       >
         <div className={cn("h-4 w-28 rounded-full", home ? "bg-[#f2dcab]/14" : "bg-[#003d55]/8")} />
         <div
           className={cn(
-            "mt-4 h-12 w-3/4 rounded-[1rem]",
+            "mt-4 h-12 w-3/4 rounded-xl",
             home ? "bg-[#f2dcab]/12" : "bg-[#003d55]/10",
           )}
         />
@@ -104,22 +104,22 @@ const ParticipantRouteFallback = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+        <div className="rounded-xl bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
           <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
           <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
         </div>
-        <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+        <div className="rounded-xl bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
           <div className="h-4 w-20 rounded-full bg-[#003d55]/8" />
           <div className="mt-4 h-8 w-16 rounded-full bg-[#003d55]/10" />
         </div>
       </div>
 
-      <div className="rounded-[1.55rem] bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
+      <div className="rounded-xl bg-white/92 p-5 shadow-[0_12px_28px_rgba(0,38,55,0.06)] backdrop-blur">
         <div className="h-4 w-28 rounded-full bg-[#003d55]/8" />
         <div className="mt-4 space-y-3">
-          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
-          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
-          <div className="h-16 rounded-[1rem] bg-[#003d55]/6" />
+          <div className="h-16 rounded-xl bg-[#003d55]/6" />
+          <div className="h-16 rounded-xl bg-[#003d55]/6" />
+          <div className="h-16 rounded-xl bg-[#003d55]/6" />
         </div>
       </div>
     </div>
@@ -293,16 +293,16 @@ export const ParticipantLayout = () => {
                   side="bottom"
                   sideOffset={12}
                   collisionPadding={16}
-                  className="w-[min(92vw,24rem)] overflow-hidden rounded-[1.9rem] border border-[rgba(161,85,35,0.14)] bg-[linear-gradient(180deg,#f2dcab_0%,#eed6a0_100%)] p-0 text-[#002637] shadow-[0_24px_60px_rgba(0,0,0,0.34)]"
+                  className="w-[min(92vw,24rem)] overflow-hidden rounded-xl border border-[rgba(161,85,35,0.14)] bg-[linear-gradient(180deg,#f2dcab_0%,#eed6a0_100%)] p-0 text-[#002637] shadow-[0_24px_60px_rgba(0,0,0,0.34)]"
                 >
                   <div className="border-b border-[rgba(0,38,55,0.1)] px-5 py-5">
                     <div className="stitch-kicker text-[rgba(0,38,55,0.52)]">Benachrichtigungen</div>
                   </div>
 
                   <div className="space-y-3 px-4 py-4">
-                    <div className="rounded-[1.35rem] bg-white/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]">
+                    <div className="rounded-xl bg-white/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#a15523] text-white">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#a15523] text-white">
                           <Bell className="h-4 w-4" />
                         </div>
                         <div>
@@ -319,9 +319,9 @@ export const ParticipantLayout = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-[1.35rem] bg-white/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]">
+                    <div className="rounded-xl bg-white/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#003d55] text-[#f2dcab]">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#003d55] text-[#f2dcab]">
                           <User className="h-4 w-4" />
                         </div>
                         <div>

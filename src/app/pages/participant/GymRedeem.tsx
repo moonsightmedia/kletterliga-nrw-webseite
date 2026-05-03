@@ -110,7 +110,7 @@ const GymRedeem = () => {
       <div className="mx-auto max-w-md">
         <StitchCard
           tone="cream"
-          className="rounded-[2.2rem] border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-6 shadow-[0_28px_70px_rgba(0,0,0,0.24)]"
+          className="rounded-xl border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-6 shadow-[0_28px_70px_rgba(0,0,0,0.24)]"
         >
           <div className="space-y-4 text-center">
             <div className="stitch-headline text-[2rem] leading-[1.02] text-[#002637]">Mastercode zuerst einlösen</div>
@@ -132,15 +132,15 @@ const GymRedeem = () => {
       <div className="space-y-5">
         <StitchCard
           tone="cream"
-          className="overflow-hidden rounded-[2.2rem] border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-5 shadow-[0_28px_70px_rgba(0,0,0,0.24)] sm:p-6"
+          className="overflow-hidden rounded-xl border border-[rgba(161,85,35,0.12)] bg-[linear-gradient(180deg,#f2dcab_0%,#ecd39a_100%)] p-5 shadow-[0_28px_70px_rgba(0,0,0,0.24)] sm:p-6"
         >
           <form onSubmit={handleRedeem} className="space-y-6">
             <div className="flex justify-center pt-2">
               <div className="relative">
-                <div className="flex h-24 w-24 items-center justify-center rounded-[1.35rem] bg-[rgba(0,38,55,0.08)] text-[#a15523] shadow-[inset_0_-2px_0_rgba(0,38,55,0.06)]">
+                <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-[rgba(0,38,55,0.08)] text-[#a15523] shadow-[inset_0_-2px_0_rgba(0,38,55,0.06)]">
                   <Ticket className="h-10 w-10" />
                 </div>
-                <div className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-[#a15523] text-[#f2dcab] shadow-[0_14px_28px_rgba(161,85,35,0.28)]">
+                <div className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-xl bg-[#a15523] text-[#f2dcab] shadow-[0_14px_28px_rgba(161,85,35,0.28)]">
                   <KeyRound className="h-5 w-5" />
                 </div>
               </div>
@@ -159,7 +159,7 @@ const GymRedeem = () => {
 
             <label className="block space-y-3">
               <span className="sr-only">Hallencode</span>
-              <div className="rounded-[1.2rem] bg-white px-5 pb-4 pt-4 shadow-[0_16px_34px_rgba(0,0,0,0.08)]">
+              <div className="rounded-xl bg-white px-5 pb-4 pt-4 shadow-[0_16px_34px_rgba(0,0,0,0.08)]">
                 <input
                   value={code}
                   onChange={(event) => setCode(event.target.value.toUpperCase())}
@@ -175,7 +175,7 @@ const GymRedeem = () => {
             <StitchButton
               type="submit"
               size="lg"
-              className="w-full rounded-[1.1rem] py-6 text-base shadow-[0_18px_34px_rgba(161,85,35,0.24)]"
+              className="w-full rounded-xl py-6 text-base shadow-[0_18px_34px_rgba(161,85,35,0.24)]"
               disabled={loading || !code.trim()}
             >
               {loading ? "Code wird geprüft..." : "Code aktivieren"}
@@ -196,7 +196,7 @@ const GymRedeem = () => {
                   </DrawerTrigger>
                   <DrawerContent
                     showHandle={false}
-                    className="mx-auto max-w-md rounded-t-[2rem] border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
+                    className="mx-auto max-w-md rounded-t-xl border-0 bg-[#002637] px-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-[#f2dcab]"
                   >
                     <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-[rgba(242,220,171,0.24)]" />
 
@@ -214,7 +214,7 @@ const GymRedeem = () => {
                         <DrawerClose asChild>
                           <button
                             type="button"
-                            className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
+                            className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(242,220,171,0.08)] text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.14)]"
                             aria-label="Scanner schließen"
                           >
                             <X className="h-5 w-5" />
@@ -224,7 +224,7 @@ const GymRedeem = () => {
                     </DrawerHeader>
 
                     <div className="px-7 pt-5">
-                      <div className="overflow-hidden rounded-[1.8rem] bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
+                      <div className="overflow-hidden rounded-xl bg-[#f5f3f0] p-0 shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
                         <CodeQrScanner
                           onScan={(value) => {
                             setCode(value.trim().toUpperCase());

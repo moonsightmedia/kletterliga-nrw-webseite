@@ -5,8 +5,8 @@
     --stitch-navy-deep: #002637;
     --stitch-cream: #f2dcab;
     --stitch-terracotta: #a15523;
-    --stitch-radius-hero: 1.7rem;
-    --stitch-radius-content: 1.55rem;
+    --stitch-radius-hero: 0.75rem;
+    --stitch-radius-content: 0.75rem;
     --stitch-surface: #ffffff;
     --stitch-surface-soft: #f8f4ee;
     --stitch-surface-muted: #ede8e1;
@@ -81,7 +81,6 @@
   .stitch-cream-card,
   .stitch-muted-card,
   .stitch-glass-card {
-    border-radius: 1.5rem;
     overflow: hidden;
   }
 
@@ -108,6 +107,11 @@
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  }
+
+  /* Innen horizontal scrollen: overflow-x:visible + overflow-y:hidden auf hidden-Karten erzwingt laut Spec oft overflow-x:auto auf dem Eltern — Zentrierung im inneren Scroller bricht dann. */
+  .stitch-glass-card.stitch-glass-card--allow-horizontal-scroll-child {
+    overflow: visible;
   }
 
   .stitch-navy-card {
@@ -159,7 +163,7 @@
   .stitch-field-shell {
     background: rgba(255, 255, 255, 0.7);
     border-bottom: 2px solid rgba(0, 38, 55, 0.16);
-    border-radius: 1rem 1rem 0.35rem 0.35rem;
+    border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
     transition: border-color 160ms ease, background-color 160ms ease;
   }
 
@@ -209,3 +213,7 @@
 .stitch-scroll-x::-webkit-scrollbar {
   display: none;
 }
+
+  .stitch-scroll-x-touch {
+    -webkit-overflow-scrolling: touch;
+  }

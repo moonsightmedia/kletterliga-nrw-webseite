@@ -94,17 +94,19 @@ const ProfileEditScreen = () => {
               (uploading || savingAvatar) && "cursor-wait opacity-70",
             )}
           >
-            <div className="h-36 w-36 overflow-hidden rounded-[1.4rem] border-4 border-[#A15523] shadow-[0_20px_42px_rgba(0,0,0,0.22)]">
-              {avatarPreview ? (
-                <img src={avatarPreview} alt={displayName} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#0f2d3c] font-['Space_Grotesk'] text-4xl font-bold uppercase text-[#F2DCAB]">
-                  {getInitials(displayName)}
-                </div>
-              )}
+            <div className="h-36 w-36 rounded-xl bg-[#A15523] p-1 shadow-[0_20px_42px_rgba(0,0,0,0.22)]">
+              <div className="h-full w-full overflow-hidden rounded-[calc(0.75rem-0.25rem)] bg-[#0f2d3c]">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-['Space_Grotesk'] text-4xl font-bold uppercase text-[#F2DCAB]">
+                    {getInitials(displayName)}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <span className="absolute -bottom-1 -right-1 flex h-14 w-14 items-center justify-center rounded-[1rem] border-2 border-[#003D55] bg-[#A15523] text-white shadow-lg transition-transform group-hover:scale-[1.02]">
+            <span className="absolute -bottom-1 -right-1 flex h-14 w-14 items-center justify-center rounded-xl border-2 border-[#003D55] bg-[#A15523] text-white shadow-lg transition-transform group-hover:scale-[1.02]">
               <MaterialIcon name="edit" className="text-lg" />
             </span>
           </button>
@@ -114,7 +116,7 @@ const ProfileEditScreen = () => {
           </p>
         </section>
 
-        <section className="relative overflow-hidden rounded-[2rem] bg-[#F2DCAB] p-8 shadow-[0_24px_54px_rgba(0,0,0,0.16)]">
+        <section className="relative overflow-hidden rounded-xl bg-[#F2DCAB] p-8 shadow-[0_24px_54px_rgba(0,0,0,0.16)]">
           <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#A15523]/6 blur-3xl" />
 
           <div className="relative z-10 space-y-8">
@@ -175,7 +177,7 @@ const ProfileEditScreen = () => {
             <div className="space-y-6 pt-2">
               <div className="space-y-3">
                 <div className="ml-1 text-xs font-bold uppercase tracking-[0.18em] text-[#003D55]">Geschlecht</div>
-                <div className="flex rounded-2xl bg-[#003D55]/5 p-1.5" aria-disabled="true">
+                <div className="flex rounded-xl bg-[#003D55]/5 p-1.5" aria-disabled="true">
                   <SegmentedOption active={genderLabel === "Männlich"} label="Männlich" />
                   <SegmentedOption active={genderLabel === "Weiblich"} label="Weiblich" />
                 </div>
@@ -189,7 +191,7 @@ const ProfileEditScreen = () => {
                 </div>
               </div>
 
-              <div className="rounded-[1.7rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.28)_100%)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_12px_26px_rgba(0,38,55,0.06)]">
+              <div className="rounded-xl border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.28)_100%)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_12px_26px_rgba(0,38,55,0.06)]">
                 <div className="inline-flex items-center rounded-full bg-white/65 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#A15523]">
                   Wettkampfbereich
                 </div>
@@ -199,7 +201,7 @@ const ProfileEditScreen = () => {
                 <button
                   type="button"
                   onClick={() => setChangeRequestOpen(true)}
-                  className="mt-5 flex w-full items-center justify-center gap-2.5 rounded-[1.2rem] border border-[#003D55]/12 bg-white px-5 py-3.5 text-sm font-bold text-[#003D55] shadow-[0_10px_22px_rgba(0,38,55,0.08)] transition-all hover:-translate-y-[1px] hover:bg-white/95"
+                  className="mt-5 flex w-full items-center justify-center gap-2.5 rounded-xl border border-[#003D55]/12 bg-white px-5 py-3.5 text-sm font-bold text-[#003D55] shadow-[0_10px_22px_rgba(0,38,55,0.08)] transition-all hover:-translate-y-[1px] hover:bg-white/95"
                 >
                   <PenLine className="h-4 w-4 shrink-0" strokeWidth={2.2} />
                   <span>Änderung anfragen</span>
@@ -215,7 +217,7 @@ const ProfileEditScreen = () => {
                   void handleSaveAndReturn();
                 }}
                 className={cn(
-                  "w-full rounded-[1.5rem] bg-[#A15523] px-6 py-5 font-['Space_Grotesk'] text-sm font-black uppercase tracking-[0.24em] text-white shadow-[0_16px_32px_rgba(161,85,35,0.28)] transition-all hover:shadow-[0_20px_36px_rgba(161,85,35,0.34)] active:translate-y-0.5",
+                  "w-full rounded-xl bg-[#A15523] px-6 py-5 font-['Space_Grotesk'] text-sm font-black uppercase tracking-[0.24em] text-white shadow-[0_16px_32px_rgba(161,85,35,0.28)] transition-all hover:shadow-[0_20px_36px_rgba(161,85,35,0.34)] active:translate-y-0.5",
                   (saving || uploading || savingAvatar) && "cursor-wait opacity-70",
                 )}
               >

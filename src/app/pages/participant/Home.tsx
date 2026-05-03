@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -306,6 +306,146 @@ const Home = () => {
     );
     return upcoming ?? stages.at(-1) ?? null;
   }, [now, stages]);
+
+  const timelineFocusStageKey = useMemo(() => {
+    for (const stage of stages) {
+      const startDate = new Date(`${stage.start}T00:00:00`);
+      const endDate = new Date(`${stage.end}T23:59:59`);
+      if (now >= startDate.getTime() && now <= endDate.getTime()) {
+        return stage.key;
+      }
+    }
+    return heroStage?.key ?? null;
+  }, [now, stages, heroStage?.key]);
+
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const timelineTrackRef = useRef<HTMLDivElement>(null);
+
+  const scrollTimelineFocusedCardIntoView = useCallback(() => {
+    const container = timelineScrollRef.current;
+    const key = timelineFocusStageKey;
+    if (!container || !key || stages.length === 0) return;
+
+    let el: Element | null = null;
+    try {
+      el = container.querySelector(`[data-timeline-stage="${CSS.escape(String(key))}"]`);
+    } catch {
+      return;
+    }
+    if (!(el instanceof HTMLElement)) return;
+
+    const prev = el.previousElementSibling;
+    const next = el.nextElementSibling;
+
+    const pad = 12;
+    const clientW = container.clientWidth;
+    const maxS = Math.max(0, container.scrollWidth - clientW);
+
+    container.scrollLeft = 0;
+    void container.offsetHeight;
+
+    const cr = container.getBoundingClientRect();
+    const box = (node: HTMLElement) => {
+      const r = node.getBoundingClientRect();
+      const left = r.left - cr.left;
+      return { left, width: r.width, right: left + r.width };
+    };
+
+    const f = box(el);
+    const fLeft = f.left;
+    const fRight = f.right;
+    const fCenter = f.left + f.width / 2;
+
+    const sMin = fRight - clientW + pad;
+    const sMax = fLeft - pad;
+
+    const rightBias = Math.min(48, Math.round(clientW * 0.08));
+    const sIdeal = fCenter - clientW / 2 - rightBias;
+
+    let s: number;
+    if (sMin <= sMax) {
+      s = Math.min(Math.max(sIdeal, sMin), sMax);
+    } else {
+      s = Math.max(0, Math.min(maxS, fLeft - pad));
+    }
+
+    if (prev instanceof HTMLElement) {
+      const p = box(prev);
+      const keepPrevPx = Math.min(p.width - 8, Math.max(56, Math.round(p.width * 0.88)));
+      const keepPrevScrollMax = p.right - keepPrevPx;
+      s = Math.min(s, keepPrevScrollMax);
+    }
+
+    if (next instanceof HTMLElement) {
+      const n = box(next);
+      const nextPeek = Math.min(96, Math.round(clientW * 0.22));
+      s = Math.max(s, n.left - clientW + nextPeek);
+    }
+
+    if (sMin <= sMax) {
+      s = Math.min(Math.max(s, sMin), sMax);
+    } else {
+      s = Math.max(0, Math.min(maxS, fLeft - pad));
+    }
+
+    container.scrollLeft = Math.min(maxS, Math.max(0, s));
+
+    requestAnimationFrame(() => {
+      const cr2 = container.getBoundingClientRect();
+      const er2 = el.getBoundingClientRect();
+      if (er2.right > cr2.right - 2 || er2.left < cr2.left + 2) {
+        el.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+      }
+    });
+  }, [timelineFocusStageKey, stages.length]);
+
+  const timelineLayoutKey = `${timelineFocusStageKey ?? ""}|${stages.map((s) => s.key).join(",")}`;
+
+  useLayoutEffect(() => {
+    scrollTimelineFocusedCardIntoView();
+    const raf = requestAnimationFrame(() => {
+      scrollTimelineFocusedCardIntoView();
+      requestAnimationFrame(() => {
+        scrollTimelineFocusedCardIntoView();
+      });
+    });
+    const container = timelineScrollRef.current;
+    const track = timelineTrackRef.current;
+    const ro =
+      container &&
+      new ResizeObserver(() => {
+        scrollTimelineFocusedCardIntoView();
+      });
+    if (container && ro) {
+      ro.observe(container);
+      if (track) ro.observe(track);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+    };
+  }, [scrollTimelineFocusedCardIntoView, timelineLayoutKey]);
+
+  useEffect(() => {
+    if (stages.length === 0) return;
+
+    const timers = [0, 120, 450].map((ms) =>
+      window.setTimeout(() => {
+        scrollTimelineFocusedCardIntoView();
+      }, ms),
+    );
+
+    let cancelled = false;
+    void document.fonts?.ready?.then(() => {
+      if (!cancelled) scrollTimelineFocusedCardIntoView();
+    });
+
+    return () => {
+      cancelled = true;
+      timers.forEach((id) => window.clearTimeout(id));
+    };
+  }, [scrollTimelineFocusedCardIntoView, timelineLayoutKey, stages.length]);
 
   const fullName =
     [firstName, lastName].filter(Boolean).join(" ") ||
@@ -637,7 +777,7 @@ const Home = () => {
         </section>
 
         <section className="space-y-4">
-          <div className="stitch-glass-card rounded-xl p-5">
+          <div className="stitch-glass-card stitch-glass-card--allow-horizontal-scroll-child min-w-0 rounded-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="stitch-kicker text-[rgba(242,220,171,0.62)]">Saison-Timeline</div>
@@ -655,8 +795,13 @@ const Home = () => {
               ) : null}
             </div>
 
-            <div className="stitch-scroll-x mt-5 -mx-1 overflow-x-auto px-1">
-              <div className="flex gap-3 pb-1">
+            <div
+              ref={timelineScrollRef}
+              role="region"
+              aria-label="Etappen — horizontal scrollen"
+              className="stitch-scroll-x stitch-scroll-x-touch mt-5 -mx-1 w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain px-1 [scroll-padding-inline:0.5rem]"
+            >
+              <div ref={timelineTrackRef} className="relative flex w-max min-w-max flex-nowrap gap-3 pb-1">
                 {stages.map((stage) => {
                   const startDate = new Date(`${stage.start}T00:00:00`);
                   const endDate = new Date(`${stage.end}T23:59:59`);
@@ -677,6 +822,7 @@ const Home = () => {
                     <button
                       key={stage.key}
                       type="button"
+                      data-timeline-stage={stage.key}
                       onClick={() => {
                         if (featureLocked) {
                           showLockedFeatureNotice("Ranglisten und Etappen");
@@ -684,15 +830,16 @@ const Home = () => {
                         }
                         navigate(`/app/rankings?tab=stage&stage=${stage.key}`);
                       }}
-                      className={`min-w-[210px] rounded-xl border p-4 text-left transition-all ${
+                      className={`min-w-[226px] shrink-0 overflow-visible rounded-xl border p-4 text-left transition-all ${
                         isCurrent
                           ? "border-[#a15523] bg-[#a15523] text-white shadow-[0_18px_28px_rgba(161,85,35,0.18)]"
                           : "border-[rgba(242,220,171,0.12)] bg-[rgba(0,38,55,0.12)] text-[#f2dcab]"
                       } ${featureLocked ? "opacity-80" : ""}`}
                       aria-disabled={featureLocked}
+                      aria-current={isCurrent ? "true" : undefined}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1 pr-1">
                           <div
                             className={`stitch-kicker ${
                               isCurrent ? "text-white/72" : "text-[rgba(242,220,171,0.62)]"
@@ -703,11 +850,11 @@ const Home = () => {
                           <div className="stitch-headline mt-3 text-xl">{stage.range}</div>
                         </div>
                         <Timer
-                          className={`h-5 w-5 ${isCurrent ? "text-white/72" : "text-[#f2dcab]"}`}
+                          className={`h-5 w-5 shrink-0 ${isCurrent ? "text-white/72" : "text-[#f2dcab]"}`}
                         />
                       </div>
                       <p
-                        className={`mt-3 text-sm leading-6 ${
+                        className={`mt-3 whitespace-normal break-words text-sm leading-6 ${
                           isCurrent ? "text-white/82" : "text-[rgba(242,220,171,0.72)]"
                         }`}
                       >

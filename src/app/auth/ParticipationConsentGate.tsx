@@ -59,7 +59,7 @@ export const ParticipationConsentGate = () => {
         <div className="space-y-3 text-center">
           <StitchBadge
             tone="cream"
-            className="mx-auto rounded-[0.9rem] px-4 py-1.5"
+            className="mx-auto rounded-xl px-4 py-1.5"
           >
             Teilnahme
           </StitchBadge>
@@ -71,20 +71,20 @@ export const ParticipationConsentGate = () => {
             trennen notwendige Mails von optionalen Liga-Infos.
           </p>
           {user?.email ? (
-            <div className="inline-flex items-center gap-2 rounded-[0.95rem] border border-[rgba(242,220,171,0.16)] bg-[rgba(242,220,171,0.08)] px-4 py-2 text-sm text-[rgba(242,220,171,0.82)]">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(242,220,171,0.16)] bg-[rgba(242,220,171,0.08)] px-4 py-2 text-sm text-[rgba(242,220,171,0.82)]">
               <Mail className="h-4 w-4" />
               {user.email}
             </div>
           ) : null}
         </div>
 
-        <StitchCard tone="cream" className="rounded-[1.2rem] p-5 sm:p-6">
+        <StitchCard tone="cream" className="rounded-xl p-5 sm:p-6">
           <div className="space-y-4 text-[#002637]">
-            <div className="flex items-start gap-3 rounded-[0.95rem] border border-[rgba(0,38,55,0.08)] bg-[#f8f1e6] p-4">
+            <div className="flex items-start gap-3 rounded-xl border border-[rgba(0,38,55,0.08)] bg-[#f8f1e6] p-4">
               <ShieldCheck className="mt-0.5 h-5 w-5 text-[#a15523]" />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-[0.6rem] bg-[#a15523] px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-white">
+                  <span className="rounded-xl bg-[#a15523] px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-white">
                     Pflicht
                   </span>
                   <div className="font-['Space_Grotesk'] text-base font-bold">
@@ -98,7 +98,7 @@ export const ParticipationConsentGate = () => {
               </div>
             </div>
 
-            <label className="flex items-start gap-4 rounded-[0.95rem] border border-[rgba(0,38,55,0.12)] bg-white p-4 sm:p-5">
+            <label className="flex items-start gap-4 rounded-xl border border-[rgba(0,38,55,0.12)] bg-white p-4 sm:p-5">
               <Checkbox
                 checked={requiredAccepted}
                 onCheckedChange={(checked) =>
@@ -138,7 +138,7 @@ export const ParticipationConsentGate = () => {
               </span>
             </label>
 
-            <label className="flex items-start gap-4 rounded-[0.95rem] border border-[rgba(0,38,55,0.12)] bg-white p-4 sm:p-5">
+            <label className="flex items-start gap-4 rounded-xl border border-[rgba(0,38,55,0.12)] bg-white p-4 sm:p-5">
               <Checkbox
                 checked={marketingRequested}
                 onCheckedChange={(checked) =>
@@ -155,13 +155,13 @@ export const ParticipationConsentGate = () => {
             </label>
 
             {error ? (
-              <div className="rounded-[0.95rem] border border-[#ba1a1a]/20 bg-[#fff1f1] px-4 py-3 text-sm text-[#8f1d1d]">
+              <div className="rounded-xl border border-[#ba1a1a]/20 bg-[#fff1f1] px-4 py-3 text-sm text-[#8f1d1d]">
                 {error}
               </div>
             ) : null}
 
             {notice ? (
-              <div className="rounded-[0.95rem] border border-[#003d55]/12 bg-[#edf6f9] px-4 py-3 text-sm text-[#003d55]">
+              <div className="rounded-xl border border-[#003d55]/12 bg-[#edf6f9] px-4 py-3 text-sm text-[#003d55]">
                 {notice}
               </div>
             ) : null}
@@ -170,14 +170,14 @@ export const ParticipationConsentGate = () => {
               <StitchButton
                 type="button"
                 variant="outline"
-                className="rounded-[0.95rem]"
+                className="rounded-xl"
                 onClick={() => void signOut()}
               >
                 Abmelden
               </StitchButton>
               <StitchButton
                 type="button"
-                className="rounded-[0.95rem]"
+                className="rounded-xl"
                 onClick={() => void handleSubmit()}
                 disabled={loading || !requiredAccepted}
               >

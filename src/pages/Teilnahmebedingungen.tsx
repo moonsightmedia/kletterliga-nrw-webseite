@@ -56,7 +56,7 @@ const Teilnahmebedingungen = () => {
                   href="https://www.alpenverein.de/artikel/sicher-klettern-sicherungsgeraete-richtig-bedienen_406d5638-0681-4e5e-8c12-c42e82e2ac59"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center rounded-[0.95rem] border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                  className="mt-4 inline-flex items-center rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
                 >
                   DAV-Sicherheitshinweise ansehen
                 </a>
@@ -85,13 +85,13 @@ const Teilnahmebedingungen = () => {
                   maßgeblich:
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <Link to="/regelwerk" className="inline-flex items-center rounded-[0.95rem] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                  <Link to="/regelwerk" className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
                     Regelwerk
                   </Link>
-                  <Link to="/datenschutz" className="inline-flex items-center rounded-[0.95rem] border border-primary px-4 py-2 text-sm font-semibold text-primary">
+                  <Link to="/datenschutz" className="inline-flex items-center rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary">
                     Datenschutzhinweise
                   </Link>
-                  <Link to="/modus" className="inline-flex items-center rounded-[0.95rem] border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
+                  <Link to="/modus" className="inline-flex items-center rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
                     Modus & Regeln
                   </Link>
                 </div>

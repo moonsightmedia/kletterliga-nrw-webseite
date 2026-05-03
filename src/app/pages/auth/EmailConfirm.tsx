@@ -68,7 +68,7 @@ const EmailConfirm = () => {
 
       <section className="space-y-5 px-5 py-6 sm:px-7 sm:py-7">
         {status === "loading" && (
-          <div className="rounded-[22px] border border-primary/10 bg-primary/[0.03] px-4 py-4">
+          <div className="rounded-xl border border-primary/10 bg-primary/[0.03] px-4 py-4">
             <div className="flex items-center gap-3 text-primary">
               <LoaderCircle className="h-5 w-5 animate-spin text-secondary" />
               <span className="text-sm font-semibold">
@@ -82,7 +82,7 @@ const EmailConfirm = () => {
         )}
 
         {status === "success" && (
-          <div className="rounded-[22px] border border-primary/15 bg-primary/[0.05] px-4 py-4">
+          <div className="rounded-xl border border-primary/15 bg-primary/[0.05] px-4 py-4">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
               <div className="space-y-2">
@@ -105,9 +105,9 @@ const EmailConfirm = () => {
         )}
 
         {status === "error" && (
-          <div className="space-y-4 rounded-[22px] border border-destructive/25 bg-destructive/5 px-4 py-4">
+          <div className="space-y-4 rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-4">
             <p className="text-sm leading-6 text-destructive">{errorMessage}</p>
-            <div className="rounded-[18px] border border-primary/10 bg-background px-4 py-4">
+            <div className="rounded-xl border border-primary/10 bg-background px-4 py-4">
               <div className="flex items-start gap-3">
                 <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
                 <p className="text-sm leading-6 text-muted-foreground">

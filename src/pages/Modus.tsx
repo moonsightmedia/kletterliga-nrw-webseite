@@ -560,16 +560,16 @@ const Modus = () => {
                     Wer nicht sicher sichern kann, darf nicht sichern.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Partnercheck vor jedem Versuch</span>
-                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Hallenregeln verbindlich beachten</span>
-                    <span className="inline-flex items-center rounded-[0.95rem] bg-white/10 px-3 py-2">Sicherungsgerät sicher bedienen</span>
+                    <span className="inline-flex items-center rounded-xl bg-white/10 px-3 py-2">Partnercheck vor jedem Versuch</span>
+                    <span className="inline-flex items-center rounded-xl bg-white/10 px-3 py-2">Hallenregeln verbindlich beachten</span>
+                    <span className="inline-flex items-center rounded-xl bg-white/10 px-3 py-2">Sicherungsgerät sicher bedienen</span>
                   </div>
                   <div className="mt-5">
                     <a
                       href="https://www.alpenverein.de/artikel/sicher-klettern-sicherungsgeraete-richtig-bedienen_406d5638-0681-4e5e-8c12-c42e82e2ac59"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center rounded-[0.95rem] bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:bg-accent/90"
+                      className="inline-flex min-h-11 items-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:bg-accent/90"
                     >
                       DAV-Hinweise zum sicheren Klettern
                     </a>

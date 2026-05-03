@@ -1,30 +1,36 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Award, Medal, Trophy, MapPin, ChevronDown } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BarChart3, ChevronDown, Flame, TrendingUp } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import {
+  buildRankingRows,
+  buildRankingVisibilityWindow,
+  formatRankingStageBoundaryDateDe,
+  formatRankingStagePeriodSentenceDe,
+  getCreatedAtTimeRanking,
+  getDateBoundaryTimeRanking,
+  getStageRange,
+  stageRankingPeriodHasBegun,
+  stageRankingPeriodHasEnded,
+} from "@/app/pages/participant/participantData";
+import { RankingRowCard, rankFormatter, formatRankingPointsDisplay as formatPoints } from "@/app/pages/participant/RankingRowCard";
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useSeasonSettings } from "@/services/seasonSettings";
-import type { Result, Route, Gym } from "@/services/appTypes";
+import { cn } from "@/lib/utils";
 
-type RankingRow = { rank: number; name: string; points: number; profile_id: string };
+type LeagueFilter = "toprope" | "lead";
 
-const getStageRange = (stageKey: string, stages: Array<{ key: string; start: string; end: string }>) => {
-  const stage = stages.find((item) => item.key === stageKey);
-  if (!stage) return null;
-  return {
-    start: new Date(`${stage.start}T00:00:00Z`),
-    end: new Date(`${stage.end}T23:59:59Z`),
-  };
-};
+const formatPlaceDelta = (value: number) => `${value} ${value === 1 ? "Platz" : "Plätze"}`;
+
+const getLeagueFromProfileValue = (value: string | null | undefined): LeagueFilter =>
+  value === "toprope" ? "toprope" : "lead";
 
 const getAgeGroupClassLabel = (value: string) => {
   const [ageGroup, gender] = value.split("-");
   const genderLabel = gender === "m" ? "männlich" : "weiblich";
-  
+
   switch (ageGroup) {
     case "U9":
       return `U9 ${genderLabel}`;
@@ -47,24 +53,62 @@ const getAgeGroupClassLabel = (value: string) => {
 
 const ageGroups = ["U9", "U11", "U13", "U15", "Ü15", "Ü40", "Ü50"] as const;
 
+const leagueOptions: Array<{ value: LeagueFilter; label: string }> = [
+  { value: "lead", label: "VORSTIEG" },
+  { value: "toprope", label: "TOP-ROPE" },
+];
+
+const filterGroupClassName =
+  "flex min-w-0 items-center gap-0.5 rounded-sm bg-[#003D55]/5 p-0.5";
+
+const filterButtonClassName =
+  "inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-sm px-2 py-1.5 font-['Space_Grotesk'] text-[7px] font-bold uppercase leading-none tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003D55]/18 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf9f6] min-[420px]:text-[8px]";
+
+const filterActiveClassName = "bg-[#A15523] text-[#F2DCAB] shadow-sm";
+
+const filterInactiveClassName = "text-[#003D55]/40 hover:text-[#003D55]";
+
+/** Wie `filterButtonClassName`, aber ohne durchgängiges `flex-1` — bei 7 Chips bricht das auf schmalen Viewports das Layout; ab `sm` gleiche Verteilung wie die drei Alters-Pills der normalen Rangliste. */
+const ageRowButtonClassName = cn(
+  filterButtonClassName,
+  "shrink-0 min-w-[1.95rem] sm:min-w-0 sm:flex-1 sm:basis-0",
+);
+
 const AgeGroupRankings = () => {
   const { profile, user } = useAuth();
   const { getAgeGroupRankingClass, getStages } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [rankings, setRankings] = useState<RankingRow[]>([]);
-  const userLeague = (profile?.league || (user?.user_metadata?.league as string | undefined) || "toprope") as
-    | "toprope"
-    | "lead";
-  const [leagueFilter, setLeagueFilter] = useState<"toprope" | "lead">(userLeague);
-  const [className, setClassName] = useState("U9-m");
-  const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
-  const [ageFilter, setAgeFilter] = useState<typeof ageGroups[number]>("U9");
+
+  const profileGender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as
+    | "m"
+    | "w"
+    | undefined;
+  const profileLeague = (profile?.league || (user?.user_metadata?.league as string | undefined)) ?? null;
+  const profileBirthDate = (profile?.birth_date || (user?.user_metadata?.birth_date as string | undefined)) ?? null;
+
+  const defaultLeague = getLeagueFromProfileValue(profileLeague);
+  const defaultClassNameFromProfile =
+    getAgeGroupRankingClass(profileBirthDate, profileGender ?? null) ?? "U9-m";
+
+  const [leagueFilter, setLeagueFilter] = useState<LeagueFilter>(defaultLeague);
+  const [className, setClassName] = useState(defaultClassNameFromProfile);
+  const [genderFilter, setGenderFilter] = useState<"m" | "w">(
+    () => defaultClassNameFromProfile.split("-")[1] === "w" ? "w" : "m",
+  );
+  const [ageFilter, setAgeFilter] = useState<(typeof ageGroups)[number]>(
+    () => (defaultClassNameFromProfile.split("-")[0] as (typeof ageGroups)[number]) || "U9",
+  );
+
   const classInitializedRef = useRef(false);
   const stages = useMemo(() => getStages(), [getStages]);
+
   const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
   const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "");
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const [expandedProfileId, setExpandedProfileId] = useState<string | null>(null);
+  const [showFullRanking, setShowFullRanking] = useState(false);
+  const [stageHelpOpen, setStageHelpOpen] = useState(false);
 
   useEffect(() => {
     const paramTab = searchParams.get("tab");
@@ -78,59 +122,250 @@ const AgeGroupRankings = () => {
   }, [searchParams, stages]);
 
   useEffect(() => {
-    const birthDate = profile?.birth_date ?? (user?.user_metadata?.birth_date as string | undefined);
-    const gender = (profile?.gender || (user?.user_metadata?.gender as string | undefined)) as "m" | "w" | undefined;
-    const derived = getAgeGroupRankingClass(birthDate ?? null, gender ?? null);
+    const derived = getAgeGroupRankingClass(profileBirthDate, profileGender ?? null);
     if (!classInitializedRef.current && derived) {
       setClassName(derived);
-      const [age, genderValue] = derived.split("-") as [typeof ageGroups[number], "m" | "w"];
-      if (age) setAgeFilter(age);
-      if (genderValue) setGenderFilter(genderValue);
+      const [age, genderValue] = derived.split("-") as [(typeof ageGroups)[number], "m" | "w"];
+      if (age && ageGroups.includes(age)) setAgeFilter(age);
+      if (genderValue === "m" || genderValue === "w") setGenderFilter(genderValue);
       classInitializedRef.current = true;
     }
-  }, [profile, user, getAgeGroupRankingClass]);
+  }, [profileBirthDate, profileGender, getAgeGroupRankingClass]);
 
   useEffect(() => {
-    const routeMap = new Map(routes.map((route) => [route.id, route.discipline]));
-    const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
-    const totals = results.reduce<Record<string, number>>((acc, result) => {
-      const discipline = routeMap.get(result.route_id);
-      const normalized =
-        discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
-      if (normalized !== leagueFilter) return acc;
-      if (range) {
-        const createdAt = result.created_at ? new Date(result.created_at) : null;
-        if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
+    setExpandedProfileId(null);
+    setShowFullRanking(false);
+    setStageHelpOpen(false);
+  }, [leagueFilter, className, tab, stageKey]);
+
+  useEffect(() => {
+    if (tab !== "stage" || stages.length === 0) return;
+    const valid = stages.some((s) => s.key === stageKey);
+    if (!valid) setStageKey(stages[0].key);
+  }, [tab, stages, stageKey]);
+
+  const stageRange = useMemo(() => {
+    if (tab !== "stage" || !stageKey || stages.length === 0) return null;
+    return getStageRange(stageKey, stages);
+  }, [tab, stageKey, stages]);
+
+  const rankingRows = useMemo(
+    () =>
+      buildRankingRows({
+        profiles,
+        results,
+        routes,
+        gyms,
+        league: leagueFilter,
+        className,
+        stageRange,
+        getClassName: getAgeGroupRankingClass,
+      }),
+    [profiles, results, routes, gyms, leagueFilter, className, stageRange, getAgeGroupRankingClass],
+  );
+
+  const defaultRankingRows = useMemo(
+    () =>
+      buildRankingRows({
+        profiles,
+        results,
+        routes,
+        gyms,
+        league: defaultLeague,
+        className: defaultClassNameFromProfile,
+        stageRange: null,
+        getClassName: getAgeGroupRankingClass,
+      }),
+    [profiles, results, routes, gyms, defaultLeague, defaultClassNameFromProfile, getAgeGroupRankingClass],
+  );
+
+  const currentProfileId = profile?.id ?? user?.id ?? null;
+  const currentUserHomeGymId =
+    profile?.home_gym_id ?? (typeof user?.user_metadata?.home_gym_id === "string" ? user.user_metadata.home_gym_id : null);
+  const currentUserHomeGym = useMemo(
+    () => (currentUserHomeGymId ? gyms.find((gym) => gym.id === currentUserHomeGymId) ?? null : null),
+    [gyms, currentUserHomeGymId],
+  );
+
+  const rankingRowsWithCurrentHomeGym = useMemo(() => {
+    if (!currentProfileId || !currentUserHomeGym) return rankingRows;
+
+    return rankingRows.map((row) => {
+      if (row.profileId !== currentProfileId) return row;
+      if (row.homeGymName || row.homeGymCity) return row;
+
+      return {
+        ...row,
+        homeGymName: currentUserHomeGym.name,
+        homeGymCity: currentUserHomeGym.city ?? null,
+      };
+    });
+  }, [rankingRows, currentProfileId, currentUserHomeGym]);
+
+  const currentUserStatsRow = useMemo(
+    () => defaultRankingRows.find((row) => row.profileId === currentProfileId) ?? null,
+    [defaultRankingRows, currentProfileId],
+  );
+
+  const previousStage = useMemo(() => {
+    if (stages.length < 2) return null;
+
+    const now = Date.now();
+    let latestStartedStageIndex = -1;
+
+    stages.forEach((stage, index) => {
+      const stageStart = getDateBoundaryTimeRanking(stage.start, "start");
+      if (stageStart !== null && stageStart <= now) {
+        latestStartedStageIndex = index;
       }
-      acc[result.profile_id] =
-        (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
-      return acc;
-    }, {});
-    const rows = profiles
-      .filter((profile) => {
-        if (profile.role === "gym_admin" || profile.role === "league_admin") return false;
-        if (!profile.participation_activated_at) return false;
-        const league = profile.league ?? null;
-        return league === null || league === leagueFilter;
-      })
-      .map((profile) => ({
-        id: profile.id,
-        className: getAgeGroupRankingClass(profile.birth_date, profile.gender),
-        name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || "Unbekannt",
-        points: totals[profile.id] ?? 0,
-      }))
-      .filter((row) => row.className === className);
-    rows.sort((a, b) => b.points - a.points);
-    setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
-  }, [profiles, results, routes, className, leagueFilter, tab, stageKey, stages, getAgeGroupRankingClass]);
+    });
 
-  const userName = useMemo(() => {
-    if (!profile) return "";
-    return `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
-  }, [profile]);
+    if (latestStartedStageIndex <= 0) return null;
+    return stages[latestStartedStageIndex - 1] ?? null;
+  }, [stages]);
 
-  const leagueLabel = leagueFilter === "lead" ? "Vorstieg" : "Toprope";
+  const previousStageResults = useMemo(() => {
+    if (!previousStage) return [];
+
+    const cutoffTime = getDateBoundaryTimeRanking(previousStage.end, "end");
+    if (cutoffTime === null) return [];
+
+    return results.filter((result) => {
+      const createdAtTime = getCreatedAtTimeRanking(result.created_at);
+      return createdAtTime !== null && createdAtTime <= cutoffTime;
+    });
+  }, [results, previousStage]);
+
+  const previousStageRankingRows = useMemo(() => {
+    if (!previousStage) return [];
+
+    return buildRankingRows({
+      profiles,
+      results: previousStageResults,
+      routes,
+      gyms,
+      league: defaultLeague,
+      className: defaultClassNameFromProfile,
+      stageRange: null,
+      getClassName: getAgeGroupRankingClass,
+    });
+  }, [
+    profiles,
+    previousStageResults,
+    routes,
+    gyms,
+    previousStage,
+    defaultLeague,
+    defaultClassNameFromProfile,
+    getAgeGroupRankingClass,
+  ]);
+
+  const previousStageRank = useMemo(
+    () => previousStageRankingRows.find((row) => row.profileId === currentProfileId)?.rank ?? null,
+    [previousStageRankingRows, currentProfileId],
+  );
+
+  const rankDeltaInfo = useMemo(() => {
+    if (!currentUserStatsRow) {
+      return {
+        label: "Keine Wertung",
+        tone: "neutral" as const,
+      };
+    }
+
+    if (!previousStage) {
+      return {
+        label: "Noch kein Vergleich",
+        tone: "neutral" as const,
+      };
+    }
+
+    if (previousStageRank === null) {
+      return {
+        label: "Neu in Wertung",
+        tone: "neutral" as const,
+      };
+    }
+
+    const rankDelta = previousStageRank - currentUserStatsRow.rank;
+
+    if (rankDelta > 0) {
+      return {
+        label: `+${formatPlaceDelta(rankDelta)}`,
+        tone: "improved" as const,
+      };
+    }
+
+    if (rankDelta < 0) {
+      return {
+        label: `-${formatPlaceDelta(Math.abs(rankDelta))}`,
+        tone: "declined" as const,
+      };
+    }
+
+    return {
+      label: "Unverändert",
+      tone: "neutral" as const,
+    };
+  }, [currentUserStatsRow, previousStage, previousStageRank]);
+
+  const topPercentLabel = useMemo(() => {
+    if (!currentUserStatsRow || defaultRankingRows.length === 0) return "Top --";
+
+    const percentile = Math.ceil((currentUserStatsRow.rank / defaultRankingRows.length) * 100);
+    return `Top ${Math.min(100, Math.max(1, percentile))}%`;
+  }, [currentUserStatsRow, defaultRankingRows.length]);
+
+  const visibleWindow = useMemo(
+    () =>
+      buildRankingVisibilityWindow(rankingRowsWithCurrentHomeGym, currentProfileId, showFullRanking),
+    [rankingRowsWithCurrentHomeGym, currentProfileId, showFullRanking],
+  );
+
+  const isSparseWindow = visibleWindow.visibleRows.length <= 1;
+
+  const rankDeltaChipClassName =
+    rankDeltaInfo.tone === "improved"
+      ? "bg-[#A15523] text-white shadow-sm"
+      : rankDeltaInfo.tone === "declined"
+        ? "bg-[#8C3B2A] text-white shadow-sm"
+        : "bg-[#F2DCAB]/14 text-[#F2DCAB] ring-1 ring-inset ring-[#F2DCAB]/12";
+
+  const rankDeltaIconClassName =
+    rankDeltaInfo.tone === "declined"
+      ? "rotate-180"
+      : rankDeltaInfo.tone === "neutral"
+        ? "opacity-70"
+        : "";
+
+  const leagueLabel = leagueFilter === "lead" ? "VORSTIEG" : "TOP-ROPE";
   const classLabel = getAgeGroupClassLabel(className);
+
+  const selectedStage = useMemo(
+    () => (stageKey ? stages.find((s) => s.key === stageKey) ?? null : null),
+    [stages, stageKey],
+  );
+  const selectedStageBegun =
+    tab === "stage" && selectedStage ? stageRankingPeriodHasBegun(selectedStage) : true;
+  const stageTabSelectedButNotBegun = tab === "stage" && selectedStage !== null && !selectedStageBegun;
+  const stageTabSelectedEnded =
+    tab === "stage" && selectedStage !== null ? stageRankingPeriodHasEnded(selectedStage) : false;
+
+  const setTabAndSyncUrl = (next: "overall" | "stage") => {
+    setTab(next);
+    let resolvedStage = stageKey;
+    if (next === "stage") {
+      const valid = Boolean(resolvedStage && stages.some((s) => s.key === resolvedStage));
+      resolvedStage = valid ? resolvedStage : (stages[0]?.key ?? "");
+      if (resolvedStage && resolvedStage !== stageKey) setStageKey(resolvedStage);
+    }
+    setSearchParams({ tab: next, stage: resolvedStage });
+  };
+
+  const setStageAndSyncUrl = (key: string) => {
+    setStageKey(key);
+    setSearchParams({ tab: "stage", stage: key });
+  };
 
   if (loading) {
     return <ParticipantStateCard title="Rangliste lädt" description="Die Altersklassen werden gerade aufgebaut." />;
@@ -140,445 +375,290 @@ const AgeGroupRankings = () => {
     return <ParticipantStateCard title="Rangliste nicht verfügbar" description={error} />;
   }
 
-  // Berechne Details für alle Teilnehmer
-  const getParticipantDetails = (profileId: string) => {
-    if (!results.length || !routes.length || !gyms.length) return null;
-
-    const routeMap = new Map(routes.map((r) => [r.id, r]));
-    const gymMap = new Map(gyms.map((g) => [g.id, g]));
-    const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
-
-    // Filtere Ergebnisse für diesen Teilnehmer und die aktuelle Liga/Etappe
-    const participantResults = results.filter((result) => {
-      if (result.profile_id !== profileId) return false;
-      const route = routeMap.get(result.route_id);
-      if (!route) return false;
-      const normalized = route.discipline === "vorstieg" ? "lead" : route.discipline === "toprope" ? "toprope" : route.discipline;
-      if (normalized !== leagueFilter) return false;
-      if (range) {
-        const createdAt = result.created_at ? new Date(result.created_at) : null;
-        if (!createdAt || createdAt < range.start || createdAt > range.end) return false;
-      }
-      return true;
-    });
-
-    // Gruppiere nach Halle
-    const gymGroups = new Map<string, { gym: Gym; routes: Array<{ route: Route; result: Result; points: number }>; totalPoints: number }>();
-
-    participantResults.forEach((result) => {
-      const route = routeMap.get(result.route_id);
-      if (!route) return;
-      const gym = gymMap.get(route.gym_id);
-      if (!gym) return;
-
-      const points = result.points + (result.flash ? 1 : 0);
-      
-      if (!gymGroups.has(gym.id)) {
-        gymGroups.set(gym.id, { gym, routes: [], totalPoints: 0 });
-      }
-      const group = gymGroups.get(gym.id)!;
-      group.routes.push({ route, result, points });
-      group.totalPoints += points;
-    });
-
-    return Array.from(gymGroups.values()).sort((a, b) => b.totalPoints - a.totalPoints);
-  };
-
-  const renderRankingList = () => {
-    if (rankings.length === 0) {
-      return <div className="p-4 text-sm text-muted-foreground">Noch keine Rangliste verfügbar.</div>;
-    }
-
-    const toggleRow = (profileId: string) => {
-      setExpandedRows((prev) => {
-        const next = new Set(prev);
-        if (next.has(profileId)) {
-          next.delete(profileId);
-        } else {
-          next.add(profileId);
-        }
-        return next;
-      });
-    };
-
-    // Desktop Table View with Expandable Rows
-    const renderDesktopTable = () => (
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Rang</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-right">Punkte</TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rankings.map((row) => {
-              const isUser = userName && row.name.includes(userName);
-              const Icon =
-                row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
-              const isExpanded = expandedRows.has(row.profile_id);
-              const participantDetails = getParticipantDetails(row.profile_id);
-              
-              return (
-                <Fragment key={row.profile_id}>
-                  <TableRow
-                    className={`cursor-pointer hover:bg-muted/50 ${isUser ? "bg-accent/20" : ""}`}
-                    onClick={() => toggleRow(row.profile_id)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {Icon ? (
-                          <Icon className={`h-5 w-5 ${
-                            row.rank === 1 ? "text-yellow-600" :
-                            row.rank === 2 ? "text-gray-400" :
-                            row.rank === 3 ? "text-amber-600" : ""
-                          }`} />
-                        ) : (
-                          <span className="text-sm font-semibold text-muted-foreground">{row.rank}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold">{row.name}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="text-lg font-semibold text-primary">{row.points}</div>
-                      <div className="text-xs text-muted-foreground">Punkte</div>
-                    </TableCell>
-                    <TableCell>
-                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                    </TableCell>
-                  </TableRow>
-                  {isExpanded && participantDetails && participantDetails.length > 0 && (
-                    <TableRow key={`${row.profile_id}-details`} className="bg-muted/20">
-                      <TableCell colSpan={4} className="p-4">
-                        <div className="space-y-3">
-                          <div className="text-xs text-muted-foreground mb-2">
-                            Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
-                          </div>
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            {participantDetails.map((group) => (
-                              <div key={group.gym.id} className="border border-border/60 rounded-lg p-3 bg-background">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                    <h3 className="font-semibold text-sm text-primary">{group.gym.name}</h3>
-                                  </div>
-                                  <div className="text-right flex-shrink-0 ml-2">
-                                    <div className="text-base font-bold text-primary">{group.totalPoints}</div>
-                                    <div className="text-[10px] text-muted-foreground leading-none">Pkt</div>
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {group.routes.map(({ route, result, points }) => (
-                                    <div
-                                      key={result.id}
-                                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs border ${
-                                        result.flash
-                                          ? "bg-yellow-500/20 border-yellow-500/40"
-                                          : "bg-background border-border/40"
-                                      }`}
-                                    >
-                                      <span className={`font-medium ${result.flash ? "text-yellow-700" : ""}`}>
-                                        {route.code}
-                                      </span>
-                                      <span className={`font-semibold ${result.flash ? "text-yellow-700" : "text-primary"}`}>
-                                        {points}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    );
-
-    // Mobile Accordion View
-    const renderMobileAccordion = () => (
-      <div className="md:hidden">
-        <Accordion type="single" collapsible className="space-y-3">
-        {rankings.map((row) => {
-          const isUser = userName && row.name.includes(userName);
-          const palette =
-            row.rank === 1
-              ? {
-                  barBg: "#234B61",
-                  name: "#FFFFFF",
-                  points: "#E7D4A8",
-                  label: "#C7D0D8",
-                  iconBg: "#F0DEB4",
-                  icon: "#1F3E52",
-                }
-              : row.rank === 2
-              ? {
-                  barBg: "#E3D6C9",
-                  name: "#234B61",
-                  points: "#9B6137",
-                  label: "#2C5B73",
-                  iconBg: "#8E5B34",
-                  icon: "#FFFFFF",
-                }
-              : row.rank === 3
-              ? {
-                  barBg: "#F0E6CC",
-                  name: "#234B61",
-                  points: "#A1693E",
-                  label: "#2C5B73",
-                  iconBg: "#234B61",
-                  icon: "#FFFFFF",
-                }
-              : {
-                  barBg: "#FFFFFF",
-                  name: "#234B61",
-                  points: "#9B6137",
-                  label: "#2C5B73",
-                  iconBg: "#F3F0E8",
-                  icon: "#234B61",
-                };
-          const Icon =
-            row.rank === 1 ? Trophy : row.rank === 2 ? Medal : row.rank === 3 ? Award : null;
-          const participantDetails = getParticipantDetails(row.profile_id);
-
-          return (
-            <AccordionItem
-              key={`${row.rank}-${row.name}`}
-              value={row.profile_id}
-              className={`border-0 ${isUser ? "bg-accent/20" : "bg-transparent"}`}
-            >
-              <AccordionTrigger
-                className="px-5 py-4 hover:no-underline [&>svg]:text-muted-foreground [&>svg]:ml-4"
-                style={{ backgroundColor: palette.barBg }}
-              >
-                <div className="flex items-center justify-between gap-4 w-full">
-                  <div className="w-16">
-                    <div
-                      className="h-12 w-12 flex items-center justify-center -skew-x-6"
-                      style={{ backgroundColor: palette.iconBg }}
-                    >
-                      <div className="skew-x-6">
-                        {Icon ? (
-                          <Icon className="h-5 w-5" style={{ color: palette.icon }} />
-                        ) : (
-                          <span className="text-sm font-semibold" style={{ color: palette.icon }}>
-                            {row.rank}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1 font-semibold uppercase tracking-wide" style={{ color: palette.name }}>
-                    {row.name}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-semibold" style={{ color: palette.points }}>
-                      {row.points}
-                    </div>
-                    <div className="text-xs" style={{ color: palette.label }}>
-                      Punkte
-                    </div>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-5 pb-3 pt-0">
-                <div className="pt-3 border-t border-border/50">
-                  {participantDetails && participantDetails.length > 0 ? (
-                    <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Punkteverteilung nach Hallen {tab === "stage" ? `(${stages.find((s) => s.key === stageKey)?.label || stageKey})` : "(Gesamtwertung)"}
-                      </div>
-                      {participantDetails.map((group) => (
-                        <div key={group.gym.id} className="border border-border/60 rounded p-2 bg-muted/30">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                              <h3 className="font-semibold text-sm text-primary truncate">{group.gym.name}</h3>
-                            </div>
-                            <div className="text-right flex-shrink-0 ml-2">
-                              <div className="text-base font-bold text-primary">{group.totalPoints}</div>
-                              <div className="text-[10px] text-muted-foreground leading-none">Pkt</div>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {group.routes.map(({ route, result, points }) => (
-                              <div
-                                key={result.id}
-                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs border ${
-                                  result.flash
-                                    ? "bg-yellow-500/20 border-yellow-500/40"
-                                    : "bg-background border-border/40"
-                                }`}
-                              >
-                                <span className={`font-medium text-[11px] ${result.flash ? "text-yellow-700" : ""}`}>
-                                  {route.code}
-                                </span>
-                                <span className={`font-semibold text-[11px] ${result.flash ? "text-yellow-700" : "text-primary"}`}>
-                                  {points}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-2 text-xs text-muted-foreground text-center">
-                      Keine Ergebnisse gefunden.
-                    </div>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-        </Accordion>
-      </div>
-    );
-
-    return (
-      <>
-        {renderDesktopTable()}
-        {renderMobileAccordion()}
-      </>
-    );
-  };
-
   return (
-    <div className="space-y-5 md:space-y-6">
-      <div className="space-y-1.5">
-        <div className="inline-flex w-full items-center rounded-[6px] bg-[#003D55]/5 p-0.5">
-          <button
-            type="button"
-            className={`flex-1 rounded-[6px] px-4 py-2 text-sm font-bold uppercase leading-none tracking-[0.08em] transition-all ${
-              leagueFilter === "toprope"
-                ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
-                : "text-[#003D55]/40 hover:text-[#003D55]"
-            }`}
-            onClick={() => setLeagueFilter("toprope")}
-          >
-            Toprope
-          </button>
-          <button
-            type="button"
-            className={`flex-1 rounded-[6px] px-4 py-2 text-sm font-bold uppercase leading-none tracking-[0.08em] transition-all ${
-              leagueFilter === "lead"
-                ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
-                : "text-[#003D55]/40 hover:text-[#003D55]"
-            }`}
-            onClick={() => setLeagueFilter("lead")}
-          >
-            Vorstieg
-          </button>
-        </div>
+    <div className="w-full">
+      <div className="mx-auto max-w-lg">
+        <section className="mb-6">
+          <div className="relative overflow-hidden rounded-xl bg-[#003D55] p-6 shadow-lg">
+            <BarChart3 className="absolute -bottom-7 -right-6 h-32 w-32 rotate-[12deg] text-[#F2DCAB]/5" />
 
-        <div className="flex w-full flex-col items-center gap-1.5">
-          <div className="inline-flex items-center rounded-[6px] bg-[#003D55]/5 p-0.5">
-            <button
-              type="button"
-              className={`min-w-[2.8rem] rounded-[6px] px-3 py-2 text-xs font-bold uppercase leading-none tracking-[0.08em] transition-all ${
-                genderFilter === "m"
-                  ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
-                  : "text-[#003D55]/40 hover:text-[#003D55]"
-              }`}
-              onClick={() => {
-                setGenderFilter("m");
-                setClassName(`${ageFilter}-m`);
-              }}
-            >
-              M
-            </button>
-            <button
-              type="button"
-              className={`min-w-[2.8rem] rounded-[6px] px-3 py-2 text-xs font-bold uppercase leading-none tracking-[0.08em] transition-all ${
-                genderFilter === "w"
-                  ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
-                  : "text-[#003D55]/40 hover:text-[#003D55]"
-              }`}
-              onClick={() => {
-                setGenderFilter("w");
-                setClassName(`${ageFilter}-w`);
-              }}
-            >
-              W
-            </button>
+            <h2 className="mb-4 font-['Space_Grotesk'] text-xs font-bold uppercase tracking-[0.24em] text-[#F2DCAB]/80">
+              Dein aktueller Stand
+            </h2>
+
+            <div className="relative z-10 flex items-end justify-between">
+              <div className="flex items-baseline gap-2">
+                <span className="font-['Space_Grotesk'] text-5xl font-bold italic leading-none text-[#F2DCAB]">
+                  {currentUserStatsRow ? `#${rankFormatter.format(currentUserStatsRow.rank)}` : "#-"}
+                </span>
+                <span className="font-['Space_Grotesk'] text-lg font-semibold text-[#F2DCAB]/60">
+                  / {rankFormatter.format(defaultRankingRows.length)}
+                </span>
+              </div>
+
+              <div className="text-right">
+                <p className="font-['Space_Grotesk'] text-2xl font-bold text-[#F2DCAB]">
+                  {formatPoints(currentUserStatsRow?.points ?? 0)}
+                </p>
+                <p className="text-[10px] font-bold uppercase tracking-tight text-[#F2DCAB]/70">Gesamtpunkte</p>
+              </div>
+            </div>
+
+            <div className="relative z-10 mt-6 flex gap-3">
+              <div className={cn("flex items-center gap-2 rounded-xl px-4 py-1.5", rankDeltaChipClassName)}>
+                <TrendingUp className={cn("h-4 w-4 transition-transform", rankDeltaIconClassName)} />
+                <span className="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.15em]">
+                  {rankDeltaInfo.label}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl border border-[#F2DCAB]/20 bg-[#F2DCAB]/10 px-4 py-1.5 text-[#F2DCAB] backdrop-blur-md">
+                <Flame className="h-4 w-4" />
+                <span className="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-[0.15em]">
+                  {topPercentLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="sticky top-16 z-30 -mx-4 mb-4 border-b border-[#003D55]/5 bg-[#fbf9f6]/95 px-4 py-2.5 backdrop-blur-xl">
+        <div className="mx-auto max-w-lg space-y-2">
+          <div className="flex items-center gap-1.5 px-0.5">
+            <div className={cn(filterGroupClassName, "flex-[1.55_1_0%]")}>
+              {leagueOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setLeagueFilter(option.value)}
+                  aria-pressed={leagueFilter === option.value}
+                  className={cn(
+                    filterButtonClassName,
+                    "px-2.5 py-2",
+                    leagueFilter === option.value ? filterActiveClassName : filterInactiveClassName,
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <div className={cn(filterGroupClassName, "flex-[0.78_1_0%]")}>
+              <button
+                type="button"
+                onClick={() => {
+                  setGenderFilter("m");
+                  setClassName(`${ageFilter}-m`);
+                }}
+                aria-pressed={genderFilter === "m"}
+                className={cn(
+                  filterButtonClassName,
+                  "px-2.5 py-2",
+                  genderFilter === "m" ? filterActiveClassName : filterInactiveClassName,
+                )}
+              >
+                M
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGenderFilter("w");
+                  setClassName(`${ageFilter}-w`);
+                }}
+                aria-pressed={genderFilter === "w"}
+                className={cn(
+                  filterButtonClassName,
+                  "px-2.5 py-2",
+                  genderFilter === "w" ? filterActiveClassName : filterInactiveClassName,
+                )}
+              >
+                W
+              </button>
+            </div>
           </div>
 
-          <div className="hide-scrollbar flex w-full items-center justify-center gap-1 overflow-x-auto rounded-[6px] bg-[#003D55]/5 p-0.5">
+          <div
+            className={cn(filterGroupClassName, "hide-scrollbar w-full overflow-x-auto")}
+            role="tablist"
+            aria-label="Altersklasse"
+          >
             {ageGroups.map((age) => (
               <button
                 key={age}
                 type="button"
-                className={`shrink-0 rounded-[6px] px-3 py-2 text-xs font-bold uppercase leading-none tracking-[0.08em] transition-all ${
-                  ageFilter === age
-                    ? "bg-[#A15523] text-[#F2DCAB] shadow-sm"
-                    : "text-[#003D55]/40 hover:text-[#003D55]"
-                }`}
+                role="tab"
+                aria-selected={ageFilter === age}
                 onClick={() => {
                   setAgeFilter(age);
                   setClassName(`${age}-${genderFilter}`);
                 }}
+                className={cn(
+                  ageRowButtonClassName,
+                  ageFilter === age ? filterActiveClassName : filterInactiveClassName,
+                )}
               >
                 {age}
               </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      <div className="text-center text-sm font-semibold uppercase tracking-widest text-secondary">
-        {leagueLabel.toUpperCase()}-Liga • {classLabel.toUpperCase()}
-      </div>
+          <div className={filterGroupClassName}>
+            <button
+              type="button"
+              onClick={() => setTabAndSyncUrl("overall")}
+              aria-pressed={tab === "overall"}
+              className={cn(
+                filterButtonClassName,
+                "px-2 py-2",
+                tab === "overall" ? filterActiveClassName : filterInactiveClassName,
+              )}
+            >
+              Gesamt
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabAndSyncUrl("stage")}
+              aria-pressed={tab === "stage"}
+              className={cn(
+                filterButtonClassName,
+                "px-2 py-2",
+                tab === "stage" ? filterActiveClassName : filterInactiveClassName,
+              )}
+            >
+              Etappe
+            </button>
+          </div>
 
-      <Tabs value={tab} onValueChange={(value) => setSearchParams({ tab: value, stage: stageKey })}>
-        <TabsList className="grid w-full grid-cols-2 gap-1.5 bg-transparent p-0">
-          <TabsTrigger
-            value="overall"
-            className="rounded-[10px] border border-[rgba(0,61,85,0.12)] bg-[#eff3f6] py-2.5 text-sm font-semibold text-[#003D55] data-[state=active]:border-transparent data-[state=active]:bg-[#A15523] data-[state=active]:text-[#F2DCAB] data-[state=active]:shadow-sm"
-          >
-            Gesamtwertung
-          </TabsTrigger>
-          <TabsTrigger
-            value="stage"
-            className="rounded-[10px] border border-[rgba(0,61,85,0.12)] bg-[#eff3f6] py-2.5 text-sm font-semibold text-[#003D55] data-[state=active]:border-transparent data-[state=active]:bg-[#A15523] data-[state=active]:text-[#F2DCAB] data-[state=active]:shadow-sm"
-          >
-            Etappenwertung
-          </TabsTrigger>
-        </TabsList>
-        {tab === "stage" && (
-          <div className="mt-4">
-            <div className="-mx-4 px-4 flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+          {tab === "stage" && stages.length > 0 ? (
+            <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
               {stages.map((stage) => (
                 <button
                   key={stage.key}
                   type="button"
-                  className={`flex-none rounded-[8px] px-4 py-2 text-xs font-bold uppercase leading-none tracking-[0.08em] border transition-all ${
+                  onClick={() => setStageAndSyncUrl(stage.key)}
+                  aria-pressed={stageKey === stage.key}
+                  aria-label={
+                    stageRankingPeriodHasEnded(stage) ? `${stage.label}, Etappe abgeschlossen` : stage.label
+                  }
+                  className={cn(
+                    "shrink-0 rounded-sm border px-3 py-2 font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-[0.1em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003D55]/18 min-[420px]:text-[9px]",
                     stageKey === stage.key
-                      ? "bg-[#A15523] text-[#F2DCAB] border-transparent shadow-sm"
-                      : "bg-[#eff3f6] text-[#003D55]/50 border-[rgba(0,61,85,0.12)]"
-                  }`}
-                  onClick={() => {
-                    setStageKey(stage.key);
-                    setSearchParams({ tab: "stage", stage: stage.key });
-                  }}
+                      ? "border-transparent bg-[#A15523] text-[#F2DCAB] shadow-sm"
+                      : "border-[#003D55]/10 bg-white text-[#003D55]/45 hover:text-[#003D55]",
+                  )}
                 >
                   {stage.label}
                 </button>
               ))}
             </div>
-          </div>
+          ) : null}
+        </div>
+      </section>
+
+      <div className="mx-auto mb-4 max-w-lg text-center">
+        <p className="font-['Space_Grotesk'] text-[9px] font-bold uppercase tracking-[0.2em] text-[#003D55]/45">
+          {leagueLabel} • {classLabel.toUpperCase()}
+          {tab === "stage" && stageKey
+            ? ` • ${stages.find((s) => s.key === stageKey)?.label ?? stageKey}`
+            : null}
+        </p>
+        {stageTabSelectedEnded ? (
+          <span
+            className="mt-2 inline-flex items-center rounded-full border border-[#003D55]/15 bg-[#003D55]/[0.06] px-2.5 py-1 font-['Space_Grotesk'] text-[8px] font-bold uppercase tracking-[0.16em] text-[#003D55]/80"
+            title="Für diese Etappe werden keine neuen Ergebnisse mehr gezählt."
+          >
+            Etappe abgeschlossen
+          </span>
+        ) : null}
+      </div>
+
+      {tab === "stage" && selectedStage ? (
+        <div className="mx-auto mb-4 max-w-lg">
+          {stageTabSelectedButNotBegun ? (
+            <p className="mb-2 text-center font-['Space_Grotesk'] text-[12px] font-semibold leading-snug text-[#A15523]">
+              Etappe erst ab {formatRankingStageBoundaryDateDe(selectedStage.start)}
+            </p>
+          ) : null}
+          <Collapsible
+            open={stageHelpOpen}
+            onOpenChange={setStageHelpOpen}
+            className="rounded-xl border border-[#003D55]/10 bg-[#003D55]/[0.04]"
+          >
+            <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-black/[0.03] focus-visible:ring-2 focus-visible:ring-[#003D55]/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf9f6]">
+              <span className="flex-1 font-['Space_Grotesk'] text-[11px] font-bold uppercase tracking-[0.14em] text-[#003D55]">
+                Etappenwertung — Kurzinfos
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 shrink-0 text-[#003D55]/45 transition-transform duration-200 ease-out",
+                  stageHelpOpen && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="overflow-hidden px-4 pb-3.5">
+              <div className="space-y-2 border-t border-[#003D55]/10 pt-3 text-[13px] leading-relaxed text-[#003D55]/80">
+                <p>
+                  Gewertet wird{" "}
+                  <span className="font-semibold text-[#003D55]">
+                    {formatRankingStagePeriodSentenceDe(selectedStage)}
+                  </span>
+                  .
+                </p>
+                <p>Wie oben gefilterte Liga und Altersklasse; Punkte wie in der Gesamtwertung (inkl. Flash).</p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      ) : null}
+
+      <div className="mx-auto max-w-lg">
+        {stageTabSelectedButNotBegun ? null : rankingRowsWithCurrentHomeGym.length === 0 ? (
+          <ParticipantStateCard
+            title="Noch keine Rangliste"
+            description="Für diese Filterkombination gibt es aktuell noch keine sichtbaren Einträge."
+          />
+        ) : (
+          <>
+            <div className="space-y-3">
+              {visibleWindow.visibleRows.map((row) => (
+                <div key={row.profileId}>
+                  {visibleWindow.separatorBeforeProfileId === row.profileId ? (
+                    <div className="flex flex-col items-center gap-1 py-2 opacity-20">
+                      <div className="h-1 w-1 rounded-full bg-[#003D55]" />
+                      <div className="h-1 w-1 rounded-full bg-[#003D55]" />
+                      <div className="h-1 w-1 rounded-full bg-[#003D55]" />
+                    </div>
+                  ) : null}
+
+                  <RankingRowCard
+                    row={row}
+                    isCurrentUser={row.profileId === currentProfileId}
+                    expanded={expandedProfileId === row.profileId}
+                    profileHref={row.profileId === currentProfileId ? null : `/app/rankings/profile/${row.profileId}`}
+                    onToggle={() =>
+                      setExpandedProfileId((current) => (current === row.profileId ? null : row.profileId))
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+
+            {visibleWindow.hasHiddenRows || showFullRanking ? (
+              <div className={cn("text-center", isSparseWindow ? "mt-5" : "mt-7")}>
+                <button
+                  type="button"
+                  onClick={() => setShowFullRanking((current) => !current)}
+                  className="rounded-xl border border-[#003D55]/10 bg-[#F2DCAB] px-10 py-4 font-['Space_Grotesk'] text-[10px] font-bold uppercase leading-none tracking-[0.24em] text-[#003D55] shadow-sm transition-all hover:shadow-md"
+                >
+                  {showFullRanking ? "Fokussierte Ansicht" : "Komplette Rangliste anzeigen"}
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
-        <TabsContent value="overall">{renderRankingList()}</TabsContent>
-        <TabsContent value="stage">{renderRankingList()}</TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 };

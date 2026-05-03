@@ -39,7 +39,7 @@ const getInitials = (name: string) =>
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("") || "?";
 
-const routeTileClass = "flex aspect-square flex-col rounded-[1rem] px-1.5 py-2.5";
+const routeTileClass = "flex aspect-square flex-col rounded-xl px-1.5 py-2.5";
 
 const RoutePerformanceTile = ({ cell }: { cell: ParticipantRouteCell }) => {
   if (cell.flash) {
@@ -86,7 +86,7 @@ const GymRouteAccordionCard = ({
   const gymLabel = group.gym.city ? `${group.gym.name} ${group.gym.city}` : group.gym.name;
 
   return (
-    <div className="overflow-hidden rounded-[1.6rem] border border-[rgba(0,38,55,0.06)] bg-white shadow-[0_18px_34px_rgba(0,61,85,0.06)]">
+    <div className="overflow-hidden rounded-xl border border-[rgba(0,38,55,0.06)] bg-white shadow-[0_18px_34px_rgba(0,61,85,0.06)]">
       <button
         type="button"
         onClick={onToggle}
@@ -96,7 +96,7 @@ const GymRouteAccordionCard = ({
         )}
         aria-expanded={open}
       >
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[0.85rem] bg-[#1a4660] text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#f2dcab]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#1a4660] text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[#f2dcab]">
           {group.gym.logo_url ? (
             <img src={group.gym.logo_url} alt={group.gym.name} className="h-full w-full object-contain p-2" />
           ) : (
@@ -141,7 +141,7 @@ const stats = (data: ParticipantProfileData) => [
 const AscentTimeline = ({ items }: { items: ParticipantAscentItem[] }) => {
   if (items.length === 0) {
     return (
-      <div className="rounded-[1rem] bg-[#f5f3f0] p-4 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+      <div className="rounded-xl bg-[#f5f3f0] p-4 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
         Sobald hier Routen geloggt sind, erscheint der aktuelle Verlauf.
       </div>
     );
@@ -167,7 +167,7 @@ const AscentTimeline = ({ items }: { items: ParticipantAscentItem[] }) => {
               )}
             />
 
-            <div className="flex flex-1 items-center justify-between rounded-[1rem] bg-[#f5f3f0] p-4">
+            <div className="flex flex-1 items-center justify-between rounded-xl bg-[#f5f3f0] p-4">
               <div className="min-w-0 pr-4">
                 <h5 className="truncate font-['Space_Grotesk'] text-sm font-bold uppercase text-[#002637]">
                   {item.routeName}
@@ -223,8 +223,8 @@ const ReadonlyParticipantProfileContent = ({
 
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="relative mb-6">
-            <div className="h-28 w-28 rounded-[1.35rem] border-[4px] border-[#a15523] bg-[#113447] p-1 shadow-xl">
-              <div className="h-full w-full overflow-hidden rounded-[1rem] bg-[#0d2a39]">
+            <div className="h-28 w-28 rounded-xl bg-[#a15523] p-[3px] shadow-xl">
+              <div className="h-full w-full overflow-hidden rounded-[calc(0.75rem-3px)] bg-[#0d2a39]">
                 {data.avatarUrl ? (
                   <img src={data.avatarUrl} alt={data.displayName} className="h-full w-full object-cover" />
                 ) : (
@@ -250,7 +250,7 @@ const ReadonlyParticipantProfileContent = ({
       </section>
 
       <section className="-mt-8 px-6">
-        <div className="relative z-20 rounded-[1rem] border-b-4 border-[#7aa8c4]/20 bg-[#f7e0af] p-6 shadow-xl">
+        <div className="relative z-20 rounded-xl border-b-4 border-[#7aa8c4]/20 bg-[#f7e0af] p-6 shadow-xl">
           <div className="flex items-start justify-between gap-6">
             <div className="min-w-0">
               <span className="block font-['Space_Grotesk'] text-xs font-bold uppercase tracking-[0.2em] text-[#534521]">
@@ -292,7 +292,7 @@ const ReadonlyParticipantProfileContent = ({
           {stats(data).map((item) => (
             <div
               key={item.label}
-              className="rounded-[1rem] border-b-2 border-[#c1c7cd]/30 bg-[#f5f3f0] p-4 transition-transform active:scale-95"
+              className="rounded-xl border-b-2 border-[#c1c7cd]/30 bg-[#f5f3f0] p-4 transition-transform active:scale-95"
             >
               <span className="mb-1 block font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest text-[#41484c]">
                 {item.label}
@@ -311,7 +311,7 @@ const ReadonlyParticipantProfileContent = ({
       </section>
 
       <section className="mt-10 px-6">
-        <div className="rounded-[1.75rem] bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 text-[#f2dcab] shadow-[0_20px_40px_rgba(0,38,55,0.16)]">
+        <div className="rounded-xl bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 text-[#f2dcab] shadow-[0_20px_40px_rgba(0,38,55,0.16)]">
           <div className="space-y-2">
             <div className="font-['Space_Grotesk'] text-[1.5rem] font-bold uppercase leading-[1.02] text-[#f2dcab]">
               Hallenfortschritt
@@ -346,7 +346,7 @@ const ReadonlyParticipantProfileContent = ({
               return (
                 <div
                   key={slot.id}
-                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-[0.95rem] border ${slotTone}`}
+                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-xl border ${slotTone}`}
                   aria-label={
                     slot.gym
                       ? `${slot.gym.name} ${slot.status === "done" ? "besucht" : "offen"}`
@@ -381,11 +381,11 @@ const ReadonlyParticipantProfileContent = ({
 
       <section className="mt-10 px-6">
         <h3 className="mb-4 font-['Space_Grotesk'] text-[1.5rem] font-bold uppercase italic leading-none text-[#002637]">
-          Gym List & Routes
+          Hallen & Routen
         </h3>
 
         {data.gymRouteGroups.length === 0 ? (
-          <div className="rounded-[1.25rem] bg-[#f5f3f0] p-4 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
+          <div className="rounded-xl bg-[#f5f3f0] p-4 text-sm leading-6 text-[rgba(27,28,26,0.64)]">
             Noch keine Hallen mit eingetragenen Routen vorhanden.
           </div>
         ) : (

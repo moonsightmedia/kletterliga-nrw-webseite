@@ -37,7 +37,7 @@ export const GymDetailDialog = ({ gym, open, onOpenChange }: GymDetailDialogProp
             <div className="space-y-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               {gym.logo_url ? (
                 <div className="flex justify-center">
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-accent/45 md:h-28 md:w-28">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl bg-accent/45 md:h-28 md:w-28">
                     <img
                       src={gym.logo_url}
                       alt={gym.name}

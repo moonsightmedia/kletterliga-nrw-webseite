@@ -30,9 +30,9 @@ export const RouteLoadingState = ({
         fullscreen ? "min-h-screen" : "min-h-full",
       )}
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-[#f2dcab] p-6 text-[#002637] shadow-[0_28px_52px_rgba(0,0,0,0.28)] sm:p-8">
+      <div className="w-full max-w-md rounded-xl bg-[#f2dcab] p-6 text-[#002637] shadow-[0_28px_52px_rgba(0,0,0,0.28)] sm:p-8">
         <div className="flex items-start gap-4">
-          <div className="rounded-[1.25rem] bg-[#003d55] p-3 shadow-[0_16px_28px_rgba(0,0,0,0.18)]">
+          <div className="rounded-xl bg-[#003d55] p-3 shadow-[0_16px_28px_rgba(0,0,0,0.18)]">
             <img src={logo} alt="Kletterliga NRW" className="h-10 w-10 object-contain" />
           </div>
 

@@ -21,7 +21,7 @@ export const AuthLayout = () => {
         <header className="relative z-10 px-4 pt-6 sm:px-6 sm:pt-8">
           <div className={cn("mx-auto flex w-full items-center justify-between gap-4", isOnboardingRoute ? "max-w-5xl" : "max-w-md")}>
             <Link to="/" className="inline-flex items-center gap-3">
-              <div className="rounded-[1.1rem] bg-[#f2dcab] p-3 shadow-[0_18px_36px_rgba(0,0,0,0.18)] rotate-[-2deg]">
+              <div className="rounded-xl bg-[#f2dcab] p-3 shadow-[0_18px_36px_rgba(0,0,0,0.18)] rotate-[-2deg]">
                 <img src={logo} alt="Kletterliga NRW" className="h-9 w-9 object-contain" />
               </div>
               <div>

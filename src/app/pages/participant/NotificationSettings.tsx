@@ -59,9 +59,9 @@ const NotificationSettings = () => {
 
   return (
     <div className="mx-auto max-w-md space-y-6">
-      <section className="rounded-[1.05rem] bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
+      <section className="rounded-xl bg-[#003d55] p-6 text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)]">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[0.72rem] bg-[#f2dcab] text-[#003d55]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f2dcab] text-[#003d55]">
             <Mail className="h-5 w-5" />
           </div>
           <div className="space-y-2">

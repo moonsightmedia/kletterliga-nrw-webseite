@@ -29,7 +29,7 @@ const ChangeRequestFieldShell = ({
 }) => (
   <div
     className={cn(
-      "relative rounded-[1.35rem] border border-white/80 bg-white/78 px-4 shadow-[0_10px_22px_rgba(0,38,55,0.08)] backdrop-blur-sm transition-all focus-within:border-[#003D55]/22 focus-within:shadow-[0_12px_26px_rgba(0,38,55,0.12)]",
+      "relative rounded-xl border border-white/80 bg-white/78 px-4 shadow-[0_10px_22px_rgba(0,38,55,0.08)] backdrop-blur-sm transition-all focus-within:border-[#003D55]/22 focus-within:shadow-[0_12px_26px_rgba(0,38,55,0.12)]",
       textarea ? "py-3" : "py-3.5",
     )}
   >
@@ -99,7 +99,7 @@ const ChangeRequestHint = ({
 }) => (
   <div
     className={cn(
-      "rounded-[1.4rem] border px-4 py-3 text-sm leading-6 shadow-[0_8px_18px_rgba(0,38,55,0.04)]",
+      "rounded-xl border px-4 py-3 text-sm leading-6 shadow-[0_8px_18px_rgba(0,38,55,0.04)]",
       muted
         ? "border-[rgba(0,38,55,0.08)] bg-white/52 text-[#003D55]/58"
         : "border-[rgba(161,85,35,0.16)] bg-[rgba(255,255,255,0.76)] text-[#003D55]/78",
@@ -137,7 +137,7 @@ export const ParticipantProfileChangeRequestDialog = ({
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent
       hideCloseButton
-      className="stitch-app overflow-x-hidden border-0 bg-[linear-gradient(180deg,#fbf9f6_0%,#f5f0e7_100%)] p-0 text-[#1b1c1a] sm:max-w-[34rem] sm:rounded-[2rem] sm:p-0"
+      className="stitch-app overflow-x-hidden border-0 bg-[linear-gradient(180deg,#fbf9f6_0%,#f5f0e7_100%)] p-0 text-[#1b1c1a] sm:max-w-[34rem] sm:rounded-xl sm:p-0"
     >
       <div className="relative overflow-hidden bg-[#003D55] px-6 pb-7 pt-6 text-[#F2DCAB] sm:px-7 sm:pb-8 sm:pt-7">
         <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/6 blur-2xl" />
@@ -145,7 +145,7 @@ export const ParticipantProfileChangeRequestDialog = ({
         <DialogClose asChild>
           <button
             type="button"
-            className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-[#003D55]/10 bg-white text-[#003D55] shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-all hover:brightness-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F2DCAB]/50 focus:ring-offset-2 focus:ring-offset-[#003D55] sm:right-6 sm:top-6"
+            className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#003D55]/10 bg-white text-[#003D55] shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-all hover:brightness-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F2DCAB]/50 focus:ring-offset-2 focus:ring-offset-[#003D55] sm:right-6 sm:top-6"
             aria-label="Dialog schließen"
           >
             <X className="h-5 w-5" strokeWidth={2.2} />
@@ -163,7 +163,7 @@ export const ParticipantProfileChangeRequestDialog = ({
       </div>
 
       <div className="space-y-5 bg-[linear-gradient(180deg,#f7f2e8_0%,#f3ece1_100%)] px-6 pb-6 pt-6 sm:px-7 sm:pb-7">
-        <div className="rounded-[1.6rem] border border-[rgba(0,38,55,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.6)_100%)] p-5 shadow-[0_14px_28px_rgba(0,38,55,0.06)]">
+        <div className="rounded-xl border border-[rgba(0,38,55,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.6)_100%)] p-5 shadow-[0_14px_28px_rgba(0,38,55,0.06)]">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <ChangeRequestFieldLabel>Aktuelle Liga</ChangeRequestFieldLabel>
@@ -236,7 +236,7 @@ export const ParticipantProfileChangeRequestDialog = ({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="min-h-[3.15rem] rounded-[1.15rem] border-[rgba(0,38,55,0.14)] bg-white/75 px-5 text-[#003D55] shadow-[0_10px_18px_rgba(0,38,55,0.06)]"
+            className="min-h-[3.15rem] rounded-xl border-[rgba(0,38,55,0.14)] bg-white/75 px-5 text-[#003D55] shadow-[0_10px_18px_rgba(0,38,55,0.06)]"
           >
             Abbrechen
           </StitchButton>
@@ -246,7 +246,7 @@ export const ParticipantProfileChangeRequestDialog = ({
             onClick={() => {
               void onSubmit();
             }}
-            className="min-h-[3.15rem] rounded-[1.15rem] px-6"
+            className="min-h-[3.15rem] rounded-xl px-6"
           >
             {requesting ? "Sende..." : "Anfrage senden"}
           </StitchButton>

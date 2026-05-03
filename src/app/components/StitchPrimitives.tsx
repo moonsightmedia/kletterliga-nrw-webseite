@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const stitchButtonVariants = cva(
-  "stitch-headline inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[1rem] border px-4 py-3 text-[0.74rem] font-bold tracking-[0.24em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "stitch-headline inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-4 py-3 text-[0.74rem] font-bold tracking-[0.24em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -48,11 +48,10 @@ export const StitchButton = React.forwardRef<HTMLButtonElement, StitchButtonProp
 StitchButton.displayName = "StitchButton";
 
 const toneClasses = {
-  surface: "stitch-surface-card",
-  cream: "stitch-cream-card",
-  muted: "stitch-muted-card",
-  glass: "stitch-glass-card",
-  /* Radius per Tailwind; utilities/className override — aligns navy tiles with Rangliste cards */
+  surface: "stitch-surface-card rounded-xl",
+  cream: "stitch-cream-card rounded-xl",
+  muted: "stitch-muted-card rounded-xl",
+  glass: "stitch-glass-card rounded-xl",
   navy: "stitch-navy-card rounded-xl",
 } as const;
 

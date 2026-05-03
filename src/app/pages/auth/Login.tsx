@@ -19,7 +19,7 @@ const Notice = ({
 }) => (
   <div
     className={cn(
-      "rounded-[1.35rem] px-4 py-4 text-left shadow-[0_18px_34px_rgba(0,0,0,0.12)]",
+      "rounded-xl px-4 py-4 text-left shadow-[0_18px_34px_rgba(0,0,0,0.12)]",
       tone === "cream" ? "bg-[#f2dcab] text-[#002637]" : "bg-[rgba(242,220,171,0.1)] text-[#f2dcab]",
     )}
   >
@@ -153,7 +153,7 @@ const Login = () => {
   return (
     <div className="mx-auto w-full max-w-md">
       <div className="text-center">
-        <div className="inline-flex items-center justify-center rounded-[1.75rem] bg-[#f2dcab] p-5 shadow-[0_24px_48px_rgba(0,0,0,0.28)]">
+        <div className="inline-flex items-center justify-center rounded-xl bg-[#f2dcab] p-5 shadow-[0_24px_48px_rgba(0,0,0,0.28)]">
           <img src={logo} alt="Kletterliga NRW" className="h-24 w-24 object-contain sm:h-28 sm:w-28" />
         </div>
 
@@ -200,7 +200,7 @@ const Login = () => {
         ) : null}
       </div>
 
-      <div className="relative mt-7 overflow-hidden rounded-[2rem] bg-[#f2dcab] p-7 shadow-[0_28px_52px_rgba(0,0,0,0.32)] sm:p-8">
+      <div className="relative mt-7 overflow-hidden rounded-xl bg-[#f2dcab] p-7 shadow-[0_28px_52px_rgba(0,0,0,0.32)] sm:p-8">
         <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#a15523]/5" />
 
         <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
@@ -217,7 +217,7 @@ const Login = () => {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="deine@email.de"
-                className="w-full rounded-[1.1rem] border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white py-4 pl-12 pr-4 font-['Space_Grotesk'] text-lg font-medium text-[#002637] placeholder:text-[rgba(0,38,55,0.26)] focus:border-[#003d55] focus:outline-none focus:ring-0"
+                className="w-full rounded-xl border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white py-4 pl-12 pr-4 font-['Space_Grotesk'] text-lg font-medium text-[#002637] placeholder:text-[rgba(0,38,55,0.26)] focus:border-[#003d55] focus:outline-none focus:ring-0"
                 required
               />
             </div>
@@ -246,14 +246,14 @@ const Login = () => {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-[1.1rem] border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white py-4 pl-12 pr-4 font-['Space_Grotesk'] text-lg font-medium text-[#002637] placeholder:text-[rgba(0,38,55,0.26)] focus:border-[#003d55] focus:outline-none focus:ring-0"
+                className="w-full rounded-xl border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white py-4 pl-12 pr-4 font-['Space_Grotesk'] text-lg font-medium text-[#002637] placeholder:text-[rgba(0,38,55,0.26)] focus:border-[#003d55] focus:outline-none focus:ring-0"
                 required
               />
             </div>
           </div>
 
           {showResetRequest ? (
-            <div className="rounded-[1.2rem] bg-white/75 p-4">
+            <div className="rounded-xl bg-white/75 p-4">
               <div className="space-y-3">
                 <div className="stitch-kicker text-[#002637]">E-Mail für Reset-Link</div>
                 <input
@@ -261,7 +261,7 @@ const Login = () => {
                   value={resetRequestEmail}
                   onChange={(event) => setResetRequestEmail(event.target.value)}
                   placeholder="deine@email.de"
-                  className="w-full rounded-[1rem] border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white px-4 py-3 text-base text-[#002637] placeholder:text-[rgba(0,38,55,0.3)] focus:border-[#003d55] focus:outline-none"
+                  className="w-full rounded-xl border-0 border-b-2 border-[rgba(0,38,55,0.08)] bg-white px-4 py-3 text-base text-[#002637] placeholder:text-[rgba(0,38,55,0.3)] focus:border-[#003d55] focus:outline-none"
                 />
                 <StitchButton
                   type="button"
@@ -282,7 +282,7 @@ const Login = () => {
           {error ? <p className="text-sm font-semibold text-[#ba1a1a]">{error}</p> : null}
 
           {needsConfirmationResend ? (
-            <div className="rounded-[1.2rem] bg-white/75 p-4">
+            <div className="rounded-xl bg-white/75 p-4">
               <div className="space-y-3">
                 <div className="stitch-kicker text-[#a15523]">Bestätigungslink</div>
                 <p className="text-sm leading-6 text-[rgba(27,28,26,0.68)]">
@@ -308,7 +308,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#a15523] px-4 py-4 font-['Space_Grotesk'] text-sm font-black uppercase tracking-[0.22em] text-[#f2dcab] shadow-[0_16px_28px_rgba(161,85,35,0.28)] transition hover:brightness-110 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#a15523] px-4 py-4 font-['Space_Grotesk'] text-sm font-black uppercase tracking-[0.22em] text-[#f2dcab] shadow-[0_16px_28px_rgba(161,85,35,0.28)] transition hover:brightness-110 disabled:opacity-60"
           >
             {loading ? "Einloggen..." : "Einloggen"}
             <ArrowRight className="h-5 w-5" />

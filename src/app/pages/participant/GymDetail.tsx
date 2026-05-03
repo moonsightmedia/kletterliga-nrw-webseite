@@ -175,7 +175,7 @@ const GymDetail = () => {
 
   if (!gym) {
     return (
-      <StitchCard tone="navy" className="mx-4 mt-6 rounded-[1.6rem] p-6">
+      <StitchCard tone="navy" className="mx-4 mt-6 rounded-xl p-6">
         <div className="stitch-headline text-2xl text-[#f2dcab]">Halle nicht gefunden</div>
         <p className="mt-3 text-sm leading-6 text-[rgba(242,220,171,0.74)]">
           Diese Halle konnte nicht geladen werden oder ist aktuell nicht verfügbar.
@@ -217,7 +217,7 @@ const GymDetail = () => {
       <section className="relative z-10 -mt-4 px-4">
         <StitchCard
           tone="surface"
-          className="overflow-hidden rounded-[1.4rem] border border-[rgba(242,220,171,0.24)] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.14)]"
+          className="overflow-hidden rounded-xl border border-[rgba(242,220,171,0.24)] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.14)]"
         >
           <div className="relative h-48 overflow-hidden bg-[linear-gradient(180deg,rgba(0,61,85,0.12),rgba(0,38,55,0.24))]">
             {mapEmbedLink ? (
@@ -295,10 +295,10 @@ const GymDetail = () => {
       <section className="mt-4 px-4">
         <StitchCard
           tone="navy"
-          className="rounded-[1.4rem] border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.18)]"
+          className="rounded-xl border border-[rgba(242,220,171,0.08)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.18)]"
         >
           <div className="flex items-start justify-between gap-4">
-            <div className="rounded-[1rem] bg-[#fd9f66] p-3 text-[#002637]">
+            <div className="rounded-xl bg-[#fd9f66] p-3 text-[#002637]">
               <Mountain className="h-4 w-4" />
             </div>
             <div className="text-[0.58rem] font-bold uppercase tracking-[0.22em] text-[rgba(242,220,171,0.48)]">
@@ -323,7 +323,7 @@ const GymDetail = () => {
       <section className="mt-8 px-4">
         <StitchCard
           tone="cream"
-          className="rounded-[1.4rem] border border-[rgba(161,85,35,0.12)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.08)]"
+          className="rounded-xl border border-[rgba(161,85,35,0.12)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.08)]"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -367,7 +367,7 @@ const GymDetail = () => {
                   value={highlight.value}
                 />
               ) : (
-                <div className="stitch-glass-card rounded-[1.4rem] p-5 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
+                <div className="stitch-glass-card rounded-xl p-5 text-sm leading-6 text-[rgba(242,220,171,0.72)]">
                   {highlight.emptyText}
                 </div>
               )}
@@ -380,7 +380,7 @@ const GymDetail = () => {
         <section className="mt-8 px-4">
           <StitchCard
             tone="cream"
-            className="rounded-[1.6rem] border border-[rgba(161,85,35,0.12)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.08)]"
+            className="rounded-xl border border-[rgba(161,85,35,0.12)] p-5 shadow-[0_18px_36px_rgba(0,0,0,0.08)]"
           >
             <div className="space-y-4">
               <div className="flex items-start gap-3">
@@ -407,7 +407,7 @@ const GymDetail = () => {
           <StitchButton
             asChild
             size="lg"
-            className="h-16 w-full rounded-[1.2rem] px-6 text-sm tracking-[0.18em] shadow-[0_18px_36px_rgba(161,85,35,0.32)]"
+            className="h-16 w-full rounded-xl px-6 text-sm tracking-[0.18em] shadow-[0_18px_36px_rgba(161,85,35,0.32)]"
           >
             <Link to={codeRedeemed ? `/app/gyms/${gym.id}/routes` : `/app/gyms/redeem?gymId=${encodeURIComponent(gym.id)}`}>
               {codeRedeemed ? "Routen öffnen" : "Halle freischalten"}

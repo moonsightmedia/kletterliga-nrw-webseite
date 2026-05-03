@@ -30,6 +30,75 @@ export type RankingRowData = {
   points0: number;
 };
 
+export const buildRankingVisibilityWindow = (
+  rows: RankingRowData[],
+  currentProfileId: string | null,
+  expanded: boolean,
+) => {
+  if (rows.length === 0) {
+    return {
+      visibleRows: [] as RankingRowData[],
+      separatorBeforeProfileId: null as string | null,
+      hasHiddenRows: false,
+    };
+  }
+
+  if (expanded) {
+    return {
+      visibleRows: rows,
+      separatorBeforeProfileId: null,
+      hasHiddenRows: false,
+    };
+  }
+
+  const podiumRows = rows.slice(0, Math.min(3, rows.length));
+  const currentIndex = currentProfileId ? rows.findIndex((row) => row.profileId === currentProfileId) : -1;
+
+  if (currentIndex < 0) {
+    return {
+      visibleRows: podiumRows,
+      separatorBeforeProfileId: null,
+      hasHiddenRows: rows.length > podiumRows.length,
+    };
+  }
+
+  const windowStart = Math.max(0, currentIndex - 2);
+  const windowEnd = Math.min(rows.length, currentIndex + 3);
+  const currentWindowRows = rows.slice(windowStart, windowEnd);
+
+  const visibleRows = [...podiumRows, ...currentWindowRows].filter(
+    (row, index, list) => list.findIndex((candidate) => candidate.profileId === row.profileId) === index,
+  );
+
+  const firstWindowRow = currentWindowRows.find((row) => !podiumRows.some((podiumRow) => podiumRow.profileId === row.profileId));
+
+  if (windowStart <= podiumRows.length - 1) {
+    return {
+      visibleRows,
+      separatorBeforeProfileId: null,
+      hasHiddenRows: visibleRows.length < rows.length,
+    };
+  }
+
+  return {
+    visibleRows,
+    separatorBeforeProfileId: firstWindowRow?.profileId ?? null,
+    hasHiddenRows: visibleRows.length < rows.length,
+  };
+};
+
+export const getDateBoundaryTimeRanking = (value: string, boundary: "start" | "end") => {
+  const suffix = boundary === "end" ? "T23:59:59.999Z" : "T00:00:00.000Z";
+  const time = new Date(`${value}${suffix}`).getTime();
+  return Number.isNaN(time) ? null : time;
+};
+
+export const getCreatedAtTimeRanking = (value: string | null | undefined) => {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? null : time;
+};
+
 type RankingStats = {
   visitedGymIds: Set<string>;
   flashCount: number;
@@ -252,6 +321,41 @@ export const getStageRange = (
     start: new Date(`${stage.start}T00:00:00Z`),
     end: new Date(`${stage.end}T23:59:59Z`),
   };
+};
+
+/** Ob zur aktuellen Uhrzeit die Etappenwertung bereits läuft (Start: Mitternacht UTC am Kalendertag `stage.start`, Ende inklusive `stage.end`). */
+export const stageRankingPeriodHasBegun = (
+  stage: Pick<Stage, "start">,
+  nowMs: number = Date.now(),
+): boolean => {
+  const boundary = getDateBoundaryTimeRanking(stage.start, "start");
+  return boundary !== null && nowMs >= boundary;
+};
+
+/** Ob die Etappe vorbei ist (nach Ende des letzten Wertungskalendertags `stage.end`, Ende inkl. 23:59:59.999 UTC). */
+export const stageRankingPeriodHasEnded = (
+  stage: Pick<Stage, "end">,
+  nowMs: number = Date.now(),
+): boolean => {
+  const boundary = getDateBoundaryTimeRanking(stage.end, "end");
+  return boundary !== null && nowMs > boundary;
+};
+
+const middayUtcFromYmd = (ymd: string) => new Date(`${ymd}T12:00:00.000Z`);
+
+/** Kalendertag für Anzeige (de-DE); Mittag UTC vermeidet Verschiebungen über lokale Zeitzonen. */
+export const formatRankingStageBoundaryDateDe = (ymd: string) =>
+  middayUtcFromYmd(ymd).toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+/** Satzteil „vom … bis …“ bzw. „am …“, passend zur Erklär der Etappenwertung. */
+export const formatRankingStagePeriodSentenceDe = (stage: Pick<Stage, "start" | "end">): string => {
+  const from = formatRankingStageBoundaryDateDe(stage.start);
+  const to = formatRankingStageBoundaryDateDe(stage.end);
+  return stage.start === stage.end ? `am ${from}` : `vom ${from} bis ${to}`;
 };
 
 const isResultInStageRange = (result: Result, stageRange: RankingStageRange | null) => {
