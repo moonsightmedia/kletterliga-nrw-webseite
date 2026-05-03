@@ -168,8 +168,6 @@ const RankingRowCard = ({
             <span className="shrink-0 rounded-[3px] bg-[#A15523] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-white">
               DU
             </span>
-          ) : profileHref ? (
-            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#A15523]" />
           ) : null}
         </div>
 
@@ -214,18 +212,18 @@ const RankingRowCard = ({
           </span>
         </div>
 
+        <div className="flex min-w-0 flex-1 items-center gap-4">{profileSummary}</div>
+
         {profileHref ? (
           <Link
             to={profileHref}
             onClick={(event) => event.stopPropagation()}
-            className="flex min-w-0 flex-1 items-center gap-4 rounded-xl transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A15523]/30"
-            aria-label={`${row.name} ansehen`}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[#A15523] transition-colors hover:bg-[#A15523]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A15523]/30"
+            aria-label={`${row.name} Profil ansehen`}
           >
-            {profileSummary}
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
-        ) : (
-          <div className="flex min-w-0 flex-1 items-center gap-4">{profileSummary}</div>
-        )}
+        ) : null}
 
         <div className="min-w-[4.4rem] shrink-0 text-right">
           <p

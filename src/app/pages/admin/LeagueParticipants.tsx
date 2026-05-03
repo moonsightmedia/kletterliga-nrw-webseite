@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -33,15 +34,18 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { toast } from "@/components/ui/use-toast";
 import {
   archiveProfile,
+  assignLeagueMasterCodeToParticipant,
   getParticipantActivityStats,
+  listAvailableLeagueMasterCodes,
   listGymAdmins,
   listGyms,
+  listMasterCodesRedeemedForProfiles,
   listProfiles,
   restoreProfile,
   updateProfile,
 } from "@/services/appApi";
-import type { Gym, ParticipantActivityStats, Profile } from "@/services/appTypes";
-import { Archive, Building2, Edit2, FilterX, MapPin, RotateCcw, Search, Shield, User, Users } from "lucide-react";
+import type { Gym, MasterCode, ParticipantActivityStats, Profile } from "@/services/appTypes";
+import { Archive, Building2, Edit2, FilterX, MapPin, RotateCcw, Search, Shield, Ticket, User, Users } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
 
 type ParticipantTab = "all" | "participants" | "gym_admins" | "league_admins";
@@ -127,6 +131,11 @@ const LeagueParticipants = () => {
     gender: "",
     league: "",
   });
+  const [masterCodeByProfileId, setMasterCodeByProfileId] = useState<Map<string, MasterCode>>(new Map());
+  const [masterCodeAssignTarget, setMasterCodeAssignTarget] = useState<Profile | null>(null);
+  const [availableLeagueMasterCodes, setAvailableLeagueMasterCodes] = useState<MasterCode[]>([]);
+  const [selectedMasterCodeId, setSelectedMasterCodeId] = useState<string>("");
+  const [masterCodeAssignLoading, setMasterCodeAssignLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -146,10 +155,32 @@ const LeagueParticipants = () => {
         });
       }
 
-      setProfiles(profilesResult.data ?? []);
+      const loadedProfiles = profilesResult.data ?? [];
+      setProfiles(loadedProfiles);
       setGyms(gymsResult.data ?? []);
       setGymAdminProfileIds(new Set((gymAdminsResult.data ?? []).map((entry) => entry.profile_id)));
       setActivityByProfileId(new Map((statsResult.data ?? []).map((row) => [row.profile_id, row])));
+
+      const profileIds = loadedProfiles.map((profile) => profile.id).filter(Boolean);
+      const masterCodesResult = await listMasterCodesRedeemedForProfiles(profileIds);
+      if (masterCodesResult.error) {
+        toast({
+          title: "Mastercodes",
+          description: "Zugeordnete Mastercodes konnten nicht geladen werden.",
+          variant: "destructive",
+        });
+        setMasterCodeByProfileId(new Map());
+      } else {
+        const map = new Map<string, MasterCode>();
+        (masterCodesResult.data ?? []).forEach((code) => {
+          if (!code.redeemed_by) return;
+          if (!map.has(code.redeemed_by)) {
+            map.set(code.redeemed_by, code);
+          }
+        });
+        setMasterCodeByProfileId(map);
+      }
+
       setIsLoading(false);
     };
 
@@ -427,6 +458,87 @@ const LeagueParticipants = () => {
     setRestoreTarget(null);
   };
 
+  const resetMasterCodeAssignDialog = () => {
+    setMasterCodeAssignTarget(null);
+    setAvailableLeagueMasterCodes([]);
+    setSelectedMasterCodeId("");
+    setMasterCodeAssignLoading(false);
+  };
+
+  const openMasterCodeAssign = async (profile: Profile) => {
+    setMasterCodeAssignTarget(profile);
+    setMasterCodeAssignLoading(true);
+
+    const { data, error } = await listAvailableLeagueMasterCodes(250);
+    if (error) {
+      toast({
+        title: "Mastercodes",
+        description: error.message || "Freie Mastercodes konnten nicht geladen werden.",
+        variant: "destructive",
+      });
+      setAvailableLeagueMasterCodes([]);
+      setSelectedMasterCodeId("");
+      setMasterCodeAssignLoading(false);
+      return;
+    }
+
+    const codes = data ?? [];
+    setAvailableLeagueMasterCodes(codes);
+    setSelectedMasterCodeId(codes[0]?.id ?? "");
+    setMasterCodeAssignLoading(false);
+  };
+
+  const handleAssignMasterCode = async () => {
+    if (!masterCodeAssignTarget) return;
+    if (!selectedMasterCodeId) {
+      toast({
+        title: "Kein Code gewählt",
+        description: "Bitte einen freien Liga-Mastercode auswählen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMasterCodeAssignLoading(true);
+    const { data, error } = await assignLeagueMasterCodeToParticipant({
+      profileId: masterCodeAssignTarget.id,
+      masterCodeId: selectedMasterCodeId,
+    });
+    setMasterCodeAssignLoading(false);
+
+    if (error) {
+      toast({
+        title: "Zuweisung fehlgeschlagen",
+        description: error.message || "Der Mastercode konnte nicht zugewiesen werden.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!data?.profile || !data.masterCode) {
+      toast({
+        title: "Zuweisung fehlgeschlagen",
+        description: "Es wurden keine Daten vom Server zurückgegeben.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProfiles((prev) => prev.map((profile) => (profile.id === data.profile.id ? data.profile : profile)));
+    setMasterCodeByProfileId((prev) => {
+      const next = new Map(prev);
+      next.set(data.profile.id, data.masterCode);
+      return next;
+    });
+
+    toast({
+      title: "Mastercode zugewiesen",
+      description: `${data.masterCode.code} ist jetzt mit diesem Profil verknüpft und die Teilnahme ist aktiv.`,
+    });
+
+    resetMasterCodeAssignDialog();
+  };
+
   const getRoleBadge = (item: ParticipantListItem) => {
     if (item.tabGroup === "league_admins") {
       return (
@@ -459,6 +571,9 @@ const LeagueParticipants = () => {
 
   const renderProfileCard = (item: ParticipantListItem, archived: boolean) => {
     const { profile } = item;
+    const isParticipationActivated = Boolean(profile.participation_activated_at);
+    const assignedMasterCode = masterCodeByProfileId.get(profile.id) ?? null;
+    const canAssignLeagueMasterCode = item.tabGroup === "participants" && !archived && !isParticipationActivated;
     return (
       <Card
         key={profile.id}
@@ -470,8 +585,24 @@ const LeagueParticipants = () => {
               <div className="font-semibold text-primary text-base md:text-lg break-words">{getFullName(profile)}</div>
               {getRoleBadge(item)}
               {archived ? <Badge variant="outline">Archiviert</Badge> : null}
+              {!archived && isParticipationActivated ? (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                  Teilnahme aktiv
+                </Badge>
+              ) : null}
+              {!archived && assignedMasterCode && !isParticipationActivated ? (
+                <Badge variant="secondary" className="bg-amber-500/10 text-amber-800 border-amber-500/20">
+                  Mastercode zugewiesen
+                </Badge>
+              ) : null}
             </div>
             <div className="text-sm text-muted-foreground break-words">{profile.email ?? "-"}</div>
+            {assignedMasterCode ? (
+              <div className="text-xs text-muted-foreground mt-1 break-words">
+                <span className="text-muted-foreground">Mastercode:</span>{" "}
+                <span className="font-mono font-semibold text-foreground">{assignedMasterCode.code}</span>
+              </div>
+            ) : null}
             <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" />
               <span>
@@ -484,6 +615,17 @@ const LeagueParticipants = () => {
           <div className="flex items-center gap-2 flex-shrink-0">
             {!archived ? (
               <>
+                {canAssignLeagueMasterCode ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void openMasterCodeAssign(profile)}
+                    className="h-9 w-9 p-0 touch-manipulation"
+                    aria-label={`Mastercode für ${profile.email ?? profile.id} zuweisen`}
+                  >
+                    <Ticket className="h-4 w-4" />
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
                   size="sm"
@@ -1027,6 +1169,90 @@ const LeagueParticipants = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={masterCodeAssignTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetMasterCodeAssignDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Mastercode zuweisen</DialogTitle>
+            <DialogDescription className="sr-only">
+              Weist einem Teilnehmer einen freien Liga-Mastercode zu und aktiviert die Teilnahme.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 px-5 pb-2 pt-2 sm:px-0 sm:pb-0 sm:pt-0">
+            <p className="text-sm text-muted-foreground">
+              Hier wird ein freier <span className="font-semibold">Liga-Mastercode</span> (ohne Hallenzuordnung) einem
+              Teilnehmerprofil zugewiesen. Das entspricht technisch einem Einlösen: Der Code wird reserviert und die
+              Teilnahme aktiviert.
+            </p>
+
+            {masterCodeAssignTarget ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <div className="font-semibold text-foreground">{getFullName(masterCodeAssignTarget)}</div>
+                <div className="text-muted-foreground break-words">{masterCodeAssignTarget.email ?? "-"}</div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label htmlFor="master-code-pick">Freier Liga-Mastercode</Label>
+              <Select
+                value={selectedMasterCodeId}
+                onValueChange={setSelectedMasterCodeId}
+                disabled={masterCodeAssignLoading || availableLeagueMasterCodes.length === 0}
+              >
+                <SelectTrigger id="master-code-pick">
+                  <SelectValue
+                    placeholder={
+                      availableLeagueMasterCodes.length === 0
+                        ? "Keine freien Liga-Mastercodes"
+                        : "Code auswählen"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {availableLeagueMasterCodes.map((code) => (
+                    <SelectItem key={code.id} value={code.id}>
+                      <span className="font-mono">{code.code}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {availableLeagueMasterCodes.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Lege zuerst neue Liga-Mastercodes an (Admin: Mastercodes).
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={resetMasterCodeAssignDialog}
+              disabled={masterCodeAssignLoading}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              className="w-full sm:w-auto"
+              onClick={() => void handleAssignMasterCode()}
+              disabled={masterCodeAssignLoading || !selectedMasterCodeId}
+            >
+              {masterCodeAssignLoading ? "Wird zugewiesen..." : "Zuweisen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

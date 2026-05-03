@@ -573,6 +573,12 @@ create policy "Results insert own" on public.results
   with check (
     auth.uid() = profile_id
     and exists (
+      select 1
+      from public.profiles
+      where profiles.id = auth.uid()
+        and profiles.participation_activated_at is not null
+    )
+    and exists (
       select 1 from public.routes
       where routes.id = results.route_id
         and exists (
@@ -590,6 +596,12 @@ create policy "Results update own" on public.results
   using (auth.uid() = profile_id)
   with check (
     auth.uid() = profile_id
+    and exists (
+      select 1
+      from public.profiles
+      where profiles.id = auth.uid()
+        and profiles.participation_activated_at is not null
+    )
     and exists (
       select 1 from public.routes
       where routes.id = results.route_id

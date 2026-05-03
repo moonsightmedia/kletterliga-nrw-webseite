@@ -131,6 +131,7 @@ const Home = () => {
   } = useSeasonSettings();
   const { participantFeatureLocked: featureLocked, unlockDate } = useLaunchSettings();
   const unlockDateLabel = formatUnlockDate(unlockDate);
+  const isParticipationActivated = Boolean(profile?.participation_activated_at);
 
   useEffect(() => {
     if (role === "gym_admin") {
@@ -448,16 +449,16 @@ const Home = () => {
               }`}
             >
               <Link
-                to="/app/gyms/redeem"
+                to={isParticipationActivated ? "/app/gyms/redeem" : "/app/participation/redeem"}
                 onClick={(event) => {
                   if (!featureLocked) return;
                   event.preventDefault();
-                  showLockedFeatureNotice("Hallen-Codes");
+                  showLockedFeatureNotice(isParticipationActivated ? "Hallen-Codes" : "Mastercode");
                 }}
                 aria-disabled={featureLocked}
               >
                 <QrCode className="h-4 w-4" />
-                Hallen-Code einlösen
+                {isParticipationActivated ? "Hallen-Code einlösen" : "Mastercode freischalten"}
               </Link>
             </StitchButton>
           </div>

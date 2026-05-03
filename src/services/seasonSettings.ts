@@ -73,7 +73,7 @@ export const useSeasonSettings = () => {
     return `Ü40-${gender}`;
   }, [getAgeAt, settings?.age_u16_max, settings?.age_u40_min]);
 
-  const getAgeGroupRankingClass = (
+  const getAgeGroupRankingClass = useCallback((
     birthDate: string | null | undefined,
     gender: "m" | "w" | null | undefined,
     cutoffDate?: string | null
@@ -88,9 +88,9 @@ export const useSeasonSettings = () => {
     if (age < 40) return `Ü15-${gender}`;
     if (age < 50) return `Ü40-${gender}`;
     return `Ü50-${gender}`;
-  };
+  }, [getAgeAt]);
 
-  const getStages = (): Stage[] => {
+  const getStages = useCallback((): Stage[] => {
     if (settings?.stages && settings.stages.length > 0) {
       return settings.stages;
     }
@@ -128,7 +128,7 @@ export const useSeasonSettings = () => {
     }
 
     return stages;
-  };
+  }, [settings?.qualification_end, settings?.qualification_start, settings?.stages]);
 
   const isQualificationActive = (): boolean => {
     if (!settings?.qualification_start || !settings?.qualification_end) return false;

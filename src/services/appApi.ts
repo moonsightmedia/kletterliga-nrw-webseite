@@ -36,6 +36,13 @@ type AuditListOptions = {
   limit?: number;
 };
 
+export type ParticipantCompetitionDataPayload = {
+  profiles: Profile[];
+  results: Result[];
+  routes: Route[];
+  gyms: Gym[];
+};
+
 const shouldExcludeArchived = (options?: ArchiveQueryOptions) => !options?.includeArchived;
 
 const mapIds = <T extends { id: string }>(rows: T[] | null | undefined) => new Set((rows ?? []).map((row) => row.id));
@@ -484,6 +491,30 @@ export async function listGymCommunityStats() {
   return { data: (Array.isArray(body) ? body : []) as GymCommunityStats[], error: null };
 }
 
+export async function getParticipantCompetitionData() {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const url = `${supabaseConfig.url}/functions/v1/get-participant-competition-data`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: await getFunctionHeaders(),
+  });
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const message =
+      (body as { error?: string })?.error ?? res.statusText ?? "Teilnehmerdaten konnten nicht geladen werden.";
+    return { data: null, error: { message } };
+  }
+
+  return {
+    data: body as ParticipantCompetitionDataPayload,
+    error: null,
+  };
+}
+
 export async function listProfiles(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
@@ -756,6 +787,164 @@ export async function listMasterCodes(gymId?: string) {
     q = q.eq("gym_id", gymId);
   }
   return q.returns<MasterCode[]>();
+}
+
+export async function listMasterCodesRedeemedForProfiles(profileIds: string[]) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const normalized = [...new Set(profileIds.filter(Boolean))];
+  if (normalized.length === 0) {
+    return { data: [] as MasterCode[], error: null };
+  }
+
+  return supabase
+    .from("master_codes")
+    .select("id, code, gym_id, redeemed_by, redeemed_at, expires_at, status, created_at")
+    .in("redeemed_by", normalized)
+    .order("redeemed_at", { ascending: false })
+    .returns<MasterCode[]>();
+}
+
+export async function listAvailableLeagueMasterCodes(limit = 250) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const nowIso = new Date().toISOString();
+
+  return supabase
+    .from("master_codes")
+    .select("id, code, gym_id, redeemed_by, redeemed_at, expires_at, status, created_at")
+    .is("gym_id", null)
+    .is("redeemed_by", null)
+    .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+    .eq("status", "available")
+    .order("created_at", { ascending: true })
+    .limit(limit)
+    .returns<MasterCode[]>();
+}
+
+export type AssignLeagueMasterCodePayload = {
+  profileId: string;
+  /** If omitted, picks the oldest available league master code. */
+  masterCodeId?: string;
+};
+
+export async function assignLeagueMasterCodeToParticipant(payload: AssignLeagueMasterCodePayload) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const profileId = payload.profileId.trim();
+  if (!profileId) {
+    return { data: null, error: { message: "Profil-ID fehlt." } };
+  }
+
+  const nowIso = new Date().toISOString();
+
+  let masterCodeId = payload.masterCodeId?.trim() ?? "";
+
+  if (!masterCodeId) {
+    const pick = await supabase
+      .from("master_codes")
+      .select("id")
+      .is("gym_id", null)
+      .is("redeemed_by", null)
+      .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+      .eq("status", "available")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+
+    if (pick.error) {
+      return { data: null, error: pick.error };
+    }
+    if (!pick.data?.id) {
+      return {
+        data: null,
+        error: { message: "Keine freien Liga-Mastercodes vorhanden. Bitte unter Mastercodes neue Codes erzeugen." },
+      };
+    }
+
+    masterCodeId = pick.data.id;
+  }
+
+  const masterLookup = await supabase
+    .from("master_codes")
+    .select("id, code, gym_id, redeemed_by, redeemed_at, expires_at, status")
+    .eq("id", masterCodeId)
+    .maybeSingle<MasterCode>();
+
+  if (masterLookup.error) {
+    return { data: null, error: masterLookup.error };
+  }
+
+  const master = masterLookup.data;
+  if (!master) {
+    return { data: null, error: { message: "Mastercode nicht gefunden." } };
+  }
+
+  if (master.gym_id) {
+    return { data: null, error: { message: "Nur Liga-Mastercodes (ohne Halle) können hier zugewiesen werden." } };
+  }
+
+  if (master.redeemed_by) {
+    return { data: null, error: { message: "Dieser Mastercode ist bereits vergeben." } };
+  }
+
+  if (master.expires_at && new Date(master.expires_at).getTime() < Date.now()) {
+    return { data: null, error: { message: "Dieser Mastercode ist abgelaufen." } };
+  }
+
+  const redeemUpdate = await supabase
+    .from("master_codes")
+    .update({
+      redeemed_by: profileId,
+      redeemed_at: nowIso,
+      status: "redeemed",
+    })
+    .eq("id", masterCodeId)
+    .is("redeemed_by", null)
+    .select("*")
+    .maybeSingle<MasterCode>();
+
+  if (redeemUpdate.error) {
+    return { data: null, error: redeemUpdate.error };
+  }
+
+  if (!redeemUpdate.data) {
+    return {
+      data: null,
+      error: { message: "Der Mastercode konnte nicht reserviert werden (ggf. parallel vergeben)." },
+    };
+  }
+
+  const profileUpdate = await supabase
+    .from("profiles")
+    .update({ participation_activated_at: nowIso })
+    .eq("id", profileId)
+    .is("participation_activated_at", null)
+    .select("*")
+    .maybeSingle<Profile>();
+
+  if (profileUpdate.error) {
+    return { data: null, error: profileUpdate.error };
+  }
+
+  if (!profileUpdate.data) {
+    const refreshedProfile = await supabase.from("profiles").select("*").eq("id", profileId).maybeSingle<Profile>();
+    if (refreshedProfile.error) {
+      return { data: null, error: refreshedProfile.error };
+    }
+    if (!refreshedProfile.data) {
+      return { data: null, error: { message: "Profil nach Mastercode-Zuweisung nicht gefunden." } };
+    }
+    return { data: { masterCode: redeemUpdate.data, profile: refreshedProfile.data }, error: null };
+  }
+
+  return { data: { masterCode: redeemUpdate.data, profile: profileUpdate.data }, error: null };
 }
 
 export async function createMasterCodes(codes: Omit<MasterCode, "id" | "created_at">[]) {

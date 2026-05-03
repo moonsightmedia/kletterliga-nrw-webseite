@@ -184,7 +184,7 @@ export const ParticipantLayout = () => {
         <div
           className={cn(
             "mx-auto flex w-full max-w-md items-center justify-between gap-4",
-            isParticipantProfileScreen ? "h-16 px-6" : "px-4 py-3 sm:px-6",
+            "h-16 px-6",
           )}
         >
           {isGymDetail ? (

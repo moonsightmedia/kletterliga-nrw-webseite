@@ -52,7 +52,8 @@ const toneClasses = {
   cream: "stitch-cream-card",
   muted: "stitch-muted-card",
   glass: "stitch-glass-card",
-  navy: "stitch-navy-card",
+  /* Radius per Tailwind; utilities/className override — aligns navy tiles with Rangliste cards */
+  navy: "stitch-navy-card rounded-xl",
 } as const;
 
 export const StitchCard = React.forwardRef<

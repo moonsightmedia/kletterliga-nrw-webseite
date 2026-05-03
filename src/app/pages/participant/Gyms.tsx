@@ -202,7 +202,6 @@ const Gyms = () => {
         <StitchCard
           tone="navy"
           className="overflow-hidden rounded-xl border border-[rgba(242,220,171,0.08)] bg-[linear-gradient(180deg,#003d55_0%,#002637_100%)] p-5 shadow-[0_20px_44px_rgba(0,0,0,0.22)]"
-          style={{ borderRadius: "0.75rem" }}
         >
           <div className="space-y-3">
             <div className="stitch-headline text-[2rem] uppercase leading-[0.98] text-[#f2dcab]">

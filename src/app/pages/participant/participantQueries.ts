@@ -3,9 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   checkGymCodeRedeemed,
   getGym,
+  getParticipantCompetitionData,
   listGymCommunityStats,
   listGyms,
-  listProfiles,
   listResults,
   listResultsForUser,
   listRoutes,
@@ -82,10 +82,10 @@ const buildQueryState = <T,>({
 };
 
 const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetitionData> => {
-  const responses = await Promise.all([listProfiles(), listResults(), listRoutes(), listGyms(), listGymCommunityStats()]);
-  const [{ data: profiles }, { data: results }, { data: routes }, { data: gyms }, { data: gymStats }] = responses;
+  const responses = await Promise.all([getParticipantCompetitionData(), listGymCommunityStats()]);
+  const [{ data: competitionData }, { data: gymStats }] = responses;
 
-  if (!profiles || !results || !routes || !gyms || !gymStats) {
+  if (!competitionData || !gymStats) {
     throw new Error(
       getResponseErrorMessage(
         responses,
@@ -94,7 +94,7 @@ const fetchParticipantCompetitionData = async (): Promise<ParticipantCompetition
     );
   }
 
-  return { profiles, results, routes, gyms, gymStats };
+  return { ...competitionData, gymStats };
 };
 
 const fetchParticipantUserResults = async (profileId: string): Promise<Result[]> => {

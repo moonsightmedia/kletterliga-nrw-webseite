@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Award, Medal, Trophy, MapPin, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listProfiles, listResults, listRoutes, listGyms } from "@/services/appApi";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import type { Result, Route, Gym } from "@/services/appTypes";
 
@@ -49,11 +50,9 @@ const ageGroups = ["U9", "U11", "U13", "U15", "Ü15", "Ü40", "Ü50"] as const;
 const AgeGroupRankings = () => {
   const { profile, user } = useAuth();
   const { getAgeGroupRankingClass, getStages } = useSeasonSettings();
+  const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rankings, setRankings] = useState<RankingRow[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [gyms, setGyms] = useState<Gym[]>([]);
   const userLeague = (profile?.league || (user?.user_metadata?.league as string | undefined) || "toprope") as
     | "toprope"
     | "lead";
@@ -62,7 +61,7 @@ const AgeGroupRankings = () => {
   const [genderFilter, setGenderFilter] = useState<"m" | "w">("m");
   const [ageFilter, setAgeFilter] = useState<typeof ageGroups[number]>("U9");
   const classInitializedRef = useRef(false);
-  const stages = getStages();
+  const stages = useMemo(() => getStages(), [getStages]);
   const [tab, setTab] = useState(searchParams.get("tab") === "stage" ? "stage" : "overall");
   const [stageKey, setStageKey] = useState(searchParams.get("stage") || stages[0]?.key || "");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -92,54 +91,38 @@ const AgeGroupRankings = () => {
   }, [profile, user, getAgeGroupRankingClass]);
 
   useEffect(() => {
-    const load = async () => {
-      const [{ data: profiles }, { data: resultsData }, { data: routesData }, { data: gymsData }] = await Promise.all([
-        listProfiles(),
-        listResults(),
-        listRoutes(),
-        listGyms(),
-      ]);
-      if (!profiles || !resultsData || !routesData) {
-        setRankings([]);
-        return;
+    const routeMap = new Map(routes.map((route) => [route.id, route.discipline]));
+    const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
+    const totals = results.reduce<Record<string, number>>((acc, result) => {
+      const discipline = routeMap.get(result.route_id);
+      const normalized =
+        discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
+      if (normalized !== leagueFilter) return acc;
+      if (range) {
+        const createdAt = result.created_at ? new Date(result.created_at) : null;
+        if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
       }
-      setResults(resultsData);
-      setRoutes(routesData);
-      if (gymsData) setGyms(gymsData);
-      const routeMap = new Map(routesData.map((route) => [route.id, route.discipline]));
-      const range = tab === "stage" && stages.length > 0 ? getStageRange(stageKey, stages) : null;
-      const totals = resultsData.reduce<Record<string, number>>((acc, result) => {
-        const discipline = routeMap.get(result.route_id);
-        const normalized =
-          discipline === "vorstieg" ? "lead" : discipline === "toprope" ? "toprope" : discipline;
-        if (normalized !== leagueFilter) return acc;
-        if (range) {
-          const createdAt = result.created_at ? new Date(result.created_at) : null;
-          if (!createdAt || createdAt < range.start || createdAt > range.end) return acc;
-        }
-        acc[result.profile_id] =
-          (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
-        return acc;
-      }, {});
-      const rows = profiles
-        .filter((profile) => {
-          if (profile.role === "gym_admin" || profile.role === "league_admin") return false;
-          if (!profile.participation_activated_at) return false;
-          const league = profile.league ?? null;
-          return league === null || league === leagueFilter;
-        })
-        .map((profile) => ({
-          id: profile.id,
-          className: getAgeGroupRankingClass(profile.birth_date, profile.gender),
-          name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || "Unbekannt",
-          points: totals[profile.id] ?? 0,
-        }))
-        .filter((row) => row.className === className);
-      rows.sort((a, b) => b.points - a.points);
-      setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
-    };
-    load();
-  }, [className, leagueFilter, tab, stageKey, stages, getAgeGroupRankingClass]);
+      acc[result.profile_id] =
+        (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
+      return acc;
+    }, {});
+    const rows = profiles
+      .filter((profile) => {
+        if (profile.role === "gym_admin" || profile.role === "league_admin") return false;
+        if (!profile.participation_activated_at) return false;
+        const league = profile.league ?? null;
+        return league === null || league === leagueFilter;
+      })
+      .map((profile) => ({
+        id: profile.id,
+        className: getAgeGroupRankingClass(profile.birth_date, profile.gender),
+        name: `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || "Unbekannt",
+        points: totals[profile.id] ?? 0,
+      }))
+      .filter((row) => row.className === className);
+    rows.sort((a, b) => b.points - a.points);
+    setRankings(rows.map((row, index) => ({ rank: index + 1, name: row.name, points: row.points, profile_id: row.id })));
+  }, [profiles, results, routes, className, leagueFilter, tab, stageKey, stages, getAgeGroupRankingClass]);
 
   const userName = useMemo(() => {
     if (!profile) return "";
@@ -148,6 +131,14 @@ const AgeGroupRankings = () => {
 
   const leagueLabel = leagueFilter === "lead" ? "Vorstieg" : "Toprope";
   const classLabel = getAgeGroupClassLabel(className);
+
+  if (loading) {
+    return <ParticipantStateCard title="Rangliste lädt" description="Die Altersklassen werden gerade aufgebaut." />;
+  }
+
+  if (error) {
+    return <ParticipantStateCard title="Rangliste nicht verfügbar" description={error} />;
+  }
 
   // Berechne Details für alle Teilnehmer
   const getParticipantDetails = (profileId: string) => {
@@ -231,9 +222,8 @@ const AgeGroupRankings = () => {
               const participantDetails = getParticipantDetails(row.profile_id);
               
               return (
-                <>
+                <Fragment key={row.profile_id}>
                   <TableRow
-                    key={`${row.rank}-${row.name}`}
                     className={`cursor-pointer hover:bg-muted/50 ${isUser ? "bg-accent/20" : ""}`}
                     onClick={() => toggleRow(row.profile_id)}
                   >
@@ -305,7 +295,7 @@ const AgeGroupRankings = () => {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>

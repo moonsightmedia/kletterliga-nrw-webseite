@@ -16,6 +16,23 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const buildAmbiguousCodeVariants = (code: string) => {
+  const variants = new Set([code]);
+  const chars = Array.from(code);
+
+  chars.forEach((char, index) => {
+    if (char !== "O" && char !== "0") return;
+
+    Array.from(variants).forEach((variant) => {
+      const nextChars = Array.from(variant);
+      nextChars[index] = char === "O" ? "0" : "O";
+      variants.add(nextChars.join(""));
+    });
+  });
+
+  return Array.from(variants);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -87,13 +104,41 @@ serve(async (req) => {
       });
     }
 
-    const { data: masterCode, error: codeError } = await supabase
+    const { data: exactMasterCode, error: codeError } = await supabase
       .from("master_codes")
       .select("id, redeemed_by, expires_at")
       .eq("code", code)
       .maybeSingle();
 
-    if (codeError || !masterCode) {
+    if (codeError) {
+      return new Response(JSON.stringify({ error: "Mastercode konnte nicht geprüft werden." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    let masterCode = exactMasterCode;
+
+    if (!masterCode) {
+      const variants = buildAmbiguousCodeVariants(code);
+      const { data: variantMatches, error: variantError } = await supabase
+        .from("master_codes")
+        .select("id, redeemed_by, expires_at")
+        .in("code", variants);
+
+      if (variantError) {
+        return new Response(JSON.stringify({ error: "Mastercode konnte nicht geprüft werden." }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      if ((variantMatches ?? []).length === 1) {
+        masterCode = variantMatches![0];
+      }
+    }
+
+    if (!masterCode) {
       return new Response(JSON.stringify({ error: "Dieser Mastercode wurde nicht gefunden." }), {
         status: 404,
         headers: { "Content-Type": "application/json", ...corsHeaders },

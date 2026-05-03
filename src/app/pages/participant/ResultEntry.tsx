@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Lock } from "lucide-react";
+import { CheckCircle2, KeyRound, Lock } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,6 +49,7 @@ const ResultEntry = () => {
     () => results.find((item) => item.route_id === routeId) ?? null,
     [results, routeId],
   );
+  const isParticipationActivated = Boolean(profile?.participation_activated_at);
 
   useEffect(() => {
     if (existingResult) {
@@ -77,6 +78,15 @@ const ResultEntry = () => {
 
   const handleSave = async () => {
     if (!profile?.id || !routeId) return;
+
+    if (!isParticipationActivated) {
+      toast({
+        title: "Mastercode fehlt",
+        description: "Du musst zuerst deinen Mastercode einlösen, bevor du Ergebnisse eintragen kannst.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!codeRedeemed) {
       toast({
@@ -148,6 +158,33 @@ const ResultEntry = () => {
           Für diese Route konnten keine Details geladen werden.
         </p>
       </StitchCard>
+    );
+  }
+
+  if (!isParticipationActivated) {
+    return (
+      <div className="px-4 pt-6">
+        <StitchCard tone="cream" className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgba(161,85,35,0.12)] text-[#a15523]">
+              <KeyRound className="h-5 w-5" />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="stitch-kicker text-[#a15523]">Teilnahme fehlt</div>
+                <div className="stitch-headline mt-2 text-3xl text-[#002637]">Mastercode zuerst einlösen</div>
+                <p className="mt-3 text-sm leading-6 text-[rgba(27,28,26,0.66)]">
+                  Deine Ergebnisse zählen erst nach der offiziellen Freischaltung. Löse zuerst deinen Mastercode ein.
+                </p>
+              </div>
+
+              <StitchButton asChild size="sm">
+                <Link to="/app/participation/redeem">Zum Mastercode</Link>
+              </StitchButton>
+            </div>
+          </div>
+        </StitchCard>
+      </div>
     );
   }
 

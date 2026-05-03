@@ -121,6 +121,7 @@ describe("ProfileScreen", () => {
     expect(screen.queryByText("Pre-Launch")).not.toBeInTheDocument();
     expect(screen.getByText("Teilnahme fehlt")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mastercode freischalten" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Mastercode einlösen/i })).toBeEnabled();
   });
 
   it("shows class badge once the profile is unlocked", () => {

@@ -80,8 +80,7 @@
   .stitch-surface-card,
   .stitch-cream-card,
   .stitch-muted-card,
-  .stitch-glass-card,
-  .stitch-navy-card {
+  .stitch-glass-card {
     border-radius: 1.5rem;
     overflow: hidden;
   }

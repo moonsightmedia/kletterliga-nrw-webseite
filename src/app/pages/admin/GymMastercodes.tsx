@@ -82,8 +82,14 @@ const GymMastercodes = () => {
     return name || item.email || "Unbekannt";
   };
 
-  const generateCode = () =>
-    `KL-MASTER-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const generateSegment = (length: number) => {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const values = new Uint32Array(length);
+    crypto.getRandomValues(values);
+    return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+  };
+
+  const generateCode = () => `KL-MASTER-${generateSegment(8)}-${generateSegment(4)}`;
 
   const formatCompactExportDate = (value: string | null) => {
     if (!value) return null;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Instagram, ExternalLink, Heart, MessageCircle } from "lucide-react";
+import { Instagram, ExternalLink, Heart, MessageCircle, PlayCircle } from "lucide-react";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
 import { getInstagramFeed } from "@/services/appApi";
 import { getInstagramImageSource } from "@/components/home/instagramMedia";
@@ -73,7 +73,10 @@ export const InstagramSection = () => {
               animation="scale"
             >
               {posts.map((post) => {
-                const imageUrl = getInstagramImageSource(post.thumbnail_url || post.media_url);
+                const isVideo = post.media_type === "VIDEO";
+                const imageUrl = getInstagramImageSource(
+                  isVideo ? post.thumbnail_url || null : post.thumbnail_url || post.media_url,
+                );
                 const caption = post.caption || null;
                 const likeCount = post.like_count ?? 0;
                 const commentCount = post.comments_count ?? 0;
@@ -96,6 +99,12 @@ export const InstagramSection = () => {
                             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
                           />
+                          {isVideo && (
+                            <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground shadow-lg backdrop-blur">
+                              <PlayCircle size={14} />
+                              Reel
+                            </div>
+                          )}
                         </div>
                         
                         <div className="p-4 space-y-3">
@@ -124,12 +133,12 @@ export const InstagramSection = () => {
                           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_34%,rgba(242,220,171,0.12)_100%)]" />
                           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center text-[#f2dcab]">
                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.22)] backdrop-blur">
-                              <Instagram size={34} />
+                              {isVideo ? <PlayCircle size={34} /> : <Instagram size={34} />}
                             </div>
                             <div>
                               <div className="font-headline text-2xl uppercase leading-none">@kletterliga_nrw</div>
                               <div className="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#f2dcab]/72">
-                                Auf Instagram ansehen
+                                {isVideo ? "Reel auf Instagram ansehen" : "Auf Instagram ansehen"}
                               </div>
                             </div>
                           </div>

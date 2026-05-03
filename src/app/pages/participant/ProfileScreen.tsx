@@ -421,7 +421,7 @@ const ProfileScreen = () => {
 
       <StitchCard
         tone="navy"
-        className={`relative overflow-hidden rounded-[1.1rem] p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
+        className={`relative overflow-hidden rounded-xl p-6 text-center text-[#f2dcab] shadow-[0_20px_44px_rgba(0,38,55,0.24)] ${
           isParticipationActivated
             ? "outline outline-2 outline-[#63d3a8] outline-offset-2"
             : ""
@@ -496,7 +496,7 @@ const ProfileScreen = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <StitchCard tone="surface" className="rounded-[1rem] p-4">
+          <StitchCard tone="surface" className="rounded-xl p-4">
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Punkte/Route
             </span>
@@ -505,7 +505,7 @@ const ProfileScreen = () => {
             </span>
           </StitchCard>
 
-          <StitchCard tone="surface" className="rounded-[1rem] p-4">
+          <StitchCard tone="surface" className="rounded-xl p-4">
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Einheiten
             </span>
@@ -514,7 +514,7 @@ const ProfileScreen = () => {
             </span>
           </StitchCard>
 
-          <StitchCard tone="surface" className="col-span-2 rounded-[1rem] p-4">
+          <StitchCard tone="surface" className="col-span-2 rounded-xl p-4">
             <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-[#71787d]">
               Gesamtpunkte
             </span>
@@ -527,7 +527,7 @@ const ProfileScreen = () => {
         <button
           type="button"
           onClick={() => navigate("/app/age-group-rankings")}
-          className="flex w-full items-center justify-between gap-3 rounded-[1rem] border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#003d55]/10 bg-white px-4 py-4 shadow-sm transition-all hover:border-[#a15523]/30 hover:shadow-md active:scale-[0.99]"
         >
           <span className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] bg-[#003d55] text-[#f2dcab]">
@@ -554,12 +554,23 @@ const ProfileScreen = () => {
           Einstellungen
         </h3>
 
-        <StitchCard tone="surface" className="rounded-[1rem] p-1">
+        <StitchCard tone="surface" className="rounded-xl p-1">
           <SettingsRow
             icon="person_outline"
             label="Profil bearbeiten"
             onClick={() => navigate("/app/profile/edit")}
           />
+          {shouldShowParticipationNotice ? (
+            <>
+              <div className="mx-3 h-px bg-[#f2dcab]/40" />
+              <SettingsRow
+                icon="verified_user"
+                label="Mastercode einlösen"
+                hint="Teilnahme aktivieren"
+                onClick={() => navigate("/app/participation/redeem")}
+              />
+            </>
+          ) : null}
           <div className="mx-3 h-px bg-[#f2dcab]/40" />
           <SettingsRow
             icon="lock_open"
@@ -588,7 +599,7 @@ const ProfileScreen = () => {
           type="button"
           variant="cream"
           size="lg"
-          className="w-full rounded-[1rem] border border-[#003d55]/10"
+          className="w-full rounded-xl border border-[#003d55]/10"
           onClick={() => {
             void signOut();
           }}
