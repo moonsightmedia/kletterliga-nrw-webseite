@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
@@ -404,8 +404,9 @@ const GymRoutesAdmin = () => {
                   const colorName = getColorName(route.color);
                   const isSelected = selectedRoutes.has(route.id);
                   return (
-                    <StitchCard tone="surface"
+                    <StitchCard
                       key={route.id}
+                      tone="surface"
                       className={`border-2 p-4 transition-all hover:shadow-md ${
                         isSelected ? "border-[var(--stitch-navy)] bg-[rgba(0,61,85,0.06)]" : "border-border/60"
                       }`}
@@ -487,8 +488,9 @@ const GymRoutesAdmin = () => {
                   const colorName = getColorName(route.color);
                   const isSelected = selectedRoutes.has(route.id);
                   return (
-                    <StitchCard tone="surface"
+                    <StitchCard
                       key={route.id}
+                      tone="surface"
                       className={`border-2 p-4 transition-all hover:shadow-md ${
                         isSelected ? "border-[var(--stitch-navy)] bg-[rgba(0,61,85,0.06)]" : "border-border/60"
                       }`}
@@ -625,12 +627,12 @@ const GymRoutesAdmin = () => {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditingRoute(null)}>
+              <StitchButton type="button" variant="outline" onClick={() => setEditingRoute(null)}>
                 Abbrechen
-              </Button>
-              <Button onClick={handleUpdate} disabled={saving}>
+              </StitchButton>
+              <StitchButton type="button" variant="primary" onClick={handleUpdate} disabled={saving}>
                 {saving ? "Speichern..." : "Speichern"}
-              </Button>
+              </StitchButton>
             </div>
           </div>
         </DialogContent>
