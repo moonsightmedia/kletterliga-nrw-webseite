@@ -789,6 +789,9 @@ export async function listMasterCodes(gymId?: string) {
   return q.returns<MasterCode[]>();
 }
 
+/** Supabase PostgREST limits how many rows a single select returns (commonly 1000). Chunk IDs so we don't silently drop redeemed codes when many profiles redeem. */
+const MASTER_CODES_BY_PROFILE_BATCH = 150;
+
 export async function listMasterCodesRedeemedForProfiles(profileIds: string[]) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
@@ -799,12 +802,29 @@ export async function listMasterCodesRedeemedForProfiles(profileIds: string[]) {
     return { data: [] as MasterCode[], error: null };
   }
 
-  return supabase
-    .from("master_codes")
-    .select("id, code, gym_id, redeemed_by, redeemed_at, expires_at, status, created_at")
-    .in("redeemed_by", normalized)
-    .order("redeemed_at", { ascending: false })
-    .returns<MasterCode[]>();
+  const merged: MasterCode[] = [];
+  for (let i = 0; i < normalized.length; i += MASTER_CODES_BY_PROFILE_BATCH) {
+    const chunk = normalized.slice(i, i + MASTER_CODES_BY_PROFILE_BATCH);
+    const batch = await supabase
+      .from("master_codes")
+      .select("id, code, gym_id, redeemed_by, redeemed_at, expires_at, status, created_at")
+      .in("redeemed_by", chunk)
+      .order("redeemed_at", { ascending: false })
+      .returns<MasterCode[]>();
+
+    if (batch.error) {
+      return { data: null, error: batch.error };
+    }
+    merged.push(...(batch.data ?? []));
+  }
+
+  merged.sort((a, b) => {
+    const tb = b.redeemed_at ? Date.parse(b.redeemed_at) : 0;
+    const ta = a.redeemed_at ? Date.parse(a.redeemed_at) : 0;
+    return tb - ta;
+  });
+
+  return { data: merged, error: null };
 }
 
 export async function listAvailableLeagueMasterCodes(limit = 250) {
