@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Award, Users, Info } from "lucide-react";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { listProfiles } from "@/services/appApi";
 import type { Profile } from "@/services/appTypes";
-import { Award, Users, Calendar, Info } from "lucide-react";
+import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
+import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 
 const LeagueClasses = () => {
   const { settings, getAgeU15Max, getAgeU40Min, getClassName } = useSeasonSettings();
@@ -12,23 +12,19 @@ const LeagueClasses = () => {
 
   useEffect(() => {
     listProfiles().then(({ data }) => {
-      // Filtere nur Teilnehmer (keine Admins)
       const participants = (data ?? []).filter((p) => p.role === "participant");
       setProfiles(participants);
     });
   }, []);
 
-  // Berechne Teilnehmeranzahl pro Klasse
   const classCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     const allClasses = ["U15-m", "U15-w", "Ü15-m", "Ü15-w", "Ü40-m", "Ü40-w"];
 
-    // Initialisiere alle Klassen mit 0
     allClasses.forEach((cls) => {
       counts[cls] = 0;
     });
 
-    // Zähle Teilnehmer pro Klasse
     profiles.forEach((profile) => {
       const className = getClassName(profile.birth_date, profile.gender);
       if (className && Object.prototype.hasOwnProperty.call(counts, className)) {
@@ -81,123 +77,120 @@ const LeagueClasses = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <Award className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <Award className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Wertungsklassen</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl">Wertungsklassen</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-[rgba(242,220,171,0.88)] md:text-base">
                 Übersicht der Wertungsklassen · {totalClasses} Klassen · {totalParticipants} Teilnehmer zugeordnet
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      {/* Konfigurations-Info */}
-      <Card className="p-4 md:p-6 border-2 border-border/60">
+      <StitchCard tone="surface" className="p-4 md:p-6">
         <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-          <div className="flex-1 space-y-2 min-w-0">
-            <h3 className="font-semibold text-primary text-sm md:text-base">Konfiguration</h3>
-            <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 text-sm">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#003d55]" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <h3 className="stitch-headline text-sm text-[#002637] md:text-base">Konfiguration</h3>
+            <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 md:grid-cols-3">
               <div>
-                <span className="text-muted-foreground">U15 max Alter:</span>{" "}
-                <span className="font-medium">{u15Max} Jahre</span>
+                <span className="text-[rgba(27,28,26,0.55)]">U15 max Alter:</span>{" "}
+                <span className="font-semibold text-[#002637]">{u15Max} Jahre</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Ü40 min Alter:</span>{" "}
-                <span className="font-medium">{u40Min} Jahre</span>
+                <span className="text-[rgba(27,28,26,0.55)]">Ü40 min Alter:</span>{" "}
+                <span className="font-semibold text-[#002637]">{u40Min} Jahre</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Stichtag:</span>{" "}
-                <span className="font-medium">
+                <span className="text-[rgba(27,28,26,0.55)]">Stichtag:</span>{" "}
+                <span className="font-semibold text-[#002637]">
                   {cutoffDate ? new Date(cutoffDate).toLocaleDateString("de-DE") : "Nicht gesetzt"}
                 </span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="mt-2 text-xs text-[rgba(27,28,26,0.55)]">
               Die Altersgrenzen können in der Saisonverwaltung angepasst werden.
             </p>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      {/* Wertungsklassen-Übersicht */}
-            <div className="space-y-4">
-              <h2 className="text-base md:text-lg font-semibold text-primary">Hauptwertungsklassen (finalrelevant)</h2>
-              <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-          {classes.map((group) => (
-            <Card key={group.key} className="p-6 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg">
-              <div className="flex items-center gap-2 mb-4">
-                <Award className="h-5 w-5 text-primary" />
-                <div>
-                  <h3 className="font-headline text-xl text-primary">{group.label}</h3>
-                  <p className="text-xs text-muted-foreground">{group.ageRange}</p>
-                </div>
+      <AdminPageHeader
+        className="!mb-4"
+        eyebrow="Übersicht"
+        title="Hauptwertungsklassen"
+        description="Finalrelevante Wertungsklassen und Teilnehmerzahlen."
+      />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 md:grid-cols-3">
+        {classes.map((group) => (
+          <StitchCard key={group.key} tone="muted" className="p-6 transition-shadow hover:shadow-[0_20px_44px_rgba(0,38,55,0.1)]">
+            <div className="mb-4 flex items-center gap-2">
+              <Award className="h-5 w-5 text-[#003d55]" />
+              <div>
+                <h3 className="stitch-headline text-xl text-[#002637]">{group.label}</h3>
+                <p className="text-xs text-[rgba(27,28,26,0.55)]">{group.ageRange}</p>
               </div>
-              <div className="space-y-3">
-                {group.classes.map((cls) => (
-                  <div
-                    key={cls.key}
-                    className="flex items-center justify-between p-3 bg-accent/20 rounded-lg border border-border/60"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{cls.label}</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                      {cls.count} {cls.count === 1 ? "Teilnehmer" : "Teilnehmer"}
-                    </Badge>
+            </div>
+            <div className="space-y-3">
+              {group.classes.map((cls) => (
+                <div
+                  key={cls.key}
+                  className="flex items-center justify-between rounded-lg border border-[rgba(0,38,55,0.08)] bg-white/60 p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[rgba(27,28,26,0.45)]" />
+                    <span className="text-sm font-medium text-[#002637]">{cls.label}</span>
                   </div>
-                ))}
-                <div className="pt-2 border-t border-border/60 text-xs text-muted-foreground text-center">
-                  Gesamt: {group.classes.reduce((sum, c) => sum + c.count, 0)} Teilnehmer
+                  <StitchBadge tone="navy" className="shrink-0">
+                    {cls.count} {cls.count === 1 ? "Teilnehmer" : "Teilnehmer"}
+                  </StitchBadge>
                 </div>
+              ))}
+              <div className="border-t border-[rgba(0,38,55,0.08)] pt-2 text-center text-xs text-[rgba(27,28,26,0.55)]">
+                Gesamt: {group.classes.reduce((sum, c) => sum + c.count, 0)} Teilnehmer
               </div>
-            </Card>
-          ))}
-        </div>
+            </div>
+          </StitchCard>
+        ))}
       </div>
 
-      {/* Statistik-Zusammenfassung */}
-      <Card className="p-6 border-2 border-border/60">
-        <h3 className="font-semibold text-primary mb-4">Statistik</h3>
+      <StitchCard tone="surface" className="p-6">
+        <h3 className="stitch-headline mb-4 text-base text-[#002637]">Statistik</h3>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="text-center p-4 bg-accent/20 rounded-lg">
-            <div className="font-headline text-3xl text-primary mb-1">{totalClasses}</div>
-            <div className="text-sm text-muted-foreground">Wertungsklassen</div>
+          <div className="rounded-lg bg-[rgba(0,61,85,0.06)] p-4 text-center">
+            <div className="stitch-metric mb-1 text-3xl text-[#002637]">{totalClasses}</div>
+            <div className="text-sm text-[rgba(27,28,26,0.55)]">Wertungsklassen</div>
           </div>
-          <div className="text-center p-4 bg-accent/20 rounded-lg">
-            <div className="font-headline text-3xl text-primary mb-1">{totalParticipants}</div>
-            <div className="text-sm text-muted-foreground">Teilnehmer zugeordnet</div>
+          <div className="rounded-lg bg-[rgba(0,61,85,0.06)] p-4 text-center">
+            <div className="stitch-metric mb-1 text-3xl text-[#002637]">{totalParticipants}</div>
+            <div className="text-sm text-[rgba(27,28,26,0.55)]">Teilnehmer zugeordnet</div>
           </div>
-          <div className="text-center p-4 bg-accent/20 rounded-lg">
-            <div className="font-headline text-3xl text-primary mb-1">
-              {profiles.length - totalParticipants}
-            </div>
-            <div className="text-sm text-muted-foreground">Ohne Zuordnung</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              (fehlende Geburtsdaten/Geschlecht)
-            </p>
+          <div className="rounded-lg bg-[rgba(0,61,85,0.06)] p-4 text-center">
+            <div className="stitch-metric mb-1 text-3xl text-[#002637]">{profiles.length - totalParticipants}</div>
+            <div className="text-sm text-[rgba(27,28,26,0.55)]">Ohne Zuordnung</div>
+            <p className="mt-1 text-xs text-[rgba(27,28,26,0.5)]">(fehlende Geburtsdaten/Geschlecht)</p>
           </div>
         </div>
-      </Card>
+      </StitchCard>
     </div>
   );
 };

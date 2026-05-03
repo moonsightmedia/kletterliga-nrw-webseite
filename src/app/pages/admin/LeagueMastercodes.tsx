@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 import {
   listMasterCodes,
   createMasterCodes,
@@ -183,58 +182,70 @@ const LeagueMastercodes = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary break-words">Mastercodes</h1>
-          <p className="text-sm text-muted-foreground mt-2 break-words">
-            Teilnahmegebühr – einmal pro Teilnehmer einlösbar. Erstellung durch Liga (ohne Halle) oder durch Hallen.
-          </p>
-        </div>
-        <div className="hidden sm:flex flex-row items-center gap-2 flex-shrink-0">
-          <Button variant="outline" onClick={exportToPDF} disabled={visibleCodes.filter((c) => !c.redeemed_by).length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            <span className="skew-x-6">PDF Export</span>
-          </Button>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="skew-x-6">Neue Mastercodes</span>
-          </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <AdminPageHeader
+          className="!mb-0 min-w-0"
+          eyebrow="Liga"
+          title="Mastercodes"
+          description="Teilnahmegebühr – einmal pro Teilnehmer einlösbar. Erstellung durch Liga (ohne Halle) oder durch Hallen."
+        />
+        <div className="hidden shrink-0 flex-row items-center gap-2 sm:flex">
+          <StitchButton
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={exportToPDF}
+            disabled={visibleCodes.filter((c) => !c.redeemed_by).length === 0}
+          >
+            <Download className="h-4 w-4" />
+            PDF Export
+          </StitchButton>
+          <StitchButton type="button" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
+            <Plus className="h-4 w-4" />
+            Neue Mastercodes
+          </StitchButton>
         </div>
       </div>
-      <div className="flex sm:hidden flex-col gap-2">
-        <Button variant="outline" onClick={exportToPDF} disabled={visibleCodes.filter((c) => !c.redeemed_by).length === 0} className="w-full min-h-[44px] touch-manipulation">
-          <Download className="h-4 w-4 mr-2" />
-          <span className="skew-x-6">PDF Export</span>
-        </Button>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="w-full min-h-[44px] touch-manipulation">
-          <Plus className="h-4 w-4 mr-2" />
-          <span className="skew-x-6">Neue Mastercodes</span>
-        </Button>
+      <div className="flex flex-col gap-2 sm:hidden">
+        <StitchButton
+          type="button"
+          variant="outline"
+          className="min-h-[44px] w-full"
+          onClick={exportToPDF}
+          disabled={visibleCodes.filter((c) => !c.redeemed_by).length === 0}
+        >
+          <Download className="h-4 w-4" />
+          PDF Export
+        </StitchButton>
+        <StitchButton type="button" className="min-h-[44px] w-full" onClick={() => setShowCreateForm(!showCreateForm)}>
+          <Plus className="h-4 w-4" />
+          Neue Mastercodes
+        </StitchButton>
       </div>
 
-      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-3">
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Gesamt</div>
-          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{stats.total}</div>
-        </Card>
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Verfügbar</div>
-          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{stats.available}</div>
-        </Card>
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Eingelöst</div>
-          <div className="font-headline text-xl sm:text-2xl text-secondary mt-1 sm:mt-2">{stats.redeemed}</div>
-        </Card>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Gesamt</div>
+          <div className="stitch-metric mt-1 text-xl text-[#002637] sm:mt-2 sm:text-2xl">{stats.total}</div>
+        </StitchCard>
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Verfügbar</div>
+          <div className="stitch-metric mt-1 text-xl text-[#002637] sm:mt-2 sm:text-2xl">{stats.available}</div>
+        </StitchCard>
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Eingelöst</div>
+          <div className="stitch-metric mt-1 text-xl text-[#a15523] sm:mt-2 sm:text-2xl">{stats.redeemed}</div>
+        </StitchCard>
       </div>
 
-      {showCreateForm && (
-        <Card className="p-4 md:p-6 border-border/60 space-y-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-secondary mb-4">
-            <TicketCheck className="h-4 w-4 flex-shrink-0" />
-            <span className="break-words">Mastercodes erzeugen (Liga)</span>
+      {showCreateForm ? (
+        <StitchCard tone="muted" className="space-y-4 p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <TicketCheck className="h-4 w-4 shrink-0 text-[#003d55]" />
+            <span className="stitch-kicker text-[#a15523]">Mastercodes erzeugen (Liga)</span>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            <div className="space-y-2 flex-1 w-full">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="w-full flex-1 space-y-2">
               <Label htmlFor="batchSize">Anzahl</Label>
               <Input
                 id="batchSize"
@@ -243,23 +254,23 @@ const LeagueMastercodes = () => {
                 max={200}
                 value={batchSize}
                 onChange={(e) => setBatchSize(Number(e.target.value))}
-                className="touch-manipulation min-h-[44px]"
+                className="min-h-[44px] touch-manipulation"
               />
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-              <Button onClick={() => handleCreateBatch(batchSize)} disabled={creating} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
-                {creating ? "Erstelle..." : `Batch (${batchSize})`}
-              </Button>
-              <Button variant="outline" onClick={() => handleCreateBatch(1)} disabled={creating} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+              <StitchButton type="button" onClick={() => handleCreateBatch(batchSize)} disabled={creating} className="min-h-[44px] w-full sm:w-auto">
+                {creating ? "Erstelle…" : `Batch (${batchSize})`}
+              </StitchButton>
+              <StitchButton type="button" variant="outline" onClick={() => handleCreateBatch(1)} disabled={creating} className="min-h-[44px] w-full sm:w-auto">
                 Einzelcode
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto min-h-[44px] touch-manipulation">
+              </StitchButton>
+              <StitchButton type="button" variant="outline" onClick={() => setShowCreateForm(false)} className="min-h-[44px] w-full sm:w-auto">
                 Abbrechen
-              </Button>
+              </StitchButton>
             </div>
           </div>
-        </Card>
-      )}
+        </StitchCard>
+      ) : null}
 
       <div className="flex items-center gap-2 w-full sm:w-auto">
         <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -275,25 +286,26 @@ const LeagueMastercodes = () => {
       </div>
 
       {visibleCodes.length === 0 ? (
-        <Card className="p-6 md:p-8 text-center text-muted-foreground">
-          {filter === "available"
-            ? "Keine verfügbaren Mastercodes. Erstelle neue oben."
-            : filter === "redeemed"
-              ? "Keine eingelösten Mastercodes."
-              : "Keine Mastercodes vorhanden. Erstelle neue oben."}
-        </Card>
+        <StitchCard tone="muted" className="p-6 text-center md:p-8">
+          <p className="text-sm text-[rgba(27,28,26,0.64)]">
+            {filter === "available"
+              ? "Keine verfügbaren Mastercodes. Erstelle neue oben."
+              : filter === "redeemed"
+                ? "Keine eingelösten Mastercodes."
+                : "Keine Mastercodes vorhanden. Erstelle neue oben."}
+          </p>
+        </StitchCard>
       ) : (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {visibleCodes.map((code) => {
             const isRedeemed = !!code.redeemed_by;
             const redeemer = isRedeemed ? getRedeemerName(code.redeemed_by) : null;
             const origin = getGymName(code.gym_id);
             return (
-              <Card
+              <StitchCard
                 key={code.id}
-                className={`p-4 md:p-5 border-2 transition-all hover:shadow-md min-w-0 ${
-                  isRedeemed ? "border-secondary/50 opacity-75" : "border-border/60"
-                }`}
+                tone="surface"
+                className={`min-w-0 p-4 transition-shadow hover:shadow-[0_16px_36px_rgba(0,38,55,0.1)] md:p-5 ${isRedeemed ? "opacity-80" : ""}`}
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -307,10 +319,8 @@ const LeagueMastercodes = () => {
                         Erstellt: {code.created_at ? new Date(code.created_at).toLocaleDateString("de-DE") : "-"}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <Badge variant={isRedeemed ? "secondary" : "default"}>
-                        {isRedeemed ? "Eingelöst" : "Frei"}
-                      </Badge>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <StitchBadge tone={isRedeemed ? "terracotta" : "navy"}>{isRedeemed ? "Eingelöst" : "Frei"}</StitchBadge>
                       <CodeQrDisplay value={code.code} size={64} />
                     </div>
                   </div>
@@ -338,7 +348,7 @@ const LeagueMastercodes = () => {
                     </div>
                   )}
                 </div>
-              </Card>
+              </StitchCard>
             );
           })}
         </div>

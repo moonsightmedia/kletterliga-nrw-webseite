@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -274,17 +273,17 @@ const GymRoutesAdmin = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">Routenverwaltung</h1>
+          <h1 className="stitch-headline text-xl text-[#003d55] md:text-2xl lg:text-3xl">Routenverwaltung</h1>
           <p className="text-sm text-muted-foreground mt-2">Liga-Routen verwalten und bearbeiten.</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="w-full sm:w-auto touch-manipulation">
-          <Plus className="h-4 w-4 mr-2" />
+        <StitchButton type="button" variant="primary" onClick={() => setShowCreateForm(!showCreateForm)} className="w-full touch-manipulation sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
           <span className="skew-x-6">Neue Route</span>
-        </Button>
+        </StitchButton>
       </div>
 
       {showCreateForm && (
-        <Card className="p-4 md:p-6 border-border/60 space-y-4">
+        <StitchCard tone="surface" className="p-4 md:p-6 border-border/60 space-y-4">
           <div className="text-xs uppercase tracking-widest text-secondary mb-4">Neue Route anlegen</div>
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-2">
@@ -356,14 +355,14 @@ const GymRoutesAdmin = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto touch-manipulation">
+            <StitchButton type="button" variant="outline" onClick={() => setShowCreateForm(false)} className="w-full touch-manipulation sm:w-auto">
               Abbrechen
-            </Button>
-            <Button onClick={handleCreate} disabled={saving} className="w-full sm:w-auto touch-manipulation">
+            </StitchButton>
+            <StitchButton type="button" variant="primary" onClick={handleCreate} disabled={saving} className="w-full touch-manipulation sm:w-auto">
               <span className="skew-x-6">{saving ? "Speichern..." : "Route anlegen"}</span>
-            </Button>
+            </StitchButton>
           </div>
-        </Card>
+        </StitchCard>
       )}
 
       <Tabs value={selectedDiscipline} onValueChange={(v) => setSelectedDiscipline(v as "toprope" | "lead")}>
@@ -374,19 +373,19 @@ const GymRoutesAdmin = () => {
           </TabsList>
           <div className="flex items-center gap-2">
             {selectedRoutes.size > 0 && (
-              <Button variant="outline" size="sm" onClick={handleBulkDelete} className="w-full sm:w-auto touch-manipulation">
-                <Trash2 className="h-4 w-4 mr-1" />
+              <StitchButton type="button" variant="outline" size="sm" onClick={handleBulkDelete} className="w-full touch-manipulation sm:w-auto">
+                <Trash2 className="mr-1 h-4 w-4" />
                 Löschen ({selectedRoutes.size})
-              </Button>
+              </StitchButton>
             )}
           </div>
         </div>
 
         <TabsContent value="toprope" className="space-y-4">
           {filteredRoutes.length === 0 ? (
-            <Card className="p-8 text-center text-muted-foreground">
+            <StitchCard tone="surface" className="p-8 text-center text-muted-foreground">
               Keine Routen gefunden. Erstelle eine neue Route oben.
-            </Card>
+            </StitchCard>
           ) : (
             <div className="space-y-3">
               <div className="text-xs uppercase tracking-widest text-secondary flex items-center justify-between">
@@ -405,10 +404,10 @@ const GymRoutesAdmin = () => {
                   const colorName = getColorName(route.color);
                   const isSelected = selectedRoutes.has(route.id);
                   return (
-                    <Card
+                    <StitchCard tone="surface"
                       key={route.id}
-                      className={`p-4 border-2 transition-all hover:shadow-md ${
-                        isSelected ? "border-primary bg-primary/5" : "border-border/60"
+                      className={`border-2 p-4 transition-all hover:shadow-md ${
+                        isSelected ? "border-[var(--stitch-navy)] bg-[rgba(0,61,85,0.06)]" : "border-border/60"
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -435,27 +434,29 @@ const GymRoutesAdmin = () => {
                             {route.setter && <div>Routenschrauber: {route.setter}</div>}
                           </div>
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
-                            <Button
+                            <StitchButton
+                              type="button"
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(route)}
                               className="flex-1 touch-manipulation"
                             >
-                              <Pencil className="h-3 w-3 mr-1" />
+                              <Pencil className="mr-1 h-3 w-3" />
                               Bearbeiten
-                            </Button>
-                            <Button
+                            </StitchButton>
+                            <StitchButton
+                              type="button"
                               variant="outline"
                               size="sm"
                               onClick={() => handleDelete(route.id)}
-                              className="text-destructive hover:text-destructive touch-manipulation"
+                              className="touch-manipulation text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                             >
                               <Trash2 className="h-3 w-3" />
-                            </Button>
+                            </StitchButton>
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </StitchCard>
                   );
                 })}
               </div>
@@ -465,9 +466,9 @@ const GymRoutesAdmin = () => {
 
         <TabsContent value="lead" className="space-y-4">
           {filteredRoutes.length === 0 ? (
-            <Card className="p-8 text-center text-muted-foreground">
+            <StitchCard tone="surface" className="p-8 text-center text-muted-foreground">
               Keine Routen gefunden. Erstelle eine neue Route oben.
-            </Card>
+            </StitchCard>
           ) : (
             <div className="space-y-3">
               <div className="text-xs uppercase tracking-widest text-secondary flex items-center justify-between">
@@ -486,10 +487,10 @@ const GymRoutesAdmin = () => {
                   const colorName = getColorName(route.color);
                   const isSelected = selectedRoutes.has(route.id);
                   return (
-                    <Card
+                    <StitchCard tone="surface"
                       key={route.id}
-                      className={`p-4 border-2 transition-all hover:shadow-md ${
-                        isSelected ? "border-primary bg-primary/5" : "border-border/60"
+                      className={`border-2 p-4 transition-all hover:shadow-md ${
+                        isSelected ? "border-[var(--stitch-navy)] bg-[rgba(0,61,85,0.06)]" : "border-border/60"
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -516,27 +517,29 @@ const GymRoutesAdmin = () => {
                             {route.setter && <div>Routenschrauber: {route.setter}</div>}
                           </div>
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
-                            <Button
+                            <StitchButton
+                              type="button"
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(route)}
                               className="flex-1 touch-manipulation"
                             >
-                              <Pencil className="h-3 w-3 mr-1" />
+                              <Pencil className="mr-1 h-3 w-3" />
                               Bearbeiten
-                            </Button>
-                            <Button
+                            </StitchButton>
+                            <StitchButton
+                              type="button"
                               variant="outline"
                               size="sm"
                               onClick={() => handleDelete(route.id)}
-                              className="text-destructive hover:text-destructive touch-manipulation"
+                              className="touch-manipulation text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                             >
                               <Trash2 className="h-3 w-3" />
-                            </Button>
+                            </StitchButton>
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </StitchCard>
                   );
                 })}
               </div>

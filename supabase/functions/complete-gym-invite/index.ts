@@ -113,46 +113,6 @@ serve(async (req) => {
       );
     }
 
-    const { data: mappings, error: mappingLookupError } = await supabase
-      .from("gym_admins")
-      .select("profile_id")
-      .eq("gym_id", invite.gym_id);
-
-    if (mappingLookupError) {
-      console.error("Failed to inspect existing gym admins:", mappingLookupError);
-      return new Response(
-        JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
-      );
-    }
-
-    const mappingProfileIds = (mappings ?? [])
-      .map((mapping) => mapping.profile_id)
-      .filter((profileId): profileId is string => typeof profileId === "string");
-
-    if (mappingProfileIds.length > 0) {
-      const { data: activeProfiles, error: profileLookupError } = await supabase
-        .from("profiles")
-        .select("id")
-        .in("id", mappingProfileIds)
-        .is("archived_at", null);
-
-      if (profileLookupError) {
-        console.error("Failed to inspect mapped profiles:", profileLookupError);
-        return new Response(
-          JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
-        );
-      }
-
-      if ((activeProfiles ?? []).length > 0) {
-        return new Response(
-          JSON.stringify({ error: "Fuer diese Halle ist bereits ein Hallenzugang aktiv." }),
-          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } },
-        );
-      }
-    }
-
     const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email: invite.email,
       password,

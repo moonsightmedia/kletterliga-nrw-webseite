@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
+import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { createGymCodes, listGymAdminsByProfile, listGymCodesByGym, updateGymCode, deleteGymCode, fetchProfile, listProfiles } from "@/services/appApi";
 import type { GymCode, Profile } from "@/services/appTypes";
@@ -207,7 +205,7 @@ const GymCodes = () => {
   };
 
   if (!gymId) {
-    return <div className="text-sm text-muted-foreground">Keine Halle zugewiesen.</div>;
+    return <p className="text-sm text-[rgba(27,28,26,0.64)]">Keine Halle zugewiesen.</p>;
   }
 
   const availableCount = codes.filter((c) => !c.redeemed_by).length;
@@ -215,61 +213,59 @@ const GymCodes = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header mit Titel und Buttons - auf Desktop nebeneinander */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">Code-Verwaltung</h1>
-          <p className="text-sm text-muted-foreground mt-2">Hallen-Codes generieren und verwalten.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <AdminPageHeader
+          className="!mb-0"
+          eyebrow="Halle"
+          title="Code-Verwaltung"
+          description="Hallen-Codes generieren und verwalten."
+        />
+        <div className="hidden shrink-0 flex-row items-center gap-2 sm:flex">
+          <StitchButton type="button" variant="outline" size="sm" onClick={exportToPDF} disabled={availableCount === 0}>
+            <Download className="h-4 w-4" />
+            PDF Export
+          </StitchButton>
+          <StitchButton type="button" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
+            <Plus className="h-4 w-4" />
+            Neue Codes
+          </StitchButton>
         </div>
-        {/* Buttons - auf Desktop hier, auf Mobile werden sie später angezeigt */}
-        <div className="hidden sm:flex flex-row items-center gap-2">
-          <Button variant="outline" onClick={exportToPDF} disabled={availableCount === 0} className="touch-manipulation">
-            <Download className="h-4 w-4 mr-2" />
-            <span className="skew-x-6">PDF Export</span>
-          </Button>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)} className="touch-manipulation">
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="skew-x-6">Neue Codes</span>
-          </Button>
-        </div>
       </div>
 
-      {/* Stats Cards - auf Mobile vor den Buttons */}
-      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-3">
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes gesamt</div>
-          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{codes.length}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Alle Codes</p>
-        </Card>
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes verfügbar</div>
-          <div className="font-headline text-xl sm:text-2xl text-primary mt-1 sm:mt-2">{availableCount}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Noch nicht eingelöst</p>
-        </Card>
-        <Card className="p-3 sm:p-4 border-border/60">
-          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-secondary">Codes eingelöst</div>
-          <div className="font-headline text-xl sm:text-2xl text-secondary mt-1 sm:mt-2">{redeemedCount}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Bereits verwendet</p>
-        </Card>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Codes gesamt</div>
+          <div className="stitch-metric mt-1 text-xl text-[#002637] sm:mt-2 sm:text-2xl">{codes.length}</div>
+          <p className="mt-1 text-[10px] text-[rgba(27,28,26,0.55)] sm:text-xs">Alle Codes</p>
+        </StitchCard>
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Codes verfügbar</div>
+          <div className="stitch-metric mt-1 text-xl text-[#002637] sm:mt-2 sm:text-2xl">{availableCount}</div>
+          <p className="mt-1 text-[10px] text-[rgba(27,28,26,0.55)] sm:text-xs">Noch nicht eingelöst</p>
+        </StitchCard>
+        <StitchCard tone="surface" className="p-3 sm:p-4">
+          <div className="stitch-kicker text-[0.58rem] text-[#a15523] sm:text-xs">Codes eingelöst</div>
+          <div className="stitch-metric mt-1 text-xl text-[#a15523] sm:mt-2 sm:text-2xl">{redeemedCount}</div>
+          <p className="mt-1 text-[10px] text-[rgba(27,28,26,0.55)] sm:text-xs">Bereits verwendet</p>
+        </StitchCard>
       </div>
 
-      {/* Buttons - nur auf Mobile sichtbar, nach den Statistiken */}
-      <div className="flex sm:hidden flex-col items-stretch gap-2">
-        <Button variant="outline" onClick={exportToPDF} disabled={availableCount === 0} className="w-full touch-manipulation">
-          <Download className="h-4 w-4 mr-2" />
-          <span className="skew-x-6">PDF Export</span>
-        </Button>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)} className="w-full touch-manipulation">
-          <Plus className="h-4 w-4 mr-2" />
-          <span className="skew-x-6">Neue Codes</span>
-        </Button>
+      <div className="flex flex-col gap-2 sm:hidden">
+        <StitchButton type="button" variant="outline" className="w-full" onClick={exportToPDF} disabled={availableCount === 0}>
+          <Download className="h-4 w-4" />
+          PDF Export
+        </StitchButton>
+        <StitchButton type="button" className="w-full" onClick={() => setShowCreateForm(!showCreateForm)}>
+          <Plus className="h-4 w-4" />
+          Neue Codes
+        </StitchButton>
       </div>
 
-      {showCreateForm && (
-        <Card className="p-4 md:p-6 border-border/60 space-y-4">
-          <div className="text-xs uppercase tracking-widest text-secondary mb-4">Codes erzeugen</div>
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            <div className="space-y-2 flex-1">
+      {showCreateForm ? (
+        <StitchCard tone="muted" className="space-y-4 p-4 md:p-6">
+          <div className="stitch-kicker mb-4 text-[#a15523]">Codes erzeugen</div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-2">
               <Label htmlFor="batchSize">Batch-Größe</Label>
               <Input
                 id="batchSize"
@@ -282,20 +278,20 @@ const GymCodes = () => {
                 className="touch-manipulation"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={() => handleCreateBatch(batchSize)} disabled={creating} className="w-full sm:w-auto touch-manipulation">
-                <span className="skew-x-6">{creating ? "Erstelle..." : `Batch (${batchSize})`}</span>
-              </Button>
-              <Button variant="outline" onClick={() => handleCreateBatch(1)} disabled={creating} className="w-full sm:w-auto touch-manipulation">
-                <span className="skew-x-6">Einzelcode</span>
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto touch-manipulation">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <StitchButton type="button" onClick={() => handleCreateBatch(batchSize)} disabled={creating} className="w-full sm:w-auto">
+                {creating ? "Erstelle…" : `Batch (${batchSize})`}
+              </StitchButton>
+              <StitchButton type="button" variant="outline" onClick={() => handleCreateBatch(1)} disabled={creating} className="w-full sm:w-auto">
+                Einzelcode
+              </StitchButton>
+              <StitchButton type="button" variant="outline" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
                 Abbrechen
-              </Button>
+              </StitchButton>
             </div>
           </div>
-        </Card>
-      )}
+        </StitchCard>
+      ) : null}
 
       {/* Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -311,37 +307,41 @@ const GymCodes = () => {
             <option value="redeemed">Nur Eingelöste ({redeemedCount})</option>
           </select>
         </div>
-        {visibleCodes.length > 0 && (
-          <Button 
-            variant="outline" 
-            onClick={handleDeleteAllVisible} 
-            className="text-destructive hover:text-destructive whitespace-nowrap w-full sm:w-auto touch-manipulation"
+        {visibleCodes.length > 0 ? (
+          <StitchButton
+            type="button"
+            variant="outline"
+            onClick={handleDeleteAllVisible}
+            className="w-full whitespace-nowrap border-[#c41e3a]/35 text-[0.62rem] text-[#b42318] hover:bg-[#c41e3a]/08 sm:w-auto"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            <span className="skew-x-6">Alle löschen ({visibleCodes.length})</span>
-          </Button>
-        )}
+            <Trash2 className="h-4 w-4" />
+            Alle löschen ({visibleCodes.length})
+          </StitchButton>
+        ) : null}
       </div>
 
       {/* Codes List */}
       {visibleCodes.length === 0 ? (
-        <Card className="p-6 md:p-8 text-center text-muted-foreground">
-          {filter === "available"
-            ? "Keine verfügbaren Codes. Erstelle neue Codes oben."
-            : filter === "redeemed"
-              ? "Keine eingelösten Codes."
-              : "Keine Codes vorhanden. Erstelle neue Codes oben."}
-        </Card>
+        <StitchCard tone="muted" className="p-6 text-center md:p-8">
+          <p className="text-sm text-[rgba(27,28,26,0.64)]">
+            {filter === "available"
+              ? "Keine verfügbaren Codes. Erstelle neue Codes oben."
+              : filter === "redeemed"
+                ? "Keine eingelösten Codes."
+                : "Keine Codes vorhanden. Erstelle neue Codes oben."}
+          </p>
+        </StitchCard>
       ) : (
-        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {visibleCodes.map((code) => {
             const isRedeemed = !!code.redeemed_by;
             const redeemer = isRedeemed ? getRedeemerName(code.redeemed_by) : null;
             return (
-              <Card
+              <StitchCard
                 key={code.id}
-                className={`p-4 border-2 transition-all hover:shadow-md overflow-visible ${
-                  isRedeemed ? "border-secondary/50 opacity-75" : "border-border/60"
+                tone="surface"
+                className={`overflow-visible p-4 transition-shadow hover:shadow-[0_16px_36px_rgba(0,38,55,0.1)] ${
+                  isRedeemed ? "opacity-80" : ""
                 }`}
               >
                 <div className="space-y-3">
@@ -352,10 +352,8 @@ const GymCodes = () => {
                         Erstellt: {code.created_at ? new Date(code.created_at).toLocaleDateString("de-DE") : "-"}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <Badge variant={isRedeemed ? "secondary" : "default"}>
-                        {isRedeemed ? "Eingelöst" : "Frei"}
-                      </Badge>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <StitchBadge tone={isRedeemed ? "terracotta" : "navy"}>{isRedeemed ? "Eingelöst" : "Frei"}</StitchBadge>
                       <CodeQrDisplay value={code.code} size={64} />
                     </div>
                   </div>
@@ -388,27 +386,29 @@ const GymCodes = () => {
 
                   <div className="pt-2 border-t border-border/50 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     {isRedeemed && redeemer ? (
-                      <Button
+                      <StitchButton
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handleReleaseCode(code.id)}
-                        className="flex-1 sm:flex-none touch-manipulation"
+                        className="flex-1 touch-manipulation sm:flex-none"
                       >
-                        <RotateCcw className="h-3 w-3 mr-1" />
+                        <RotateCcw className="h-3 w-3" />
                         Freigeben
-                      </Button>
+                      </StitchButton>
                     ) : null}
-                    <Button
+                    <StitchButton
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteCode(code.id)}
-                      className="text-destructive hover:text-destructive flex-1 sm:flex-none touch-manipulation"
+                      className="flex-1 border-[#c41e3a]/35 text-[0.58rem] text-[#b42318] hover:bg-[#c41e3a]/08 sm:flex-none"
                     >
                       <Trash2 className="h-3 w-3" />
-                    </Button>
+                    </StitchButton>
                   </div>
                 </div>
-              </Card>
+              </StitchCard>
             );
           })}
         </div>

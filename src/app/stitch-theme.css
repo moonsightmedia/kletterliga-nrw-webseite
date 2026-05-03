@@ -217,3 +217,8 @@
   .stitch-scroll-x-touch {
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Admin layout: sidebar stacks on light shell */
+  .stitch-admin-aside {
+    box-shadow: 0 12px 32px rgba(0, 38, 55, 0.06);
+  }

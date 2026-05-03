@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -542,22 +540,22 @@ const LeagueParticipants = () => {
   const getRoleBadge = (item: ParticipantListItem) => {
     if (item.tabGroup === "league_admins") {
       return (
-        <Badge variant="secondary" className="bg-purple-500/10 text-purple-700 border-purple-500/20">
+        <StitchBadge tone="ghost" className="border border-purple-500/20 bg-purple-500/10 text-xs font-semibold normal-case tracking-normal text-purple-700">
           Liga-Admin
-        </Badge>
+        </StitchBadge>
       );
     }
     if (item.tabGroup === "gym_admins") {
       return (
-        <Badge variant="secondary" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
+        <StitchBadge tone="ghost" className="border border-blue-500/20 bg-blue-500/10 text-xs font-semibold normal-case tracking-normal text-blue-700">
           Hallen-Admin
-        </Badge>
+        </StitchBadge>
       );
     }
     return (
-      <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20">
+      <StitchBadge tone="ghost" className="border border-green-500/20 bg-green-500/10 text-xs font-semibold normal-case tracking-normal text-green-700">
         Teilnehmer
-      </Badge>
+      </StitchBadge>
     );
   };
 
@@ -577,30 +575,35 @@ const LeagueParticipants = () => {
     const participationMasterMismatch = isParticipationActivated && !hasMasterProof;
     const canAssignLeagueMasterCode = item.tabGroup === "participants" && !archived && !hasMasterProof;
     return (
-      <Card
+      <StitchCard
         key={profile.id}
-        className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-4"
+        tone="surface"
+        className="space-y-4 border-2 border-border/60 p-4 transition-all hover:border-[var(--stitch-navy)]/35 hover:shadow-lg md:p-5"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <div className="font-semibold text-primary text-base md:text-lg break-words">{getFullName(profile)}</div>
               {getRoleBadge(item)}
-              {archived ? <Badge variant="outline">Archiviert</Badge> : null}
+              {archived ? (
+                <StitchBadge tone="ghost" className="text-xs font-semibold normal-case tracking-normal">
+                  Archiviert
+                </StitchBadge>
+              ) : null}
               {!archived && isParticipationActivated && hasMasterProof ? (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+                <StitchBadge tone="ghost" className="border border-emerald-500/20 bg-emerald-500/10 text-xs font-semibold normal-case tracking-normal text-emerald-700">
                   Teilnahme aktiv
-                </Badge>
+                </StitchBadge>
               ) : null}
               {!archived && participationMasterMismatch ? (
-                <Badge variant="secondary" className="bg-rose-500/12 text-rose-900 border-rose-500/25">
+                <StitchBadge tone="ghost" className="border border-rose-500/25 bg-rose-500/12 text-xs font-semibold normal-case tracking-normal text-rose-900">
                   Aktiv ohne Mastercode-Datensatz
-                </Badge>
+                </StitchBadge>
               ) : null}
               {!archived && assignedMasterCode && !isParticipationActivated ? (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-800 border-amber-500/20">
+                <StitchBadge tone="ghost" className="border border-amber-500/20 bg-amber-500/10 text-xs font-semibold normal-case tracking-normal text-amber-800">
                   Mastercode zugewiesen
-                </Badge>
+                </StitchBadge>
               ) : null}
             </div>
             <div className="text-sm text-muted-foreground break-words">{profile.email ?? "-"}</div>
@@ -623,46 +626,50 @@ const LeagueParticipants = () => {
             {!archived ? (
               <>
                 {canAssignLeagueMasterCode ? (
-                  <Button
+                  <StitchButton
+                    type="button"
                     variant="outline"
-                    size="sm"
+                    size="icon"
                     onClick={() => void openMasterCodeAssign(profile)}
-                    className="h-9 w-9 p-0 touch-manipulation"
+                    className="h-9 w-9 min-h-0 touch-manipulation"
                     aria-label={`Mastercode für ${profile.email ?? profile.id} zuweisen`}
                   >
                     <Ticket className="h-4 w-4" />
-                  </Button>
+                  </StitchButton>
                 ) : null}
-                <Button
+                <StitchButton
+                  type="button"
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleEdit(profile)}
-                  className="h-9 w-9 p-0 touch-manipulation"
+                  className="h-9 w-9 min-h-0 touch-manipulation"
                   aria-label={`Profil von ${profile.email ?? profile.id} bearbeiten`}
                 >
                   <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
+                </StitchButton>
+                <StitchButton
+                  type="button"
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => setArchiveTarget(profile)}
-                  className="h-9 w-9 p-0 text-amber-700 hover:text-amber-700 hover:bg-amber-500/10 touch-manipulation"
+                  className="h-9 w-9 min-h-0 touch-manipulation text-amber-700 hover:bg-amber-500/10 hover:text-amber-700"
                   aria-label={`Profil von ${profile.email ?? profile.id} archivieren`}
                 >
                   <Archive className="h-4 w-4" />
-                </Button>
+                </StitchButton>
               </>
             ) : (
-              <Button
+              <StitchButton
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setRestoreTarget(profile)}
-                className="h-9 gap-2 px-3 touch-manipulation"
+                className="h-9 touch-manipulation"
                 aria-label={`Profil von ${profile.email ?? profile.id} wiederherstellen`}
               >
                 <RotateCcw className="h-4 w-4" />
                 Restore
-              </Button>
+              </StitchButton>
             )}
           </div>
         </div>
@@ -713,45 +720,43 @@ const LeagueParticipants = () => {
             </>
           ) : null}
         </div>
-      </Card>
+      </StitchCard>
     );
   };
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-              backgroundRepeat: "repeat",
-            }}
-          />
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <Users className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <Users className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Teilnehmerverwaltung</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl break-words">Teilnehmerverwaltung</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-white/90 md:text-base break-words">
                 {profiles.filter((profile) => !profile.archived_at).length} aktive Personen ·{" "}
                 {profiles.filter((profile) => profile.archived_at).length} archiviert
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      <Card className="p-4 md:p-6 border-2 border-[#f2dcab]/60 bg-gradient-to-br from-[#fffdf9] via-[#fff8ec] to-[#f9f3e8]">
+      <StitchCard tone="cream" className="border-2 border-[#f2dcab]/60 p-4 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-lg md:text-xl font-semibold text-primary">Teilnehmer-Dashboard</h2>
@@ -759,36 +764,36 @@ const LeagueParticipants = () => {
               Verteilungen basierend auf der aktuell gefilterten aktiven Ansicht.
             </p>
           </div>
-          <Badge variant="outline" className="text-sm border-[#003d55]/20 text-[#003d55]">
+          <StitchBadge tone="ghost" className="border border-[#003d55]/20 text-sm font-semibold normal-case tracking-normal text-[#003d55]">
             {dashboard.total} aktive Personen
-          </Badge>
+          </StitchBadge>
         </div>
 
         <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4 mb-4">
-          <Card className="p-3 border border-[#f2dcab]/70 bg-white/95">
+          <StitchCard tone="surface" className="p-3 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-xs text-[rgba(0,38,55,0.56)] uppercase tracking-wide">
               <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none" style={{ color: COLORS.women }} aria-label="Weiblich">♀</span>
             </div>
             <div className="text-2xl font-headline mt-1" style={{ color: COLORS.women }}>{dashboard.gender.female}</div>
-          </Card>
-          <Card className="p-3 border border-[#f2dcab]/70 bg-white/95">
+          </StitchCard>
+          <StitchCard tone="surface" className="p-3 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-xs text-[rgba(0,38,55,0.56)] uppercase tracking-wide">
               <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none" style={{ color: COLORS.men }} aria-label="Männlich">♂</span>
             </div>
             <div className="text-2xl font-headline mt-1" style={{ color: COLORS.men }}>{dashboard.gender.male}</div>
-          </Card>
-          <Card className="p-3 border border-[#f2dcab]/70 bg-white/95">
+          </StitchCard>
+          <StitchCard tone="surface" className="p-3 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-xs text-[rgba(0,38,55,0.56)] uppercase tracking-wide">Toprope</div>
             <div className="text-2xl font-headline mt-1" style={{ color: COLORS.toprope }}>{dashboard.league.toprope}</div>
-          </Card>
-          <Card className="p-3 border border-[#f2dcab]/70 bg-white/95">
+          </StitchCard>
+          <StitchCard tone="surface" className="p-3 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-xs text-[rgba(0,38,55,0.56)] uppercase tracking-wide">Vorstieg</div>
             <div className="text-2xl font-headline mt-1" style={{ color: COLORS.lead }}>{dashboard.league.lead}</div>
-          </Card>
+          </StitchCard>
         </div>
 
         <div className="grid gap-3 md:gap-4 grid-cols-1 xl:grid-cols-2">
-          <Card className="p-4 border border-[#f2dcab]/70 bg-white/95">
+          <StitchCard tone="surface" className="p-4 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-sm font-semibold mb-3">Geschlechterverteilung</div>
             <ChartContainer
               config={{
@@ -805,17 +810,17 @@ const LeagueParticipants = () => {
                 <ChartTooltip content={<ChartTooltipContent />} />
               </PieChart>
             </ChartContainer>
-          </Card>
+          </StitchCard>
 
-          <Card className="p-4 border border-[#f2dcab]/70 bg-white/95">
+          <StitchCard tone="surface" className="p-4 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-sm font-semibold mb-3">Altersklassenverteilung nach Geschlecht</div>
             <div className="flex flex-wrap gap-2 mb-2">
-              <Badge variant="outline" className="text-xs border-[rgba(161,85,35,0.35)] bg-[rgba(161,85,35,0.08)]">
+              <StitchBadge tone="ghost" className="border border-[rgba(161,85,35,0.35)] bg-[rgba(161,85,35,0.08)] px-2 py-0.5 text-xs font-semibold normal-case tracking-normal">
                 <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-xs leading-none" style={{ color: COLORS.women }} aria-label="Weiblich">♀</span>
-              </Badge>
-              <Badge variant="outline" className="text-xs border-[rgba(0,61,85,0.35)] bg-[rgba(0,61,85,0.08)]">
+              </StitchBadge>
+              <StitchBadge tone="ghost" className="border border-[rgba(0,61,85,0.35)] bg-[rgba(0,61,85,0.08)] px-2 py-0.5 text-xs font-semibold normal-case tracking-normal">
                 <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-xs leading-none" style={{ color: COLORS.men }} aria-label="Männlich">♂</span>
-              </Badge>
+              </StitchBadge>
             </div>
             <ChartContainer
               config={{
@@ -833,9 +838,9 @@ const LeagueParticipants = () => {
                 <Bar dataKey="male" stackId="gender" fill="var(--color-male)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ChartContainer>
-          </Card>
+          </StitchCard>
 
-          <Card className="p-4 border border-[#f2dcab]/70 bg-white/95">
+          <StitchCard tone="surface" className="p-4 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-sm font-semibold mb-3">Ligaverteilung</div>
             <ChartContainer
               config={{
@@ -855,9 +860,9 @@ const LeagueParticipants = () => {
                 </Bar>
               </BarChart>
             </ChartContainer>
-          </Card>
+          </StitchCard>
 
-          <Card className="p-4 border border-[#f2dcab]/70 bg-white/95">
+          <StitchCard tone="surface" className="p-4 border border-[#f2dcab]/70 bg-white/95">
             <div className="text-sm font-semibold mb-3">Heimathallen</div>
             <ChartContainer
               config={{
@@ -876,11 +881,11 @@ const LeagueParticipants = () => {
             <p className="text-xs text-muted-foreground mt-2">
               "Keine Halle" bedeutet: Profil ohne Heimathalle. "Halle unbekannt" bedeutet: Heimathallen-Zuordnung zeigt auf keinen Hallendatensatz.
             </p>
-          </Card>
+          </StitchCard>
         </div>
-      </Card>
+      </StitchCard>
 
-      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
+      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2">
           <Search className="h-5 w-5 text-primary flex-shrink-0" />
           <Label htmlFor="search" className="text-sm md:text-base font-semibold">
@@ -936,9 +941,9 @@ const LeagueParticipants = () => {
                 <SelectItem value="without_results">Ohne Ergebnisse</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={resetFilters} className="px-3" aria-label="Filter zurücksetzen">
+            <StitchButton type="button" variant="outline" size="icon" onClick={resetFilters} className="min-h-0 px-3" aria-label="Filter zurücksetzen">
               <FilterX className="h-4 w-4" />
-            </Button>
+            </StitchButton>
           </div>
         </div>
 
@@ -959,17 +964,17 @@ const LeagueParticipants = () => {
         {activeFilterChips.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {activeFilterChips.map((chip) => (
-              <Badge key={chip} variant="outline">
+              <StitchBadge key={chip} tone="ghost" className="text-xs font-semibold normal-case tracking-normal">
                 {chip}
-              </Badge>
+              </StitchBadge>
             ))}
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">Keine aktiven Zusatzfilter.</p>
         )}
-      </Card>
+      </StitchCard>
 
-      <Card className="p-4 md:p-6 border-2 border-border/60">
+      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ParticipantTab)}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 md:gap-0 h-auto p-1.5 md:p-1">
             <TabsTrigger value="all" className="flex items-center justify-center gap-2 text-xs md:text-sm px-3 py-3 md:py-1.5 min-h-[48px] md:min-h-0">
@@ -993,28 +998,28 @@ const LeagueParticipants = () => {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      </Card>
+      </StitchCard>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-primary">Aktive Personen ({activeRows.length})</h2>
         </div>
         {isLoading ? (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Teilnehmerdaten werden geladen ...</p>
-          </Card>
+          </StitchCard>
         ) : activeRows.length > 0 ? (
           <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
             {activeRows.map((item) => renderProfileCard(item, false))}
           </div>
         ) : (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">
               {search || activeFilterChips.length > 0
                 ? "Keine aktiven Personen mit den aktuellen Filtern gefunden."
                 : "Keine aktiven Personen in dieser Kategorie."}
             </p>
-          </Card>
+          </StitchCard>
         )}
       </div>
 
@@ -1027,9 +1032,9 @@ const LeagueParticipants = () => {
             {archivedRows.map((item) => renderProfileCard(item, true))}
           </div>
         ) : (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Keine archivierten Personen für diese Ansicht.</p>
-          </Card>
+          </StitchCard>
         )}
       </div>
 
@@ -1132,12 +1137,12 @@ const LeagueParticipants = () => {
             </div>
           </div>
           <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
-            <Button variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto">
+            <StitchButton type="button" variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto">
               Abbrechen
-            </Button>
-            <Button onClick={handleSaveEdit} className="w-full sm:w-auto">
+            </StitchButton>
+            <StitchButton type="button" variant="primary" onClick={handleSaveEdit} className="w-full sm:w-auto">
               Speichern
-            </Button>
+            </StitchButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1240,7 +1245,7 @@ const LeagueParticipants = () => {
           </div>
 
           <DialogFooter className="flex-col gap-2 px-5 pb-5 sm:flex-row sm:px-0 sm:pb-0">
-            <Button
+            <StitchButton
               type="button"
               variant="outline"
               className="w-full sm:w-auto"
@@ -1248,15 +1253,16 @@ const LeagueParticipants = () => {
               disabled={masterCodeAssignLoading}
             >
               Abbrechen
-            </Button>
-            <Button
+            </StitchButton>
+            <StitchButton
               type="button"
+              variant="primary"
               className="w-full sm:w-auto"
               onClick={() => void handleAssignMasterCode()}
               disabled={masterCodeAssignLoading || !selectedMasterCodeId}
             >
               {masterCodeAssignLoading ? "Wird zugewiesen..." : "Zuweisen"}
-            </Button>
+            </StitchButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

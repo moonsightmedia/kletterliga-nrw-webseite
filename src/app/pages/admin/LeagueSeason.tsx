@@ -1,10 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { listAdminSettings, upsertAdminSettings } from "@/services/appApi";
 import type { Stage } from "@/services/appTypes";
 import { Calendar, Trophy, Users, Plus } from "lucide-react";
@@ -184,39 +182,38 @@ const LeagueSeason = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <Calendar className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Saisonverwaltung</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl">Saisonverwaltung</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-[rgba(242,220,171,0.88)] md:text-base">
                 Konfiguration der laufenden Saison {form.season_year || "2026"}
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      {/* Grunddaten */}
-      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
-          <h2 className="text-base md:text-lg font-semibold text-primary">Grunddaten</h2>
+      <StitchCard tone="surface" className="space-y-4 p-4 md:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Calendar className="h-5 w-5 shrink-0 text-[#003d55]" />
+          <h2 className="stitch-headline text-base text-[#002637] md:text-lg">Grunddaten</h2>
         </div>
         <div className="space-y-2">
           <Label htmlFor="season">Saisonjahr</Label>
@@ -276,24 +273,30 @@ const LeagueSeason = () => {
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      {/* Etappen-Verwaltung */}
-      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <StitchCard tone="surface" className="space-y-4 p-4 md:p-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
-            <h2 className="text-base md:text-lg font-semibold text-primary">Etappen</h2>
+            <Calendar className="h-5 w-5 shrink-0 text-[#003d55]" />
+            <h2 className="stitch-headline text-base text-[#002637] md:text-lg">Etappen</h2>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" size="sm" onClick={handleGenerateStages} disabled={!form.qualification_start || !form.qualification_end} className="touch-manipulation">
-              <Plus className="h-4 w-4 mr-1" />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <StitchButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateStages}
+              disabled={!form.qualification_start || !form.qualification_end}
+              className="touch-manipulation"
+            >
+              <Plus className="h-4 w-4" />
               <span className="text-xs md:text-sm">Auto-generieren</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleAddStage} className="touch-manipulation">
-              <Plus className="h-4 w-4 mr-1" />
+            </StitchButton>
+            <StitchButton type="button" variant="outline" size="sm" onClick={handleAddStage} className="touch-manipulation">
+              <Plus className="h-4 w-4" />
               <span className="text-xs md:text-sm">Etappe hinzufügen</span>
-            </Button>
+            </StitchButton>
           </div>
         </div>
         
@@ -317,13 +320,12 @@ const LeagueSeason = () => {
             ))}
           </div>
         )}
-      </Card>
+      </StitchCard>
 
-      {/* Finale */}
-      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Trophy className="h-5 w-5 text-secondary flex-shrink-0" />
-          <h2 className="text-base md:text-lg font-semibold text-primary">Finalevent</h2>
+      <StitchCard tone="surface" className="space-y-4 p-4 md:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Trophy className="h-5 w-5 shrink-0 text-[#a15523]" />
+          <h2 className="stitch-headline text-base text-[#002637] md:text-lg">Finalevent</h2>
         </div>
         <div className="space-y-2">
           <Label htmlFor="finaleEnabled">Finale aktiviert</Label>
@@ -387,13 +389,12 @@ const LeagueSeason = () => {
             </div>
           </>
         )}
-      </Card>
+      </StitchCard>
 
-      {/* Wertungsklassen */}
-      <Card className="p-6 border-2 border-border/60 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="h-5 w-5 text-accent-foreground" />
-          <h2 className="text-lg font-semibold text-primary">Wertungsklassen</h2>
+      <StitchCard tone="surface" className="space-y-4 p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 shrink-0 text-[#003d55]" />
+          <h2 className="stitch-headline text-lg text-[#002637]">Wertungsklassen</h2>
         </div>
         <div className="space-y-2">
           <Label htmlFor="ageCutoff">Stichtag für Altersberechnung</Label>
@@ -435,24 +436,24 @@ const LeagueSeason = () => {
             <p className="text-xs text-muted-foreground">Minimales Alter für Ü40 (Standard: 40)</p>
           </div>
         </div>
-        <div className="p-3 bg-accent/50 rounded-lg">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Hauptwertungsklassen (finalrelevant)</p>
-          <div className="text-sm text-foreground space-y-1">
+        <div className="rounded-lg bg-[rgba(0,61,85,0.06)] p-3">
+          <p className="stitch-kicker mb-2 text-[rgba(27,28,26,0.55)]">Hauptwertungsklassen (finalrelevant)</p>
+          <div className="space-y-1 text-sm text-[#002637]">
             <p>• U15 (bis {form.age_u16_max} Jahre) - männlich & weiblich</p>
             <p>• Ü15 ({Number(form.age_u16_max) + 1}–{Number(form.age_u40_min) - 1} Jahre) - männlich & weiblich</p>
             <p>• Ü40 (ab {form.age_u40_min} Jahre) - männlich & weiblich</p>
           </div>
-          {form.age_cutoff_date && (
-            <p className="text-xs text-muted-foreground mt-2">
+          {form.age_cutoff_date ? (
+            <p className="mt-2 text-xs text-[rgba(27,28,26,0.55)]">
               Stichtag: {new Date(form.age_cutoff_date).toLocaleDateString("de-DE")}
             </p>
-          )}
+          ) : null}
         </div>
-      </Card>
+      </StitchCard>
 
-      <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto touch-manipulation">
-        <span className="skew-x-6">{saving ? "Speichern..." : "Saison-Einstellungen speichern"}</span>
-      </Button>
+      <StitchButton type="button" onClick={handleSave} disabled={saving} className="w-full touch-manipulation md:w-auto">
+        {saving ? "Speichern…" : "Saison-Einstellungen speichern"}
+      </StitchButton>
     </div>
   );
 };

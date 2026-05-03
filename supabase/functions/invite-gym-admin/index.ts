@@ -299,15 +299,17 @@ serve(async (req) => {
       );
     }
 
-    const { data: mappings, error: mappingError } = await supabase
-      .from("gym_admins")
-      .select("profile_id")
-      .eq("gym_id", gym_id);
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (mappingError) {
-      console.error("Failed to inspect existing gym admins:", mappingError);
+    const { data: emailProfiles, error: emailProfileError } = await supabase
+      .from("profiles")
+      .select("id, archived_at")
+      .ilike("email", normalizedEmail);
+
+    if (emailProfileError) {
+      console.error("Failed to look up profile by email:", emailProfileError);
       return new Response(
-        JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
+        JSON.stringify({ error: "Profil konnte nicht geprueft werden." }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -315,19 +317,21 @@ serve(async (req) => {
       );
     }
 
-    const mappingProfileIds = (mappings ?? [])
-      .map((mapping) => mapping.profile_id)
-      .filter((profileId): profileId is string => typeof profileId === "string");
+    const activeProfileIds = (emailProfiles ?? [])
+      .filter((row) => !row.archived_at)
+      .map((row) => row.id)
+      .filter((id): id is string => typeof id === "string");
 
-    if (mappingProfileIds.length > 0) {
-      const { data: activeProfiles, error: profileError } = await supabase
-        .from("profiles")
+    if (activeProfileIds.length > 0) {
+      const { data: existingMapping, error: existingMappingError } = await supabase
+        .from("gym_admins")
         .select("id")
-        .in("id", mappingProfileIds)
-        .is("archived_at", null);
+        .eq("gym_id", gym_id)
+        .in("profile_id", activeProfileIds)
+        .limit(1);
 
-      if (profileError) {
-        console.error("Failed to inspect mapped profiles:", profileError);
+      if (existingMappingError) {
+        console.error("Failed to inspect gym admin mapping for email:", existingMappingError);
         return new Response(
           JSON.stringify({ error: "Bestehende Hallenzugaenge konnten nicht geprueft werden." }),
           {
@@ -337,10 +341,10 @@ serve(async (req) => {
         );
       }
 
-      if ((activeProfiles ?? []).length > 0) {
+      if ((existingMapping ?? []).length > 0) {
         return new Response(
           JSON.stringify({
-            error: "Fuer diese Halle ist bereits ein Hallenzugang aktiv.",
+            error: "Diese E-Mail ist fuer diese Halle bereits als Hallen-Admin hinterlegt.",
             code: "GYM_ADMIN_ALREADY_EXISTS",
           }),
           {
@@ -349,12 +353,25 @@ serve(async (req) => {
           },
         );
       }
+
+      return new Response(
+        JSON.stringify({
+          error:
+            "Fuer diese E-Mail existiert bereits ein Konto. Bitte in der Hallenverwaltung den bestehenden Benutzer manuell der Halle zuordnen (Zuordnung), statt eines Claim-Links.",
+          code: "PROFILE_EMAIL_EXISTS",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
+      );
     }
 
     const { error: revokeError } = await supabase
       .from("gym_invites")
       .update({ revoked_at: new Date().toISOString() })
       .eq("gym_id", gym_id)
+      .eq("email", normalizedEmail)
       .is("used_at", null)
       .is("revoked_at", null);
 
@@ -377,7 +394,7 @@ serve(async (req) => {
       .from("gym_invites")
       .insert({
         gym_id,
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         token: inviteToken,
         expires_at: expiresAt.toISOString(),
       })
@@ -403,7 +420,7 @@ serve(async (req) => {
     if (!skip_email) {
       try {
         await sendClaimEmail({
-          to: email.toLowerCase(),
+          to: normalizedEmail,
           gymName: gym.name,
           inviteUrl,
         });

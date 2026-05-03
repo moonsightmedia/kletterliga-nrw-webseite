@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
 import { StarRating } from "@/components/ui/star-rating";
 import { listResults, listRoutes, listGyms, listProfiles } from "@/services/appApi";
 import type { Result, Route, Gym, Profile } from "@/services/appTypes";
@@ -246,35 +245,37 @@ const LeagueRouteFeedback = () => {
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}></div>
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <MessageCircle className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <MessageCircle className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Routenfeedback</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl break-words">Routenfeedback</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-white/90 md:text-base break-words">
                 Übersicht aller Routen mit Bewertungen und Feedback
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
       {/* Filter und Suche */}
-      <Card className="p-4 md:p-6 border-2 border-border/60">
+      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60">
         <div className="space-y-4">
           {/* Suche */}
           <div className="flex items-center gap-2">
@@ -388,22 +389,22 @@ const LeagueRouteFeedback = () => {
             </span>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
       {/* Routen-Liste */}
       <div className="space-y-6">
         {loading ? (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Lade Daten...</p>
-          </Card>
+          </StitchCard>
         ) : grouped.length === 0 ? (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">
               {search || selectedGymId !== "all" || selectedDiscipline !== "all" || feedbackType !== "all"
                 ? "Keine Routen mit Feedback gefunden."
                 : "Noch keine Routen mit Feedback vorhanden."}
             </p>
-          </Card>
+          </StitchCard>
         ) : (
           grouped.map((group) => {
             const isGymGroup = "gym" in group;
@@ -412,7 +413,7 @@ const LeagueRouteFeedback = () => {
             const isExpanded = gymId ? expandedGyms.has(gymId) : true;
 
             return (
-              <Card key={groupKey} className="border-2 border-border/60">
+              <StitchCard tone="surface" key={groupKey} className="border-2 border-border/60">
                 <div className="p-4 md:p-5">
                   {/* Gruppen-Header */}
                   <button
@@ -430,9 +431,9 @@ const LeagueRouteFeedback = () => {
                       <h2 className="text-lg md:text-xl font-semibold text-primary truncate">
                         {isGymGroup && group.gym ? group.gym.name : group.discipline}
                       </h2>
-                      <Badge variant="outline" className="text-xs flex-shrink-0">
+                      <StitchBadge tone="ghost" className="shrink-0 text-[0.58rem] normal-case tracking-normal">
                         {group.routes.length} {group.routes.length === 1 ? "Route" : "Routen"}
-                      </Badge>
+                      </StitchBadge>
                     </div>
                     {isGymGroup && (
                       <div className="flex-shrink-0">
@@ -455,7 +456,7 @@ const LeagueRouteFeedback = () => {
                         const isRouteExpanded = expandedRoutes.has(item.route.id);
 
                         return (
-                          <Card key={item.route.id} className="border border-border/60 hover:border-primary/50 transition-all bg-muted/20">
+                          <StitchCard tone="muted" key={item.route.id} className="border border-border/60 transition-all hover:border-[var(--stitch-navy)]/35">
                             <div className="p-4">
                               {/* Route Header - Klickbar */}
                               <button
@@ -473,13 +474,13 @@ const LeagueRouteFeedback = () => {
                                       <h3 className="font-semibold text-base md:text-lg text-primary break-words">
                                         {item.route.code} {item.route.name && `· ${item.route.name}`}
                                       </h3>
-                                      <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                      <StitchBadge tone="navy" className="shrink-0 text-[0.58rem] normal-case tracking-normal">
                                         {item.route.discipline === "lead" ? "Vorstieg" : "Toprope"}
-                                      </Badge>
+                                      </StitchBadge>
                                       {!isGymGroup && item.gym && (
-                                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                                        <StitchBadge tone="ghost" className="shrink-0 text-[0.58rem] normal-case tracking-normal">
                                           {item.gym.name}
-                                        </Badge>
+                                        </StitchBadge>
                                       )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground flex-wrap">
@@ -572,13 +573,13 @@ const LeagueRouteFeedback = () => {
                                 </div>
                               )}
                             </div>
-                          </Card>
+                          </StitchCard>
                         );
                       })}
                     </div>
                   )}
                 </div>
-              </Card>
+              </StitchCard>
             );
           })
         )}
@@ -603,11 +604,11 @@ const LeagueRouteFeedback = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-6">
-            <Card className="p-5 bg-muted/50 border-border/60">
+            <StitchCard tone="surface" className="p-5 bg-muted/50 border-border/60">
               <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                 {selectedFeedback?.text}
               </p>
-            </Card>
+            </StitchCard>
           </div>
         </DialogContent>
       </Dialog>

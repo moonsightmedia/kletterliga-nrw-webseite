@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { listAuditEntries, listGyms, listProfiles, listResults, listRoutes } from "@/services/appApi";
 import type { DataChangeAudit, Gym, Profile, Result, Route } from "@/services/appTypes";
 import { ClipboardList, History, MessageCircle, Search, X } from "lucide-react";
@@ -140,38 +138,36 @@ const LeagueResults = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-              backgroundRepeat: "repeat",
-            }}
-          />
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <ClipboardList className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <ClipboardList className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Ergebnisse</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl break-words">Ergebnisse</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-white/90 md:text-base break-words">
                 Aktive Ergebnisse mit Verlauf · {results.length} gesamt
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      <Card className="p-4 md:p-6 border-2 border-border/60">
+      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Input
@@ -186,7 +182,7 @@ const LeagueResults = () => {
             </button>
           ) : null}
         </div>
-      </Card>
+      </StitchCard>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -196,15 +192,15 @@ const LeagueResults = () => {
         </div>
 
         {loading ? (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Lade Ergebnisse...</p>
-          </Card>
+          </StitchCard>
         ) : filtered.length === 0 ? (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">
               {search ? "Keine Ergebnisse gefunden." : "Noch keine aktiven Ergebnisse vorhanden."}
             </p>
-          </Card>
+          </StitchCard>
         ) : (
           <div className="space-y-3">
             {filtered.map((result) => {
@@ -218,20 +214,25 @@ const LeagueResults = () => {
               const isEdited = Boolean(result.updated_at && result.updated_at !== result.created_at);
 
               return (
-                <Card
+                <StitchCard
                   key={result.id}
-                  className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg"
+                  tone="surface"
+                  className="border-2 border-border/60 p-4 transition-all hover:border-[var(--stitch-navy)]/35 hover:shadow-lg md:p-5"
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <div className="font-semibold text-primary text-base md:text-lg break-words">{profileName}</div>
                         {result.flash ? (
-                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 text-xs">
+                          <StitchBadge tone="ghost" className="border border-yellow-500/20 bg-yellow-500/10 text-xs font-semibold normal-case tracking-normal text-yellow-700">
                             Flash
-                          </Badge>
+                          </StitchBadge>
                         ) : null}
-                        {isEdited ? <Badge variant="outline" className="text-xs">Bearbeitet</Badge> : null}
+                        {isEdited ? (
+                          <StitchBadge tone="ghost" className="text-xs font-semibold normal-case tracking-normal">
+                            Bearbeitet
+                          </StitchBadge>
+                        ) : null}
                       </div>
                       <div className="text-sm text-muted-foreground break-words">
                         {gymName} · Route {routeCode} · {formatDateTime(displayDate)}
@@ -239,7 +240,8 @@ const LeagueResults = () => {
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         {result.feedback ? (
-                          <Button
+                          <StitchButton
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() =>
@@ -253,9 +255,10 @@ const LeagueResults = () => {
                           >
                             <MessageCircle className="h-4 w-4" />
                             Feedback
-                          </Button>
+                          </StitchButton>
                         ) : null}
-                        <Button
+                        <StitchButton
+                          type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => void openHistory(result)}
@@ -264,7 +267,7 @@ const LeagueResults = () => {
                         >
                           <History className="h-4 w-4" />
                           Verlauf
-                        </Button>
+                        </StitchButton>
                       </div>
                     </div>
 
@@ -285,7 +288,7 @@ const LeagueResults = () => {
                       ) : null}
                     </div>
                   </div>
-                </Card>
+                </StitchCard>
               );
             })}
           </div>
@@ -304,9 +307,9 @@ const LeagueResults = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-6">
-            <Card className="p-5 bg-muted/50 border-border/60">
+            <StitchCard tone="muted" className="border-border/60 p-5">
               <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{selectedFeedback?.text}</p>
-            </Card>
+            </StitchCard>
           </div>
         </DialogContent>
       </Dialog>
@@ -326,28 +329,30 @@ const LeagueResults = () => {
           </DialogHeader>
           <div className="mt-4 space-y-3">
             {historyLoading ? (
-              <Card className="p-6 border border-border/60">
+              <StitchCard tone="surface" className="p-6 border border-border/60">
                 <p className="text-sm text-muted-foreground">Verlauf wird geladen...</p>
-              </Card>
+              </StitchCard>
             ) : selectedHistory?.entries.length ? (
               selectedHistory.entries.map((entry) => {
                 const changes = getAuditChanges(entry);
                 return (
-                  <Card key={entry.id} className="p-4 border border-border/60 space-y-2">
+                  <StitchCard tone="surface" key={entry.id} className="p-4 border border-border/60 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge variant="outline">{entry.action === "insert" ? "Angelegt" : "Aktualisiert"}</Badge>
+                      <StitchBadge tone="ghost" className="text-xs font-semibold normal-case tracking-normal">
+                        {entry.action === "insert" ? "Angelegt" : "Aktualisiert"}
+                      </StitchBadge>
                       <div className="text-xs text-muted-foreground">{formatDateTime(entry.created_at)}</div>
                     </div>
                     <div className="space-y-1 text-sm text-foreground">
                       {changes.length ? changes.map((change) => <p key={change}>{change}</p>) : <p>Keine Feldänderungen protokolliert.</p>}
                     </div>
-                  </Card>
+                  </StitchCard>
                 );
               })
             ) : (
-              <Card className="p-6 border border-border/60">
+              <StitchCard tone="surface" className="p-6 border border-border/60">
                 <p className="text-sm text-muted-foreground">Für dieses Ergebnis liegt noch kein Verlauf vor.</p>
-              </Card>
+              </StitchCard>
             )}
           </div>
         </DialogContent>

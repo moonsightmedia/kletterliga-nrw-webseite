@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
@@ -355,14 +353,6 @@ const LeagueGyms = () => {
       return;
     }
 
-    if (hasActiveAdmin(inviteForm.gymId)) {
-      toast({
-        title: "Zugang bereits aktiv",
-        description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
-      });
-      return;
-    }
-
     setInviting(true);
     try {
       const shouldSkipEmail = allowInviteLinkPreview && skipEmail;
@@ -373,8 +363,15 @@ const LeagueGyms = () => {
 
         if (errorCode === "GYM_ADMIN_ALREADY_EXISTS") {
           toast({
-            title: "Zugang bereits aktiv",
-            description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
+            title: "Bereits zugeordnet",
+            description: "Diese E-Mail ist für diese Halle bereits als Hallen-Admin hinterlegt.",
+          });
+        } else if (errorCode === "PROFILE_EMAIL_EXISTS") {
+          toast({
+            title: "Konto existiert bereits",
+            description:
+              "Für diese E-Mail gibt es schon ein Konto. Bitte weiter unten bei „Fallback: Bestehenden Account zu Halle zuordnen“ zuweisen.",
+            variant: "destructive",
           });
         } else {
           toast({
@@ -443,14 +440,6 @@ const LeagueGyms = () => {
   const handleAssignAdmin = async () => {
     if (!selectedGym || !selectedAdmin) {
       toast({ title: "Fehlende Auswahl", description: "Bitte Halle und Admin wählen." });
-      return;
-    }
-
-    if (hasActiveAdmin(selectedGym)) {
-      toast({
-        title: "Zugang bereits aktiv",
-        description: "Für diese Halle ist bereits ein Hallenzugang aktiv.",
-      });
       return;
     }
 
@@ -544,7 +533,7 @@ const LeagueGyms = () => {
       });
 
     return (
-      <Card
+      <StitchCard tone="surface"
         key={gym.id}
         className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4"
       >
@@ -552,7 +541,11 @@ const LeagueGyms = () => {
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <div className="font-semibold text-primary text-base md:text-lg break-words">{gym.name}</div>
-              {archived ? <Badge variant="outline">Archiviert</Badge> : null}
+              {archived ? (
+                <StitchBadge tone="ghost" className="normal-case tracking-normal">
+                  Archiviert
+                </StitchBadge>
+              ) : null}
             </div>
             <div className="text-sm text-muted-foreground">
               {[gym.postal_code, gym.city].filter(Boolean).join(" ")}
@@ -568,7 +561,7 @@ const LeagueGyms = () => {
             ) : null}
             {!archived ? (
               <>
-                <Button
+                <StitchButton type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleEdit(gym)}
@@ -576,8 +569,8 @@ const LeagueGyms = () => {
                   aria-label={`Halle ${gym.name} bearbeiten`}
                 >
                   <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
+                </StitchButton>
+                <StitchButton type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setArchiveTarget(gym)}
@@ -585,10 +578,10 @@ const LeagueGyms = () => {
                   aria-label={`Halle ${gym.name} archivieren`}
                 >
                   <Archive className="h-4 w-4" />
-                </Button>
+                </StitchButton>
               </>
             ) : (
-              <Button
+              <StitchButton type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setRestoreTarget(gym)}
@@ -597,7 +590,7 @@ const LeagueGyms = () => {
               >
                 <RotateCcw className="h-4 w-4" />
                 Restore
-              </Button>
+              </StitchButton>
             )}
           </div>
         </div>
@@ -619,24 +612,36 @@ const LeagueGyms = () => {
             </>
           ) : null}
         </div>
-      </Card>
+      </StitchCard>
     );
   };
 
   const renderStatusBadge = (gym: Gym) => {
     if (gym.archived_at) {
-      return <Badge variant="outline">Archiviert</Badge>;
+      return (
+        <StitchBadge tone="ghost" className="normal-case tracking-normal">
+          Archiviert
+        </StitchBadge>
+      );
     }
 
     if (hasActiveAdmin(gym.id)) {
-      return <Badge className="bg-emerald-600 hover:bg-emerald-600">Zugang aktiv</Badge>;
+      return (
+        <StitchBadge tone="ghost" className="border-emerald-200 bg-emerald-600 normal-case tracking-normal text-white">
+          Zugang aktiv
+        </StitchBadge>
+      );
     }
 
     if (openInvitesByGym[gym.id]) {
-      return <Badge variant="secondary">Einladung offen</Badge>;
+      return <StitchBadge tone="cream">Einladung offen</StitchBadge>;
     }
 
-    return <Badge variant="outline">Kein Zugang</Badge>;
+    return (
+      <StitchBadge tone="ghost" className="normal-case tracking-normal">
+        Kein Zugang
+      </StitchBadge>
+    );
   };
 
   const renderGymCard = (gym: Gym, archived: boolean) => {
@@ -646,7 +651,7 @@ const LeagueGyms = () => {
     const adminLabels = gymProfiles.map(formatProfileLabel);
 
     return (
-      <Card
+      <StitchCard tone="surface"
         key={gym.id}
         className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg space-y-3 md:space-y-4"
       >
@@ -668,21 +673,31 @@ const LeagueGyms = () => {
                 <img src={gym.logo_url} alt={gym.name} className="h-full w-full object-contain" />
               </div>
             ) : null}
-            {!archived && activeAdminProfiles.length === 0 ? (
-              <Button
+            {!archived ? (
+              <StitchButton type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => prepareInviteForGym(gym)}
                 className="h-9 gap-2 px-3"
-                aria-label={`Claim-Link fuer ${gym.name} senden`}
+                aria-label={
+                  activeAdminProfiles.length > 0
+                    ? `Weiteren Hallen-Admin fuer ${gym.name} einladen`
+                    : `Claim-Link fuer ${gym.name} senden`
+                }
               >
                 <Mail className="h-4 w-4" />
-                {activeInvite ? "Neu senden" : "Claim-Link"}
-              </Button>
+                {activeAdminProfiles.length > 0
+                  ? activeInvite
+                    ? "Einladung"
+                    : "Weiteren Admin"
+                  : activeInvite
+                    ? "Neu senden"
+                    : "Claim-Link"}
+              </StitchButton>
             ) : null}
             {!archived ? (
               <>
-                <Button
+                <StitchButton type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleEdit(gym)}
@@ -690,8 +705,8 @@ const LeagueGyms = () => {
                   aria-label={`Halle ${gym.name} bearbeiten`}
                 >
                   <Edit2 className="h-4 w-4" />
-                </Button>
-                <Button
+                </StitchButton>
+                <StitchButton type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setArchiveTarget(gym)}
@@ -699,10 +714,10 @@ const LeagueGyms = () => {
                   aria-label={`Halle ${gym.name} archivieren`}
                 >
                   <Archive className="h-4 w-4" />
-                </Button>
+                </StitchButton>
               </>
             ) : (
-              <Button
+              <StitchButton type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setRestoreTarget(gym)}
@@ -711,7 +726,7 @@ const LeagueGyms = () => {
               >
                 <RotateCcw className="h-4 w-4" />
                 Restore
-              </Button>
+              </StitchButton>
             )}
           </div>
         </div>
@@ -720,7 +735,7 @@ const LeagueGyms = () => {
           <div>
             <span className="font-medium">Admins:</span> {adminLabels.length ? adminLabels.join(", ") : "Keine"}
           </div>
-          {!archived && activeInvite && activeAdminProfiles.length === 0 ? (
+          {!archived && activeInvite ? (
             <>
               <div>
                 <span className="font-medium">Offene Einladung:</span> {activeInvite.email}
@@ -748,7 +763,7 @@ const LeagueGyms = () => {
             </>
           ) : null}
         </div>
-      </Card>
+      </StitchCard>
     );
   };
 
@@ -758,38 +773,36 @@ const LeagueGyms = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary via-primary to-primary/90 shadow-lg">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-              backgroundRepeat: "repeat",
-            }}
-          />
-        </div>
+      <StitchCard tone="navy" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundRepeat: "repeat",
+          }}
+        />
         <div className="relative p-4 md:p-6 lg:p-8">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center flex-shrink-0">
-              <Building2 className="h-6 w-6 md:h-8 md:w-8 text-white/80" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
+              <Building2 className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-white break-words">Hallenverwaltung</h1>
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs flex-shrink-0">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl">Hallenverwaltung</h1>
+                <StitchBadge tone="cream" className="shrink-0">
                   Liga
-                </Badge>
+                </StitchBadge>
               </div>
-              <p className="text-white/90 text-xs md:text-sm lg:text-base break-words">
+              <p className="text-sm text-[rgba(242,220,171,0.88)] md:text-base">
                 {activeGyms.length} aktive Hallen · {archivedGyms.length} archiviert
               </p>
             </div>
           </div>
         </div>
-      </Card>
+      </StitchCard>
 
-      <Card className="p-4 md:p-6 border-2 border-border/60 space-y-4">
+      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <Plus className="h-5 w-5 text-primary flex-shrink-0" />
           <h2 className="text-base md:text-lg font-headline text-primary">Hallenzugang einrichten</h2>
@@ -835,9 +848,9 @@ const LeagueGyms = () => {
                 <Input id="adminPassword" type="password" value={form.adminPassword} onChange={(event) => setForm((prev) => ({ ...prev, adminPassword: event.target.value }))} />
               </div>
             </div>
-            <Button onClick={handleCreate} disabled={creating}>
+            <StitchButton type="button" onClick={handleCreate} disabled={creating}>
               {creating ? "Erstelle..." : "Halle anlegen"}
-            </Button>
+            </StitchButton>
           </TabsContent>
 
           <TabsContent value="invite" className="space-y-4 mt-4">
@@ -891,10 +904,10 @@ const LeagueGyms = () => {
                 </Label>
               </div>
             ) : null}
-            <Button onClick={handleInvite} disabled={inviting || claimableGyms.length === 0}>
+            <StitchButton type="button" onClick={handleInvite} disabled={inviting || claimableGyms.length === 0}>
               <Mail className="h-4 w-4 mr-2" />
               {inviting ? "Erstelle..." : allowInviteLinkPreview && skipEmail ? "Link generieren" : "Claim-Link senden"}
-            </Button>
+            </StitchButton>
             {claimableGyms.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 Für alle aktiven Hallen ist bereits ein Hallenzugang eingerichtet.
@@ -902,9 +915,9 @@ const LeagueGyms = () => {
             ) : null}
           </TabsContent>
         </Tabs>
-      </Card>
+      </StitchCard>
 
-      <Card className="p-6 border-2 border-border/60 space-y-4">
+      <StitchCard tone="surface" className="p-6 border-2 border-border/60 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <UserPlus className="h-5 w-5 text-secondary" />
           <h2 className="text-lg font-semibold text-primary">Fallback: Bestehenden Account zu Halle zuordnen</h2>
@@ -950,8 +963,8 @@ const LeagueGyms = () => {
             </select>
           </div>
         </div>
-        <Button onClick={handleAssignAdmin} disabled={claimableGyms.length === 0}>Zuordnen</Button>
-      </Card>
+        <StitchButton type="button" onClick={handleAssignAdmin} disabled={claimableGyms.length === 0}>Zuordnen</StitchButton>
+      </StitchCard>
 
       <div className="space-y-4">
         <h2 className="text-base md:text-lg font-semibold text-primary">Aktive Hallen ({activeGyms.length})</h2>
@@ -960,9 +973,9 @@ const LeagueGyms = () => {
             {activeGyms.map((gym) => renderGymCard(gym, false))}
           </div>
         ) : (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Noch keine aktiven Hallen vorhanden.</p>
-          </Card>
+          </StitchCard>
         )}
       </div>
 
@@ -973,9 +986,9 @@ const LeagueGyms = () => {
             {archivedGyms.map((gym) => renderGymCard(gym, true))}
           </div>
         ) : (
-          <Card className="p-8 text-center border-2 border-border/60">
+          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
             <p className="text-muted-foreground">Keine archivierten Hallen vorhanden.</p>
-          </Card>
+          </StitchCard>
         )}
       </div>
 
@@ -1013,12 +1026,12 @@ const LeagueGyms = () => {
             </div>
           </div>
           <DialogFooter className="flex flex-wrap gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setEditingGym(null)} className="min-w-0 flex-1 sm:flex-initial">
+            <StitchButton type="button" variant="outline" onClick={() => setEditingGym(null)} className="min-w-0 flex-1 sm:flex-initial">
               Abbrechen
-            </Button>
-            <Button onClick={handleSaveEdit} className="min-w-0 flex-1 sm:flex-initial">
+            </StitchButton>
+            <StitchButton type="button" onClick={handleSaveEdit} className="min-w-0 flex-1 sm:flex-initial">
               Speichern
-            </Button>
+            </StitchButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

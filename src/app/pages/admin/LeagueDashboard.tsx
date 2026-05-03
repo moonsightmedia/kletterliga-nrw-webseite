@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { listAdminSettings, listProfiles, listGyms, listResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
 import { Users, Building2, BarChart3, Flag, TicketPercent } from "lucide-react";
+import { listAdminSettings, listProfiles, listGyms, listResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
+import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
+import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
 
 const PARTNER_VOUCHER_SLUG = "kletterladen_nrw";
 
@@ -16,8 +17,8 @@ const LeagueDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([listProfiles(), listGyms(), listResults(), listRoutes(), listAdminSettings()]).then(
-      async ([profilesResult, gymsResult, resultsResult, routesResult, adminSettingsResult]) => {
+    Promise.all([listProfiles(), listGyms(), listResults(), listRoutes(), listAdminSettings()])
+      .then(async ([profilesResult, gymsResult, resultsResult, routesResult, adminSettingsResult]) => {
         const participants = (profilesResult.data ?? []).filter((p) => p.role === "participant").length;
         const gyms = (gymsResult.data ?? []).length;
         const results = (resultsResult.data ?? []).length;
@@ -37,111 +38,76 @@ const LeagueDashboard = () => {
           totalPartnerVoucherRedemptions,
         });
         setLoading(false);
-      }
-    ).catch(() => {
-      setLoading(false);
-    });
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="font-headline text-3xl text-primary">Liga-Übersicht</h1>
-          <p className="text-sm text-muted-foreground mt-2">Globale Kennzahlen der Saison.</p>
-        </div>
-        <div className="text-sm text-muted-foreground">Lade Statistiken...</div>
+        <AdminPageHeader
+          eyebrow="Liga"
+          title="Liga-Übersicht"
+          description="Globale Kennzahlen der Saison."
+        />
+        <p className="text-sm text-[rgba(27,28,26,0.64)]">Lade Statistiken…</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-3xl text-primary">Liga-Verwaltung</h1>
-        <p className="text-sm text-muted-foreground mt-2">Detaillierte Übersicht und Verwaltung der Liga.</p>
-      </div>
+      <AdminPageHeader
+        eyebrow="Liga"
+        title="Liga-Verwaltung"
+        description="Detaillierte Übersicht und Verwaltung der Liga."
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors"></div>
-          <div className="relative p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Teilnehmer</p>
-              <div className="font-headline text-3xl text-primary">{stats.totalParticipants}</div>
-              <p className="text-xs text-muted-foreground">Gesamt registriert</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors"></div>
-          <div className="relative p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                <Building2 className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Hallen</p>
-              <div className="font-headline text-3xl text-blue-500">{stats.totalGyms}</div>
-              <p className="text-xs text-muted-foreground">Aktive Partnerhallen</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-green-500/10 transition-colors"></div>
-          <div className="relative p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                <BarChart3 className="h-5 w-5 text-green-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Ergebnisse</p>
-              <div className="font-headline text-3xl text-green-500">{stats.totalResults}</div>
-              <p className="text-xs text-muted-foreground">Einträge gesamt</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-purple-500/10 transition-colors"></div>
-          <div className="relative p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
-                <Flag className="h-5 w-5 text-purple-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Routen</p>
-              <div className="font-headline text-3xl text-purple-500">{stats.totalRoutes}</div>
-              <p className="text-xs text-muted-foreground">Aktive Routen</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-amber-500/10 transition-colors"></div>
-          <div className="relative p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                <TicketPercent className="h-5 w-5 text-amber-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Partnergutscheine</p>
-              <div className="font-headline text-3xl text-amber-500">{stats.totalPartnerVoucherRedemptions}</div>
-              <p className="text-xs text-muted-foreground">Kletterladen NRW (Saison)</p>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <AdminStatCard
+          icon={Users}
+          label="Teilnehmer"
+          value={stats.totalParticipants}
+          hint="Gesamt registriert"
+        />
+        <AdminStatCard
+          icon={Building2}
+          label="Hallen"
+          value={stats.totalGyms}
+          hint="Aktive Partnerhallen"
+          iconWrapClassName="bg-[#003d55]/10 group-hover:bg-[#003d55]/16"
+          iconClassName="text-[#003d55]"
+          valueClassName="stitch-metric text-3xl text-[#003d55]"
+        />
+        <AdminStatCard
+          icon={BarChart3}
+          label="Ergebnisse"
+          value={stats.totalResults}
+          hint="Einträge gesamt"
+          iconWrapClassName="bg-emerald-600/12 group-hover:bg-emerald-600/18"
+          iconClassName="text-emerald-700"
+          valueClassName="stitch-metric text-3xl text-emerald-700"
+        />
+        <AdminStatCard
+          icon={Flag}
+          label="Routen"
+          value={stats.totalRoutes}
+          hint="Aktive Routen"
+          iconWrapClassName="bg-[#a15523]/12 group-hover:bg-[#a15523]/18"
+          iconClassName="text-[#a15523]"
+          valueClassName="stitch-metric text-3xl text-[#a15523]"
+        />
+        <AdminStatCard
+          icon={TicketPercent}
+          label="Partnergutscheine"
+          value={stats.totalPartnerVoucherRedemptions}
+          hint="Kletterladen NRW (Saison)"
+          iconWrapClassName="bg-amber-500/12 group-hover:bg-amber-500/18"
+          iconClassName="text-amber-700"
+          valueClassName="stitch-metric text-3xl text-amber-700"
+        />
       </div>
     </div>
   );

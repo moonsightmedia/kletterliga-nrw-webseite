@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Stage } from "@/services/appTypes";
 import { Edit2, Save, X, Trash2 } from "lucide-react";
+import { StitchButton } from "@/app/components/StitchPrimitives";
 
 interface StageEditorProps {
   stage: Stage;
@@ -24,30 +24,38 @@ const StageEditor = ({ stage, index, isEditing, onEdit, onSave, onCancel, onDele
 
   if (!isEditing) {
     return (
-      <div className="flex items-center justify-between p-3 border border-border/60 rounded-lg bg-accent/20">
+      <div className="flex items-center justify-between rounded-xl border border-[rgba(0,38,55,0.1)] bg-white/70 p-3">
         <div className="flex-1">
-          <div className="font-medium text-primary">{stage.label}</div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="font-semibold text-[#002637]">{stage.label}</div>
+          <div className="mt-1 text-xs text-[rgba(27,28,26,0.55)]">
             {new Date(stage.start).toLocaleDateString("de-DE")} – {new Date(stage.end).toLocaleDateString("de-DE")}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Key: {stage.key}</div>
+          <div className="mt-1 text-xs text-[rgba(27,28,26,0.45)]">Key: {stage.key}</div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <StitchButton type="button" variant="outline" size="sm" onClick={onEdit}>
             <Edit2 className="h-3 w-3" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={onDelete} className="text-destructive hover:text-destructive">
+          </StitchButton>
+          <StitchButton
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onDelete}
+            className="border-[#c41e3a]/35 text-[0.58rem] text-[#b42318] hover:bg-[#c41e3a]/08"
+          >
             <Trash2 className="h-3 w-3" />
-          </Button>
+          </StitchButton>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 border-2 border-primary/50 rounded-lg bg-accent/30 space-y-3">
+    <div className="space-y-3 rounded-xl border-2 border-[#003d55]/25 bg-[rgba(0,61,85,0.04)] p-4">
       <div className="space-y-2">
-        <Label htmlFor={`stage-key-${index}`} className="text-xs">Etappen-Key</Label>
+        <Label htmlFor={`stage-key-${index}`} className="text-xs">
+          Etappen-Key
+        </Label>
         <Input
           id={`stage-key-${index}`}
           value={editedStage.key}
@@ -56,7 +64,9 @@ const StageEditor = ({ stage, index, isEditing, onEdit, onSave, onCancel, onDele
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor={`stage-label-${index}`} className="text-xs">Label</Label>
+        <Label htmlFor={`stage-label-${index}`} className="text-xs">
+          Label
+        </Label>
         <Input
           id={`stage-label-${index}`}
           value={editedStage.label}
@@ -64,9 +74,11 @@ const StageEditor = ({ stage, index, isEditing, onEdit, onSave, onCancel, onDele
           placeholder="z. B. Etappe 1 (Mai)"
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor={`stage-start-${index}`} className="text-xs">Start-Datum</Label>
+          <Label htmlFor={`stage-start-${index}`} className="text-xs">
+            Start-Datum
+          </Label>
           <Input
             id={`stage-start-${index}`}
             type="date"
@@ -75,7 +87,9 @@ const StageEditor = ({ stage, index, isEditing, onEdit, onSave, onCancel, onDele
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`stage-end-${index}`} className="text-xs">End-Datum</Label>
+          <Label htmlFor={`stage-end-${index}`} className="text-xs">
+            End-Datum
+          </Label>
           <Input
             id={`stage-end-${index}`}
             type="date"
@@ -85,14 +99,14 @@ const StageEditor = ({ stage, index, isEditing, onEdit, onSave, onCancel, onDele
         </div>
       </div>
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => onSave(editedStage)}>
-          <Save className="h-3 w-3 mr-1" />
+        <StitchButton type="button" size="sm" onClick={() => onSave(editedStage)}>
+          <Save className="h-3 w-3" />
           Speichern
-        </Button>
-        <Button variant="outline" size="sm" onClick={onCancel}>
-          <X className="h-3 w-3 mr-1" />
+        </StitchButton>
+        <StitchButton type="button" variant="outline" size="sm" onClick={onCancel}>
+          <X className="h-3 w-3" />
           Abbrechen
-        </Button>
+        </StitchButton>
       </div>
     </div>
   );

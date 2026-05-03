@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Users, Zap, Target, BarChart3, Calendar, Award } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { listGymAdminsByProfile, listGymCodesByGym, listRoutesByGym, listResults, listProfiles } from "@/services/appApi";
 import type { Result, Profile, GymCode, Route } from "@/services/appTypes";
-import { TrendingUp, Users, Zap, Target, BarChart3, Calendar, Award } from "lucide-react";
+import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
+import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
+import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
 
 const GymStats = () => {
   const { profile } = useAuth();
@@ -26,13 +27,11 @@ const GymStats = () => {
         listRoutesByGym(firstGym).then(({ data: routesData }) => {
           const gymRoutes = routesData ?? [];
           setRoutes(gymRoutes);
-          // Lade Ergebnisse nachdem Routen geladen sind
           Promise.all([listResults(), listProfiles()]).then(([{ data: resultsData }, { data: profilesData }]) => {
             const routeIds = gymRoutes.map((r) => r.id);
             const gymResults = (resultsData ?? []).filter((r) => routeIds.includes(r.route_id));
             setResults(gymResults);
-            
-            // Erstelle Profile-Map
+
             const profileMap = new Map<string, Profile>();
             (profilesData ?? []).forEach((p) => profileMap.set(p.id, p));
             setProfiles(profileMap);
@@ -42,7 +41,6 @@ const GymStats = () => {
     });
   }, [profile?.id]);
 
-  // Code-Einlösungen im Zeitverlauf (letzte 30 Tage)
   const codeRedemptionsTimeline = useMemo(() => {
     const last30Days = Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
@@ -55,7 +53,6 @@ const GymStats = () => {
     }));
   }, [codes]);
 
-  // Ergebnisse im Zeitverlauf (letzte 30 Tage)
   const resultsTimeline = useMemo(() => {
     const last30Days = Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
@@ -68,13 +65,11 @@ const GymStats = () => {
     }));
   }, [results]);
 
-  // Top-Routen nach Durchschnittspunkten
   const topRoutesByPoints = useMemo(() => {
     const routeStats = routes.map((route) => {
       const routeResults = results.filter((r) => r.route_id === route.id);
-      const avgPoints = routeResults.length > 0
-        ? routeResults.reduce((sum, r) => sum + r.points, 0) / routeResults.length
-        : 0;
+      const avgPoints =
+        routeResults.length > 0 ? routeResults.reduce((sum, r) => sum + r.points, 0) / routeResults.length : 0;
       return {
         route,
         avgPoints,
@@ -87,7 +82,6 @@ const GymStats = () => {
       .slice(0, 5);
   }, [routes, results]);
 
-  // Beliebte Routen (nach Anzahl der Ergebnisse)
   const popularRoutes = useMemo(() => {
     const routeCounts = routes.map((route) => ({
       route,
@@ -96,7 +90,6 @@ const GymStats = () => {
     return routeCounts.sort((a, b) => b.count - a.count).slice(0, 5);
   }, [routes, results]);
 
-  // Flash-Rate
   const flashStats = useMemo(() => {
     const flashCount = results.filter((r) => r.flash).length;
     const totalCount = results.length;
@@ -107,7 +100,6 @@ const GymStats = () => {
     };
   }, [results]);
 
-  // Aktivste Teilnehmer
   const topParticipants = useMemo(() => {
     const participantCounts = new Map<string, number>();
     results.forEach((r) => {
@@ -124,22 +116,18 @@ const GymStats = () => {
       .slice(0, 5);
   }, [results, profiles]);
 
-  // Code-Einlösungsrate
   const codeRedemptionRate = useMemo(() => {
     const totalCodes = codes.length;
     const redeemedCodes = codes.filter((c) => c.redeemed_by).length;
     return totalCodes > 0 ? Math.round((redeemedCodes / totalCodes) * 100) : 0;
   }, [codes]);
 
-  // Durchschnittliche Punkte
   const avgPoints = useMemo(() => {
-    return results.length > 0
-      ? Math.round(results.reduce((sum, r) => sum + r.points, 0) / results.length)
-      : 0;
+    return results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.points, 0) / results.length) : 0;
   }, [results]);
 
   if (!gymId) {
-    return <div className="text-sm text-muted-foreground">Keine Halle zugewiesen.</div>;
+    return <p className="text-sm text-[rgba(27,28,26,0.64)]">Keine Halle zugewiesen.</p>;
   }
 
   const maxCodeRedemptions = Math.max(...codeRedemptionsTimeline.map((d) => d.count), 1);
@@ -147,221 +135,197 @@ const GymStats = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-xl md:text-2xl lg:text-3xl text-primary">Hallen-Statistiken</h1>
-        <p className="text-sm text-muted-foreground mt-2">Detaillierte Analyse der Hallen-Aktivität und Nutzung.</p>
+      <AdminPageHeader
+        eyebrow="Statistik"
+        title="Hallen-Statistiken"
+        description="Detaillierte Analyse der Hallen-Aktivität und Nutzung."
+      />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+        <AdminStatCard
+          icon={BarChart3}
+          label="Ergebnisse gesamt"
+          value={results.length}
+          hint={`Ø ${avgPoints} Punkte`}
+        />
+        <AdminStatCard
+          icon={Zap}
+          label="Flash-Rate"
+          value={`${flashStats.rate}%`}
+          hint={`${flashStats.flash} von ${results.length}`}
+          iconWrapClassName="bg-emerald-600/12 group-hover:bg-emerald-600/18"
+          iconClassName="text-emerald-700"
+          valueClassName="stitch-metric text-3xl text-emerald-700"
+        />
+        <AdminStatCard
+          icon={Target}
+          label="Code-Einlösung"
+          value={`${codeRedemptionRate}%`}
+          hint={`${codes.filter((c) => c.redeemed_by).length} von ${codes.length}`}
+          iconWrapClassName="bg-[#003d55]/10 group-hover:bg-[#003d55]/16"
+          iconClassName="text-[#003d55]"
+          valueClassName="stitch-metric text-3xl text-[#003d55]"
+        />
+        <AdminStatCard
+          icon={Users}
+          label="Routen gesamt"
+          value={routes.length}
+          hint="Aktive Routen"
+          iconWrapClassName="bg-[#a15523]/12 group-hover:bg-[#a15523]/18"
+          iconClassName="text-[#a15523]"
+          valueClassName="stitch-metric text-3xl text-[#a15523]"
+        />
       </div>
 
-      {/* Übersichtskarten */}
-      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors"></div>
-          <div className="relative p-4 md:p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <BarChart3 className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Ergebnisse gesamt</p>
-              <div className="font-headline text-3xl text-primary">{results.length}</div>
-              <p className="text-xs text-muted-foreground">Ø {avgPoints} Punkte</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-green-500/10 transition-colors"></div>
-          <div className="relative p-4 md:p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                <Zap className="h-5 w-5 text-green-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Flash-Rate</p>
-              <div className="font-headline text-3xl text-green-500">{flashStats.rate}%</div>
-              <p className="text-xs text-muted-foreground">{flashStats.flash} von {results.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors"></div>
-          <div className="relative p-4 md:p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                <Target className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Code-Einlösung</p>
-              <div className="font-headline text-3xl text-blue-500">{codeRedemptionRate}%</div>
-              <p className="text-xs text-muted-foreground">{codes.filter((c) => c.redeemed_by).length} von {codes.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-2 border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 group-hover:bg-purple-500/10 transition-colors"></div>
-          <div className="relative p-4 md:p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
-                <Users className="h-5 w-5 text-purple-500" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Routen gesamt</p>
-              <div className="font-headline text-3xl text-purple-500">{routes.length}</div>
-              <p className="text-xs text-muted-foreground">Aktive Routen</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Zeitverläufe */}
-      <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
-        <Card className="p-4 md:p-6 border-2 border-border/60">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="h-4 w-4 text-primary" />
-            <div className="text-xs uppercase tracking-widest text-secondary">Code-Einlösungen (30 Tage)</div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        <StitchCard tone="surface" className="p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-[#003d55]" />
+            <div className="stitch-kicker text-[#a15523]">Code-Einlösungen (30 Tage)</div>
           </div>
           <div className="space-y-2">
             {codeRedemptionsTimeline.map((day) => (
               <div key={day.date} className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground w-14 sm:w-20 flex-shrink-0">
+                <div className="w-14 shrink-0 text-xs text-[rgba(27,28,26,0.55)] sm:w-20">
                   {new Date(day.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </div>
-                <div className="flex-1 bg-accent/40 rounded h-4 relative">
+                <div className="relative h-4 flex-1 rounded bg-[rgba(0,61,85,0.08)]">
                   <div
-                    className="bg-primary rounded h-4 transition-all"
+                    className="h-4 rounded bg-[#003d55] transition-all"
                     style={{ width: `${(day.count / maxCodeRedemptions) * 100}%` }}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground w-6 sm:w-8 text-right flex-shrink-0">{day.count}</div>
+                <div className="w-6 shrink-0 text-right text-xs text-[rgba(27,28,26,0.55)] sm:w-8">{day.count}</div>
               </div>
             ))}
           </div>
-        </Card>
+        </StitchCard>
 
-        <Card className="p-4 md:p-6 border-2 border-border/60">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <div className="text-xs uppercase tracking-widest text-secondary">Ergebnisse (30 Tage)</div>
+        <StitchCard tone="surface" className="p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#003d55]" />
+            <div className="stitch-kicker text-[#a15523]">Ergebnisse (30 Tage)</div>
           </div>
           <div className="space-y-2">
             {resultsTimeline.map((day) => (
               <div key={day.date} className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground w-14 sm:w-20 flex-shrink-0">
+                <div className="w-14 shrink-0 text-xs text-[rgba(27,28,26,0.55)] sm:w-20">
                   {new Date(day.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </div>
-                <div className="flex-1 bg-accent/40 rounded h-4 relative">
+                <div className="relative h-4 flex-1 rounded bg-[rgba(0,61,85,0.08)]">
                   <div
-                    className="bg-green-500 rounded h-4 transition-all"
+                    className="h-4 rounded bg-emerald-600 transition-all"
                     style={{ width: `${(day.count / maxResults) * 100}%` }}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground w-6 sm:w-8 text-right flex-shrink-0">{day.count}</div>
+                <div className="w-6 shrink-0 text-right text-xs text-[rgba(27,28,26,0.55)] sm:w-8">{day.count}</div>
               </div>
             ))}
           </div>
-        </Card>
+        </StitchCard>
       </div>
 
-      {/* Routen-Statistiken */}
-      <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2">
-        <Card className="p-4 md:p-6 border-2 border-border/60">
-          <div className="flex items-center gap-2 mb-4">
-            <Award className="h-4 w-4 text-primary" />
-            <div className="text-xs uppercase tracking-widest text-secondary">Top-Routen nach Punkten</div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        <StitchCard tone="surface" className="p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Award className="h-4 w-4 text-[#003d55]" />
+            <div className="stitch-kicker text-[#a15523]">Top-Routen nach Punkten</div>
           </div>
           <div className="space-y-3">
             {topRoutesByPoints.length > 0 ? (
               topRoutesByPoints.map((item, idx) => (
-                <div key={item.route.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+                <div
+                  key={item.route.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(0,38,55,0.08)] bg-white/70 p-3 transition-colors hover:bg-white/95"
+                >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003d55]/10 text-sm font-bold text-[#003d55]">
                       {idx + 1}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium text-primary break-words">
+                      <div className="font-semibold text-[#002637] break-words">
                         {item.route.code} {item.route.name ? `· ${item.route.name}` : ""}
                       </div>
-                      <div className="text-xs text-muted-foreground">{item.count} Ergebnisse</div>
+                      <div className="text-xs text-[rgba(27,28,26,0.55)]">{item.count} Ergebnisse</div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-mono flex-shrink-0">
+                  <StitchBadge tone="ghost" className="shrink-0 font-mono normal-case tracking-normal">
                     Ø {item.avgPoints.toFixed(1)}
-                  </Badge>
+                  </StitchBadge>
                 </div>
               ))
             ) : (
-              <div className="text-sm text-muted-foreground">Noch keine Ergebnisse vorhanden.</div>
+              <p className="text-sm text-[rgba(27,28,26,0.64)]">Noch keine Ergebnisse vorhanden.</p>
             )}
           </div>
-        </Card>
+        </StitchCard>
 
-        <Card className="p-4 md:p-6 border-2 border-border/60">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <div className="text-xs uppercase tracking-widest text-secondary">Beliebte Routen</div>
+        <StitchCard tone="surface" className="p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-[#003d55]" />
+            <div className="stitch-kicker text-[#a15523]">Beliebte Routen</div>
           </div>
           <div className="space-y-3">
             {popularRoutes.length > 0 ? (
               popularRoutes.map((item, idx) => (
-                <div key={item.route.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+                <div
+                  key={item.route.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(0,38,55,0.08)] bg-white/70 p-3 transition-colors hover:bg-white/95"
+                >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003d55]/10 text-sm font-bold text-[#003d55]">
                       {idx + 1}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium text-primary break-words">
+                      <div className="font-semibold text-[#002637] break-words">
                         {item.route.code} {item.route.name ? `· ${item.route.name}` : ""}
                       </div>
-                      <Badge variant="outline" className="text-xs mt-1">
+                      <StitchBadge tone="ghost" className="mt-1 normal-case tracking-normal">
                         {item.route.discipline === "toprope" ? "Toprope" : "Lead"}
-                      </Badge>
+                      </StitchBadge>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-primary flex-shrink-0">{item.count}</div>
+                  <div className="shrink-0 text-sm font-semibold text-[#002637]">{item.count}</div>
                 </div>
               ))
             ) : (
-              <div className="text-sm text-muted-foreground">Noch keine Ergebnisse vorhanden.</div>
+              <p className="text-sm text-[rgba(27,28,26,0.64)]">Noch keine Ergebnisse vorhanden.</p>
             )}
           </div>
-        </Card>
+        </StitchCard>
       </div>
 
-      {/* Aktivste Teilnehmer */}
-      {topParticipants.length > 0 && (
-        <Card className="p-4 md:p-6 border-2 border-border/60">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-4 w-4 text-primary" />
-            <div className="text-xs uppercase tracking-widest text-secondary">Aktivste Teilnehmer</div>
+      {topParticipants.length > 0 ? (
+        <StitchCard tone="surface" className="p-4 md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#003d55]" />
+            <div className="stitch-kicker text-[#a15523]">Aktivste Teilnehmer</div>
           </div>
           <div className="space-y-3">
             {topParticipants.map((item, idx) => (
-              <div key={item.profile?.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/40 transition-colors">
+              <div
+                key={item.profile?.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(0,38,55,0.08)] bg-white/70 p-3 transition-colors hover:bg-white/95"
+              >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003d55]/10 text-sm font-bold text-[#003d55]">
                     {idx + 1}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-medium text-primary break-words">
+                    <div className="font-semibold text-[#002637] break-words">
                       {item.profile?.first_name} {item.profile?.last_name}
                     </div>
-                    <div className="text-xs text-muted-foreground break-all">{item.profile?.email}</div>
+                    <div className="break-all text-xs text-[rgba(27,28,26,0.55)]">{item.profile?.email}</div>
                   </div>
                 </div>
-                <Badge variant="outline" className="font-mono flex-shrink-0">
+                <StitchBadge tone="ghost" className="shrink-0 font-mono normal-case tracking-normal">
                   {item.count} Ergebnisse
-                </Badge>
+                </StitchBadge>
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        </StitchCard>
+      ) : null}
     </div>
   );
 };
