@@ -738,6 +738,41 @@ export async function updateChangeRequest(requestId: string, patch: Partial<Chan
   return supabase.from("change_requests").update(patch).eq("id", requestId).select("*").single<ChangeRequest>();
 }
 
+export async function approveChangeRequest(requestId: string) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  const url = `${supabaseConfig.url}/functions/v1/approve-change-request`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: await getFunctionHeaders(),
+    body: JSON.stringify({ requestId }),
+  });
+
+  const body = (await response.json().catch(() => ({}))) as
+    | { success?: boolean; request?: ChangeRequest; profile?: Profile }
+    | { error?: string; message?: string };
+
+  if (!response.ok) {
+    return {
+      data: null,
+      error: {
+        message:
+          body.error ??
+          body.message ??
+          response.statusText ??
+          "Die Anfrage konnte nicht genehmigt werden.",
+      },
+    };
+  }
+
+  return {
+    data: body as { success: boolean; request: ChangeRequest; profile: Profile },
+    error: null,
+  };
+}
+
 export async function listGymCodesByGym(gymId: string) {
   return supabase.from("gym_codes").select("*").eq("gym_id", gymId).order("created_at", { ascending: false }).returns<GymCode[]>();
 }

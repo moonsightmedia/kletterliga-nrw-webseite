@@ -33,11 +33,7 @@ export const AboutSection = () => {
           
           <AnimatedSection animation="fade-up" delay={100}>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-12">
-              Die Kletterliga NRW ist ein landesweiter Hallenkletter-Wettkampf, der 
-              Kletterer:innen aller Leistungsstufen zusammenbringt. Über mehrere 
-              Monate hinweg sammelst du in verschiedenen Kletterhallen Punkte und 
-              qualifizierst dich für das große Finale. Ob Einsteiger oder ambitionierter 
-              Sportkletterer – bei uns findest du die passende Herausforderung.
+              Die Kletterliga NRW ist ein landesweiter Hallenkletter-Wettkampf in Nordrhein-Westfalen. Teilnehmer:innen sammeln während der Qualifikationsphase Punkte in mehreren Partnerhallen und tragen ihre Ergebnisse digital ein. Über die Ranglisten verfolgen sie ihren aktuellen Stand in ihrer Liga und Wertungsklasse. Wer sich erfolgreich qualifiziert, erreicht das Halbfinale und mit starker Leistung das große Finale der Saison. So verbindet die Kletterliga NRW mehrere Kletterhallen in einem gemeinsamen Wettkampfformat mit Community, Vergleich und echter Saisonspannung.
             </p>
           </AnimatedSection>
 

@@ -43,9 +43,9 @@ const Modus = () => {
   };
 
   usePageMeta({
-    title: "Modus & Regeln",
+    title: "Modus der Kletterliga NRW – Qualifikation, Rangliste, Halbfinale und Finale",
     description:
-      "Alle Regeln der Kletterliga NRW: Wertung, Punktevergabe, Wertungsklassen, Qualifikation, Wildcards und Finale im Überblick.",
+      "So funktioniert die Kletterliga NRW: Qualifikationsphase, Punktewertung, Ranglisten, Wertungsklassen, Wildcards, Halbfinale und Finale im Überblick.",
     canonicalPath: "/modus",
   });
 

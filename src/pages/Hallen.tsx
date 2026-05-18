@@ -36,9 +36,9 @@ const Hallen = () => {
   const qualEnd = formatDate(getQualificationEnd());
 
   usePageMeta({
-    title: "Teilnehmende Hallen",
+    title: "Partnerhallen der Kletterliga NRW – alle teilnehmenden Kletterhallen in NRW",
     description:
-      "Alle teilnehmenden Kletterhallen der Kletterliga NRW in Nordrhein-Westfalen mit Adressen, Partnerinfos und direktem Einstieg.",
+      "Alle Partnerhallen der Kletterliga NRW im Überblick – mit Standorten, Infos zur Saison und direktem Einstieg in die teilnehmenden Kletterhallen in Nordrhein-Westfalen.",
     canonicalPath: "/hallen",
     structuredData: {
       "@context": "https://schema.org",

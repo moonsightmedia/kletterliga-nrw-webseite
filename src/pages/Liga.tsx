@@ -41,9 +41,9 @@ const values = [
 
 export default function Liga() {
   usePageMeta({
-    title: "Die Liga",
+    title: "Kletterliga NRW – Konzept, Vision und Hallenkletter-Wettkampf in NRW",
     description:
-      "Die Kletterliga NRW ist ein landesweiter Kletterwettkampf in Nordrhein-Westfalen. Hier findest du Vision, Werte und Hintergründe der Liga.",
+      "Was ist die Kletterliga NRW? Hier findest du Konzept, Vision und Hintergründe zum landesweiten Hallenkletter-Wettkampf in Nordrhein-Westfalen.",
     canonicalPath: "/liga",
   });
 

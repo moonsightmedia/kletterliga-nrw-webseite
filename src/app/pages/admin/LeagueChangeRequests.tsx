@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
-import { listChangeRequests, updateChangeRequest, updateProfile, fetchProfile } from "@/services/appApi";
+import { approveChangeRequest, listChangeRequests, updateChangeRequest, fetchProfile } from "@/services/appApi";
 import type { ChangeRequest, Profile } from "@/services/appTypes";
 import { AlertCircle, CheckCircle2, XCircle, Clock, User, Mail, Calendar } from "lucide-react";
 import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
@@ -107,31 +107,16 @@ const LeagueChangeRequests = () => {
 
     setProcessing(true);
     try {
-      const updateData: Partial<Profile> = {};
-      if (request.requested_league) {
-        updateData.league = request.requested_league as "toprope" | "lead";
-      }
-      if (request.requested_gender) {
-        updateData.gender = request.requested_gender as "m" | "w";
-      }
-
-      const { error: profileError } = await updateProfile(request.profile_id, updateData);
-      if (profileError) {
-        toast({ title: "Fehler", description: profileError.message || "Fehler beim Aktualisieren des Profils" });
-        setProcessing(false);
-        return;
-      }
-
-      const { error: requestError } = await updateChangeRequest(request.id, { status: "approved" });
-      if (requestError) {
-        toast({ title: "Fehler", description: requestError.message || "Fehler beim Aktualisieren der Anfrage" });
+      const { error } = await approveChangeRequest(request.id);
+      if (error) {
+        toast({ title: "Fehler", description: error.message || "Fehler beim Genehmigen der Anfrage" });
         setProcessing(false);
         return;
       }
 
       toast({
         title: "Anfrage genehmigt",
-        description: "Das Profil wurde aktualisiert und der Teilnehmer wurde benachrichtigt.",
+        description: "Profil und Auth-Metadaten wurden aktualisiert.",
       });
 
       await loadRequests();

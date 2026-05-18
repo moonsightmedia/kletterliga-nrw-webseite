@@ -12,9 +12,9 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Index = () => {
   usePageMeta({
-    title: "Kletterliga NRW",
+    title: "Kletterliga NRW – Hallenkletter-Wettkampf mit Rangliste, Partnerhallen und Finale",
     description:
-      "Kletterliga NRW: der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen mit mehreren Hallen, digitaler Wertung und großem Finale.",
+      "Die Kletterliga NRW ist der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen: sammle Punkte in Partnerhallen, trage Ergebnisse digital ein und qualifiziere dich für Halbfinale und Finale.",
     canonicalPath: "/",
     structuredData: {
       "@context": "https://schema.org",

@@ -127,7 +127,7 @@ export const HeroSection = () => {
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-primary/75 mb-4 max-w-xl mx-auto lg:mx-0 animate-fade-in-up leading-relaxed" style={{ animationDelay: "150ms" }}>
-              Der landesweite Hallenkletter-Wettkampf mit digitaler Ergebniswertung und großem Finale.
+              Die Kletterliga NRW ist der landesweite Hallenkletter-Wettkampf in Nordrhein-Westfalen – mit Partnerhallen, digitaler Ergebniseintragung, Ranglisten sowie Halbfinale und Finale.
             </p>
 
             {/* Tagline */}

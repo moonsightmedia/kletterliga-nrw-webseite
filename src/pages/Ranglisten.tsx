@@ -29,9 +29,9 @@ type LeaderboardEntry = {
 
 const Ranglisten = () => {
   usePageMeta({
-    title: "Ranglisten",
+    title: "Ranglisten der Kletterliga NRW – aktuelle Platzierungen und Saisonwertung",
     description:
-      "Aktuelle Ranglisten der Kletterliga NRW mit Vorschau auf Spitzenplätze und Zugang zum Teilnehmerbereich für die vollständige Auswertung.",
+      "Die Ranglisten der Kletterliga NRW mit aktuellen Platzierungen, Saisonwertung und Einblicken in den Stand der Qualifikation.",
     canonicalPath: "/ranglisten",
   });
 
