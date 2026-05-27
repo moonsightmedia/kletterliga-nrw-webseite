@@ -50,6 +50,30 @@ const shouldExcludeArchived = (options?: ArchiveQueryOptions) => !options?.inclu
 
 const mapIds = <T extends { id: string }>(rows: T[] | null | undefined) => new Set((rows ?? []).map((row) => row.id));
 
+const RESULTS_PAGE_SIZE = 1000;
+
+async function listAllResults(baseQuery: ReturnType<typeof supabase.from<"results">>) {
+  const merged: Result[] = [];
+
+  for (let from = 0; ; from += RESULTS_PAGE_SIZE) {
+    const to = from + RESULTS_PAGE_SIZE - 1;
+    const batch = await baseQuery.select("*").range(from, to).returns<Result[]>();
+
+    if (batch.error) {
+      return { data: null, error: batch.error };
+    }
+
+    const page = batch.data ?? [];
+    merged.push(...page);
+
+    if (page.length < RESULTS_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return { data: merged, error: null };
+}
+
 type ConsentActionPayload = {
   action: "initialize" | "resend" | "confirm" | "unsubscribe";
   profileId?: string;
@@ -374,11 +398,7 @@ export async function listResultsForUser(profileId: string, options?: ArchiveQue
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  const resultsResult = await supabase
-    .from("results")
-    .select("*")
-    .eq("profile_id", profileId)
-    .returns<Result[]>();
+  const resultsResult = await listAllResults(supabase.from("results").eq("profile_id", profileId));
   if (!shouldExcludeArchived(options)) {
     return resultsResult;
   }
@@ -412,7 +432,7 @@ export async function listResults(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  const resultsResult = await supabase.from("results").select("*").returns<Result[]>();
+  const resultsResult = await listAllResults(supabase.from("results"));
   if (!shouldExcludeArchived(options)) {
     return resultsResult;
   }
