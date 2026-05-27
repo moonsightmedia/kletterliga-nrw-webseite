@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users, Building2, BarChart3, Flag, TicketPercent } from "lucide-react";
-import { listAdminSettings, listProfiles, listGyms, listResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
+import { listAdminSettings, listProfiles, listGyms, countResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
 import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
 
@@ -17,11 +17,11 @@ const LeagueDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([listProfiles(), listGyms(), listResults(), listRoutes(), listAdminSettings()])
-      .then(async ([profilesResult, gymsResult, resultsResult, routesResult, adminSettingsResult]) => {
+    Promise.all([listProfiles(), listGyms(), countResults(), listRoutes(), listAdminSettings()])
+      .then(async ([profilesResult, gymsResult, resultsCountResult, routesResult, adminSettingsResult]) => {
         const participants = (profilesResult.data ?? []).filter((p) => p.role === "participant").length;
         const gyms = (gymsResult.data ?? []).length;
-        const results = (resultsResult.data ?? []).length;
+        const results = resultsCountResult.data ?? 0;
         const activeRoutes = (routesResult.data ?? []).filter((r) => r.active === true).length;
         const seasonYear = adminSettingsResult.data?.[0]?.season_year?.trim() || String(new Date().getFullYear());
         const redemptionsResult = await listPartnerVoucherRedemptions({

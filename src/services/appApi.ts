@@ -438,6 +438,46 @@ export async function listResults(options?: ArchiveQueryOptions) {
   };
 }
 
+export async function countResults(options?: ArchiveQueryOptions) {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: missingSupabaseError() };
+  }
+
+  if (!shouldExcludeArchived(options)) {
+    const { count, error } = await supabase
+      .from("results")
+      .select("id", { count: "exact", head: true });
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    return { data: count ?? 0, error: null };
+  }
+
+  const [profilesResult, routesResult] = await Promise.all([listProfiles(), listRoutes()]);
+  if (profilesResult.error) {
+    return { data: null, error: profilesResult.error };
+  }
+  if (routesResult.error) {
+    return { data: null, error: routesResult.error };
+  }
+
+  const activeProfileIds = mapIds(profilesResult.data);
+  const activeRouteIds = mapIds(routesResult.data);
+
+  if (activeProfileIds.size === 0 || activeRouteIds.size === 0) {
+    return { data: 0, error: null };
+  }
+
+  const resultsResult = await listResults(options);
+  if (resultsResult.error) {
+    return { data: null, error: resultsResult.error };
+  }
+
+  return { data: (resultsResult.data ?? []).length, error: null };
+}
+
 export async function getParticipantActivityStats(options?: ArchiveQueryOptions) {
   const { data, error } = await listResults(options);
   if (error) {
