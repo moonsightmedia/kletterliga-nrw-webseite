@@ -52,12 +52,17 @@ const mapIds = <T extends { id: string }>(rows: T[] | null | undefined) => new S
 
 const RESULTS_PAGE_SIZE = 1000;
 
-async function listAllResults(baseQuery: ReturnType<typeof supabase.from<"results">>) {
+/** PostgREST caps select responses (~1000 rows). Filters must be applied after `.select()`. */
+async function listAllResults(profileId?: string) {
   const merged: Result[] = [];
 
   for (let from = 0; ; from += RESULTS_PAGE_SIZE) {
     const to = from + RESULTS_PAGE_SIZE - 1;
-    const batch = await baseQuery.select("*").range(from, to).returns<Result[]>();
+    let query = supabase.from("results").select("*");
+    if (profileId) {
+      query = query.eq("profile_id", profileId);
+    }
+    const batch = await query.range(from, to).returns<Result[]>();
 
     if (batch.error) {
       return { data: null, error: batch.error };
@@ -398,7 +403,7 @@ export async function listResultsForUser(profileId: string, options?: ArchiveQue
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  const resultsResult = await listAllResults(supabase.from("results").eq("profile_id", profileId));
+  const resultsResult = await listAllResults(profileId);
   if (!shouldExcludeArchived(options)) {
     return resultsResult;
   }
@@ -432,7 +437,7 @@ export async function listResults(options?: ArchiveQueryOptions) {
   if (!isSupabaseConfigured) {
     return { data: null, error: missingSupabaseError() };
   }
-  const resultsResult = await listAllResults(supabase.from("results"));
+  const resultsResult = await listAllResults();
   if (!shouldExcludeArchived(options)) {
     return resultsResult;
   }
