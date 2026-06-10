@@ -6,8 +6,10 @@ import {
   Flag,
   MapPinned,
   QrCode,
+  TicketPercent,
   Timer,
   Trophy,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { RouteHighlightCard } from "@/app/components/RouteHighlightCard";
@@ -15,12 +17,16 @@ import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfile
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useParticipantUserResultsQuery } from "@/app/pages/participant/participantQueries";
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 import { formatUnlockDate, useLaunchSettings } from "@/config/launch";
+import { getMyPartnerVoucherRedemption } from "@/services/appApi";
 import type { Gym, Result, Route, Stage } from "@/services/appTypes";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
 const WILDCARD_TARGET = 8;
+const PARTNER_VOUCHER_SLUG = "kletterladen_nrw";
+const PARTNER_VOUCHER_MODAL_STORAGE_KEY = "kl_partner_voucher_modal_seen";
 
 const LOGO_FALLBACKS: Record<string, string> = {
   "2T Lindlar": "/gym-logos-real/2t-lindlar.png",
@@ -95,6 +101,25 @@ const getTimeValue = (value: string | null) => {
   return Number.isNaN(time) ? 0 : time;
 };
 
+const getPartnerVoucherModalStorageToken = (profileId: string, seasonYear: string) =>
+  `${profileId}:${seasonYear}`;
+
+const readPartnerVoucherModalSeen = (profileId: string, seasonYear: string) => {
+  if (typeof window === "undefined") return false;
+  return (
+    window.localStorage.getItem(PARTNER_VOUCHER_MODAL_STORAGE_KEY) ===
+    getPartnerVoucherModalStorageToken(profileId, seasonYear)
+  );
+};
+
+const writePartnerVoucherModalSeen = (profileId: string, seasonYear: string) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    PARTNER_VOUCHER_MODAL_STORAGE_KEY,
+    getPartnerVoucherModalStorageToken(profileId, seasonYear),
+  );
+};
+
 const Home = () => {
   const { profile, user, role } = useAuth();
   const navigate = useNavigate();
@@ -107,6 +132,8 @@ const Home = () => {
     profile?.gender || (user?.user_metadata?.gender as string | undefined)
   ) as "m" | "w" | undefined;
   const [currentRank, setCurrentRank] = useState<number | null>(null);
+  const [partnerVoucherRedeemedAt, setPartnerVoucherRedeemedAt] = useState<string | null>(null);
+  const [isPartnerVoucherModalOpen, setIsPartnerVoucherModalOpen] = useState(false);
   const {
     gyms: competitionGyms,
     routes,
@@ -133,6 +160,7 @@ const Home = () => {
   const { participantFeatureLocked: featureLocked, unlockDate } = useLaunchSettings();
   const unlockDateLabel = formatUnlockDate(unlockDate);
   const hasOfficialMasterRedemption = Boolean(viewerMasterRedemption?.redeemed_at);
+  const seasonYear = getSeasonYear() || String(new Date().getFullYear());
   const participationMasterMismatch =
     Boolean(profile?.participation_activated_at) && !hasOfficialMasterRedemption;
 
@@ -143,6 +171,44 @@ const Home = () => {
       navigate("/app/admin/league", { replace: true });
     }
   }, [role, navigate]);
+
+  useEffect(() => {
+    if (!profile?.id || !hasOfficialMasterRedemption) {
+      setPartnerVoucherRedeemedAt(null);
+      setIsPartnerVoucherModalOpen(false);
+      return;
+    }
+
+    let active = true;
+    getMyPartnerVoucherRedemption(PARTNER_VOUCHER_SLUG, seasonYear)
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          setPartnerVoucherRedeemedAt(null);
+          return;
+        }
+
+        const redeemedAt = data?.redeemed_at ?? null;
+        setPartnerVoucherRedeemedAt(redeemedAt);
+
+        if (redeemedAt) {
+          setIsPartnerVoucherModalOpen(false);
+          return;
+        }
+
+        if (!readPartnerVoucherModalSeen(profile.id, seasonYear)) {
+          setIsPartnerVoucherModalOpen(true);
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setPartnerVoucherRedeemedAt(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [profile?.id, hasOfficialMasterRedemption, seasonYear]);
 
   const gyms = useMemo(
     () =>
@@ -548,6 +614,18 @@ const Home = () => {
   const homeError = competitionError || userResultsError;
   const homeLoading = competitionLoading || userResultsLoading;
 
+  const handleClosePartnerVoucherModal = useCallback(() => {
+    if (profile?.id) {
+      writePartnerVoucherModalSeen(profile.id, seasonYear);
+    }
+    setIsPartnerVoucherModalOpen(false);
+  }, [profile?.id, seasonYear]);
+
+  const handleOpenPartnerVoucherFlow = useCallback(() => {
+    handleClosePartnerVoucherModal();
+    navigate("/app/profile/partner-voucher");
+  }, [handleClosePartnerVoucherModal, navigate]);
+
   if (homeLoading) {
     return (
       <ParticipantStateCard
@@ -563,6 +641,59 @@ const Home = () => {
 
   return (
     <>
+      <Dialog open={isPartnerVoucherModalOpen} onOpenChange={(open) => !open && handleClosePartnerVoucherModal()}>
+        <DialogContent
+          hideCloseButton
+          className="stitch-app overflow-x-hidden border-0 bg-[linear-gradient(180deg,#fbf9f6_0%,#f5f0e7_100%)] p-0 text-[#1b1c1a] sm:max-w-[34rem] sm:rounded-xl sm:p-0"
+        >
+          <div className="relative overflow-hidden bg-[#003D55] px-6 pb-7 pt-6 text-[#F2DCAB] sm:px-7 sm:pb-8 sm:pt-7">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#003D55]/10 bg-white text-[#003D55] shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-all hover:brightness-[1.02]"
+                aria-label="Dialog schließen"
+              >
+                <X className="h-5 w-5" strokeWidth={2.2} />
+              </button>
+            </DialogClose>
+
+            <DialogHeader className="relative max-w-[19rem] space-y-3 px-0 pt-0 text-left">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[#f2dcab]/14 bg-[#f2dcab]/10 text-[#f2dcab]">
+                <TicketPercent className="h-6 w-6" />
+              </div>
+              <DialogTitle className="font-['Space_Grotesk'] pr-14 text-[2rem] font-black uppercase leading-[0.9] tracking-tight text-[#F2DCAB]">
+                15 % bei Kletterladen NRW
+              </DialogTitle>
+              <DialogDescription className="max-w-md text-base leading-7 text-[rgba(242,220,171,0.78)]">
+                Mit aktiviertem Kletterliga-Profil bekommst du einmalig 15 % bei Kletterladen NRW.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="space-y-5 bg-[linear-gradient(180deg,#f7f2e8_0%,#f3ece1_100%)] px-6 pb-6 pt-6 sm:px-7 sm:pb-7">
+            <div className="rounded-xl border border-[rgba(0,38,55,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.6)_100%)] p-5 shadow-[0_14px_28px_rgba(0,38,55,0.06)]">
+              <div className="space-y-3 text-sm leading-6 text-[#003D55]">
+                <p>So löst du ihn ein:</p>
+                <ol className="list-decimal space-y-2 pl-5">
+                  <li>Öffne in deinem Profil den Gutscheinbereich.</li>
+                  <li>Scanne den QR-Code direkt im Kletterladen.</li>
+                  <li>Danach bleibt der Rabatt in deinem Profil gespeichert.</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <StitchButton type="button" variant="outline" size="lg" className="w-full rounded-xl" onClick={handleClosePartnerVoucherModal}>
+                Später
+              </StitchButton>
+              <StitchButton type="button" size="lg" className="w-full rounded-xl" onClick={handleOpenPartnerVoucherFlow}>
+                Zum Gutschein
+              </StitchButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-7">
         {participationMasterMismatch ? (
           <div className="rounded-xl border border-amber-500/55 bg-amber-500/14 px-4 py-4 text-sm leading-relaxed text-[rgba(242,220,171,0.92)] shadow-[inset_0_0_0_1px_rgba(245,158,11,0.15)]">
