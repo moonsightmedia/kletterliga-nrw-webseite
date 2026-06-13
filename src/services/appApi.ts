@@ -884,13 +884,24 @@ export async function getGymCodeByCode(code: string) {
 }
 
 export async function checkGymCodeRedeemed(gymId: string, profileId: string) {
-  return supabase
+  const response = await supabase
     .from("gym_codes")
     .select("*")
     .eq("gym_id", gymId)
     .eq("redeemed_by", profileId)
     .not("redeemed_at", "is", null)
-    .maybeSingle<GymCode>();
+    .order("redeemed_at", { ascending: false })
+    .limit(1)
+    .returns<GymCode[]>();
+
+  if (response.error) {
+    return { data: null, error: response.error };
+  }
+
+  return {
+    data: response.data?.[0] ?? null,
+    error: null,
+  };
 }
 
 export async function redeemGymCode(code: string) {
@@ -917,7 +928,7 @@ export async function redeemGymCode(code: string) {
   }
 
   return {
-    data: body as { success: true; gym_id: string; gym_name: string | null },
+    data: body as { success: true; gym_id: string; gym_name: string | null; already_redeemed?: boolean },
     error: null,
   };
 }

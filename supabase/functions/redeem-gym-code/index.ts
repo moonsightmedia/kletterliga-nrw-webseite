@@ -131,6 +131,31 @@ serve(async (req) => {
       });
     }
 
+    const { data: existingUnlocks, error: existingUnlocksError } = await supabase
+      .from("gym_codes")
+      .select("id")
+      .eq("gym_id", gymCode.gym_id)
+      .eq("redeemed_by", user.id)
+      .not("redeemed_at", "is", null)
+      .limit(1);
+
+    if (existingUnlocksError) {
+      return new Response(JSON.stringify({ error: "Vorhandene Hallenfreischaltung konnte nicht geprüft werden." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if ((existingUnlocks?.length ?? 0) > 0) {
+      return new Response(
+        JSON.stringify({ success: true, gym_id: gymCode.gym_id, gym_name: gymRelation?.name ?? null, already_redeemed: true }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        },
+      );
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from("gym_codes")
       .update({
@@ -155,7 +180,7 @@ serve(async (req) => {
         ? (updated.gyms as { name: string | null }).name
         : null;
 
-    return new Response(JSON.stringify({ success: true, gym_id: updated.gym_id, gym_name: gymName }), {
+    return new Response(JSON.stringify({ success: true, gym_id: updated.gym_id, gym_name: gymName, already_redeemed: false }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
