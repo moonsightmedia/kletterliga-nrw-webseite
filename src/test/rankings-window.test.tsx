@@ -18,9 +18,13 @@ vi.mock("@/services/seasonSettings", () => ({
   useSeasonSettings: vi.fn(),
 }));
 
-vi.mock("@/app/pages/participant/participantData", () => ({
-  buildRankingRowsForScope: vi.fn(),
-}));
+vi.mock("@/app/pages/participant/participantData", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/pages/participant/participantData")>();
+  return {
+    ...actual,
+    buildRankingRowsForScope: vi.fn(),
+  };
+});
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseParticipantCompetitionData = vi.mocked(useParticipantCompetitionData);
@@ -71,6 +75,8 @@ describe("Rankings focus window", () => {
       settings: null,
       getClassName: () => "Ü15-m",
       getStages: () => [],
+      getQualificationStart: () => "2026-05-01",
+      getQualificationEnd: () => "2026-09-13",
     } as ReturnType<typeof useSeasonSettings>);
 
     mockedBuildRankingRowsForScope.mockImplementation(() => rankingRows);

@@ -20,6 +20,14 @@ const getCategoryLabel = (age: typeof ageGroups[number], gender: "m" | "w") => {
   return `${age} ${g}`;
 };
 
+const formatRankingPoints = (value: number) => {
+  const hasFraction = Math.abs(value % 1) > 0.001;
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: hasFraction ? 1 : 0,
+    maximumFractionDigits: hasFraction ? 1 : 0,
+  }).format(value);
+};
+
 type LeaderboardEntry = {
   rank: number;
   name: string;
@@ -314,7 +322,7 @@ const Ranglisten = () => {
                           index === 0 ? "text-accent" : "text-secondary"
                         }`}
                       >
-                        {entry.points}
+                        {formatRankingPoints(entry.points)}
                       </span>
                       <p
                         className={`text-xs ${
