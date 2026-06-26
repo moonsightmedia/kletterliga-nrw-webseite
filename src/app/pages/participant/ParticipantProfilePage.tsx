@@ -8,8 +8,9 @@ import { useParticipantCompetitionData } from "./useParticipantCompetitionData";
 
 const ParticipantProfilePage = () => {
   const { profileId } = useParams<{ profileId: string }>();
-  const { getClassName } = useSeasonSettings();
+  const { getClassName, getQualificationSeasonRange } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
+  const seasonRange = getQualificationSeasonRange();
 
   const profileData = useMemo(() => {
     if (!profileId) return null;
@@ -20,9 +21,10 @@ const ParticipantProfilePage = () => {
       results,
       routes,
       gyms,
+      seasonRange,
       getClassName,
     });
-  }, [profileId, profiles, results, routes, gyms, getClassName]);
+  }, [profileId, profiles, results, routes, gyms, seasonRange, getClassName]);
 
   if (loading) {
     return (

@@ -32,6 +32,10 @@ type ResultRow = {
   updated_at: string | null;
 };
 
+const RESULTS_PAGE_SIZE = 1000;
+/** PostgREST `.in()` lists should stay small; row pagination handles large result sets. */
+const PROFILE_ID_BATCH = 150;
+
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -42,6 +46,46 @@ const getBearerToken = (req: Request) => {
   const header = req.headers.get("Authorization") ?? "";
   const [scheme, token] = header.split(" ");
   return scheme?.toLowerCase() === "bearer" ? token ?? null : null;
+};
+
+type ServiceClient = ReturnType<typeof createClient>;
+
+const listAllResultsForProfiles = async (
+  supabase: ServiceClient,
+  profileIds: string[],
+): Promise<{ data: ResultRow[] | null; error: { message: string } | null }> => {
+  if (profileIds.length === 0) {
+    return { data: [], error: null };
+  }
+
+  const merged: ResultRow[] = [];
+
+  for (let batchStart = 0; batchStart < profileIds.length; batchStart += PROFILE_ID_BATCH) {
+    const profileChunk = profileIds.slice(batchStart, batchStart + PROFILE_ID_BATCH);
+
+    for (let from = 0; ; from += RESULTS_PAGE_SIZE) {
+      const to = from + RESULTS_PAGE_SIZE - 1;
+      const pageResult = await supabase
+        .from("results")
+        .select("id, profile_id, route_id, points, flash, created_at, updated_at")
+        .in("profile_id", profileChunk)
+        .range(from, to)
+        .returns<ResultRow[]>();
+
+      if (pageResult.error) {
+        return { data: null, error: pageResult.error };
+      }
+
+      const page = pageResult.data ?? [];
+      merged.push(...page);
+
+      if (page.length < RESULTS_PAGE_SIZE) {
+        break;
+      }
+    }
+  }
+
+  return { data: merged, error: null };
 };
 
 serve(async (req) => {
@@ -142,14 +186,7 @@ serve(async (req) => {
   });
   const visibleProfileIds = visibleProfiles.map((profile) => profile.id);
 
-  const resultsResult =
-    visibleProfileIds.length > 0
-      ? await supabase
-          .from("results")
-          .select("id, profile_id, route_id, points, flash, created_at, updated_at")
-          .in("profile_id", visibleProfileIds)
-          .returns<ResultRow[]>()
-      : { data: [] as ResultRow[], error: null };
+  const resultsResult = await listAllResultsForProfiles(supabase, visibleProfileIds);
 
   if (resultsResult.error) {
     console.error("get-participant-competition-data results query error:", resultsResult.error);

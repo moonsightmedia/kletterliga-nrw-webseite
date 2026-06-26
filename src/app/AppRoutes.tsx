@@ -75,6 +75,9 @@ const LeagueSettings = lazy(() => import("@/app/pages/admin/LeagueSettings"));
 const LeagueRouteFeedback = lazy(
   () => import("@/app/pages/admin/LeagueRouteFeedback"),
 );
+const LeagueStageWinners = lazy(
+  () => import("@/app/pages/admin/LeagueStageWinners"),
+);
 
 const LaunchLockedRoute = ({
   title,
@@ -313,6 +316,14 @@ export const appRoutes = (
         element={
           <RoleGuard allow={["league_admin"]}>
             <LeagueResults />
+          </RoleGuard>
+        }
+      />
+      <Route
+        path="league/stage-winners"
+        element={
+          <RoleGuard allow={["league_admin"]}>
+            <LeagueStageWinners />
           </RoleGuard>
         }
       />

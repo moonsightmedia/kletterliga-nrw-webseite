@@ -43,11 +43,43 @@ type RedemptionRow = {
   redeemed_at: string | null;
 };
 
+const RESULTS_PAGE_SIZE = 1000;
+
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
+
+type ServiceClient = ReturnType<typeof createClient>;
+
+const listAllResults = async (
+  supabase: ServiceClient,
+): Promise<{ data: ResultRow[] | null; error: { message: string } | null }> => {
+  const merged: ResultRow[] = [];
+
+  for (let from = 0; ; from += RESULTS_PAGE_SIZE) {
+    const to = from + RESULTS_PAGE_SIZE - 1;
+    const pageResult = await supabase
+      .from("results")
+      .select("profile_id, route_id, points, flash")
+      .range(from, to)
+      .returns<ResultRow[]>();
+
+    if (pageResult.error) {
+      return { data: null, error: pageResult.error };
+    }
+
+    const page = pageResult.data ?? [];
+    merged.push(...page);
+
+    if (page.length < RESULTS_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return { data: merged, error: null };
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -69,12 +101,11 @@ serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  const [gymsResult, profilesResult, routesResult, resultsResult, gymCodesResult, masterCodesResult] =
+  const [gymsResult, profilesResult, routesResult, gymCodesResult, masterCodesResult] =
     await Promise.all([
       supabase.from("gyms").select("id, archived_at").is("archived_at", null).returns<GymRow[]>(),
       supabase.from("profiles").select("id, role, archived_at").returns<ProfileRow[]>(),
       supabase.from("routes").select("id, gym_id, active").returns<RouteRow[]>(),
-      supabase.from("results").select("profile_id, route_id, points, flash").returns<ResultRow[]>(),
       supabase
         .from("gym_codes")
         .select("gym_id, redeemed_by, redeemed_at")
@@ -86,6 +117,8 @@ serve(async (req) => {
         .not("redeemed_at", "is", null)
         .returns<RedemptionRow[]>(),
     ]);
+
+  const resultsResult = await listAllResults(supabase);
 
   const firstError =
     gymsResult.error ??

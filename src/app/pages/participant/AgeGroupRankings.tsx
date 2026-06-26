@@ -7,6 +7,7 @@ import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfile
 import {
   buildRankingRows,
   buildRankingVisibilityWindow,
+  buildSeasonRangeFromQualification,
   formatRankingStageBoundaryDateDe,
   formatRankingStagePeriodSentenceDe,
   getCreatedAtTimeRanking,
@@ -76,7 +77,7 @@ const ageRowButtonClassName = cn(
 
 const AgeGroupRankings = () => {
   const { profile, user } = useAuth();
-  const { getAgeGroupRankingClass, getStages } = useSeasonSettings();
+  const { getAgeGroupRankingClass, getStages, getQualificationStart, getQualificationEnd, settings } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -149,6 +150,11 @@ const AgeGroupRankings = () => {
     return getStageRange(stageKey, stages);
   }, [tab, stageKey, stages]);
 
+  const seasonRange = useMemo(() => {
+    if (tab !== "overall") return null;
+    return buildSeasonRangeFromQualification(getQualificationStart(), getQualificationEnd());
+  }, [tab, getQualificationStart, getQualificationEnd, settings?.qualification_start, settings?.qualification_end]);
+
   const rankingRows = useMemo(
     () =>
       buildRankingRows({
@@ -159,9 +165,10 @@ const AgeGroupRankings = () => {
         league: leagueFilter,
         className,
         stageRange,
+        seasonRange,
         getClassName: getAgeGroupRankingClass,
       }),
-    [profiles, results, routes, gyms, leagueFilter, className, stageRange, getAgeGroupRankingClass],
+    [profiles, results, routes, gyms, leagueFilter, className, stageRange, seasonRange, getAgeGroupRankingClass],
   );
 
   const defaultRankingRows = useMemo(
@@ -173,10 +180,22 @@ const AgeGroupRankings = () => {
         gyms,
         league: defaultLeague,
         className: defaultClassNameFromProfile,
-        stageRange: null,
+        seasonRange: buildSeasonRangeFromQualification(getQualificationStart(), getQualificationEnd()),
         getClassName: getAgeGroupRankingClass,
       }),
-    [profiles, results, routes, gyms, defaultLeague, defaultClassNameFromProfile, getAgeGroupRankingClass],
+    [
+      profiles,
+      results,
+      routes,
+      gyms,
+      defaultLeague,
+      defaultClassNameFromProfile,
+      getAgeGroupRankingClass,
+      getQualificationStart,
+      getQualificationEnd,
+      settings?.qualification_start,
+      settings?.qualification_end,
+    ],
   );
 
   const currentProfileId = profile?.id ?? user?.id ?? null;

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, Users, Zap, Target, BarChart3, Calendar, Award } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { listGymAdminsByProfile, listGymCodesByGym, listRoutesByGym, listResults, listProfiles } from "@/services/appApi";
-import type { Result, Profile, GymCode, Route } from "@/services/appTypes";
+import type { GymCode, Profile, Result, Route } from "@/services/appTypes";
+import { getResultScore } from "@/app/pages/participant/participantData";
 import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
 import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
@@ -69,7 +70,9 @@ const GymStats = () => {
     const routeStats = routes.map((route) => {
       const routeResults = results.filter((r) => r.route_id === route.id);
       const avgPoints =
-        routeResults.length > 0 ? routeResults.reduce((sum, r) => sum + r.points, 0) / routeResults.length : 0;
+        routeResults.length > 0
+          ? routeResults.reduce((sum, r) => sum + getResultScore(r), 0) / routeResults.length
+          : 0;
       return {
         route,
         avgPoints,
@@ -123,7 +126,9 @@ const GymStats = () => {
   }, [codes]);
 
   const avgPoints = useMemo(() => {
-    return results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.points, 0) / results.length) : 0;
+    return results.length > 0
+      ? Math.round(results.reduce((sum, r) => sum + getResultScore(r), 0) / results.length)
+      : 0;
   }, [results]);
 
   if (!gymId) {

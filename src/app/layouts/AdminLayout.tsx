@@ -32,6 +32,7 @@ const adminNav = [
   { to: "/app/admin/gym/stats", label: "Statistiken", icon: ChartLine, role: "gym_admin" },
   { to: "/app/admin/league", label: "Liga", icon: Shield, role: "league_admin" },
   { to: "/app/admin/league/season", label: "Saison", icon: Cog, role: "league_admin" },
+  { to: "/app/admin/league/stage-winners", label: "Etappensieger", icon: Trophy, role: "league_admin" },
   { to: "/app/admin/league/gyms", label: "Hallenverwaltung", icon: Building2, role: "league_admin" },
   { to: "/app/admin/league/participants", label: "Teilnehmer", icon: Users, role: "league_admin" },
   { to: "/app/admin/league/classes", label: "Wertungsklassen", icon: ClipboardList, role: "league_admin" },

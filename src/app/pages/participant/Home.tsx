@@ -14,6 +14,12 @@ import {
 import { useAuth } from "@/app/auth/AuthProvider";
 import { RouteHighlightCard } from "@/app/components/RouteHighlightCard";
 import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
+import {
+  buildRankingRowsForScope,
+  buildSeasonRangeFromQualification,
+  getResultScore,
+  type RankingAgeScope,
+} from "@/app/pages/participant/participantData";
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { useParticipantUserResultsQuery } from "@/app/pages/participant/participantQueries";
 import { StitchBadge, StitchButton } from "@/app/components/StitchPrimitives";
@@ -120,6 +126,13 @@ const writePartnerVoucherModalSeen = (profileId: string, seasonYear: string) => 
   );
 };
 
+const getAgeScopeFromClassName = (className: string | null): RankingAgeScope => {
+  if (className?.startsWith("U15-")) return "U15";
+  if (className?.startsWith("\u00dc15-")) return "UE15";
+  if (className?.startsWith("\u00dc40-")) return "UE40";
+  return "U15";
+};
+
 const Home = () => {
   const { profile, user, role } = useAuth();
   const navigate = useNavigate();
@@ -156,6 +169,9 @@ const Home = () => {
     getPreparationStart,
     getFinaleDate,
     getFinaleEnabled,
+    getQualificationStart,
+    getQualificationEnd,
+    settings,
   } = useSeasonSettings();
   const { participantFeatureLocked: featureLocked, unlockDate } = useLaunchSettings();
   const unlockDateLabel = formatUnlockDate(unlockDate);
@@ -230,38 +246,32 @@ const Home = () => {
   const gymMap = useMemo(() => new Map(gyms.map((gym) => [gym.id, gym])), [gyms]);
   const activeLeague = league === "lead" || league === "toprope" ? league : null;
 
-  useEffect(() => {
+  const seasonRange = useMemo(
+    () => buildSeasonRangeFromQualification(getQualificationStart(), getQualificationEnd()),
+    [getQualificationStart, getQualificationEnd, settings?.qualification_start, settings?.qualification_end],
+  );
+
+  const currentRankValue = useMemo(() => {
     if (!profile?.id || !allProfiles.length || !allResults.length || !routes.length || !activeLeague) {
-      setCurrentRank(null);
-      return;
+      return null;
     }
 
     const classKey = getClassName(birthDate ?? null, gender ?? null);
-    if (!classKey) {
-      setCurrentRank(null);
-      return;
-    }
+    if (!classKey) return null;
 
-    const disciplineMap = new Map(routes.map((route) => [route.id, route.discipline]));
-    const totals = allResults.reduce<Record<string, number>>((acc, result) => {
-      if (disciplineMap.get(result.route_id) !== activeLeague) return acc;
-      acc[result.profile_id] =
-        (acc[result.profile_id] ?? 0) + (result.points ?? 0) + (result.flash ? 1 : 0);
-      return acc;
-    }, {});
+    const rows = buildRankingRowsForScope({
+      profiles: allProfiles,
+      results: allResults,
+      routes,
+      gyms: competitionGyms,
+      leagueScope: activeLeague,
+      gender: gender === "w" ? "w" : "m",
+      ageScope: getAgeScopeFromClassName(classKey),
+      seasonRange,
+      getClassName,
+    });
 
-    const rows = allProfiles
-      .filter((item) => item.role !== "gym_admin" && item.role !== "league_admin")
-      .map((item) => ({
-        id: item.id,
-        className: getClassName(item.birth_date, item.gender) || null,
-        points: totals[item.id] ?? 0,
-      }))
-      .filter((row) => row.className === classKey)
-      .sort((a, b) => b.points - a.points);
-
-    const index = rows.findIndex((row) => row.id === profile.id);
-    setCurrentRank(index >= 0 ? index + 1 : null);
+    return rows.find((row) => row.profileId === profile.id)?.rank ?? null;
   }, [
     profile?.id,
     birthDate,
@@ -269,20 +279,33 @@ const Home = () => {
     allProfiles,
     allResults,
     routes,
+    competitionGyms,
     activeLeague,
+    seasonRange,
     getClassName,
   ]);
 
+  useEffect(() => {
+    setCurrentRank(currentRankValue);
+  }, [currentRankValue]);
+
   const filteredResults = useMemo(() => {
-    if (!activeLeague) return results;
-    return results.filter((result) => routeMap.get(result.route_id)?.discipline === activeLeague);
-  }, [results, routeMap, activeLeague]);
+    let scoped = results;
+    if (activeLeague) {
+      scoped = scoped.filter((result) => routeMap.get(result.route_id)?.discipline === activeLeague);
+    }
+    if (!seasonRange) return scoped;
+
+    return scoped.filter((result) => {
+      if (!result.created_at) return false;
+      const createdAt = new Date(result.created_at);
+      if (Number.isNaN(createdAt.getTime())) return false;
+      return createdAt >= seasonRange.start && createdAt <= seasonRange.end;
+    });
+  }, [results, routeMap, activeLeague, seasonRange]);
 
   const stats = useMemo(() => {
-    const points = filteredResults.reduce(
-      (sum, result) => sum + (result.points ?? 0) + (result.flash ? 1 : 0),
-      0,
-    );
+    const points = filteredResults.reduce((sum, result) => sum + getResultScore(result), 0);
     const routesClimbed = filteredResults.filter((result) => result.points > 0).length;
     const flashCount = filteredResults.filter((result) => result.flash).length;
     const visitedGymIds = new Set(
@@ -959,7 +982,7 @@ const Home = () => {
                           showLockedFeatureNotice("Ranglisten und Etappen");
                           return;
                         }
-                        navigate(`/app/rankings?tab=stage&stage=${stage.key}`);
+                        navigate(`/app/age-group-rankings?tab=stage&stage=${stage.key}`);
                       }}
                       className={`min-w-[226px] shrink-0 overflow-visible rounded-xl border p-4 text-left transition-all ${
                         isCurrent

@@ -5,6 +5,7 @@ import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfile
 import {
   buildRankingRowsForScope,
   buildRankingVisibilityWindow,
+  buildSeasonRangeFromQualification,
   getCreatedAtTimeRanking,
   getDateBoundaryTimeRanking,
   type RankingAgeScope,
@@ -62,7 +63,7 @@ const filterInactiveClassName = "text-[#003D55]/40 hover:text-[#003D55]";
 
 const Rankings = () => {
   const { profile, user } = useAuth();
-  const { settings, getClassName, getStages } = useSeasonSettings();
+  const { settings, getClassName, getStages, getQualificationStart, getQualificationEnd } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantCompetitionData();
   const [leagueScope, setLeagueScope] = useState<RankingLeagueFilterValue>("lead");
   const [genderFilter, setGenderFilter] = useState<RankingGenderScope>("m");
@@ -80,6 +81,10 @@ const Rankings = () => {
   const defaultGenderFilter: RankingGenderScope = profileGender === "w" ? "w" : "m";
   const defaultAgeFilter = getAgeScopeFromClassName(getClassName(profileBirthDate, profileGender ?? null));
   const stages = getStages();
+  const seasonRange = useMemo(
+    () => buildSeasonRangeFromQualification(getQualificationStart(), getQualificationEnd()),
+    [getQualificationStart, getQualificationEnd, settings?.qualification_start, settings?.qualification_end],
+  );
 
   useEffect(() => {
     setLeagueScope(defaultLeagueScope);
@@ -110,9 +115,10 @@ const Rankings = () => {
         leagueScope,
         gender: genderFilter,
         ageScope: ageFilter,
+        seasonRange,
         getClassName,
       }),
-    [profiles, results, routes, gyms, leagueScope, genderFilter, ageFilter, getClassName],
+    [profiles, results, routes, gyms, leagueScope, genderFilter, ageFilter, seasonRange, getClassName],
   );
 
   const currentProfileId = profile?.id ?? user?.id ?? null;
@@ -146,9 +152,10 @@ const Rankings = () => {
         leagueScope: defaultLeagueScope,
         gender: defaultGenderFilter,
         ageScope: defaultAgeFilter,
+        seasonRange,
         getClassName,
       }),
-    [profiles, results, routes, gyms, defaultLeagueScope, defaultGenderFilter, defaultAgeFilter, getClassName],
+    [profiles, results, routes, gyms, defaultLeagueScope, defaultGenderFilter, defaultAgeFilter, seasonRange, getClassName],
   );
   const currentUserStatsRow = useMemo(
     () => defaultRankingRows.find((row) => row.profileId === currentProfileId) ?? null,

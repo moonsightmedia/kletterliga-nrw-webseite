@@ -33,8 +33,9 @@ const buildFallbackProfile = (
 
 const ProfileHistory = () => {
   const { profile, user } = useAuth();
-  const { getClassName } = useSeasonSettings();
+  const { getClassName, getQualificationSeasonRange } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantDataBundle();
+  const seasonRange = getQualificationSeasonRange();
 
   const selectedProfile = useMemo(() => {
     const authId = profile?.id ?? user?.id ?? null;
@@ -53,9 +54,10 @@ const ProfileHistory = () => {
         results,
         routes,
         gyms,
+        seasonRange,
         getClassName,
       }),
-    [selectedProfile, profiles, results, routes, gyms, getClassName],
+    [selectedProfile, profiles, results, routes, gyms, seasonRange, getClassName],
   );
 
   if (loading) {

@@ -220,6 +220,8 @@ const getMonthLabel = (dayKey: string) => {
 
 const getResultScore = (result: Result) => (result.points ?? 0) + (result.flash ? 1 : 0);
 
+export { getResultScore };
+
 const sortByCode = (a: Route, b: Route) => {
   const numA = Number(a.code.replace(/\D/g, "")) || 0;
   const numB = Number(b.code.replace(/\D/g, "")) || 0;
@@ -317,9 +319,29 @@ export const getStageRange = (
   const stage = stages.find((item) => item.key === stageKey);
   if (!stage) return null;
 
+  const startMs = getDateBoundaryTimeRanking(stage.start, "start");
+  const endMs = getDateBoundaryTimeRanking(stage.end, "end");
+  if (startMs === null || endMs === null) return null;
+
   return {
-    start: new Date(`${stage.start}T00:00:00Z`),
-    end: new Date(`${stage.end}T23:59:59Z`),
+    start: new Date(startMs),
+    end: new Date(endMs),
+  };
+};
+
+export const buildSeasonRangeFromQualification = (
+  qualificationStart: string | null | undefined,
+  qualificationEnd: string | null | undefined,
+): RankingStageRange | null => {
+  if (!qualificationStart || !qualificationEnd) return null;
+
+  const startMs = getDateBoundaryTimeRanking(qualificationStart, "start");
+  const endMs = getDateBoundaryTimeRanking(qualificationEnd, "end");
+  if (startMs === null || endMs === null) return null;
+
+  return {
+    start: new Date(startMs),
+    end: new Date(endMs),
   };
 };
 
@@ -382,6 +404,7 @@ const buildRankingRowsBase = ({
   routeMap,
   gymMap,
   stageRange,
+  seasonRange = null,
   includeProfile,
 }: {
   profiles: Profile[];
@@ -389,12 +412,15 @@ const buildRankingRowsBase = ({
   routeMap: Map<string, Route>;
   gymMap: Map<string, Gym>;
   stageRange: RankingStageRange | null;
+  seasonRange?: RankingStageRange | null;
   includeProfile: (profile: Profile) => boolean;
 }): RankingRowData[] => {
+  const dateRange = stageRange ?? seasonRange ?? null;
+
   const totals = results.reduce<Record<string, number>>((acc, result) => {
     const route = routeMap.get(result.route_id);
     if (!route) return acc;
-    if (!isResultInStageRange(result, stageRange)) return acc;
+    if (!isResultInStageRange(result, dateRange)) return acc;
 
     acc[result.profile_id] = (acc[result.profile_id] ?? 0) + getResultScore(result);
     return acc;
@@ -403,7 +429,7 @@ const buildRankingRowsBase = ({
   const stats = results.reduce<Record<string, RankingStats>>((acc, result) => {
     const route = routeMap.get(result.route_id);
     if (!route) return acc;
-    if (!isResultInStageRange(result, stageRange)) return acc;
+    if (!isResultInStageRange(result, dateRange)) return acc;
 
     if (!acc[result.profile_id]) {
       acc[result.profile_id] = createEmptyRankingStats();
@@ -463,6 +489,7 @@ type BuildRankingRowsInput = {
   league: LeagueValue;
   className: string;
   stageRange?: RankingStageRange | null;
+  seasonRange?: RankingStageRange | null;
   getClassName: (birthDate: string | null | undefined, gender: "m" | "w" | null | undefined) => string | null;
 };
 
@@ -474,6 +501,7 @@ export const buildRankingRows = ({
   league,
   className,
   stageRange = null,
+  seasonRange = null,
   getClassName,
 }: BuildRankingRowsInput): RankingRowData[] => {
   const scopedRoutes = routes.filter((route) => normalizeDiscipline(route.discipline) === league);
@@ -486,6 +514,7 @@ export const buildRankingRows = ({
     routeMap,
     gymMap,
     stageRange,
+    seasonRange,
     includeProfile: (item) => {
       if (item.role === "gym_admin" || item.role === "league_admin") return false;
       if (!item.participation_activated_at) return false;
@@ -504,6 +533,7 @@ type BuildRankingRowsForScopeInput = {
   gender: RankingGenderScope;
   ageScope: RankingAgeScope;
   stageRange?: RankingStageRange | null;
+  seasonRange?: RankingStageRange | null;
   getClassName: (birthDate: string | null | undefined, gender: "m" | "w" | null | undefined) => string | null;
 };
 
@@ -516,6 +546,7 @@ export const buildRankingRowsForScope = ({
   gender,
   ageScope,
   stageRange = null,
+  seasonRange = null,
   getClassName,
 }: BuildRankingRowsForScopeInput): RankingRowData[] => {
   const scopedRoutes = getScopedRoutes(routes, leagueScope);
@@ -528,6 +559,7 @@ export const buildRankingRowsForScope = ({
     routeMap,
     gymMap,
     stageRange,
+    seasonRange,
     includeProfile: (item) => {
       if (item.role === "gym_admin" || item.role === "league_admin") return false;
       if (!item.participation_activated_at) return false;
@@ -565,6 +597,7 @@ type BuildParticipantProfileDataInput = {
   routes: Route[];
   gyms: Gym[];
   stageRange?: RankingStageRange | null;
+  seasonRange?: RankingStageRange | null;
   getClassName: (birthDate: string | null | undefined, gender: "m" | "w" | null | undefined) => string | null;
 };
 
@@ -575,6 +608,7 @@ export const buildParticipantProfileData = ({
   routes,
   gyms,
   stageRange = null,
+  seasonRange = null,
   getClassName,
 }: BuildParticipantProfileDataInput): ParticipantProfileData | null => {
   if (!selectedProfile) return null;
@@ -587,13 +621,14 @@ export const buildParticipantProfileData = ({
   const scopedRoutes = getScopedRoutes(routes, league);
   const routeMap = new Map(scopedRoutes.map((route) => [route.id, route]));
   const gymMap = new Map(gyms.map((gym) => [gym.id, gym]));
+  const dateRange = stageRange ?? seasonRange ?? null;
 
   const participantResults = results
     .filter(
       (result) =>
         result.profile_id === selectedProfile.id &&
         routeMap.has(result.route_id) &&
-        isResultInStageRange(result, stageRange),
+        isResultInStageRange(result, dateRange),
     )
     .sort((a, b) => getTimeValue(getResultTimestamp(b)) - getTimeValue(getResultTimestamp(a)));
 
@@ -784,6 +819,7 @@ export const buildParticipantProfileData = ({
       league,
       className,
       stageRange,
+      seasonRange,
       getClassName,
     });
     totalParticipants = rows.length;

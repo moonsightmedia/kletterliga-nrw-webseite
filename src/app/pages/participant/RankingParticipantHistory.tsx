@@ -8,8 +8,9 @@ import { useSeasonSettings } from "@/services/seasonSettings";
 
 const RankingParticipantHistory = () => {
   const { profileId } = useParams<{ profileId: string }>();
-  const { getClassName } = useSeasonSettings();
+  const { getClassName, getQualificationSeasonRange } = useSeasonSettings();
   const { profiles, results, routes, gyms, loading, error } = useParticipantDataBundle();
+  const seasonRange = getQualificationSeasonRange();
 
   const selectedProfile = useMemo(
     () => profiles.find((item) => item.id === profileId) ?? null,
@@ -24,9 +25,10 @@ const RankingParticipantHistory = () => {
         results,
         routes,
         gyms,
+        seasonRange,
         getClassName,
       }),
-    [selectedProfile, profiles, results, routes, gyms, getClassName],
+    [selectedProfile, profiles, results, routes, gyms, seasonRange, getClassName],
   );
 
   if (loading) {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { buildSeasonRangeFromQualification } from "@/app/pages/participant/participantData";
 import { listAdminSettings } from "./appApi";
 import type { AdminSettings, Stage } from "./appTypes";
 
@@ -84,11 +85,15 @@ export const useSeasonSettings = () => {
     if (age <= 9) return `U9-${gender}`;
     if (age <= 11) return `U11-${gender}`;
     if (age <= 13) return `U13-${gender}`;
-    if (age <= 15) return `U15-${gender}`;
-    if (age < 40) return `Ü15-${gender}`;
+
+    const u15Max = settings?.age_u16_max ?? 14;
+    const u40Min = settings?.age_u40_min ?? 40;
+
+    if (age <= u15Max) return `U15-${gender}`;
+    if (age < u40Min) return `Ü15-${gender}`;
     if (age < 50) return `Ü40-${gender}`;
     return `Ü50-${gender}`;
-  }, [getAgeAt]);
+  }, [getAgeAt, settings?.age_u16_max, settings?.age_u40_min]);
 
   const getStages = useCallback((): Stage[] => {
     if (settings?.stages && settings.stages.length > 0) {
@@ -186,6 +191,11 @@ export const useSeasonSettings = () => {
     return settings?.finale_enabled ?? false;
   };
 
+  const getQualificationSeasonRange = useCallback(
+    () => buildSeasonRangeFromQualification(settings?.qualification_start, settings?.qualification_end),
+    [settings?.qualification_start, settings?.qualification_end],
+  );
+
   const refreshSettings = async () => {
     settingsCache = null;
     settingsPromise = null;
@@ -206,6 +216,7 @@ export const useSeasonSettings = () => {
     getFinaleDate,
     getQualificationStart,
     getQualificationEnd,
+    getQualificationSeasonRange,
     getFinaleRegistrationDeadline,
     getPreparationStart,
     getPreparationEnd,
