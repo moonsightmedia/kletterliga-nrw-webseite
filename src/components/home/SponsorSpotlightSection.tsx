@@ -1,6 +1,6 @@
 import { ExternalLink, MapPin } from "lucide-react";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
-import { featuredSponsor } from "@/data/sponsors";
+import { featuredSponsor, polytalonSponsor } from "@/data/sponsors";
 
 export const SponsorSpotlightSection = () => {
   return (
@@ -62,6 +62,53 @@ export const SponsorSpotlightSection = () => {
                   className="mt-8 inline-flex min-h-11 items-center gap-2 text-secondary hover:text-secondary/80 font-medium transition-colors self-start"
                 >
                   {featuredSponsor.websiteLabel}
+                  <ExternalLink size={16} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection animation="fade-up" delay={220}>
+          <div className="card-kl mx-auto mt-8 max-w-5xl overflow-hidden rounded-sm border-secondary/30 p-0">
+            <div className="grid items-stretch md:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+              <div className="relative flex min-h-64 items-center justify-center overflow-hidden bg-white px-8 py-10">
+                <div className="absolute -left-10 top-8 h-20 w-32 bg-secondary/10 -skew-x-6" />
+                <div className="absolute -bottom-8 right-8 h-20 w-40 bg-accent/70 -skew-x-6" />
+                <img
+                  src={polytalonSponsor.logoSrc}
+                  alt={`Logo ${polytalonSponsor.name}`}
+                  className="relative w-full max-w-[350px] scale-125 object-contain"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="flex flex-col justify-center bg-primary p-8 text-primary-foreground md:p-10">
+                <span className="inline-block self-start bg-secondary px-3 py-1 text-xs text-secondary-foreground -skew-x-6">
+                  <span className="inline-block skew-x-6">OFFIZIELLER GRIFFPARTNER</span>
+                </span>
+
+                <h3 className="mt-6 font-headline text-3xl md:text-4xl">
+                  {polytalonSponsor.name}
+                </h3>
+
+                <p className="mt-3 text-lg font-medium text-accent">
+                  {polytalonSponsor.claim}
+                </p>
+
+                <p className="mt-5 max-w-xl text-sm leading-7 text-primary-foreground/75 md:text-base">
+                  POLYTALON unterstützt die Kletterliga NRW als Silberpartner und bringt
+                  seine in Deutschland entwickelten Klettergriffe in die Finalrouten der
+                  Saison 2026.
+                </p>
+
+                <a
+                  href={polytalonSponsor.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-7 inline-flex min-h-11 items-center gap-2 self-start font-medium text-accent transition-colors hover:text-accent/80"
+                >
+                  {polytalonSponsor.websiteLabel}
                   <ExternalLink size={16} />
                 </a>
               </div>
