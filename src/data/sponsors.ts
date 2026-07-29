@@ -53,6 +53,7 @@ export const polytalonSponsor: Sponsor = {
 };
 
 export const partnerSponsors: Sponsor[] = [
+  polytalonSponsor,
   {
     name: "Proviant",
     tier: "Silber",
