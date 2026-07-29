@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Sponsoren from "@/pages/Sponsoren";
 import { SponsorBanner } from "@/components/home/SponsorBanner";
+import { partnerSponsors } from "@/data/sponsors";
 
 vi.mock("@/components/home/HeroSection", () => ({
   HeroSection: () => <section>Hero</section>,
@@ -33,6 +34,18 @@ vi.mock("@/components/home/CTASection", () => ({
 }));
 
 describe("sponsor presentation", () => {
+  it("keeps the silver partners ahead of Mantle as the sole bronze partner", () => {
+    expect(
+      partnerSponsors.map(({ name, tier }) => ({ name, tier })),
+    ).toEqual([
+      { name: "POLYTALON", tier: "Silber" },
+      { name: "Proviant", tier: "Silber" },
+      { name: "Hillseye Boards", tier: "Silber" },
+      { name: "Art by Glöckchen", tier: "Silber" },
+      { name: "Mantle Climbing", tier: "Bronze" },
+    ]);
+  });
+
   it("renders the sponsor spotlight on the homepage before the footer", () => {
     render(
       <MemoryRouter>
