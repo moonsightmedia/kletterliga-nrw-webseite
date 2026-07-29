@@ -97,9 +97,8 @@ export const SponsorSpotlightSection = () => {
                 </p>
 
                 <p className="mt-5 max-w-xl text-sm leading-7 text-primary-foreground/75 md:text-base">
-                  POLYTALON unterstützt die Kletterliga NRW als Silberpartner und bringt
-                  seine in Deutschland entwickelten Klettergriffe in die Finalrouten der
-                  Saison 2026.
+                  POLYTALON unterstützt die Kletterliga NRW im Bereich Routenbau und
+                  begleitet die Saison 2026 als Silberpartner.
                 </p>
 
                 <a
