@@ -46,6 +46,9 @@ describe("sponsor presentation", () => {
     const footer = screen.getByRole("contentinfo");
 
     expect(within(main).getByText("HAUPTSPONSOR")).toBeInTheDocument();
+    expect(within(main).getByText("OFFIZIELLER GRIFFPARTNER")).toBeInTheDocument();
+    expect(within(main).getByText("POLYTALON")).toBeInTheDocument();
+    expect(within(main).getByAltText("Logo POLYTALON")).toBeInTheDocument();
     expect(claim).toBeInTheDocument();
     expect(address).toBeInTheDocument();
     expect(claim.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -100,11 +103,22 @@ describe("sponsor presentation", () => {
     const links = within(main).getAllByRole("link");
 
     expect(within(main).getByText("Proviant")).toBeInTheDocument();
+    expect(within(main).getByText("POLYTALON")).toBeInTheDocument();
     expect(within(main).getByText("Hillseye Boards")).toBeInTheDocument();
     expect(within(main).getByText("Mantle Climbing")).toBeInTheDocument();
     expect(within(main).getByText("Art by Glöckchen")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Art by Glöckchen")).toBeInTheDocument();
+    expect(screen.getByAltText("Logo POLYTALON")).toBeInTheDocument();
+    expect(
+      links.some((link) => link.getAttribute("href") === "https://polytalon.com/"),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) =>
+          link.getAttribute("href") === "https://www.instagram.com/polytalon_climbing/",
+      ),
+    ).toBe(true);
     expect(links.some((link) => link.getAttribute("href") === "https://www.proviant.de/")).toBe(
       true,
     );

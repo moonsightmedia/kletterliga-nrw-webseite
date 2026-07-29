@@ -2,7 +2,7 @@ import { Clock, ExternalLink, Facebook, Heart, Instagram, Mail, MapPin, Phone } 
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatedSection, StaggeredAnimation } from "@/hooks/useScrollAnimation";
-import { mainSponsors, partnerSponsors } from "@/data/sponsors";
+import { mainSponsors, partnerSponsors, polytalonSponsor } from "@/data/sponsors";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Sponsoren = () => {
@@ -135,6 +135,77 @@ const Sponsoren = () => {
               </div>
             ))}
           </StaggeredAnimation>
+        </div>
+      </section>
+
+      <section className="section-padding bg-primary">
+        <div className="container-kl">
+          <AnimatedSection animation="fade-up" className="mb-12 text-center">
+            <h2 className="font-headline text-3xl text-primary-foreground md:text-4xl">
+              OFFIZIELLER GRIFFPARTNER
+            </h2>
+          </AnimatedSection>
+
+          <AnimatedSection animation="fade-up" delay={120}>
+            <div className="mx-auto grid max-w-5xl overflow-hidden rounded-sm border border-primary-foreground/15 bg-background shadow-xl md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div className="relative flex min-h-72 items-center justify-center overflow-hidden bg-white px-8 py-10">
+                <div className="absolute -left-10 top-8 h-20 w-32 bg-secondary/10 -skew-x-6" />
+                <div className="absolute -bottom-8 right-8 h-20 w-40 bg-accent/70 -skew-x-6" />
+                <img
+                  src={polytalonSponsor.logoSrc}
+                  alt={`Logo ${polytalonSponsor.name}`}
+                  className="relative w-full max-w-[390px] scale-125 object-contain"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="flex flex-col justify-center p-8 md:p-10">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="font-headline text-3xl text-primary md:text-4xl">
+                    {polytalonSponsor.name}
+                  </h3>
+                  <span className="inline-block -skew-x-6 bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                    <span className="inline-block skew-x-6">{polytalonSponsor.tier}</span>
+                  </span>
+                </div>
+
+                <p className="mt-4 text-lg font-medium text-secondary">
+                  {polytalonSponsor.claim}
+                </p>
+
+                <p className="mt-5 text-sm leading-7 text-muted-foreground md:text-base">
+                  POLYTALON unterstützt die Finalrouten der Saison 2026 mit in
+                  Deutschland entwickelten Klettergriffen und begleitet die Kletterliga
+                  NRW als Silberpartner.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <a
+                    href={polytalonSponsor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 bg-accent px-4 py-2 font-medium text-accent-foreground -skew-x-6 transition-colors hover:bg-accent/90"
+                  >
+                    <span className="inline-flex items-center gap-2 skew-x-6">
+                      Website
+                      <ExternalLink size={16} />
+                    </span>
+                  </a>
+                  <a
+                    href={polytalonSponsor.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 border border-border bg-background px-4 py-2 font-medium text-primary -skew-x-6 transition-colors hover:bg-accent/40"
+                  >
+                    <span className="inline-flex items-center gap-2 skew-x-6">
+                      <Instagram size={16} />
+                      Instagram
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 

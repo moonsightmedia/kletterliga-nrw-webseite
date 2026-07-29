@@ -41,6 +41,17 @@ featuredSponsor.details = joinSponsorDetails(
 
 export const mainSponsors: Sponsor[] = [featuredSponsor];
 
+export const polytalonSponsor: Sponsor = {
+  name: "POLYTALON",
+  tier: "Silber",
+  website: "https://polytalon.com/",
+  websiteLabel: "polytalon.com",
+  logoSrc: "/sponsors/polytalon.jpg",
+  claim: "Engineered Climbing Holds",
+  address: "Zähringerplatz 22, 78464 Konstanz",
+  instagramUrl: "https://www.instagram.com/polytalon_climbing/",
+};
+
 export const partnerSponsors: Sponsor[] = [
   {
     name: "Proviant",
