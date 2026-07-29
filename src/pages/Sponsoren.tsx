@@ -171,7 +171,7 @@ const Sponsoren = () => {
                             src={sponsor.logoSrc}
                             alt={`Logo ${sponsor.name}`}
                             className={`max-h-14 w-full object-contain skew-x-6 ${
-                              sponsor.name === "POLYTALON" ? "scale-[1.6]" : ""
+                              sponsor.name === "POLYTALON" ? "scale-[1.35]" : ""
                             }`}
                             loading="lazy"
                           />
