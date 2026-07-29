@@ -71,19 +71,19 @@ export const partnerSponsors: Sponsor[] = [
     facebookUrl: "https://www.facebook.com/hillseye.boards/",
   },
   {
+    name: "Art by Glöckchen",
+    tier: "Silber",
+    website: "https://www.etsy.com/de/shop/artbyGloeckchen",
+    logoSrc: "/sponsors/art-by-gloeckchen.png",
+    claim: "Handbemalte und lasergravierte Bürsten für Kletterer",
+    instagramUrl: "https://www.instagram.com/art.by.gloeckchen/",
+  },
+  {
     name: "Mantle Climbing",
     tier: "Bronze",
     website: "https://www.mantle-climbing.de/",
     logoSrc: "/sponsors/mantle-climbing.png",
     instagramUrl: "https://www.instagram.com/mantleclimbing/",
     facebookUrl: "https://de-de.facebook.com/Mantle-Climbing-GmbH-456045974427265/",
-  },
-  {
-    name: "Art by Glöckchen",
-    tier: "Bronze",
-    website: "https://www.etsy.com/de/shop/artbyGloeckchen",
-    logoSrc: "/sponsors/art-by-gloeckchen.png",
-    claim: "Handbemalte und lasergravierte Bürsten für Kletterer",
-    instagramUrl: "https://www.instagram.com/art.by.gloeckchen/",
   },
 ];
