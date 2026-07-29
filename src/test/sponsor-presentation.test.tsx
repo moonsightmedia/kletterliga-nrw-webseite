@@ -49,6 +49,11 @@ describe("sponsor presentation", () => {
     expect(within(main).getByText("OFFIZIELLER GRIFFPARTNER")).toBeInTheDocument();
     expect(within(main).getByText("POLYTALON")).toBeInTheDocument();
     expect(within(main).getByAltText("Logo POLYTALON")).toBeInTheDocument();
+    expect(
+      within(main).getByText(
+        "POLYTALON unterstützt die Kletterliga NRW im Bereich Routenbau und begleitet die Saison 2026 als Silberpartner.",
+      ),
+    ).toBeInTheDocument();
     expect(claim).toBeInTheDocument();
     expect(address).toBeInTheDocument();
     expect(claim.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -110,6 +115,11 @@ describe("sponsor presentation", () => {
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Art by Glöckchen")).toBeInTheDocument();
     expect(screen.getByAltText("Logo POLYTALON")).toBeInTheDocument();
+    expect(
+      within(main).getByText(
+        "POLYTALON unterstützt die Kletterliga NRW im Bereich Routenbau und begleitet die Saison 2026 als Silberpartner.",
+      ),
+    ).toBeInTheDocument();
     expect(
       links.some((link) => link.getAttribute("href") === "https://polytalon.com/"),
     ).toBe(true);
