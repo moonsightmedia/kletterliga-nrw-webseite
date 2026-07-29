@@ -108,7 +108,10 @@ describe("sponsor presentation", () => {
     expect(within(main).getByText("Art by Glöckchen")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Art by Glöckchen")).toBeInTheDocument();
-    expect(screen.getByAltText("Logo POLYTALON")).toBeInTheDocument();
+    expect(screen.getByAltText("Logo POLYTALON")).toHaveAttribute(
+      "src",
+      "/sponsors/polytalon.png",
+    );
     expect(within(main).queryByText("OFFIZIELLER GRIFFPARTNER")).not.toBeInTheDocument();
     expect(
       links.some((link) => link.getAttribute("href") === "https://polytalon.com/"),

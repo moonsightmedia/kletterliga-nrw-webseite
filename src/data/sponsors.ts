@@ -46,7 +46,7 @@ export const polytalonSponsor: Sponsor = {
   tier: "Silber",
   website: "https://polytalon.com/",
   websiteLabel: "polytalon.com",
-  logoSrc: "/sponsors/polytalon.jpg",
+  logoSrc: "/sponsors/polytalon.png",
   claim: "Engineered Climbing Holds",
   address: "Zähringerplatz 22, 78464 Konstanz",
   instagramUrl: "https://www.instagram.com/polytalon_climbing/",
