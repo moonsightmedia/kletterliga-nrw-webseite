@@ -69,7 +69,7 @@ describe("ResultEntry mastercode gate", () => {
       error: null,
       reload: vi.fn(),
       isRefreshing: false,
-    } as ReturnType<typeof useParticipantCompetitionData>);
+    } as unknown as ReturnType<typeof useParticipantCompetitionData>);
     mockedUseAuth.mockReturnValue({
       profile: {
         id: "profile-1",
@@ -90,14 +90,15 @@ describe("ResultEntry mastercode gate", () => {
         },
       ],
       results: [],
-      allResults: [],
+      communityStats: null,
+      communityStatsError: null,
       codeRedeemed: true,
       loading: false,
       isInitialLoading: false,
       isRefreshing: false,
       error: null,
       reload: vi.fn(),
-    } as ReturnType<typeof useParticipantGymDetailQuery>);
+    } as unknown as ReturnType<typeof useParticipantGymDetailQuery>);
   });
 
   it("requires the mastercode before saving route results", () => {

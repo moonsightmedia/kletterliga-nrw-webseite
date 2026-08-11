@@ -29,7 +29,17 @@ export function StarRating({ value, onChange, readonly = false, className, size 
   };
 
   return (
-    <div className={cn("flex items-center justify-between w-full", className)}>
+    <div
+      className={cn("flex items-center justify-between w-full", className)}
+      role={readonly ? "img" : undefined}
+      aria-label={
+        readonly
+          ? value && value > 0
+            ? `${value} von 5 Sternen`
+            : "Keine Bewertung"
+          : undefined
+      }
+    >
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = value !== null && star <= value;
         return (
@@ -39,12 +49,14 @@ export function StarRating({ value, onChange, readonly = false, className, size 
             onClick={() => handleClick(star)}
             onMouseEnter={() => handleMouseEnter(star)}
             disabled={readonly || !onChange}
+            aria-hidden={readonly ? true : undefined}
+            tabIndex={readonly ? -1 : undefined}
             className={cn(
               "flex-1 flex items-center justify-center transition-colors border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-0",
               readonly || !onChange ? "cursor-default" : "cursor-pointer hover:scale-110",
               size === "sm" ? "py-2" : size === "lg" ? "py-3" : "py-2"
             )}
-            aria-label={`${star} ${star === 1 ? "Stern" : "Sterne"}`}
+            aria-label={readonly ? undefined : `${star} ${star === 1 ? "Stern" : "Sterne"}`}
           >
             <Star
               className={cn(

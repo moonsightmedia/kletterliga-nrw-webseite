@@ -6,10 +6,12 @@ import type {
   FinaleRegistration,
   Gym,
   GymAdmin,
+  GymAdminResultsPayload,
   GymCode,
   GymCommunityStats,
   GymInvite,
   GymInvitePreview,
+  GymRouteHighlights,
   InstagramPost,
   MarketingEmailStatus,
   MasterCode,
@@ -557,6 +559,219 @@ export async function listGymCommunityStats() {
   }
 
   return { data: (Array.isArray(body) ? body : []) as GymCommunityStats[], error: null };
+}
+
+export async function getGymRouteHighlights(gymId: string) {
+  try {
+    const auth = await getRequiredSessionAccessToken(
+      "Bitte melde dich erneut an, um die Routenstatistik zu laden.",
+    );
+    if (auth.error || !auth.token) {
+      return { data: null, error: auth.error };
+    }
+
+    const url = `${supabaseConfig.url}/functions/v1/get-gym-route-highlights?gym_id=${encodeURIComponent(gymId)}`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+        apikey: supabaseConfig.anonKey,
+      },
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message =
+        (body as { error?: string })?.error ??
+        res.statusText ??
+        "Routenstatistik konnte nicht geladen werden.";
+      return { data: null, error: { message } };
+    }
+
+    const candidate = body as Partial<GymRouteHighlights>;
+    const validAverage =
+      candidate.average_rating === null ||
+      (typeof candidate.average_rating === "number" && Number.isFinite(candidate.average_rating));
+    const validRouteStats =
+      Array.isArray(candidate.route_stats) &&
+      candidate.route_stats.every(
+        (routeStats) =>
+          typeof routeStats?.route_id === "string" &&
+          typeof routeStats.rating_count === "number" &&
+          Number.isFinite(routeStats.rating_count) &&
+          (routeStats.average_rating === null ||
+            (typeof routeStats.average_rating === "number" && Number.isFinite(routeStats.average_rating))) &&
+          typeof routeStats.entry_count === "number" &&
+          Number.isFinite(routeStats.entry_count),
+      );
+
+    if (
+      candidate.gym_id !== gymId ||
+      typeof candidate.rating_count !== "number" ||
+      !Number.isFinite(candidate.rating_count) ||
+      !validAverage ||
+      !validRouteStats
+    ) {
+      return {
+        data: null,
+        error: { message: "Routenstatistik hat ein unerwartetes Format." },
+      };
+    }
+
+    return { data: candidate as GymRouteHighlights, error: null };
+  } catch {
+    return {
+      data: null,
+      error: { message: "Routenstatistik konnte nicht geladen werden." },
+    };
+  }
+}
+
+export async function getGymAdminResults(
+  gymId: string,
+  options?: { limit?: number; cursor?: string | null },
+) {
+  try {
+    const auth = await getRequiredSessionAccessToken(
+      "Bitte melde dich erneut an, um die Hallenergebnisse zu laden.",
+    );
+    if (auth.error || !auth.token) {
+      return { data: null, error: auth.error };
+    }
+
+    const requestedLimit = options?.limit;
+    const normalizedLimit =
+      typeof requestedLimit === "number" && Number.isFinite(requestedLimit)
+        ? Math.trunc(requestedLimit)
+        : 50;
+    const limit = Math.min(100, Math.max(1, normalizedLimit));
+    const params = new URLSearchParams({
+      gym_id: gymId,
+      limit: String(limit),
+    });
+    if (options?.cursor) {
+      params.set("cursor", options.cursor);
+    }
+
+    const url = `${supabaseConfig.url}/functions/v1/get-gym-admin-results?${params.toString()}`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+        apikey: supabaseConfig.anonKey,
+      },
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message =
+        (body as { error?: string })?.error ??
+        res.statusText ??
+        "Hallenergebnisse konnten nicht geladen werden.";
+      return { data: null, error: { message } };
+    }
+
+    const candidate = body as Partial<GymAdminResultsPayload>;
+    const isNonNegativeInteger = (value: unknown): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value >= 0;
+    const isFiniteNumberOrNull = (value: unknown): value is number | null =>
+      value === null || (typeof value === "number" && Number.isFinite(value));
+    const routeStats = Array.isArray(candidate.route_stats) ? candidate.route_stats : [];
+    const dailyResults = Array.isArray(candidate.daily_results) ? candidate.daily_results : [];
+    const results = Array.isArray(candidate.results) ? candidate.results : [];
+    const validRouteStats =
+      Array.isArray(candidate.route_stats) &&
+      routeStats.every(
+        (routeStats) =>
+          typeof routeStats?.route_id === "string" &&
+          isNonNegativeInteger(routeStats.result_count) &&
+          isNonNegativeInteger(routeStats.flash_count) &&
+          isFiniteNumberOrNull(routeStats.average_score),
+      );
+    const validDailyResults =
+      Array.isArray(candidate.daily_results) &&
+      dailyResults.every(
+        (dailyResult) =>
+          typeof dailyResult?.date === "string" && isNonNegativeInteger(dailyResult.count),
+      );
+    const validResults =
+      Array.isArray(candidate.results) &&
+      results.every(
+        (result) =>
+          typeof result?.route_id === "string" &&
+          typeof result.points === "number" &&
+          Number.isFinite(result.points) &&
+          typeof result.flash === "boolean" &&
+          (result.status === null || typeof result.status === "string") &&
+          (result.rating === null ||
+            (typeof result.rating === "number" &&
+              Number.isFinite(result.rating) &&
+              result.rating >= 1 &&
+              result.rating <= 5)) &&
+          typeof result.submitted_on === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(result.submitted_on) &&
+          typeof result.edited === "boolean",
+      );
+    const validCursor =
+      candidate.next_cursor === null ||
+      (typeof candidate.next_cursor === "string" &&
+        candidate.next_cursor.length <= 1024 &&
+        /^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(candidate.next_cursor));
+
+    if (
+      candidate.gym_id !== gymId ||
+      !isNonNegativeInteger(candidate.result_count) ||
+      !isNonNegativeInteger(candidate.participant_count) ||
+      !isNonNegativeInteger(candidate.flash_count) ||
+      !isFiniteNumberOrNull(candidate.average_score) ||
+      !validRouteStats ||
+      !validDailyResults ||
+      !validResults ||
+      !validCursor
+    ) {
+      return {
+        data: null,
+        error: { message: "Hallenergebnisse haben ein unerwartetes Format." },
+      };
+    }
+
+    const data: GymAdminResultsPayload = {
+      gym_id: candidate.gym_id,
+      result_count: candidate.result_count,
+      participant_count: candidate.participant_count,
+      flash_count: candidate.flash_count,
+      average_score: candidate.average_score,
+      route_stats: routeStats.map((routeStats) => ({
+        route_id: routeStats.route_id,
+        result_count: routeStats.result_count,
+        flash_count: routeStats.flash_count,
+        average_score: routeStats.average_score,
+      })),
+      daily_results: dailyResults.map((dailyResult) => ({
+        date: dailyResult.date,
+        count: dailyResult.count,
+      })),
+      results: results.map((result) => ({
+        route_id: result.route_id,
+        points: result.points,
+        flash: result.flash,
+        status: result.status,
+        rating: result.rating,
+        submitted_on: result.submitted_on,
+        edited: result.edited,
+      })),
+      next_cursor: candidate.next_cursor,
+    };
+
+    return { data, error: null };
+  } catch {
+    return {
+      data: null,
+      error: { message: "Hallenergebnisse konnten nicht geladen werden." },
+    };
+  }
 }
 
 export async function getParticipantCompetitionData() {

@@ -4,10 +4,10 @@ import {
   checkGymCodeRedeemed,
   fetchViewerMasterRedemptionForViewer,
   getGym,
+  getGymRouteHighlights,
   getParticipantCompetitionData,
   listGymCommunityStats,
   listGyms,
-  listResults,
   listResultsForUser,
   listRoutes,
   listRoutesByGym,
@@ -15,6 +15,7 @@ import {
 import type {
   Gym,
   GymCommunityStats,
+  GymRouteHighlights,
   Profile,
   Result,
   Route,
@@ -34,7 +35,8 @@ export type ParticipantGymDetailData = {
   gym: Gym | null;
   routes: Route[];
   results: Result[];
-  allResults: Result[];
+  communityStats: GymRouteHighlights | null;
+  communityStatsError: string | null;
   codeRedeemed: boolean | null;
 };
 
@@ -54,7 +56,8 @@ const EMPTY_GYM_DETAIL_DATA: ParticipantGymDetailData = {
   gym: null,
   routes: [],
   results: [],
-  allResults: [],
+  communityStats: null,
+  communityStatsError: null,
   codeRedeemed: null,
 };
 
@@ -146,30 +149,44 @@ const fetchParticipantUserResults = async (profileId: string): Promise<Result[]>
   return response.data ?? [];
 };
 
-const fetchParticipantGymDetailData = async (
+export const fetchParticipantGymDetailData = async (
   gymId: string,
   profileId: string,
 ): Promise<ParticipantGymDetailData> => {
-  const responses = await Promise.all([
-    getGym(gymId),
-    listRoutesByGym(gymId),
-    listResultsForUser(profileId),
-    listResults(),
-    checkGymCodeRedeemed(gymId, profileId),
-  ]);
+  const [gymResponse, routesResponse, resultsResponse, communityStatsResponse, redeemedResult] =
+    await Promise.all([
+      getGym(gymId),
+      listRoutesByGym(gymId),
+      listResultsForUser(profileId),
+      getGymRouteHighlights(gymId).catch((error: unknown) => ({
+        data: null,
+        error: {
+          message: getErrorMessage(error, "Routenstatistik konnte nicht geladen werden."),
+        },
+      })),
+      checkGymCodeRedeemed(gymId, profileId),
+    ]);
 
-  const [{ data: gym }, { data: routes }, { data: results }, { data: allResults }, redeemedResult] = responses;
-  const firstError = getResponseErrorMessage(responses, "");
+  const firstError = getResponseErrorMessage(
+    [gymResponse, routesResponse, resultsResponse, redeemedResult],
+    "",
+  );
 
   if (firstError) {
     throw new Error(firstError);
   }
 
+  const communityStatsError = communityStatsResponse.error?.message ?? null;
+  if (communityStatsError) {
+    console.warn("[participantQueries] Routenstatistik konnte nicht geladen werden:", communityStatsError);
+  }
+
   return {
-    gym: gym ?? null,
-    routes: routes ?? [],
-    results: results ?? [],
-    allResults: allResults ?? [],
+    gym: gymResponse.data ?? null,
+    routes: routesResponse.data ?? [],
+    results: resultsResponse.data ?? [],
+    communityStats: communityStatsResponse.data ?? null,
+    communityStatsError,
     codeRedeemed: Boolean(redeemedResult.data),
   };
 };

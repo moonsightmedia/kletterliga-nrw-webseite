@@ -1,64 +1,93 @@
 import { useEffect, useState } from "react";
 import { Building2, Users, CheckCircle2, BarChart3, Ticket } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { listGymAdminsByProfile, listGymCodesByGym, listRoutesByGym, getGym, listProfiles, listResults } from "@/services/appApi";
+import { listGymCodesByGym, getGym } from "@/services/appApi";
 import type { Gym } from "@/services/appTypes";
-import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
+import { useGymAdminOverviewQuery } from "@/app/pages/admin/gymAdminQueries";
 
 const GymAdminDashboard = () => {
   const { profile } = useAuth();
-  const [gymId, setGymId] = useState<string | null>(null);
+  const { data, loading, error, reload } = useGymAdminOverviewQuery(profile?.id);
   const [gym, setGym] = useState<Gym | null>(null);
+  const [gymLoading, setGymLoading] = useState(false);
+  const [gymError, setGymError] = useState<string | null>(null);
+  const [codesLoading, setCodesLoading] = useState(false);
+  const [codesError, setCodesError] = useState<string | null>(null);
   const [stats, setStats] = useState({
-    totalParticipants: 0,
     redeemedCodes: 0,
-    totalResults: 0,
     availableCodes: 0,
   });
 
   useEffect(() => {
-    if (!profile?.id) return;
-    listGymAdminsByProfile(profile.id).then(({ data }) => {
-      const firstGym = data?.[0]?.gym_id ?? null;
-      setGymId(firstGym);
-      if (firstGym) {
-        getGym(firstGym).then(({ data: gymData }) => {
-          if (gymData) {
-            setGym(gymData);
-          }
-        });
-        listGymCodesByGym(firstGym).then(({ data: codesData }) => {
-          const codes = codesData ?? [];
-          const redeemed = codes.filter((c) => c.redeemed_by).length;
-          setStats((prev) => ({
-            ...prev,
-            redeemedCodes: redeemed,
-            availableCodes: codes.length - redeemed,
-          }));
-        });
-        listProfiles().then(({ data: profilesData }) => {
-          const totalParticipants = (profilesData ?? []).filter((p) => p.role === "participant").length;
-          setStats((prev) => ({
-            ...prev,
-            totalParticipants,
-          }));
-        });
-        Promise.all([listRoutesByGym(firstGym), listResults()]).then(([{ data: routesData }, { data: resultsData }]) => {
-          const routes = routesData ?? [];
-          const results = resultsData ?? [];
-          const routeIds = routes.map((r) => r.id);
-          const gymResults = results.filter((r) => routeIds.includes(r.route_id));
-          setStats((prev) => ({
-            ...prev,
-            totalResults: gymResults.length,
-          }));
-        });
-      }
-    });
-  }, [profile?.id]);
+    if (!data.gymId) return;
+    let cancelled = false;
+    setGym(null);
+    setGymLoading(true);
+    setGymError(null);
+    setStats({ redeemedCodes: 0, availableCodes: 0 });
+    setCodesLoading(true);
+    setCodesError(null);
 
-  if (!gymId) {
+    void getGym(data.gymId)
+      .then((gymResponse) => {
+        if (cancelled) return;
+        if (gymResponse.error || !gymResponse.data) {
+          setGymError(gymResponse.error?.message ?? "Hallendaten konnten nicht geladen werden.");
+          return;
+        }
+        setGym(gymResponse.data);
+      })
+      .catch(() => {
+        if (!cancelled) setGymError("Hallendaten konnten nicht geladen werden.");
+      })
+      .finally(() => {
+        if (!cancelled) setGymLoading(false);
+      });
+
+    void listGymCodesByGym(data.gymId)
+      .then((codesResponse) => {
+        if (cancelled) return;
+        if (codesResponse.error) {
+          setCodesError(codesResponse.error.message);
+          return;
+        }
+        const codes = codesResponse.data ?? [];
+        const redeemed = codes.filter((code) => code.redeemed_by).length;
+        setStats({
+          redeemedCodes: redeemed,
+          availableCodes: codes.length - redeemed,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setCodesError("Hallencodes konnten nicht geladen werden.");
+      })
+      .finally(() => {
+        if (!cancelled) setCodesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data.gymId]);
+
+  if (loading) {
+    return <p className="text-sm text-[rgba(27,28,26,0.64)]">Hallenübersicht wird geladen…</p>;
+  }
+
+  if (error) {
+    return (
+      <StitchCard tone="surface" className="space-y-4 p-5 md:p-6">
+        <p className="text-sm font-semibold text-[#b42318]">{error}</p>
+        <StitchButton type="button" variant="outline" size="sm" onClick={() => void reload()}>
+          Erneut versuchen
+        </StitchButton>
+      </StitchCard>
+    );
+  }
+
+  if (!data.gymId || !data.results) {
     return (
       <p className="text-sm text-[rgba(27,28,26,0.64)]">
         Keine Halle zugewiesen. Bitte kontaktiere einen Liga-Admin.
@@ -66,8 +95,9 @@ const GymAdminDashboard = () => {
     );
   }
 
-  const participantPercentage =
-    stats.totalParticipants > 0 ? Math.round((stats.redeemedCodes / stats.totalParticipants) * 100) : 0;
+  const totalCodes = stats.redeemedCodes + stats.availableCodes;
+  const codeRedemptionRate =
+    totalCodes > 0 ? Math.round((stats.redeemedCodes / totalCodes) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -99,9 +129,18 @@ const GymAdminDashboard = () => {
                   </StitchBadge>
                 </div>
                 <p className="text-sm text-[rgba(242,220,171,0.88)] md:text-base">
-                  {gym?.name || "Meine Halle"}
+                  {gymLoading
+                    ? "Halle wird geladen…"
+                    : gymError
+                      ? "Hallendaten nicht verfügbar"
+                      : gym?.name || "Meine Halle"}
                   {gym?.city && ` · ${gym.city}`}
                 </p>
+                {gymLoading ? (
+                  <p className="mt-1 text-xs text-[rgba(242,220,171,0.72)]">Hallendaten werden geladen…</p>
+                ) : gymError ? (
+                  <p className="mt-1 text-xs font-semibold text-[#ffd8d3]">{gymError}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -111,16 +150,22 @@ const GymAdminDashboard = () => {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
         <AdminStatCard
           icon={Users}
-          label="Gesamtteilnehmer"
-          value={stats.totalParticipants}
-          hint="In der Liga registriert"
+          label="Aktive Teilnehmende"
+          value={data.results.participant_count}
+          hint="Mit Ergebnis in dieser Halle"
         />
         <AdminStatCard
           icon={CheckCircle2}
           label="Codes eingelöst"
-          value={stats.redeemedCodes}
+          value={codesLoading ? "…" : codesError ? "–" : stats.redeemedCodes}
           hint={
-            stats.totalParticipants > 0 ? `${participantPercentage}% der Teilnehmer` : "Noch keine Teilnehmer"
+            codesLoading
+              ? "Hallencodes werden geladen"
+              : codesError
+                ? "Hallencodes derzeit nicht verfügbar"
+                : totalCodes > 0
+                  ? `${codeRedemptionRate}% der Hallencodes`
+                  : "Noch keine Hallencodes"
           }
           iconWrapClassName="bg-[#a15523]/15 group-hover:bg-[#a15523]/22"
           iconClassName="text-[#a15523]"
@@ -129,7 +174,7 @@ const GymAdminDashboard = () => {
         <AdminStatCard
           icon={BarChart3}
           label="Ergebnisse gesamt"
-          value={stats.totalResults}
+          value={data.results.result_count}
           hint="In dieser Halle"
           iconWrapClassName="bg-[#f2dcab]/25 group-hover:bg-[#f2dcab]/35"
           iconClassName="text-[#002637]"
@@ -138,8 +183,8 @@ const GymAdminDashboard = () => {
         <AdminStatCard
           icon={Ticket}
           label="Codes verfügbar"
-          value={stats.availableCodes}
-          hint="Noch nicht eingelöst"
+          value={codesLoading ? "…" : codesError ? "–" : stats.availableCodes}
+          hint={codesError ? "Hallencodes derzeit nicht verfügbar" : "Noch nicht eingelöst"}
         />
       </div>
     </div>

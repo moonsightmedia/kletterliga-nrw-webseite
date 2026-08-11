@@ -140,6 +140,54 @@ export type GymCommunityStats = {
   average_points_per_route: number | null;
 };
 
+export type GymRouteCommunityStats = {
+  route_id: string;
+  rating_count: number;
+  average_rating: number | null;
+  entry_count: number;
+};
+
+export type GymRouteHighlights = {
+  gym_id: string;
+  rating_count: number;
+  average_rating: number | null;
+  route_stats: GymRouteCommunityStats[];
+};
+
+export type GymAdminResultItem = {
+  route_id: string;
+  points: number;
+  flash: boolean;
+  status: string | null;
+  rating: number | null;
+  submitted_on: string;
+  edited: boolean;
+};
+
+export type GymAdminRouteResultStats = {
+  route_id: string;
+  result_count: number;
+  flash_count: number;
+  average_score: number | null;
+};
+
+export type GymAdminDailyResultStats = {
+  date: string;
+  count: number;
+};
+
+export type GymAdminResultsPayload = {
+  gym_id: string;
+  result_count: number;
+  participant_count: number;
+  flash_count: number;
+  average_score: number | null;
+  route_stats: GymAdminRouteResultStats[];
+  daily_results: GymAdminDailyResultStats[];
+  results: GymAdminResultItem[];
+  next_cursor: string | null;
+};
+
 export type GymInvite = {
   id: string;
   gym_id: string | null;

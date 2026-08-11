@@ -40,6 +40,12 @@ verify_jwt = false
 [functions.get-gym-community-stats]
 verify_jwt = false
 
+[functions.get-gym-route-highlights]
+verify_jwt = true
+
+[functions.get-gym-admin-results]
+verify_jwt = true
+
 # send-contact-email: öffentlich (Kontaktformular ohne Login)
 [functions.send-contact-email]
 verify_jwt = false

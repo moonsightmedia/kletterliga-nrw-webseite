@@ -1,46 +1,45 @@
 import { useEffect, useMemo, useState } from "react";
-import { TrendingUp, Users, Zap, Target, BarChart3, Calendar, Award } from "lucide-react";
+import { TrendingUp, Users, Zap, Target, BarChart3, Calendar, Award, Star } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { listGymAdminsByProfile, listGymCodesByGym, listRoutesByGym, listResults, listProfiles } from "@/services/appApi";
-import type { GymCode, Profile, Result, Route } from "@/services/appTypes";
-import { getResultScore } from "@/app/pages/participant/participantData";
-import { StitchBadge, StitchCard } from "@/app/components/StitchPrimitives";
+import { listGymCodesByGym } from "@/services/appApi";
+import type { GymCode, Route } from "@/services/appTypes";
+import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
 import { AdminStatCard } from "@/app/pages/admin/_components/AdminStatCard";
+import { useGymAdminOverviewQuery } from "@/app/pages/admin/gymAdminQueries";
 
 const GymStats = () => {
   const { profile } = useAuth();
-  const [gymId, setGymId] = useState<string | null>(null);
+  const { data, loading, error, reload } = useGymAdminOverviewQuery(profile?.id);
   const [codes, setCodes] = useState<GymCode[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-  const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
+  const [codesLoading, setCodesLoading] = useState(false);
+  const [codesError, setCodesError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profile?.id) return;
-    listGymAdminsByProfile(profile.id).then(({ data }) => {
-      const firstGym = data?.[0]?.gym_id ?? null;
-      setGymId(firstGym);
-      if (firstGym) {
-        listGymCodesByGym(firstGym).then(({ data: codesData }) => {
-          setCodes(codesData ?? []);
-        });
-        listRoutesByGym(firstGym).then(({ data: routesData }) => {
-          const gymRoutes = routesData ?? [];
-          setRoutes(gymRoutes);
-          Promise.all([listResults(), listProfiles()]).then(([{ data: resultsData }, { data: profilesData }]) => {
-            const routeIds = gymRoutes.map((r) => r.id);
-            const gymResults = (resultsData ?? []).filter((r) => routeIds.includes(r.route_id));
-            setResults(gymResults);
-
-            const profileMap = new Map<string, Profile>();
-            (profilesData ?? []).forEach((p) => profileMap.set(p.id, p));
-            setProfiles(profileMap);
-          });
-        });
-      }
-    });
-  }, [profile?.id]);
+    if (!data.gymId) return;
+    let cancelled = false;
+    setCodes([]);
+    setCodesLoading(true);
+    setCodesError(null);
+    void listGymCodesByGym(data.gymId)
+      .then((codesResponse) => {
+        if (cancelled) return;
+        if (codesResponse.error) {
+          setCodesError(codesResponse.error.message);
+          return;
+        }
+        setCodes(codesResponse.data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setCodesError("Hallencodes konnten nicht geladen werden.");
+      })
+      .finally(() => {
+        if (!cancelled) setCodesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [data.gymId]);
 
   const codeRedemptionsTimeline = useMemo(() => {
     const last30Days = Array.from({ length: 30 }, (_, i) => {
@@ -55,6 +54,9 @@ const GymStats = () => {
   }, [codes]);
 
   const resultsTimeline = useMemo(() => {
+    const countsByDate = new Map(
+      (data.results?.daily_results ?? []).map((day) => [day.date, day.count]),
+    );
     const last30Days = Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (29 - i));
@@ -62,62 +64,50 @@ const GymStats = () => {
     });
     return last30Days.map((date) => ({
       date,
-      count: results.filter((r) => r.created_at?.startsWith(date)).length,
+      count: countsByDate.get(date) ?? 0,
     }));
-  }, [results]);
+  }, [data.results]);
 
   const topRoutesByPoints = useMemo(() => {
-    const routeStats = routes.map((route) => {
-      const routeResults = results.filter((r) => r.route_id === route.id);
-      const avgPoints =
-        routeResults.length > 0
-          ? routeResults.reduce((sum, r) => sum + getResultScore(r), 0) / routeResults.length
-          : 0;
-      return {
-        route,
-        avgPoints,
-        count: routeResults.length,
-      };
-    });
-    return routeStats
-      .filter((s) => s.count > 0)
+    const routeMap = new Map(data.routes.map((route) => [route.id, route]));
+    return (data.results?.route_stats ?? [])
+      .map((routeStats) => ({
+        route: routeMap.get(routeStats.route_id),
+        avgPoints: routeStats.average_score ?? 0,
+        count: routeStats.result_count,
+      }))
+      .filter(
+        (item): item is { route: Route; avgPoints: number; count: number } =>
+          Boolean(item.route) && item.count > 0,
+      )
       .sort((a, b) => b.avgPoints - a.avgPoints)
       .slice(0, 5);
-  }, [routes, results]);
+  }, [data.results, data.routes]);
 
   const popularRoutes = useMemo(() => {
-    const routeCounts = routes.map((route) => ({
-      route,
-      count: results.filter((r) => r.route_id === route.id).length,
-    }));
-    return routeCounts.sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [routes, results]);
+    const routeMap = new Map(data.routes.map((route) => [route.id, route]));
+    return (data.results?.route_stats ?? [])
+      .map((routeStats) => ({
+        route: routeMap.get(routeStats.route_id),
+        count: routeStats.result_count,
+      }))
+      .filter(
+        (item): item is { route: Route; count: number } =>
+          Boolean(item.route) && item.count > 0,
+      )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [data.results, data.routes]);
 
   const flashStats = useMemo(() => {
-    const flashCount = results.filter((r) => r.flash).length;
-    const totalCount = results.length;
+    const flashCount = data.results?.flash_count ?? 0;
+    const totalCount = data.results?.result_count ?? 0;
     return {
       flash: flashCount,
       normal: totalCount - flashCount,
       rate: totalCount > 0 ? Math.round((flashCount / totalCount) * 100) : 0,
     };
-  }, [results]);
-
-  const topParticipants = useMemo(() => {
-    const participantCounts = new Map<string, number>();
-    results.forEach((r) => {
-      const count = participantCounts.get(r.profile_id) || 0;
-      participantCounts.set(r.profile_id, count + 1);
-    });
-    return Array.from(participantCounts.entries())
-      .map(([profileId, count]) => ({
-        profile: profiles.get(profileId),
-        count,
-      }))
-      .filter((p) => p.profile)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [results, profiles]);
+  }, [data.results]);
 
   const codeRedemptionRate = useMemo(() => {
     const totalCodes = codes.length;
@@ -126,12 +116,27 @@ const GymStats = () => {
   }, [codes]);
 
   const avgPoints = useMemo(() => {
-    return results.length > 0
-      ? Math.round(results.reduce((sum, r) => sum + getResultScore(r), 0) / results.length)
-      : 0;
-  }, [results]);
+    return data.results?.average_score === null || data.results?.average_score === undefined
+      ? 0
+      : Math.round(data.results.average_score);
+  }, [data.results]);
 
-  if (!gymId) {
+  if (loading) {
+    return <p className="text-sm text-[rgba(27,28,26,0.64)]">Hallen-Statistiken werden geladen…</p>;
+  }
+
+  if (error) {
+    return (
+      <StitchCard tone="surface" className="space-y-4 p-5 md:p-6">
+        <p className="text-sm font-semibold text-[#b42318]">{error}</p>
+        <StitchButton type="button" variant="outline" size="sm" onClick={() => void reload()}>
+          Erneut versuchen
+        </StitchButton>
+      </StitchCard>
+    );
+  }
+
+  if (!data.gymId || !data.results) {
     return <p className="text-sm text-[rgba(27,28,26,0.64)]">Keine Halle zugewiesen.</p>;
   }
 
@@ -146,39 +151,59 @@ const GymStats = () => {
         description="Detaillierte Analyse der Hallen-Aktivität und Nutzung."
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-5">
         <AdminStatCard
           icon={BarChart3}
           label="Ergebnisse gesamt"
-          value={results.length}
+          value={data.results.result_count}
           hint={`Ø ${avgPoints} Punkte`}
+        />
+        <AdminStatCard
+          icon={Users}
+          label="Aktive Teilnehmende"
+          value={data.results.participant_count}
+          hint="Anonym zusammengefasst"
         />
         <AdminStatCard
           icon={Zap}
           label="Flash-Rate"
           value={`${flashStats.rate}%`}
-          hint={`${flashStats.flash} von ${results.length}`}
+          hint={`${flashStats.flash} von ${data.results.result_count}`}
           iconWrapClassName="bg-emerald-600/12 group-hover:bg-emerald-600/18"
           iconClassName="text-emerald-700"
           valueClassName="stitch-metric text-3xl text-emerald-700"
         />
         <AdminStatCard
+          icon={Star}
+          label="Routenbewertung"
+          value={
+            data.highlights?.average_rating === null || data.highlights?.average_rating === undefined
+              ? "–"
+              : data.highlights.average_rating.toLocaleString("de-DE", { maximumFractionDigits: 1 })
+          }
+          hint={
+            data.highlightsError
+              ? "Derzeit nicht verfügbar"
+              : `${data.highlights?.rating_count ?? 0} Bewertungen`
+          }
+          iconWrapClassName="bg-amber-500/14 group-hover:bg-amber-500/20"
+          iconClassName="text-amber-600"
+          valueClassName="stitch-metric text-3xl text-amber-600"
+        />
+        <AdminStatCard
           icon={Target}
           label="Code-Einlösung"
-          value={`${codeRedemptionRate}%`}
-          hint={`${codes.filter((c) => c.redeemed_by).length} von ${codes.length}`}
+          value={codesLoading ? "…" : codesError ? "–" : `${codeRedemptionRate}%`}
+          hint={
+            codesLoading
+              ? "Hallencodes werden geladen"
+              : codesError
+                ? "Hallencodes derzeit nicht verfügbar"
+                : `${codes.filter((c) => c.redeemed_by).length} von ${codes.length}`
+          }
           iconWrapClassName="bg-[#003d55]/10 group-hover:bg-[#003d55]/16"
           iconClassName="text-[#003d55]"
           valueClassName="stitch-metric text-3xl text-[#003d55]"
-        />
-        <AdminStatCard
-          icon={Users}
-          label="Routen gesamt"
-          value={routes.length}
-          hint="Aktive Routen"
-          iconWrapClassName="bg-[#a15523]/12 group-hover:bg-[#a15523]/18"
-          iconClassName="text-[#a15523]"
-          valueClassName="stitch-metric text-3xl text-[#a15523]"
         />
       </div>
 
@@ -188,8 +213,13 @@ const GymStats = () => {
             <Calendar className="h-4 w-4 text-[#003d55]" />
             <div className="stitch-kicker text-[#a15523]">Code-Einlösungen (30 Tage)</div>
           </div>
-          <div className="space-y-2">
-            {codeRedemptionsTimeline.map((day) => (
+          {codesLoading ? (
+            <p className="text-sm text-[rgba(27,28,26,0.64)]">Hallencodes werden geladen…</p>
+          ) : codesError ? (
+            <p className="text-sm font-semibold text-[#b42318]">{codesError}</p>
+          ) : (
+            <div className="space-y-2">
+              {codeRedemptionsTimeline.map((day) => (
               <div key={day.date} className="flex items-center gap-2">
                 <div className="w-14 shrink-0 text-xs text-[rgba(27,28,26,0.55)] sm:w-20">
                   {new Date(day.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
@@ -202,8 +232,9 @@ const GymStats = () => {
                 </div>
                 <div className="w-6 shrink-0 text-right text-xs text-[rgba(27,28,26,0.55)] sm:w-8">{day.count}</div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </StitchCard>
 
         <StitchCard tone="surface" className="p-4 md:p-6">
@@ -300,37 +331,6 @@ const GymStats = () => {
         </StitchCard>
       </div>
 
-      {topParticipants.length > 0 ? (
-        <StitchCard tone="surface" className="p-4 md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#003d55]" />
-            <div className="stitch-kicker text-[#a15523]">Aktivste Teilnehmer</div>
-          </div>
-          <div className="space-y-3">
-            {topParticipants.map((item, idx) => (
-              <div
-                key={item.profile?.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(0,38,55,0.08)] bg-white/70 p-3 transition-colors hover:bg-white/95"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003d55]/10 text-sm font-bold text-[#003d55]">
-                    {idx + 1}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-[#002637] break-words">
-                      {item.profile?.first_name} {item.profile?.last_name}
-                    </div>
-                    <div className="break-all text-xs text-[rgba(27,28,26,0.55)]">{item.profile?.email}</div>
-                  </div>
-                </div>
-                <StitchBadge tone="ghost" className="shrink-0 font-mono normal-case tracking-normal">
-                  {item.count} Ergebnisse
-                </StitchBadge>
-              </div>
-            ))}
-          </div>
-        </StitchCard>
-      ) : null}
     </div>
   );
 };
