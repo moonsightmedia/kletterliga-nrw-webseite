@@ -10,5 +10,5 @@ type AdminPageHeaderProps = {
 };
 
 export const AdminPageHeader = ({ className, ...props }: AdminPageHeaderProps) => (
-  <StitchSectionHeading className={cn("mb-6 md:mb-8", className)} {...props} />
+  <StitchSectionHeading className={cn("mb-6 md:mb-8", className)} titleAs="h1" {...props} />
 );

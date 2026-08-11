@@ -36,9 +36,25 @@ const formatAverageMetric = (value: number) => {
 
 const GymDetail = () => {
   const { gymId } = useParams();
-  const { profile } = useAuth();
-  const { gym, routes, results, allResults, codeRedeemed, loading, error } =
+  const { profile, user } = useAuth();
+  const {
+    gym,
+    routes,
+    results,
+    communityStats,
+    communityStatsError,
+    codeRedeemed,
+    loading,
+    error,
+  } =
     useParticipantGymDetailQuery(gymId, profile?.id);
+
+  const activeLeague =
+    profile?.league === "lead" || profile?.league === "toprope"
+      ? profile.league
+      : user?.user_metadata?.league === "lead" || user?.user_metadata?.league === "toprope"
+        ? user.user_metadata.league
+        : null;
 
   const resultMap = useMemo(
     () =>
@@ -49,49 +65,38 @@ const GymDetail = () => {
     [results],
   );
 
-  const visibleRoutes = useMemo(() => {
+  const hallRoutes = useMemo(() => {
     const activeRoutes = routes.filter((route) => route.active);
     return activeRoutes.length > 0 ? activeRoutes : routes;
   }, [routes]);
 
+  const personalRoutes = useMemo(() => {
+    if (!activeLeague) return [];
+    const scopedRoutes = routes.filter((route) => route.discipline === activeLeague);
+    const activeRoutes = scopedRoutes.filter((route) => route.active);
+    return activeRoutes.length > 0 ? activeRoutes : scopedRoutes;
+  }, [routes, activeLeague]);
+
   const loggedRoutes = useMemo(
-    () => visibleRoutes.filter((route) => Boolean(resultMap[route.id])).length,
-    [visibleRoutes, resultMap],
+    () => personalRoutes.filter((route) => Boolean(resultMap[route.id])).length,
+    [personalRoutes, resultMap],
   );
 
   const earnedPoints = useMemo(
-    () => visibleRoutes.reduce((acc, route) => acc + getResultScore(resultMap[route.id]), 0),
-    [visibleRoutes, resultMap],
+    () => personalRoutes.reduce((acc, route) => acc + getResultScore(resultMap[route.id]), 0),
+    [personalRoutes, resultMap],
   );
 
-  const progress = visibleRoutes.length > 0 ? Math.round((loggedRoutes / visibleRoutes.length) * 100) : 0;
-
-  const visibleRouteIds = useMemo(() => new Set(visibleRoutes.map((route) => route.id)), [visibleRoutes]);
-
-  const hallRatedResults = useMemo(
-    () =>
-      allResults.filter(
-        (result) => visibleRouteIds.has(result.route_id) && result.rating !== null && result.rating !== undefined,
-      ),
-    [allResults, visibleRouteIds],
-  );
-
-  const averageRating = useMemo(() => {
-    if (hallRatedResults.length === 0) return null;
-    const sum = hallRatedResults.reduce((acc, result) => acc + (result.rating ?? 0), 0);
-    return sum / hallRatedResults.length;
-  }, [hallRatedResults]);
+  const progress = personalRoutes.length > 0 ? Math.round((loggedRoutes / personalRoutes.length) * 100) : 0;
+  const averageRating = communityStats?.average_rating ?? null;
+  const ratingCount = communityStats?.rating_count ?? 0;
 
   const routeHighlights = useMemo(() => {
-    const visibleRoutesById = new Map(visibleRoutes.map((route) => [route.id, route]));
-    const resultsByRoute = allResults.reduce<Record<string, Result[]>>((acc, result) => {
-      const route = visibleRoutesById.get(result.route_id);
-      if (!route) return acc;
-      acc[result.route_id] = [...(acc[result.route_id] ?? []), result];
-      return acc;
-    }, {});
+    const routeStatsById = new Map(
+      (communityStats?.route_stats ?? []).map((routeStats) => [routeStats.route_id, routeStats]),
+    );
 
-    const sortedRoutes = [...visibleRoutes].sort((a, b) => {
+    const sortedRoutes = [...hallRoutes].sort((a, b) => {
       const codeDiff = parseCodeValue(a.code) - parseCodeValue(b.code);
       if (codeDiff !== 0) return codeDiff;
       return a.code.localeCompare(b.code);
@@ -99,16 +104,13 @@ const GymDetail = () => {
 
     const ratedCandidates = sortedRoutes
       .map((route) => {
-        const ratings = (resultsByRoute[route.id] ?? [])
-          .map((result) => result.rating)
-          .filter((rating): rating is number => rating !== null && rating !== undefined);
-
-        if (ratings.length === 0) return null;
+        const routeStats = routeStatsById.get(route.id);
+        if (!routeStats || routeStats.rating_count === 0 || routeStats.average_rating === null) return null;
 
         return {
           route,
-          average: ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length,
-          count: ratings.length,
+          average: routeStats.average_rating,
+          count: routeStats.rating_count,
         };
       })
       .filter((candidate): candidate is { route: Route; average: number; count: number } => candidate !== null)
@@ -121,7 +123,7 @@ const GymDetail = () => {
       });
 
     const climbedCandidates = sortedRoutes
-      .map((route) => ({ route, count: (resultsByRoute[route.id] ?? []).length }))
+      .map((route) => ({ route, count: routeStatsById.get(route.id)?.entry_count ?? 0 }))
       .filter((candidate) => candidate.count > 0)
       .sort((a, b) => {
         if (b.count !== a.count) return b.count - a.count;
@@ -134,7 +136,9 @@ const GymDetail = () => {
       {
         key: "favorite",
         label: "Beliebteste Route",
-        emptyText: "Noch keine bewertete Route in dieser Halle.",
+        emptyText: communityStatsError
+          ? "Routenbewertungen sind aktuell nicht verfügbar."
+          : "Noch keine bewertete Route in dieser Halle.",
         route: ratedCandidates[0]?.route ?? null,
         subtitle: ratedCandidates[0]
           ? `${ratedCandidates[0].route.discipline === "lead" ? "Vorstieg" : "Toprope"} | ${ratedCandidates[0].count} Bewertung${ratedCandidates[0].count === 1 ? "" : "en"}`
@@ -144,8 +148,10 @@ const GymDetail = () => {
       },
       {
         key: "most-climbed",
-        label: "Meistbegangenste Route",
-        emptyText: "Noch keine eingetragene Route in dieser Halle.",
+        label: "Meistbegangene Route",
+        emptyText: communityStatsError
+          ? "Routenstatistiken sind aktuell nicht verfügbar."
+          : "Noch keine eingetragene Route in dieser Halle.",
         route: climbedCandidates[0]?.route ?? null,
         subtitle: climbedCandidates[0]
           ? `${climbedCandidates[0].route.discipline === "lead" ? "Vorstieg" : "Toprope"}`
@@ -154,9 +160,7 @@ const GymDetail = () => {
         value: climbedCandidates[0] ? `${climbedCandidates[0].count}x` : "",
       },
     ];
-  }, [allResults, visibleRoutes]);
-
-  const ratingCount = hallRatedResults.length;
+  }, [communityStats, communityStatsError, hallRoutes]);
   const directionsLink = buildDirectionsLink(gym?.address ?? null);
   const mapEmbedLink = buildMapEmbedLink(gym?.address ?? null);
 
@@ -307,11 +311,19 @@ const GymDetail = () => {
           </div>
 
           <div className="mt-5">
-            <div className="stitch-metric text-6xl text-[#f2dcab]">{progress}%</div>
+            <div className="stitch-metric text-6xl text-[#f2dcab]">
+              {activeLeague ? `${progress}%` : "–"}
+            </div>
             <p className="mt-2 text-sm italic text-[rgba(242,220,171,0.68)]">
-              {loggedRoutes} von {visibleRoutes.length} Routen eingetragen
+              {activeLeague
+                ? `${loggedRoutes} von ${personalRoutes.length} Routen eingetragen`
+                : "Liga im Profil nicht hinterlegt"}
             </p>
-            <p className="mt-1 text-sm font-semibold text-[rgba(242,220,171,0.84)]">{earnedPoints} Punkte erzielt</p>
+            <p className="mt-1 text-sm font-semibold text-[rgba(242,220,171,0.84)]">
+              {activeLeague
+                ? `${earnedPoints} Punkte erzielt`
+                : "Bitte wende dich an die Ligaleitung, damit dein Hallenstatus korrekt berechnet wird."}
+            </p>
           </div>
 
           <div className="mt-6 h-2 overflow-hidden rounded-full bg-[rgba(242,220,171,0.08)]">
@@ -338,12 +350,18 @@ const GymDetail = () => {
           <div className="mt-6 flex items-center gap-3">
             <StarRating value={averageRating ?? 0} readonly size="sm" />
             <div className="text-lg font-semibold text-[#002637]">
-              {averageRating !== null ? averageRating.toFixed(1) : "Noch keine Bewertungen"}
+              {averageRating !== null
+                ? averageRating.toFixed(1)
+                : communityStatsError
+                  ? "Aktuell nicht verfügbar"
+                  : "Noch keine Bewertungen"}
             </div>
           </div>
 
           <p className="mt-3 text-sm leading-6 text-[rgba(0,38,55,0.68)]">
-            {ratingCount > 0
+            {communityStatsError
+              ? "Die Bewertungsdaten konnten nicht geladen werden. Dein Hallenstatus bleibt davon unberührt."
+              : ratingCount > 0
               ? `Basierend auf ${ratingCount} abgegebenen Bewertung${ratingCount === 1 ? "" : "en"} in dieser Halle.`
               : "Sobald Routen bewertet wurden, erscheint hier der echte Hallendurchschnitt."}
           </p>

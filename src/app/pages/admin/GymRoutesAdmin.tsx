@@ -2,13 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { createRoute, deleteRoute, listGymAdminsByProfile, listRoutesByGym, updateRoute } from "@/services/appApi";
-import type { Route } from "@/services/appTypes";
-import { Pencil, Plus, Trash2, CheckSquare, Square } from "lucide-react";
+import { createRoute, deleteRoute, getGymRouteHighlights, listGymAdminsByProfile, listRoutesByGym, updateRoute } from "@/services/appApi";
+import type { GymRouteCommunityStats, Route } from "@/services/appTypes";
+import { Pencil, Plus, Trash2, CheckSquare, Square, Star } from "lucide-react";
 
 const AVAILABLE_COLORS = [
   { name: "weiß", class: "bg-white border border-border", hex: "#FFFFFF" },
@@ -44,6 +44,7 @@ const ColorPicker = ({ value, onChange }: { value: string; onChange: (color: str
             value={hexValue}
             onChange={(e) => handleColorChange(e.target.value)}
             className="h-10 w-20 rounded-md border border-input cursor-pointer"
+            aria-label="Routenfarbe auswählen"
           />
         </div>
         <div className="flex-1">
@@ -88,6 +89,10 @@ const GymRoutesAdmin = () => {
   const { profile } = useAuth();
   const [routes, setRoutes] = useState<Route[]>([]);
   const [gymId, setGymId] = useState<string | null>(null);
+  const [routeRatings, setRouteRatings] = useState<Map<string, GymRouteCommunityStats>>(new Map());
+  const [ratingsStatus, setRatingsStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [assignmentLoading, setAssignmentLoading] = useState(true);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
   const [selectedDiscipline, setSelectedDiscipline] = useState<"toprope" | "lead">("toprope");
@@ -103,13 +108,66 @@ const GymRoutesAdmin = () => {
 
   useEffect(() => {
     if (!profile?.id) return;
-    listGymAdminsByProfile(profile.id).then(({ data }) => {
-      const firstGym = data?.[0]?.gym_id ?? null;
-      setGymId(firstGym);
-      if (firstGym) {
-        listRoutesByGym(firstGym).then(({ data: routesData }) => setRoutes(routesData ?? []));
-      }
-    });
+    let cancelled = false;
+    setAssignmentLoading(true);
+    setAssignmentError(null);
+
+    void listGymAdminsByProfile(profile.id)
+      .then((assignmentResponse) => {
+        if (cancelled) return;
+        if (assignmentResponse.error) {
+          setAssignmentError(assignmentResponse.error.message);
+          setAssignmentLoading(false);
+          return;
+        }
+
+        const firstGym = assignmentResponse.data?.[0]?.gym_id ?? null;
+        setGymId(firstGym);
+        if (!firstGym) {
+          setAssignmentLoading(false);
+          return;
+        }
+
+        void listRoutesByGym(firstGym)
+          .then((routesResponse) => {
+            if (cancelled) return;
+            if (routesResponse.error) {
+              setAssignmentError(routesResponse.error.message);
+              return;
+            }
+            setRoutes(routesResponse.data ?? []);
+          })
+          .catch(() => {
+            if (!cancelled) setAssignmentError("Routen konnten nicht geladen werden.");
+          })
+          .finally(() => {
+            if (!cancelled) setAssignmentLoading(false);
+          });
+
+        setRatingsStatus("loading");
+        void getGymRouteHighlights(firstGym).then(({ data: highlightsData, error }) => {
+          if (cancelled) return;
+          if (error || !highlightsData) {
+            setRouteRatings(new Map());
+            setRatingsStatus("unavailable");
+            return;
+          }
+          setRouteRatings(
+            new Map(highlightsData.route_stats.map((routeStats) => [routeStats.route_id, routeStats])),
+          );
+          setRatingsStatus("ready");
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAssignmentError("Hallenzuordnung konnte nicht geladen werden.");
+          setAssignmentLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [profile?.id]);
 
   const filteredRoutes = useMemo(() => {
@@ -265,6 +323,37 @@ const GymRoutesAdmin = () => {
     return color ? color.name : colorValue;
   };
 
+  const renderRouteRating = (routeId: string) => {
+    const rating = routeRatings.get(routeId);
+    if (ratingsStatus === "loading") {
+      return <div className="mt-2 text-xs text-muted-foreground">Bewertungen werden geladen…</div>;
+    }
+    if (ratingsStatus === "unavailable") {
+      return <div className="mt-2 text-xs text-muted-foreground">Bewertungen derzeit nicht verfügbar</div>;
+    }
+    if (!rating || rating.rating_count === 0 || rating.average_rating === null) {
+      return <div className="mt-2 text-xs text-muted-foreground">Noch keine Bewertung</div>;
+    }
+
+    return (
+      <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+        <span>
+          Ø {rating.average_rating.toLocaleString("de-DE", { maximumFractionDigits: 1 })} ·{" "}
+          {rating.rating_count} {rating.rating_count === 1 ? "Bewertung" : "Bewertungen"}
+        </span>
+      </div>
+    );
+  };
+
+  if (assignmentLoading) {
+    return <div className="text-sm text-muted-foreground">Routen werden geladen…</div>;
+  }
+
+  if (assignmentError) {
+    return <div className="text-sm font-semibold text-[#b42318]">{assignmentError}</div>;
+  }
+
   if (!gymId) {
     return <div className="text-sm text-muted-foreground">Keine Halle zugewiesen.</div>;
   }
@@ -416,6 +505,7 @@ const GymRoutesAdmin = () => {
                           type="button"
                           onClick={() => toggleRouteSelection(route.id)}
                           className="mt-1 touch-manipulation flex-shrink-0"
+                          aria-label={`Route ${route.code} ${isSelected ? "abwählen" : "auswählen"}`}
                         >
                           {isSelected ? (
                             <CheckSquare className="h-5 w-5 text-primary" />
@@ -434,6 +524,7 @@ const GymRoutesAdmin = () => {
                             {colorName && <div>Farbe: {colorName}</div>}
                             {route.setter && <div>Routenschrauber: {route.setter}</div>}
                           </div>
+                          {renderRouteRating(route.id)}
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
                             <StitchButton
                               type="button"
@@ -451,6 +542,7 @@ const GymRoutesAdmin = () => {
                               size="sm"
                               onClick={() => handleDelete(route.id)}
                               className="touch-manipulation text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                              aria-label={`Route ${route.code} löschen`}
                             >
                               <Trash2 className="h-3 w-3" />
                             </StitchButton>
@@ -500,6 +592,7 @@ const GymRoutesAdmin = () => {
                           type="button"
                           onClick={() => toggleRouteSelection(route.id)}
                           className="mt-1 touch-manipulation flex-shrink-0"
+                          aria-label={`Route ${route.code} ${isSelected ? "abwählen" : "auswählen"}`}
                         >
                           {isSelected ? (
                             <CheckSquare className="h-5 w-5 text-primary" />
@@ -518,6 +611,7 @@ const GymRoutesAdmin = () => {
                             {colorName && <div>Farbe: {colorName}</div>}
                             {route.setter && <div>Routenschrauber: {route.setter}</div>}
                           </div>
+                          {renderRouteRating(route.id)}
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
                             <StitchButton
                               type="button"
@@ -535,6 +629,7 @@ const GymRoutesAdmin = () => {
                               size="sm"
                               onClick={() => handleDelete(route.id)}
                               className="touch-manipulation text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                              aria-label={`Route ${route.code} löschen`}
                             >
                               <Trash2 className="h-3 w-3" />
                             </StitchButton>
@@ -555,6 +650,9 @@ const GymRoutesAdmin = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Route bearbeiten</DialogTitle>
+            <DialogDescription>
+              Passe die Routendaten an. Die vorhandenen Ergebnisse und Bewertungen bleiben unverändert.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">

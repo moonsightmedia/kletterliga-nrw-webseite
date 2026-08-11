@@ -49,6 +49,7 @@ const GymAdminDashboard = lazy(
 );
 const GymProfile = lazy(() => import("@/app/pages/admin/GymProfile"));
 const GymRoutesAdmin = lazy(() => import("@/app/pages/admin/GymRoutesAdmin"));
+const GymResults = lazy(() => import("@/app/pages/admin/GymResults"));
 const GymCodes = lazy(() => import("@/app/pages/admin/GymCodes"));
 const GymMastercodes = lazy(() => import("@/app/pages/admin/GymMastercodes"));
 const GymStats = lazy(() => import("@/app/pages/admin/GymStats"));
@@ -236,6 +237,14 @@ export const appRoutes = (
         element={
           <RoleGuard allow={["gym_admin"]}>
             <GymRoutesAdmin />
+          </RoleGuard>
+        }
+      />
+      <Route
+        path="gym/results"
+        element={
+          <RoleGuard allow={["gym_admin"]}>
+            <GymResults />
           </RoleGuard>
         }
       />

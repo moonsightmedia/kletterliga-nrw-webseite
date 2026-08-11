@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
+  BarChart3,
   Building2,
   ChartLine,
   ClipboardList,
@@ -27,6 +28,7 @@ const adminNav = [
   { to: "/app/admin/gym", label: "Meine Halle", icon: Building2, role: "gym_admin" },
   { to: "/app/admin/gym/profile", label: "Hallenprofil", icon: Cog, role: "gym_admin" },
   { to: "/app/admin/gym/routes", label: "Routen", icon: ClipboardList, role: "gym_admin" },
+  { to: "/app/admin/gym/results", label: "Ergebnisse", icon: BarChart3, role: "gym_admin" },
   { to: "/app/admin/gym/codes", label: "Codes", icon: Flag, role: "gym_admin" },
   { to: "/app/admin/gym/mastercodes", label: "Mastercodes", icon: TicketCheck, role: "gym_admin" },
   { to: "/app/admin/gym/stats", label: "Statistiken", icon: ChartLine, role: "gym_admin" },
@@ -74,6 +76,8 @@ export const AdminLayout = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]/40"
             aria-label={mobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="admin-navigation"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -82,6 +86,7 @@ export const AdminLayout = () => {
 
       {/* Sidebar */}
       <aside
+        id="admin-navigation"
         className={cn(
           "stitch-admin-aside flex min-h-0 flex-col border-b border-[rgba(242,220,171,0.35)] md:min-h-screen md:w-64 md:border-b-0 md:border-r",
           mobileMenuOpen
@@ -102,6 +107,8 @@ export const AdminLayout = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#f2dcab] transition hover:bg-[rgba(242,220,171,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]/40 md:hidden"
               aria-label="Menü schließen"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="admin-navigation"
             >
               <X className="h-5 w-5" />
             </button>

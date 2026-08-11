@@ -97,17 +97,19 @@ export const StitchSectionHeading = ({
   title,
   description,
   align = "left",
+  titleAs: Title = "div",
   className,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   align?: "left" | "center";
+  titleAs?: "div" | "h1" | "h2";
   className?: string;
 }) => (
   <div className={cn("space-y-3", align === "center" && "text-center", className)}>
     {eyebrow ? <div className="stitch-kicker text-[#a15523]">{eyebrow}</div> : null}
-    <div className="stitch-headline text-3xl leading-[0.92] text-[#002637] sm:text-4xl">{title}</div>
+    <Title className="stitch-headline text-3xl leading-[0.92] text-[#002637] sm:text-4xl">{title}</Title>
     {description ? <p className="max-w-2xl text-sm leading-6 text-[rgba(27,28,26,0.64)]">{description}</p> : null}
   </div>
 );
