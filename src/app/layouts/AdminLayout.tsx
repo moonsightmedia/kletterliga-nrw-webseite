@@ -18,6 +18,7 @@ import {
   Key,
   TicketCheck,
   MessageCircle,
+  ListOrdered,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthProvider";
@@ -29,6 +30,7 @@ const adminNav = [
   { to: "/app/admin/gym/profile", label: "Hallenprofil", icon: Cog, role: "gym_admin" },
   { to: "/app/admin/gym/routes", label: "Routen", icon: ClipboardList, role: "gym_admin" },
   { to: "/app/admin/gym/results", label: "Ergebnisse", icon: BarChart3, role: "gym_admin" },
+  { to: "/app/admin/gym/rankings", label: "Rangliste", icon: ListOrdered, role: "gym_admin" },
   { to: "/app/admin/gym/codes", label: "Codes", icon: Flag, role: "gym_admin" },
   { to: "/app/admin/gym/mastercodes", label: "Mastercodes", icon: TicketCheck, role: "gym_admin" },
   { to: "/app/admin/gym/stats", label: "Statistiken", icon: ChartLine, role: "gym_admin" },

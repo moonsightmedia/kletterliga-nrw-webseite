@@ -37,13 +37,13 @@ export const AdminStatCard = ({
     <div className="relative p-4 md:p-6">
       <div className="mb-4 flex items-start justify-between">
         <div className={cn("rounded-lg p-2 transition-colors", iconWrapClassName)}>
-          <Icon className={cn("h-5 w-5", iconClassName)} />
+          <Icon className={cn("h-5 w-5", iconClassName)} aria-hidden />
         </div>
       </div>
       <div className="space-y-1">
-        <p className="stitch-kicker text-[rgba(27,28,26,0.55)]">{label}</p>
+        <p className="stitch-kicker text-[rgba(27,28,26,0.68)]">{label}</p>
         <div className={valueClassName}>{value}</div>
-        {hint ? <p className="text-xs text-[rgba(27,28,26,0.55)]">{hint}</p> : null}
+        {hint ? <p className="text-xs text-[rgba(27,28,26,0.68)]">{hint}</p> : null}
       </div>
     </div>
   </StitchCard>

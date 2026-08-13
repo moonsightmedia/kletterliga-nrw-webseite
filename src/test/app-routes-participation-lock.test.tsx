@@ -12,6 +12,10 @@ vi.mock("@/app/layouts/ParticipantLayout", () => ({
   ParticipantLayout: () => <Outlet />,
 }));
 
+vi.mock("@/app/layouts/AdminLayout", () => ({
+  AdminLayout: () => <Outlet />,
+}));
+
 vi.mock("@/config/launch", async () => {
   const actual = await vi.importActual<typeof import("@/config/launch")>("@/config/launch");
   return {
@@ -41,6 +45,21 @@ describe("appRoutes participation gating", () => {
     );
 
     expect(await screen.findByText("Mastercode-Einlösung folgt zum Saisonstart")).toBeInTheDocument();
+    expect(screen.getByText("Freischaltung am 01.05.2026")).toBeInTheDocument();
+  });
+
+  it("uses the same season lock for the gym-admin ranking", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={["/app/admin/gym/rankings"]}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <Routes>{appRoutes}</Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Ranglisten" })).toBeInTheDocument();
+    expect(screen.getByText("Gesperrt bis Saisonstart")).toBeInTheDocument();
     expect(screen.getByText("Freischaltung am 01.05.2026")).toBeInTheDocument();
   });
 });

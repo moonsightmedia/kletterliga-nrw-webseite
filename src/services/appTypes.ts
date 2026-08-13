@@ -188,6 +188,12 @@ export type GymAdminResultsPayload = {
   next_cursor: string | null;
 };
 
+export type GymAdminRankingRow = {
+  rank: number;
+  display_name: string;
+  points: number;
+};
+
 export type GymInvite = {
   id: string;
   gym_id: string | null;

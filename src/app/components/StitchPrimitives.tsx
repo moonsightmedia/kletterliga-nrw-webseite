@@ -124,13 +124,13 @@ export const StitchTextField = React.forwardRef<
   }
 >(({ className, icon, label, hint, error, ...props }, ref) => (
   <label className="block space-y-1.5">
-    <span className="stitch-kicker text-[rgba(0,38,55,0.6)]">{label}</span>
+    <span className="stitch-kicker text-[rgba(0,38,55,0.68)]">{label}</span>
     <span className="stitch-field-shell flex items-center gap-3 px-4 py-3">
       {icon ? <span className="text-[rgba(0,38,55,0.36)]">{icon}</span> : null}
       <input ref={ref} className={cn("stitch-input min-w-0", className)} {...props} />
     </span>
     {error ? <span className="text-xs font-semibold text-[#ba1a1a]">{error}</span> : null}
-    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.56)]">{hint}</span> : null}
+    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.68)]">{hint}</span> : null}
   </label>
 ));
 StitchTextField.displayName = "StitchTextField";
@@ -144,12 +144,12 @@ export const StitchTextareaField = React.forwardRef<
   }
 >(({ className, label, hint, error, ...props }, ref) => (
   <label className="block space-y-1.5">
-    <span className="stitch-kicker text-[rgba(0,38,55,0.6)]">{label}</span>
+    <span className="stitch-kicker text-[rgba(0,38,55,0.68)]">{label}</span>
     <span className="stitch-field-shell flex px-4 py-3">
       <textarea ref={ref} className={cn("stitch-textarea min-h-24 resize-none", className)} {...props} />
     </span>
     {error ? <span className="text-xs font-semibold text-[#ba1a1a]">{error}</span> : null}
-    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.56)]">{hint}</span> : null}
+    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.68)]">{hint}</span> : null}
   </label>
 ));
 StitchTextareaField.displayName = "StitchTextareaField";
@@ -164,7 +164,7 @@ export const StitchSelectField = React.forwardRef<
   }
 >(({ children, className, label, hint, error, icon, ...props }, ref) => (
   <label className="block space-y-1.5">
-    <span className="stitch-kicker text-[rgba(0,38,55,0.6)]">{label}</span>
+    <span className="stitch-kicker text-[rgba(0,38,55,0.68)]">{label}</span>
     <span className="stitch-field-shell flex items-center gap-3 px-4 py-3">
       {icon ? <span className="text-[rgba(0,38,55,0.36)]">{icon}</span> : null}
       <span className="relative block flex-1">
@@ -175,7 +175,7 @@ export const StitchSelectField = React.forwardRef<
       </span>
     </span>
     {error ? <span className="text-xs font-semibold text-[#ba1a1a]">{error}</span> : null}
-    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.56)]">{hint}</span> : null}
+    {!error && hint ? <span className="text-xs text-[rgba(0,38,55,0.68)]">{hint}</span> : null}
   </label>
 ));
 StitchSelectField.displayName = "StitchSelectField";
