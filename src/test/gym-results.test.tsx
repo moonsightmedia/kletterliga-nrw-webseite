@@ -30,6 +30,11 @@ const mockedUseOverview = vi.mocked(useGymAdminOverviewQuery);
 const mockedGetGymAdminResults = vi.mocked(getGymAdminResults);
 const reload = vi.fn().mockResolvedValue(undefined);
 
+const openIndividualResults = () => {
+  const tab = screen.getByRole("tab", { name: "Einzelergebnisse" });
+  fireEvent.click(tab);
+};
+
 const privateResult = {
   id: "result-1",
   route_id: "route-1",
@@ -115,7 +120,15 @@ describe("GymResults", () => {
   it("renders route results and ratings without exposing private participant data or admin actions", () => {
     render(<GymResults />);
 
+    expect(screen.getByRole("tab", { name: "Nach Routen" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(screen.getByText(/Route T1/)).toHaveTextContent("Route T1 · Testkante");
+    expect(screen.getByText("Gesamter Datenbestand")).toBeInTheDocument();
+
+    openIndividualResults();
+
     expect(screen.getByText("7")).toBeInTheDocument();
     expect(screen.getByText("Flash")).toBeInTheDocument();
     expect(screen.getByText("4 von 5")).toBeInTheDocument();
@@ -127,6 +140,25 @@ describe("GymResults", () => {
     expect(
       screen.queryByRole("button", { name: /bearbeiten|löschen|verlauf/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("supports arrow, Home and End keys in the result view tabs", () => {
+    render(<GymResults />);
+
+    const routeTab = screen.getByRole("tab", { name: "Nach Routen" });
+    const resultTab = screen.getByRole("tab", { name: "Einzelergebnisse" });
+    routeTab.focus();
+
+    fireEvent.keyDown(routeTab, { key: "ArrowRight" });
+    expect(resultTab).toHaveAttribute("aria-selected", "true");
+    expect(resultTab).toHaveFocus();
+
+    fireEvent.keyDown(resultTab, { key: "Home" });
+    expect(routeTab).toHaveAttribute("aria-selected", "true");
+    expect(routeTab).toHaveFocus();
+
+    fireEvent.keyDown(routeTab, { key: "End" });
+    expect(resultTab).toHaveAttribute("aria-selected", "true");
   });
 
   it("shows a stable empty state for an assigned hall without results", () => {
@@ -145,6 +177,7 @@ describe("GymResults", () => {
     });
 
     render(<GymResults />);
+    openIndividualResults();
 
     expect(screen.getByText("Für diese Halle liegen noch keine Ergebnisse vor.")).toBeInTheDocument();
   });
@@ -174,7 +207,7 @@ describe("GymResults", () => {
     render(<GymResults />);
 
     expect(screen.getByText(/Keine Halle zugewiesen/)).toBeInTheDocument();
-    expect(screen.queryByText("Ergebnisse & Bewertungen")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Ergebnisse & Bewertungen" })).toBeInTheDocument();
   });
 
   it("loads the next anonymous result page with the assigned hall and cursor", async () => {
@@ -209,6 +242,7 @@ describe("GymResults", () => {
     });
 
     render(<GymResults />);
+    openIndividualResults();
     fireEvent.click(screen.getByRole("button", { name: "Weitere Ergebnisse laden" }));
 
     await waitFor(() => {
@@ -219,5 +253,60 @@ describe("GymResults", () => {
     });
     expect(await screen.findByText("Nicht bewertet", { selector: "span" })).toBeInTheDocument();
     expect(screen.getByText("2 von 2 geladenen Ergebnissen")).toBeInTheDocument();
+  });
+
+  it("filters the complete route overview independently from loaded result pages", () => {
+    mockOverview({
+      data: {
+        ...populatedOverview,
+        routes: [
+          ...populatedOverview.routes,
+          {
+            id: "route-10",
+            gym_id: "gym-1",
+            discipline: "lead",
+            code: "T10",
+            name: "Vorstiegsdach",
+            setter: null,
+            color: "rot",
+            grade_range: null,
+            active: true,
+          },
+        ],
+        results: {
+          ...populatedOverview.results!,
+          route_stats: [
+            ...populatedOverview.results!.route_stats,
+            { route_id: "route-10", result_count: 0, flash_count: 0, average_score: null },
+          ],
+        },
+      },
+    });
+
+    render(<GymResults />);
+
+    expect(screen.getByText("2 von 2 Routen")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Disziplin"), { target: { value: "lead" } });
+
+    expect(screen.getByText("1 von 2 Routen")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Route T10/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Route T1 · Testkante/ })).not.toBeInTheDocument();
+  });
+
+  it("marks historical route ratings as unavailable instead of unrated", () => {
+    mockOverview({
+      data: {
+        ...populatedOverview,
+        routes: populatedOverview.routes.map((route) => ({ ...route, active: false })),
+      },
+    });
+
+    render(<GymResults />);
+
+    expect(screen.getByText("Für inaktive Route nicht verfügbar")).toBeInTheDocument();
+    expect(screen.queryByText("Keine Bewertung")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Bewertung"), { target: { value: "unrated" } });
+    expect(screen.getByText("Für diese Filter wurden keine passenden Routen gefunden.")).toBeInTheDocument();
   });
 });

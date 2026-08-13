@@ -7,6 +7,7 @@ import type {
   Gym,
   GymAdmin,
   GymAdminResultsPayload,
+  GymAdminRankingRow,
   GymCode,
   GymCommunityStats,
   GymInvite,
@@ -770,6 +771,87 @@ export async function getGymAdminResults(
     return {
       data: null,
       error: { message: "Hallenergebnisse konnten nicht geladen werden." },
+    };
+  }
+}
+
+export async function getGymAdminRankings(
+  league: "toprope" | "lead",
+  age: "U15" | "UE15" | "UE40",
+  gender: "m" | "w",
+) {
+  if (!isSupabaseConfigured) {
+    return { data: null as GymAdminRankingRow[] | null, error: missingSupabaseError() };
+  }
+
+  try {
+    const auth = await getRequiredSessionAccessToken(
+      "Bitte melde dich erneut an, um die Rangliste zu laden.",
+    );
+    if (auth.error || !auth.token) {
+      return { data: null as GymAdminRankingRow[] | null, error: auth.error };
+    }
+    const params = new URLSearchParams({ league, age, gender });
+    const response = await fetch(
+      `${supabaseConfig.url}/functions/v1/get-gym-admin-rankings?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+          apikey: supabaseConfig.anonKey,
+        },
+      },
+    );
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message =
+        (body as { error?: string })?.error ?? response.statusText ?? "Rangliste konnte nicht geladen werden.";
+      return { data: null as GymAdminRankingRow[] | null, error: { message } };
+    }
+
+    const rawRows = (body as { data?: unknown }).data;
+    if (!Array.isArray(rawRows)) {
+      return {
+        data: null as GymAdminRankingRow[] | null,
+        error: { message: "Rangliste hat ein unerwartetes Format." },
+      };
+    }
+
+    const data: GymAdminRankingRow[] = [];
+    for (const row of rawRows) {
+      if (!row || typeof row !== "object") {
+        return {
+          data: null as GymAdminRankingRow[] | null,
+          error: { message: "Rangliste hat ein unerwartetes Format." },
+        };
+      }
+      const candidate = row as Partial<GymAdminRankingRow>;
+      const rank = candidate.rank;
+      const points = candidate.points;
+      if (
+        typeof rank !== "number" ||
+        !Number.isInteger(rank) ||
+        rank < 1 ||
+        typeof candidate.display_name !== "string" ||
+        candidate.display_name.trim().length === 0 ||
+        typeof points !== "number" ||
+        !Number.isFinite(points) ||
+        points < 0
+      ) {
+        return {
+          data: null as GymAdminRankingRow[] | null,
+          error: { message: "Rangliste hat ein unerwartetes Format." },
+        };
+      }
+      data.push({ rank, display_name: candidate.display_name, points });
+    }
+
+    return { data, error: null };
+  } catch {
+    return {
+      data: null as GymAdminRankingRow[] | null,
+      error: { message: "Rangliste konnte nicht geladen werden." },
     };
   }
 }

@@ -17,6 +17,7 @@ vi.mock("@/services/supabase", () => ({
 
 import {
   deleteGym,
+  getGymAdminRankings,
   getGymAdminResults,
   getGymRouteHighlights,
   redeemGymCode,
@@ -60,6 +61,13 @@ describe("appApi auth guards", () => {
 
   it("does not call gym admin results without a session token", async () => {
     const result = await getGymAdminResults("gym-1");
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(result.error?.message).toContain("erneut");
+  });
+
+  it("does not call gym admin rankings without a session token", async () => {
+    const result = await getGymAdminRankings("toprope", "UE15", "m");
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(result.error?.message).toContain("erneut");
@@ -212,6 +220,90 @@ describe("appApi auth guards", () => {
     await expect(getGymAdminResults("gym-1")).resolves.toEqual({
       data: null,
       error: { message: "Hallenergebnisse konnten nicht geladen werden." },
+    });
+  });
+
+  it("accepts and sanitizes only the gym admin ranking whitelist", async () => {
+    supabaseMocks.getSession.mockResolvedValue({
+      data: { session: { access_token: "session-token" } },
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        data: [
+          {
+            rank: 1,
+            display_name: "Max Muster",
+            points: 42,
+            profile_id: "private-profile",
+            birth_date: "2010-01-01",
+            email: "private@example.com",
+          },
+        ],
+      }),
+    });
+
+    const response = await getGymAdminRankings("toprope", "UE15", "m");
+
+    expect(response).toEqual({
+      data: [{ rank: 1, display_name: "Max Muster", points: 42 }],
+      error: null,
+    });
+    expect(JSON.stringify(response.data)).not.toContain("private-profile");
+    expect(JSON.stringify(response.data)).not.toContain("private@example.com");
+    expect(JSON.stringify(response.data)).not.toContain("2010-01-01");
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://example.supabase.co/functions/v1/get-gym-admin-rankings?league=toprope&age=UE15&gender=m",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({ Authorization: "Bearer session-token" }),
+      }),
+    );
+  });
+
+  it("rejects malformed gym admin ranking payloads without showing a false empty state", async () => {
+    supabaseMocks.getSession.mockResolvedValue({
+      data: { session: { access_token: "session-token" } },
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        data: [{ rank: 0, display_name: "Ungültig", points: 5 }],
+      }),
+    });
+
+    await expect(getGymAdminRankings("toprope", "UE15", "m")).resolves.toEqual({
+      data: null,
+      error: { message: "Rangliste hat ein unerwartetes Format." },
+    });
+  });
+
+  it("does not coerce string values in the gym admin ranking contract", async () => {
+    supabaseMocks.getSession.mockResolvedValue({
+      data: { session: { access_token: "session-token" } },
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        data: [{ rank: "1", display_name: "Falscher Vertrag", points: "42" }],
+      }),
+    });
+
+    await expect(getGymAdminRankings("toprope", "UE15", "m")).resolves.toEqual({
+      data: null,
+      error: { message: "Rangliste hat ein unerwartetes Format." },
+    });
+  });
+
+  it("returns a controlled error when the gym admin ranking request rejects", async () => {
+    supabaseMocks.getSession.mockResolvedValue({
+      data: { session: { access_token: "session-token" } },
+    });
+    global.fetch = vi.fn().mockRejectedValue(new Error("network unavailable"));
+
+    await expect(getGymAdminRankings("lead", "U15", "w")).resolves.toEqual({
+      data: null,
+      error: { message: "Rangliste konnte nicht geladen werden." },
     });
   });
 });
