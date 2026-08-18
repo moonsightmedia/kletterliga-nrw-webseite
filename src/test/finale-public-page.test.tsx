@@ -25,7 +25,7 @@ describe("public finale page", () => {
     ).toHaveAttribute("src", "/images/finale/foodtruck-marla-mathildas.webp");
     expect(
       screen.getByRole("heading", { name: "SALE-STAND VOM KLETTERLADEN NRW" }),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("id", "finale-sale-stand");
     expect(
       screen.getByRole("img", {
         name: "Wanderschuh-Auswahl im Fachgeschäft kletterladen.nrw",
