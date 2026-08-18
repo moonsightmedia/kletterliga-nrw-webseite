@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const siteUrl = "https://kletterliga-nrw.de";
+const siteUrl = "https://www.kletterliga-nrw.de";
 const distDir = path.resolve("dist");
 const today = new Date().toISOString().slice(0, 10);
 
@@ -48,6 +48,7 @@ const publicRoutes = [
     links: [
       { href: "/liga", label: "Mehr über die Liga" },
       { href: "/modus", label: "Modus und Regeln" },
+      { href: "/finale", label: "Finale 2026" },
       { href: "/hallen", label: "Teilnehmende Hallen" },
       { href: "/ranglisten", label: "Aktuelle Ranglisten" },
     ],
@@ -130,6 +131,87 @@ const publicRoutes = [
       url: `${siteUrl}/modus`,
       description:
         "Übersicht über Wertung, Punktevergabe und Teilnahmebedingungen der Kletterliga NRW.",
+    },
+  },
+  {
+    path: "/finale",
+    title: "Finale 2026 der Kletterliga NRW – Kletterevent am 3. Oktober in Altena",
+    description:
+      "Finale der Kletterliga NRW am 3. Oktober 2026 in Altena: Termin, Qualifikation, Foodtruck, Kletterladen-Sale-Stand und Anreise.",
+    keywords:
+      "Kletterliga NRW Finale 2026, Kletterwettkampf NRW 2026, Kletterevent Altena, Kletterwelt Sauerland Finale, veganer Foodtruck Finale, Kletterladen NRW Sale-Stand",
+    h1: "Finale der Kletterliga NRW 2026",
+    intro:
+      "Am 3. Oktober 2026 trifft sich die Kletterliga NRW in der Kletterwelt Sauerland in Altena zu Halbfinale, Finals, Siegerehrung und dem gemeinsamen Saisonabschluss.",
+    sections: [
+      {
+        title: "Termin und Austragungsort",
+        body:
+          "Das Finalevent findet am Samstag, 3. Oktober 2026, in der Kletterwelt Sauerland, Rosmarter Allee 12 in 58762 Altena, statt.",
+      },
+      {
+        title: "Qualifikation und Anmeldung",
+        body:
+          "Die Qualifikation endet am 13. September. Qualifizierte Teilnehmende bestätigen ihren Startplatz bis 27. September um 23:59 Uhr; vom 28. bis 30. September können Startplätze nachbesetzt werden.",
+      },
+      {
+        title: "Halbfinale, Finals und Publikum",
+        body:
+          "Halbfinale und Finals finden an einem Tag statt. Der detaillierte Zeitplan sowie Hinweise zu Einlass, Zuschauerbereichen und Anreise werden nach Abschluss der Veranstaltungsplanung ergänzt.",
+      },
+      {
+        title: "Veganer Foodtruck und Sale-Stand vom Kletterladen NRW",
+        body:
+          "Marla & Mathilda’s Genusswerkstatt ist mit einem veganen Foodtruck vor Ort: Currywurst, Seitan-Döner, Classic- und Tschicken-Burger, Crêpe und Softeis. Hauptsponsor kletterladen.nrw bietet auf der Empore 50 % auf alle Wanderschuhe, bis zu 60 % auf ausgewählte Kletterschuhe, ein GRIGRI für 60 € sowie Kletterhosen und Hardware.",
+      },
+    ],
+    links: [
+      { href: "/modus", label: "Qualifikation und Wildcards" },
+      { href: "/ranglisten", label: "Aktuelle Ranglisten" },
+      { href: "/regelwerk", label: "Offizielles Regelwerk" },
+      { href: "/kontakt", label: "Kontakt" },
+    ],
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          name: "Finale 2026 der Kletterliga NRW",
+          url: `${siteUrl}/finale`,
+          description:
+            "Informationen zum Finale der Kletterliga NRW 2026 am 3. Oktober in der Kletterwelt Sauerland in Altena.",
+        },
+        {
+          "@type": "SportsEvent",
+          name: "Finale der Kletterliga NRW 2026",
+          description:
+            "Halbfinale, Finals und Siegerehrung der Kletterliga NRW 2026 in der Kletterwelt Sauerland.",
+          startDate: "2026-10-03",
+          endDate: "2026-10-03",
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+          url: `${siteUrl}/finale`,
+          image: `${siteUrl}/og-image.png`,
+          sport: "Klettern",
+          location: {
+            "@type": "Place",
+            name: "Kletterwelt Sauerland",
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "Rosmarter Allee 12",
+              postalCode: "58762",
+              addressLocality: "Altena",
+              addressRegion: "Nordrhein-Westfalen",
+              addressCountry: "DE",
+            },
+          },
+          organizer: {
+            "@type": "SportsOrganization",
+            name: "Kletterliga NRW",
+            url: siteUrl,
+          },
+        },
+      ],
     },
   },
   {
@@ -370,7 +452,10 @@ const setCanonical = (html, href) => {
 const setStructuredData = (html, schemas) => {
   const withoutJsonLd = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, "");
   const scripts = schemas
-    .map((schema) => `    <script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n    </script>`)
+    .map((schema, index) => {
+      const pageSchemaAttribute = index === schemas.length - 1 ? ' data-kl-schema="page"' : "";
+      return `    <script type="application/ld+json"${pageSchemaAttribute}>\n${JSON.stringify(schema, null, 2)}\n    </script>`;
+    })
     .join("\n");
   return withoutJsonLd.replace("</head>", `${scripts}\n  </head>`);
 };

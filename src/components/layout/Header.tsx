@@ -10,6 +10,7 @@ const navItems = [
   { label: "Start", href: "/" },
   { label: "Die Liga", href: "/liga" },
   { label: "Modus & Regeln", href: "/modus" },
+  { label: "Finale", href: "/finale" },
   { label: "Hallen", href: "/hallen" },
   { label: "Ranglisten", href: "/ranglisten" },
   { label: "Sponsoren", href: "/sponsoren" },
@@ -38,6 +39,19 @@ export const Header = () => {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileMenuOpen]);
 
   return (
@@ -87,7 +101,7 @@ export const Header = () => {
                 end={item.href === "/"}
                 className={({ isActive }) =>
                   cn(
-                    "px-4 py-2 text-sm font-medium transition-colors duration-200 -skew-x-6 whitespace-nowrap",
+                    "px-3 py-2 text-sm font-medium transition-colors duration-200 -skew-x-6 whitespace-nowrap xl:px-4",
                     isActive
                       ? "text-primary bg-accent/90"
                       : "text-foreground/80 hover:text-primary hover:bg-accent/90"
@@ -114,6 +128,8 @@ export const Header = () => {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden min-h-10 min-w-10 flex-shrink-0 p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
             aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -127,7 +143,7 @@ export const Header = () => {
               aria-hidden="true"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <nav className="relative z-10 container-kl max-w-md ml-auto bg-background rounded-2xl border border-border shadow-2xl p-4 flex flex-col gap-2 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <nav id="mobile-navigation" className="relative z-10 container-kl max-w-md ml-auto bg-background rounded-2xl border border-border shadow-2xl p-4 flex flex-col gap-2 max-h-[calc(100vh-7rem)] overflow-y-auto">
               <div className="px-2 pb-2 border-b border-border/70">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Navigation

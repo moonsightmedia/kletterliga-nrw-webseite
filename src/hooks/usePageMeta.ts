@@ -13,7 +13,7 @@ type PageMetaOptions = {
 };
 
 const SITE_NAME = "Kletterliga NRW";
-const DEFAULT_IMAGE = "https://kletterliga-nrw.de/og-image.png";
+const DEFAULT_IMAGE = "https://www.kletterliga-nrw.de/og-image.png";
 
 const upsertMeta = (
   selector: string,

@@ -44,7 +44,7 @@ const Hallen = () => {
       "@context": "https://schema.org",
       "@type": "ItemList",
       name: "Teilnehmende Hallen der Kletterliga NRW",
-      url: "https://kletterliga-nrw.de/hallen",
+      url: "https://www.kletterliga-nrw.de/hallen",
       description:
         "Übersicht aller teilnehmenden Kletterhallen der Kletterliga NRW in Nordrhein-Westfalen.",
     },
