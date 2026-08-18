@@ -10,6 +10,7 @@ const navItems = [
   { label: "Start", href: "/" },
   { label: "Die Liga", href: "/liga" },
   { label: "Modus & Regeln", href: "/modus" },
+  { label: "Finale", href: "/finale" },
   { label: "Hallen", href: "/hallen" },
   { label: "Ranglisten", href: "/ranglisten" },
   { label: "Sponsoren", href: "/sponsoren" },
@@ -87,7 +88,7 @@ export const Header = () => {
                 end={item.href === "/"}
                 className={({ isActive }) =>
                   cn(
-                    "px-4 py-2 text-sm font-medium transition-colors duration-200 -skew-x-6 whitespace-nowrap",
+                    "px-3 py-2 text-sm font-medium transition-colors duration-200 -skew-x-6 whitespace-nowrap xl:px-4",
                     isActive
                       ? "text-primary bg-accent/90"
                       : "text-foreground/80 hover:text-primary hover:bg-accent/90"

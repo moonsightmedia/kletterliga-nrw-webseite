@@ -20,8 +20,8 @@ const Index = () => {
       "@context": "https://schema.org",
       "@type": "SportsOrganization",
       name: "Kletterliga NRW",
-      url: "https://kletterliga-nrw.de/",
-      logo: "https://kletterliga-nrw.de/logo.png",
+      url: "https://www.kletterliga-nrw.de/",
+      logo: "https://www.kletterliga-nrw.de/logo.png",
       description:
         "Die Kletterliga NRW ist ein landesweiter Hallenkletter-Wettkampf in Nordrhein-Westfalen mit mehreren Hallen, digitaler Wertung und Finale.",
       sport: "Klettern",

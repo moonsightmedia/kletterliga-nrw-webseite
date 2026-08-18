@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kletterliga-nrw.de/sitemap.xml
+Sitemap: https://www.kletterliga-nrw.de/sitemap.xml

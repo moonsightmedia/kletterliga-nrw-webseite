@@ -8,6 +8,7 @@ const footerLinks = {
     { label: "Start", href: "/" },
     { label: "Die Liga", href: "/liga" },
     { label: "Modus & Regeln", href: "/modus" },
+    { label: "Finale 2026", href: "/finale" },
     { label: "Hallen", href: "/hallen" },
     { label: "Ranglisten", href: "/ranglisten" },
     { label: "Sponsoren", href: "/sponsoren" },

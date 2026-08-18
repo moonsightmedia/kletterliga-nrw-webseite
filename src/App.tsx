@@ -18,6 +18,7 @@ import { initializeLaunchSettings } from "@/config/launch";
 import Index from "./pages/Index";
 import Liga from "./pages/Liga";
 import Modus from "./pages/Modus";
+import Finale from "./pages/Finale";
 import Regelwerk from "./pages/Regelwerk";
 import Teilnahmebedingungen from "./pages/Teilnahmebedingungen";
 import Hallen from "./pages/Hallen";
@@ -67,6 +68,7 @@ const AppShell = () => {
               <Route path="/" element={<Index />} />
               <Route path="/liga" element={<Liga />} />
               <Route path="/modus" element={<Modus />} />
+              <Route path="/finale" element={<Finale />} />
               <Route path="/regelwerk" element={<Regelwerk />} />
               <Route path="/teilnahmebedingungen" element={<Teilnahmebedingungen />} />
               <Route path="/hallen" element={<Hallen />} />
