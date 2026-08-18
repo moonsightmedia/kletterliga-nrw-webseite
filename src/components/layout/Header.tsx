@@ -41,6 +41,19 @@ export const Header = () => {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileMenuOpen]);
+
   return (
     <>
       {/* Top Corner Accent - Static, doesn't scroll */}
@@ -115,6 +128,8 @@ export const Header = () => {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden min-h-10 min-w-10 flex-shrink-0 p-2 text-foreground hover:bg-accent/50 rounded-lg transition-colors"
             aria-label={isMobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -128,7 +143,7 @@ export const Header = () => {
               aria-hidden="true"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <nav className="relative z-10 container-kl max-w-md ml-auto bg-background rounded-2xl border border-border shadow-2xl p-4 flex flex-col gap-2 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <nav id="mobile-navigation" className="relative z-10 container-kl max-w-md ml-auto bg-background rounded-2xl border border-border shadow-2xl p-4 flex flex-col gap-2 max-h-[calc(100vh-7rem)] overflow-y-auto">
               <div className="px-2 pb-2 border-b border-border/70">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Navigation

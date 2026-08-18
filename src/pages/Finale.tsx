@@ -313,7 +313,7 @@ export default function Finale() {
             </p>
           </AnimatedSection>
           <StaggeredAnimation
-            className="grid gap-6 md:grid-cols-3"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
             staggerDelay={90}
             animation="scale"
             itemClassName="h-full"
@@ -323,7 +323,7 @@ export default function Finale() {
                 <div className="mb-5 flex h-14 w-14 -skew-x-6 items-center justify-center bg-accent transition-colors duration-300 group-hover:bg-secondary">
                   <highlight.icon className="h-6 w-6 skew-x-6 text-primary transition-colors duration-300 group-hover:text-secondary-foreground" />
                 </div>
-                <h3 className="font-headline text-xl leading-tight text-primary">{highlight.title}</h3>
+                <h3 className="font-headline text-xl leading-tight text-primary [overflow-wrap:anywhere]">{highlight.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-muted-foreground">{highlight.description}</p>
               </article>
             ))}
