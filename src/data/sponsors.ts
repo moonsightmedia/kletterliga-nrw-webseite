@@ -82,7 +82,7 @@ export const partnerSponsors: Sponsor[] = [
   },
   {
     name: "Goodgrip",
-    tier: "Partner",
+    tier: "Silber",
     website: "https://www.goodgrip.info/",
     logoSrc: "/sponsors/goodgrip-white.png",
     claim: "Boulderbürsten aus Deutschland – neu: Big Betty mit Stiel",

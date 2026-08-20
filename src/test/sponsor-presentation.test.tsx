@@ -40,7 +40,7 @@ describe("sponsor presentation", () => {
     );
   });
 
-  it("keeps the documented sponsor tiers and the neutral Goodgrip partnership", () => {
+  it("keeps the documented sponsor tiers", () => {
     expect(
       partnerSponsors.map(({ name, tier }) => ({ name, tier })),
     ).toEqual([
@@ -48,7 +48,7 @@ describe("sponsor presentation", () => {
       { name: "Proviant", tier: "Silber" },
       { name: "Hillseye Boards", tier: "Silber" },
       { name: "Art by Glöckchen", tier: "Silber" },
-      { name: "Goodgrip", tier: "Partner" },
+      { name: "Goodgrip", tier: "Silber" },
       { name: "Mantle Climbing", tier: "Bronze" },
     ]);
   });
