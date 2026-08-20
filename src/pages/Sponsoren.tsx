@@ -159,7 +159,7 @@ const Sponsoren = () => {
               {partnerSponsors.map((sponsor) => (
                 <div
                   key={sponsor.name}
-                  className="card-kl group flex flex-col gap-5 rounded-sm p-6 text-left"
+                  className="card-kl group flex h-full flex-col gap-5 rounded-sm p-6 text-left"
                 >
                   <div className="relative overflow-hidden bg-muted/40 px-5 py-6">
                     <div className="absolute right-4 top-4 h-8 w-8 bg-secondary/15 -skew-x-6" />
@@ -171,7 +171,9 @@ const Sponsoren = () => {
                             src={sponsor.logoSrc}
                             alt={`Logo ${sponsor.name}`}
                             className={`max-h-14 w-full object-contain skew-x-6 ${
-                              sponsor.name === "POLYTALON" ? "scale-[1.35]" : ""
+                              sponsor.name === "POLYTALON" || sponsor.name === "Goodgrip"
+                                ? "scale-[1.35]"
+                                : ""
                             }`}
                             loading="lazy"
                           />
@@ -184,7 +186,7 @@ const Sponsoren = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="flex flex-1 flex-col">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-headline text-xl text-primary md:text-2xl">
                         {sponsor.name}
@@ -194,7 +196,13 @@ const Sponsoren = () => {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    {sponsor.claim && (
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {sponsor.claim}
+                      </p>
+                    )}
+
+                    <div className="mt-auto flex flex-wrap gap-3 pt-4">
                       {sponsor.website && (
                         <a
                           href={sponsor.website}
