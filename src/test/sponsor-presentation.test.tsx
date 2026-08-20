@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import Index from "@/pages/Index";
 import Sponsoren from "@/pages/Sponsoren";
 import { SponsorBanner } from "@/components/home/SponsorBanner";
-import { partnerSponsors } from "@/data/sponsors";
+import { mainSponsors, partnerSponsors } from "@/data/sponsors";
 
 vi.mock("@/components/home/HeroSection", () => ({
   HeroSection: () => <section>Hero</section>,
@@ -34,7 +34,13 @@ vi.mock("@/components/home/CTASection", () => ({
 }));
 
 describe("sponsor presentation", () => {
-  it("keeps the silver partners ahead of Mantle as the sole bronze partner", () => {
+  it("gives every sponsor a subtitle", () => {
+    expect([...mainSponsors, ...partnerSponsors].every((sponsor) => sponsor.claim?.trim())).toBe(
+      true,
+    );
+  });
+
+  it("keeps the documented sponsor tiers and the neutral Goodgrip partnership", () => {
     expect(
       partnerSponsors.map(({ name, tier }) => ({ name, tier })),
     ).toEqual([
@@ -42,6 +48,7 @@ describe("sponsor presentation", () => {
       { name: "Proviant", tier: "Silber" },
       { name: "Hillseye Boards", tier: "Silber" },
       { name: "Art by Glöckchen", tier: "Silber" },
+      { name: "Goodgrip", tier: "Partner" },
       { name: "Mantle Climbing", tier: "Bronze" },
     ]);
   });
@@ -119,8 +126,23 @@ describe("sponsor presentation", () => {
     expect(within(main).getByText("Hillseye Boards")).toBeInTheDocument();
     expect(within(main).getByText("Mantle Climbing")).toBeInTheDocument();
     expect(within(main).getByText("Art by Glöckchen")).toBeInTheDocument();
+    expect(within(main).getByText("Goodgrip")).toBeInTheDocument();
+    expect(within(main).getByText("Bio-Limonaden, Schorlen und Colas")).toBeInTheDocument();
+    expect(
+      within(main).getByText("Handgefertigte Hightech-Balanceboards"),
+    ).toBeInTheDocument();
+    expect(
+      within(main).getByText("Ausrüstung zum Klettern und Bouldern"),
+    ).toBeInTheDocument();
+    expect(
+      within(main).getByText("Boulderbürsten aus Deutschland – neu: Big Betty mit Stiel"),
+    ).toBeInTheDocument();
     expect(screen.getByAltText("Logo Mantle Climbing")).toBeInTheDocument();
     expect(screen.getByAltText("Logo Art by Glöckchen")).toBeInTheDocument();
+    expect(screen.getByAltText("Logo Goodgrip")).toHaveAttribute(
+      "src",
+      "/sponsors/goodgrip-white.png",
+    );
     expect(screen.getByAltText("Logo POLYTALON")).toHaveAttribute(
       "src",
       "/sponsors/polytalon.png",
@@ -176,6 +198,19 @@ describe("sponsor presentation", () => {
     expect(
       links.some(
         (link) => link.getAttribute("href") === "https://www.instagram.com/art.by.gloeckchen/",
+      ),
+    ).toBe(true);
+    expect(
+      links.some((link) => link.getAttribute("href") === "https://www.goodgrip.info/"),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) => link.getAttribute("href") === "https://www.instagram.com/goodgripinfo/",
+      ),
+    ).toBe(true);
+    expect(
+      links.some(
+        (link) => link.getAttribute("href") === "https://www.facebook.com/goodgrip.bouldering/",
       ),
     ).toBe(true);
     expect(

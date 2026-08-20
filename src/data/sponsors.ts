@@ -1,4 +1,4 @@
-export type SponsorTier = "Gold" | "Silber" | "Bronze";
+export type SponsorTier = "Gold" | "Silber" | "Bronze" | "Partner";
 
 export type Sponsor = {
   name: string;
@@ -59,6 +59,7 @@ export const partnerSponsors: Sponsor[] = [
     tier: "Silber",
     website: "https://www.proviant.de/",
     logoSrc: "/sponsors/proviant.svg",
+    claim: "Bio-Limonaden, Schorlen und Colas",
     instagramUrl: "https://www.instagram.com/proviantberlin/",
     facebookUrl: "https://www.facebook.com/ProviantFruchtmanufaktur/",
   },
@@ -67,6 +68,7 @@ export const partnerSponsors: Sponsor[] = [
     tier: "Silber",
     website: "https://www.hillseye-boards.com/",
     logoSrc: "/sponsors/hillseye-boards-mark.png",
+    claim: "Handgefertigte Hightech-Balanceboards",
     instagramUrl: "https://www.instagram.com/hillseyeboards/",
     facebookUrl: "https://www.facebook.com/hillseye.boards/",
   },
@@ -79,10 +81,20 @@ export const partnerSponsors: Sponsor[] = [
     instagramUrl: "https://www.instagram.com/art.by.gloeckchen/",
   },
   {
+    name: "Goodgrip",
+    tier: "Partner",
+    website: "https://www.goodgrip.info/",
+    logoSrc: "/sponsors/goodgrip-white.png",
+    claim: "Boulderbürsten aus Deutschland – neu: Big Betty mit Stiel",
+    instagramUrl: "https://www.instagram.com/goodgripinfo/",
+    facebookUrl: "https://www.facebook.com/goodgrip.bouldering/",
+  },
+  {
     name: "Mantle Climbing",
     tier: "Bronze",
     website: "https://www.mantle-climbing.de/",
     logoSrc: "/sponsors/mantle-climbing.png",
+    claim: "Ausrüstung zum Klettern und Bouldern",
     instagramUrl: "https://www.instagram.com/mantleclimbing/",
     facebookUrl: "https://de-de.facebook.com/Mantle-Climbing-GmbH-456045974427265/",
   },
