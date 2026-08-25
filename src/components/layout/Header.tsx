@@ -116,10 +116,15 @@ export const Header = () => {
           {/* CTA Button (Desktop) - Inside the corner */}
           <div className="hidden lg:block relative z-10">
             <Button
+              asChild
               className="px-6"
-              onClick={(event) => handlePublicParticipantAccess(event, "/app")}
             >
-              <span className="skew-x-6">Teilnehmen</span>
+              <a
+                href="/app/register"
+                onClick={(event) => handlePublicParticipantAccess(event, "/app/register")}
+              >
+                <span className="skew-x-6">Teilnehmen</span>
+              </a>
             </Button>
           </div>
 
@@ -169,11 +174,16 @@ export const Header = () => {
               ))}
               <div className="pt-4 mt-2 border-t border-border">
                 <Button
+                  asChild
                   variant="secondary"
                   className="w-full min-h-12"
-                  onClick={(event) => handlePublicParticipantAccess(event, "/app")}
                 >
-                  <span className="skew-x-6">Jetzt teilnehmen</span>
+                  <a
+                    href="/app/register"
+                    onClick={(event) => handlePublicParticipantAccess(event, "/app/register")}
+                  >
+                    <span className="skew-x-6">Jetzt teilnehmen</span>
+                  </a>
                 </Button>
               </div>
             </nav>

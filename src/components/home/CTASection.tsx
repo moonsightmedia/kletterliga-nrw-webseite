@@ -48,15 +48,19 @@ export const CTASection = () => {
           <AnimatedSection animation="fade-up" delay={200}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
               <Button
+                asChild
                 variant="secondary"
                 size="lg"
                 className="h-14 min-w-[200px] px-10 text-lg group"
-                onClick={(event) => handlePublicParticipantAccess(event, "/app")}
               >
-                <span className="flex items-center justify-center">
+                <a
+                  href="/app/register"
+                  className="flex items-center justify-center"
+                  onClick={(event) => handlePublicParticipantAccess(event, "/app/register")}
+                >
                   <span className="skew-x-6">Jetzt registrieren</span>
                   <ArrowRight className="ml-2 skew-x-6 group-hover:translate-x-1 transition-transform" size={20} />
-                </span>
+                </a>
               </Button>
               
               <Button
