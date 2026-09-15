@@ -197,6 +197,37 @@ try {
     await context.close();
   }
   if (mode === "after" && !onlyResponsive && !onlyMotion) {
+    if (!onlyNavigation && !onlyFocus) for (const [width, height] of [[320, 640], [390, 844], [768, 1024], [1440, 1000], [844, 390]]) {
+      const { context, page } = await setup(width, "eligible");
+      try {
+        await page.setViewportSize({ width, height });
+        await page.goto(base + "/app/finale", { waitUntil: "networkidle" });
+        const trigger = page.getByRole("button", { name: "Verbindlich zum Halbfinale anmelden", exact: true });
+        await trigger.click();
+        const dialog = page.getByRole("alertdialog", { name: "Bereit fürs Halbfinale?" });
+        await dialog.waitFor();
+        await page.screenshot({ path: resolve(artifactDir, `confirmation-${width}x${height}.png`) });
+        const fit = await dialog.evaluate((element) => {
+          const bounds = element.getBoundingClientRect();
+          return bounds.left >= 0 && bounds.right <= innerWidth + 1 && bounds.top >= 0 && bounds.bottom <= innerHeight + 1 && element.scrollWidth <= element.clientWidth + 1 && getComputedStyle(element).backgroundColor === "rgb(0, 61, 85)";
+        });
+        report.checks.push({ label: "confirmation-responsive", width, height, pass: fit, detail: "Dialog remains inside the viewport with scrollable content" });
+        const cancel = dialog.getByRole("button", { name: "Zurück", exact: true });
+        report.checks.push({ label: "confirmation-safe-focus", width, height, pass: await cancel.evaluate((el) => el === document.activeElement), detail: "Initial keyboard focus is on the non-binding action" });
+        await page.keyboard.press("Tab");
+        const confirm = dialog.getByRole("button", { name: "Jetzt verbindlich anmelden", exact: true });
+        const reachable = await confirm.evaluate((el) => {
+          const rect = el.getBoundingClientRect();
+          const style = getComputedStyle(el);
+          return el === document.activeElement && rect.bottom <= innerHeight && rect.top >= 0 && el.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)) && style.outlineStyle !== "none";
+        });
+        report.checks.push({ label: "confirmation-keyboard", width, height, pass: reachable, detail: "Confirmation is reachable with visible, unobscured focus" });
+        await page.keyboard.press("Escape");
+        await dialog.waitFor({ state: "hidden" });
+        await page.waitForFunction(() => document.activeElement?.tagName === "BUTTON" && document.activeElement.textContent?.includes("Verbindlich zum Halbfinale anmelden"));
+        report.checks.push({ label: "confirmation-escape", width, height, pass: await trigger.evaluate((el) => el === document.activeElement), detail: "Escape closes and restores trigger focus" });
+      } finally { await context.close(); }
+    }
     for (const scenario of onlyNavigation ? [] : onlyFocus ? ["eligible"] : ["pending", "ineligible", "eligible", "registered", "revoked", "deadline", "loading", "error", "mutation-error"]) {
       const { context, page } = await setup(390, scenario);
       try {
@@ -211,7 +242,7 @@ try {
           await page.waitForTimeout(300);
         }
         const evidence = await snapshot(page, `registration-${scenario}${["loading", "mutation-error"].includes(scenario) ? "-initial" : ""}`, 390);
-        const registerButton = page.getByRole("button", { name: /zum halbfinale anmelden|verbindlich anmelden|jetzt anmelden/i });
+        const registerButton = page.getByRole("button", { name: "Verbindlich zum Halbfinale anmelden", exact: true });
         if (["pending", "ineligible", "deadline"].includes(scenario)) {
           report.checks.push({ label: scenario, pass: !(await registerButton.isVisible()) || !(await registerButton.isEnabled()), detail: "No active registration action without eligibility or after deadline" });
         }
@@ -239,6 +270,15 @@ try {
           report.checks.push({ label: scenario, width: 390, pass: reachable, detail: "Scrolled registration control is not covered by fixed navigation" });
           await snapshot(page, "registration-focused-viewport", 390, false);
           await registerButton.click();
+          const confirmation = page.getByRole("alertdialog", { name: "Bereit fürs Halbfinale?" });
+          await confirmation.waitFor();
+          report.checks.push({ label: "confirmation-no-early-write", pass: !report.writes.some((write) => write.scenario === scenario), detail: "First click opens confirmation without a registration request" });
+          await snapshot(page, "registration-confirmation", 390, false);
+          await confirmation.getByRole("button", { name: "Zurück", exact: true }).click();
+          await confirmation.waitFor({ state: "hidden" });
+          report.checks.push({ label: "confirmation-cancel", pass: await registerButton.evaluate((el) => el === document.activeElement) && !report.writes.some((write) => write.scenario === scenario), detail: "Cancel restores focus and makes no request" });
+          await registerButton.click();
+          await confirmation.getByRole("button", { name: "Jetzt verbindlich anmelden", exact: true }).click();
           await page.getByText(/Du bist angemeldet|Anmeldung bestätigt|angemeldet/i).first().waitFor();
           const success = await snapshot(page, "registration-success", 390);
           report.checks.push({ label: scenario, pass: /angemeldet|bestätigt/i.test(success.text), detail: "Registration success is durable and visible" });
@@ -268,14 +308,12 @@ try {
         }
         if (scenario === "mutation-error") {
           await registerButton.click();
+          const confirm = page.getByRole("alertdialog").getByRole("button", { name: "Jetzt verbindlich anmelden", exact: true });
+          await confirm.click();
           await page.waitForTimeout(400);
           const failed = await snapshot(page, "registration-mutation-error", 390);
           report.checks.push({ label: scenario, pass: !/Du bist angemeldet|Anmeldung bestätigt/i.test(failed.text) && /nicht|Fehler|erneut/i.test(failed.text), detail: "Failed mutation does not show a false success" });
-          if (await registerButton.isVisible() && await registerButton.isEnabled()) await registerButton.click();
-          else {
-            await page.getByRole("button", { name: /erneut|neu laden|noch einmal/i }).click();
-            await registerButton.click();
-          }
+          await confirm.click();
           await page.waitForTimeout(450);
           report.checks.push({ label: scenario, pass: /angemeldet|bestätigt/i.test(await page.locator("body").innerText()), detail: "Failed mutation can be retried successfully" });
         }

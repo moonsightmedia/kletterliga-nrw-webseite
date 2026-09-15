@@ -1,5 +1,30 @@
 # Halbfinal-Startseite · Designrichtung 15.09.2026
 
+## Bestätigung vor Anmeldung · Ergänzung 15.09.2026
+
+Ziel: eine kurze, ruhige Zusammenfassung im vertrauten App-Design vor der
+verbindlichen Zusage. Erster Klick öffnet nur den Dialog; erst „Jetzt verbindlich
+anmelden“ ruft die bestehende Registrierung auf. Keine zusätzliche Checkbox,
+keine Änderung an Teilnahmebedingungen, Fristen, Gebühren oder Berechtigungen.
+
+Vorhandenes Radix-AlertDialog-Primitive mit Navy/Creme, Terrakotta-CTA und
+Stitch-Typografie verwenden. Datum und freigegebene Klasse aus dem geladenen
+Serverstatus, Ort aus der bestehenden Eventseite. Kurz erläutern: Halbfinalstart
+ist kein garantierter Finalplatz; Check-in-/Startzeiten noch offen; Abmeldung
+innerhalb der angezeigten Frist bei geöffneter Anmeldung, danach Orga kontaktieren.
+
+320px: volle mobile Dialogbreite mit Seitenabstand, stapelbare Buttons und
+scrollbarer Inhalt. Ab 480px Aktionen nebeneinander, maximal 32rem breit.
+Fokus startet auf Zurück, bleibt im Dialog und kehrt beim Abbruch zum Auslöser
+bzw. nach Erfolg zum bestätigten Status zurück. Fehler im Dialog sichtbar;
+Doppelklick und ungültiger/geschlossener Status dürfen keine Zusage auslösen.
+
+Lokal verifiziert: 205 Unit-/Komponententests (davon sieben neue Dialogtests),
+60 Browser-Prüfungen ohne Fehler, Produktionsbuild und gezieltes ESLint.
+Dialog bei 320×640, 390×844, 768×1024, 1440×1000 und 844×390 geprüft;
+Öffnen/Abbrechen ohne Schreibzugriff, Tastaturfokus, Fehler/Wiederholen und
+Statusänderungen während der Bestätigung abgedeckt.
+
 Die Saison geht sichtbar zu Ende, während sich das vertraute dunkle Dashboard
 in den direkten Einstieg zur Halbfinalanmeldung verwandelt.
 

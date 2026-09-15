@@ -261,6 +261,27 @@ html:has(.stitch-participant) {
 .semifinal-page .semifinal-secondary { width: 100%; white-space: normal; letter-spacing: .07em; color: var(--stitch-cream); background: rgba(242,220,171,.07); }
 .semifinal-page .semifinal-primary:focus-visible, .semifinal-page .semifinal-secondary:focus-visible { outline: 2px solid var(--stitch-cream); outline-offset: 4px; box-shadow: none; }
 .semifinal-message { background: rgba(242,220,171,.09); border-radius: .6rem; padding: 1rem; }
+.stitch-app.semifinal-confirmation { width: calc(100vw - 2rem); max-width: 32rem; max-height: calc(100dvh - 2rem); grid-template-rows: auto minmax(0, 1fr) auto; gap: 0; padding: 0; border: 0; border-radius: .75rem; background: var(--stitch-navy); color: var(--stitch-cream); overflow: hidden; }
+.semifinal-confirmation .semifinal-confirmation__header { padding: 1.35rem 1.35rem 1rem; text-align: left; }
+.semifinal-confirmation__header .stitch-kicker { font-size: .62rem; }
+.semifinal-confirmation__body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 1.35rem 1rem; }
+.semifinal-confirmation__facts { padding: 1rem; border-radius: .65rem; background: rgba(242,220,171,.07); }
+.semifinal-confirmation__facts > div + div { margin-top: .8rem; }
+.semifinal-confirmation__facts svg { flex-shrink: 0; }
+.semifinal-confirmation__facts dt { display: flex; align-items: center; gap: .7rem; color: #d5c9ad; font-size: .7rem; }
+.semifinal-confirmation__facts dd { padding-left: 1.825rem; font-weight: 700; }
+.semifinal-confirmation__facts dd span { display: block; font-size: .8rem; font-weight: 400; color: #e0d1b0; }
+.semifinal-confirmation__notes { display: grid; gap: .6rem; margin-top: 1rem; color: #e0d1b0; }
+.semifinal-confirmation .semifinal-confirmation__footer { display: flex; flex-direction: column-reverse; gap: .6rem; padding: 1rem 1.35rem 1.35rem; background: var(--stitch-navy-deep); }
+.semifinal-confirmation__footer > button { margin: 0; }
+.semifinal-confirmation .semifinal-secondary { border-color: transparent; transform: none; white-space: nowrap; padding: .75rem 1rem; font-size: .73rem; min-height: 3.2rem; flex-shrink: 0; }
+@media (min-width: 480px) {
+  .semifinal-confirmation .semifinal-confirmation__footer { flex-direction: row; }
+  .semifinal-confirmation__footer .semifinal-secondary { width: auto; min-width: 6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .semifinal-confirmation { animation: none !important; transition: none !important; }
+}
 .semifinal-aside { display: grid; gap: 1.25rem; min-width: 0; }
 .semifinal-facts dt { color: var(--stitch-cream); }
 .semifinal-facts dd { color: #e0d1b0; }
