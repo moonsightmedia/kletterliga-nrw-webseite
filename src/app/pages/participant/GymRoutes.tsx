@@ -7,6 +7,8 @@ import { useParticipantGymDetailQuery } from "@/app/pages/participant/participan
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import type { Gym, Result, Route } from "@/services/appTypes";
 import { cn } from "@/lib/utils";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
+import { QualificationNotice } from "./QualificationNotice";
 
 const sortByCode = (a: Route, b: Route) => {
   const numA = Number(a.code.replace(/\D/g, "")) || 0;
@@ -70,6 +72,7 @@ const getHeroVisual = (gym: Gym | null) => {
 const GymRoutes = () => {
   const { gymId } = useParams();
   const { profile, user } = useAuth();
+  const { phase, hasEnded, canEditResults, qualificationEnd } = useQualificationPhase();
   const league = profile?.league || (user?.user_metadata?.league as string | undefined);
   const { gym, routes, results, codeRedeemed, loading, error } =
     useParticipantGymDetailQuery(gymId, profile?.id);
@@ -202,7 +205,7 @@ const GymRoutes = () => {
         </div>
       </section>
 
-      {!codeRedeemed ? (
+      {!codeRedeemed && canEditResults ? (
         <section className="mt-6 px-6">
           <StitchCard tone="cream" className="p-5">
             <div className="flex items-start gap-4">
@@ -228,6 +231,7 @@ const GymRoutes = () => {
       ) : null}
 
       <section className="mt-11 px-6">
+        {!canEditResults && <div className="mb-6"><QualificationNotice phase={phase} end={qualificationEnd} /></div>}
         <div className="mb-7">
           <div className="font-['Space_Grotesk'] text-[1.95rem] font-bold tracking-[-0.055em] text-[#003d55]">
             Routenliste
@@ -275,7 +279,7 @@ const GymRoutes = () => {
                 </div>
               );
 
-              if (!codeRedeemed) {
+              if (!codeRedeemed && !hasEnded) {
                 return <div key={route.id}>{content}</div>;
               }
 

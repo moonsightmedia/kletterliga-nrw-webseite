@@ -28,6 +28,9 @@ vi.mock("@/app/pages/participant/participantQueries", () => {
 vi.mock("@/services/appApi", () => ({
   upsertResult: vi.fn(),
 }));
+vi.mock("@/services/useQualificationPhase", () => ({
+  useQualificationPhase: () => ({ phase: "active", canEditResults: true, hasEnded: false, qualificationEnd: "2026-09-13" }),
+}));
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseParticipantGymDetailQuery = vi.mocked(useParticipantGymDetailQuery);

@@ -5,6 +5,7 @@ import { ParticipantLayout } from "@/app/layouts/ParticipantLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
 import { useLaunchSettings } from "@/config/launch";
+import { QualificationWriteRoute } from "@/app/pages/participant/QualificationWriteRoute";
 
 const Login = lazy(() => import("@/app/pages/auth/Login"));
 const Register = lazy(() => import("@/app/pages/auth/Register"));
@@ -13,7 +14,7 @@ const GymInvite = lazy(() => import("@/app/pages/auth/GymInvite"));
 const EmailConfirm = lazy(() => import("@/app/pages/auth/EmailConfirm"));
 const ResetPassword = lazy(() => import("@/app/pages/auth/ResetPassword"));
 
-const Home = lazy(() => import("@/app/pages/participant/Home"));
+const Home = lazy(() => import("@/app/pages/participant/ParticipantStart"));
 const Gyms = lazy(() => import("@/app/pages/participant/Gyms"));
 const GymDetail = lazy(() => import("@/app/pages/participant/GymDetail"));
 const GymRedeem = lazy(() => import("@/app/pages/participant/GymRedeem"));
@@ -124,7 +125,7 @@ export const appRoutes = (
         path="gyms/redeem"
         element={
           <LaunchLockedRoute title="Code-Einlösung folgt zum Saisonstart">
-            <GymRedeem />
+            <QualificationWriteRoute><GymRedeem /></QualificationWriteRoute>
           </LaunchLockedRoute>
         }
       />
@@ -132,7 +133,7 @@ export const appRoutes = (
         path="participation/redeem"
         element={
           <LaunchLockedRoute title="Mastercode-Einlösung folgt zum Saisonstart">
-            <MastercodeRedeem />
+            <QualificationWriteRoute><MastercodeRedeem /></QualificationWriteRoute>
           </LaunchLockedRoute>
         }
       />

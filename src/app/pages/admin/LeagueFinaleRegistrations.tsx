@@ -1,425 +1,165 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { StitchBadge, StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { listFinaleRegistrations, unregisterFromFinale, listProfiles } from "@/services/appApi";
-import type { Profile } from "@/services/appTypes";
+import { adminCancelSemifinalRegistration, listAdminSemifinalRegistrations, type AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
 import { useSeasonSettings } from "@/services/seasonSettings";
-import { Trophy, Search, X, Users, Filter, Award, List } from "lucide-react";
+import { AlertCircle, Award, Filter, List, Search, Trophy, Users, X } from "lucide-react";
 
-type FinaleRegistrationWithProfile = {
-  id: string;
-  profile_id: string;
-  created_at: string;
-  profiles: Profile;
-};
+const leagueLabel = (league: AdminSemifinalRegistration["approved_league"]) =>
+  league === "lead" ? "Vorstieg" : league === "toprope" ? "Toprope" : "Liga noch nicht freigegeben";
+const participantName = (registration: AdminSemifinalRegistration) =>
+  `${registration.profiles.first_name ?? ""} ${registration.profiles.last_name ?? ""}`.trim()
+  || registration.profiles.email || "Unbekannt";
 
 const LeagueFinaleRegistrations = () => {
-  const [registrations, setRegistrations] = useState<FinaleRegistrationWithProfile[]>([]);
-  const [allProfiles, setAllProfiles] = useState<Map<string, Profile>>(new Map());
+  const [registrations, setRegistrations] = useState<AdminSemifinalRegistration[]>([]);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "byClass" | "byLeague">("all");
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { getSeasonYear, getClassName } = useSeasonSettings();
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [cancellingRegistration, setCancellingRegistration] = useState<AdminSemifinalRegistration | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const { settings, loading: settingsLoading, getSeasonYear, refreshSettings } = useSeasonSettings();
+  // Never use getSeasonYear's legacy default for an official list.
+  const seasonYear = settings?.season_year?.trim() ? getSeasonYear() : null;
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const [{ data: registrationsData }, { data: profilesData }] = await Promise.all([
-        listFinaleRegistrations(),
-        listProfiles(),
-      ]);
-
-      if (registrationsData) {
-        setRegistrations(registrationsData as FinaleRegistrationWithProfile[]);
-      }
-      if (profilesData) {
-        const profileMap = new Map<string, Profile>();
-        profilesData.forEach((p) => profileMap.set(p.id, p));
-        setAllProfiles(profileMap);
-      }
+    if (settingsLoading) return;
+    if (!seasonYear) {
       setLoading(false);
-    };
-    loadData();
-  }, []);
-
-  // Gruppiere nach Wertungsklasse
-  const groupedByClass = useMemo(() => {
-    const groups: Record<string, FinaleRegistrationWithProfile[]> = {};
-    registrations.forEach((reg) => {
-      const className = getClassName(reg.profiles.birth_date, reg.profiles.gender) || "Unbekannt";
-      if (!groups[className]) {
-        groups[className] = [];
-      }
-      groups[className].push(reg);
-    });
-    // Sortiere innerhalb jeder Gruppe nach Datum
-    Object.keys(groups).forEach((key) => {
-      groups[key].sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA;
-      });
-    });
-    return groups;
-  }, [registrations, getClassName]);
-
-  // Gruppiere nach Liga
-  const groupedByLeague = useMemo(() => {
-    const groups: Record<string, FinaleRegistrationWithProfile[]> = {
-      lead: [],
-      toprope: [],
-      unknown: [],
-    };
-    registrations.forEach((reg) => {
-      const league = reg.profiles.league || "unknown";
-      groups[league as keyof typeof groups].push(reg);
-    });
-    // Sortiere innerhalb jeder Gruppe nach Datum
-    Object.keys(groups).forEach((key) => {
-      groups[key as keyof typeof groups].sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA;
-      });
-    });
-    return groups;
-  }, [registrations]);
-
-  // Statistik berechnen
-  const stats = useMemo(() => {
-    const classStats: Record<string, number> = {};
-    const leagueStats = { lead: 0, toprope: 0, unknown: 0 };
-    
-    registrations.forEach((reg) => {
-      const className = getClassName(reg.profiles.birth_date, reg.profiles.gender) || "Unbekannt";
-      classStats[className] = (classStats[className] || 0) + 1;
-      
-      const league = reg.profiles.league || "unknown";
-      leagueStats[league as keyof typeof leagueStats]++;
-    });
-
-    return { classStats, leagueStats };
-  }, [registrations, getClassName]);
-
-  const filtered = useMemo(() => {
-    let filteredRegistrations = registrations;
-
-    if (search.trim()) {
-      const query = search.toLowerCase();
-      filteredRegistrations = filteredRegistrations.filter((reg) => {
-        const profile = reg.profiles;
-        const name = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.toLowerCase();
-        const email = (profile.email ?? "").toLowerCase();
-        return name.includes(query) || email.includes(query);
-      });
-    }
-
-    return filteredRegistrations.sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
-    });
-  }, [registrations, search]);
-
-  const handleDelete = async (profileId: string) => {
-    const { error } = await unregisterFromFinale(profileId);
-    if (error) {
-      toast({ title: "Fehler", description: error.message });
+      setError("Die aktuelle Saison konnte nicht geladen werden. Es wird keine Teilnehmerzahl geschätzt.");
       return;
     }
-    setRegistrations((prev) => prev.filter((r) => r.profile_id !== profileId));
-    setDeletingId(null);
-    toast({ title: "Entfernt", description: "Anmeldung wurde entfernt." });
-  };
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listAdminSemifinalRegistrations(seasonYear)
+      .then((data) => { if (!cancelled) setRegistrations(data); })
+      .catch(() => { if (!cancelled) setError("Die Anmeldungen konnten nicht vollständig geladen werden. Bitte versuche es erneut oder prüfe die Datenbankfreigabe."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [seasonYear, settingsLoading, reloadToken]);
 
-  const renderRegistrationCard = (registration: FinaleRegistrationWithProfile) => {
-    const profile = registration.profiles;
-    const profileName = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() || profile.email || "Unbekannt";
-    const email = profile.email ?? "-";
-    const className = getClassName(profile.birth_date, profile.gender);
-    const league = profile.league === "lead" ? "Vorstieg" : profile.league === "toprope" ? "Toprope" : "-";
-    const registrationDate = new Date(registration.created_at).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  const ready = !loading && !settingsLoading && !error;
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return registrations.filter((registration) => !query
+      || participantName(registration).toLowerCase().includes(query)
+      || (registration.profiles.email ?? "").toLowerCase().includes(query));
+  }, [registrations, search]);
+  const groups = useMemo(() => {
+    if (filterTab === "all") return [{ label: "Alle Anmeldungen", rows: filtered }];
+    const grouped = new Map<string, AdminSemifinalRegistration[]>();
+    filtered.forEach((registration) => {
+      const label = filterTab === "byLeague" ? leagueLabel(registration.approved_league)
+        : `${leagueLabel(registration.approved_league)} · ${registration.approved_class_label ?? "Klasse noch nicht freigegeben"}`;
+      grouped.set(label, [...(grouped.get(label) ?? []), registration]);
     });
+    return [...grouped].sort(([a], [b]) => a.localeCompare(b, "de")).map(([label, rows]) => ({ label, rows }));
+  }, [filtered, filterTab]);
 
-    return (
-                <StitchCard tone="surface"
-                  key={registration.id}
-                  className="p-4 md:p-5 border-2 border-border/60 hover:border-primary/50 transition-all hover:shadow-lg"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <div className="font-semibold text-primary text-base md:text-lg break-words">{profileName}</div>
-                        {className && (
-                          <StitchBadge tone="ghost" className="shrink-0 text-[0.58rem] normal-case tracking-normal">
-                            {className}
-                          </StitchBadge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div className="break-words">{email}</div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                          {league !== "-" && <span>Liga: {league}</span>}
-                          <span className="text-xs sm:text-sm">Angemeldet: {registrationDate}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <StitchButton type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeletingId(registration.profile_id)}
-                        className="touch-manipulation"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        <span className="skew-x-6 text-xs md:text-sm">Entfernen</span>
-                      </StitchButton>
-                    </div>
-                  </div>
-                </StitchCard>
-    );
+  const handleCancel = async () => {
+    if (!cancellingRegistration || cancelling) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await adminCancelSemifinalRegistration(cancellingRegistration.id);
+      setRegistrations((rows) => rows.filter((row) => row.id !== cancellingRegistration.id));
+      setCancellingRegistration(null);
+      toast({ title: "Absage gespeichert", description: "Die Änderung ist protokolliert. Bitte informiere die Person separat." });
+    } catch {
+      setCancelError("Die Absage konnte nicht sicher bestätigt werden. Bitte lade die Liste neu, bevor du erneut absagst.");
+    } finally { setCancelling(false); }
   };
 
-  const seasonYear = getSeasonYear();
-  const totalCount = registrations.length;
+  const renderRegistration = (registration: AdminSemifinalRegistration) => (
+    <StitchCard key={registration.id} tone="surface" className="p-4 md:p-5" data-testid={`registration-${registration.id}`}>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="break-words text-base font-semibold text-primary">{participantName(registration)}</h3>
+            <StitchBadge tone="ghost" className="text-[0.62rem] normal-case tracking-normal">{registration.approved_class_label ?? "Klasse noch nicht freigegeben"}</StitchBadge>
+          </div>
+          <p className="break-words text-sm text-muted-foreground">{registration.profiles.email ?? "Keine E-Mail hinterlegt"}</p>
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-4">
+            <span>{leagueLabel(registration.approved_league)}</span>
+            <span>Angemeldet: {new Date(registration.created_at).toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}</span>
+          </div>
+          {registration.eligibility_status !== "eligible" && <p className="text-sm font-semibold text-secondary">Zulassung prüfen: Diese Anmeldung hat aktuell keine bestätigte Startberechtigung.</p>}
+        </div>
+        <StitchButton variant="outline" size="sm" className="self-start" onClick={() => { setCancelError(null); setCancellingRegistration(registration); }} aria-label={`Anmeldung von ${participantName(registration)} absagen`}>
+          <X className="h-4 w-4" aria-hidden="true" /> Absagen
+        </StitchButton>
+      </div>
+    </StitchCard>
+  );
 
   return (
     <div className="space-y-6">
-      <StitchCard tone="navy" className="relative overflow-hidden">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: "repeat",
-          }}
-        />
-        <div className="relative p-4 md:p-6 lg:p-8">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(242,220,171,0.25)] bg-white/10 md:h-16 md:w-16">
-              <Trophy className="h-6 w-6 text-[#f2dcab]/85 md:h-8 md:w-8" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <h1 className="stitch-headline text-xl text-[#f2dcab] md:text-2xl lg:text-3xl">Finale-Anmeldungen</h1>
-                <StitchBadge tone="cream" className="shrink-0">
-                  Liga
-                </StitchBadge>
-              </div>
-              <p className="text-sm text-[rgba(242,220,171,0.88)] md:text-base">
-                Übersicht aller Anmeldungen für das Finale {seasonYear} · {totalCount}{" "}
-                {totalCount === 1 ? "Anmeldung" : "Anmeldungen"} gesamt
-              </p>
-            </div>
+      <StitchCard tone="navy" className="p-5 md:p-8">
+        <div className="flex items-start gap-4">
+          <Trophy className="mt-1 h-8 w-8 shrink-0 text-[#f2dcab]" aria-hidden="true" />
+          <div className="min-w-0 space-y-2">
+            <h1 className="stitch-headline text-2xl text-[#f2dcab] md:text-3xl">Halbfinal-Anmeldungen</h1>
+            <p className="text-sm leading-relaxed text-[#f2dcab]/90">Saison {seasonYear ?? "–"} · Aktuelle Zusagen zum Finalevent mit Start im Halbfinale. Klassen und Liga entsprechen der ausdrücklichen Orga-Freigabe.</p>
           </div>
         </div>
       </StitchCard>
-
-      {/* Statistik */}
-      <div className="grid gap-2 md:gap-4 grid-cols-3">
-        <StitchCard tone="surface" className="p-3 md:p-4 border-2 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary mb-1">Gesamt</div>
-          <div className="text-xl md:text-2xl font-headline text-primary">{totalCount}</div>
-          <div className="text-xs text-muted-foreground mt-1">Anmeldungen</div>
-        </StitchCard>
-        <StitchCard tone="surface" className="p-3 md:p-4 border-2 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary mb-1">Vorstieg</div>
-          <div className="text-xl md:text-2xl font-headline text-primary">{stats.leagueStats.lead}</div>
-          <div className="text-xs text-muted-foreground mt-1">Teilnehmer</div>
-        </StitchCard>
-        <StitchCard tone="surface" className="p-3 md:p-4 border-2 border-border/60">
-          <div className="text-xs uppercase tracking-widest text-secondary mb-1">Toprope</div>
-          <div className="text-xl md:text-2xl font-headline text-primary">{stats.leagueStats.toprope}</div>
-          <div className="text-xs text-muted-foreground mt-1">Teilnehmer</div>
-        </StitchCard>
+      <div className="grid grid-cols-3 gap-2 md:gap-4" aria-label="Anmeldestatistik">
+        {[
+          { label: "Gesamt", count: registrations.length },
+          { label: "Vorstieg", count: registrations.filter((row) => row.approved_league === "lead").length },
+          { label: "Toprope", count: registrations.filter((row) => row.approved_league === "toprope").length },
+        ].map(({ label, count }) => <StitchCard key={label} tone="surface" className="p-3 md:p-4">
+          <div className="mb-1 text-xs font-semibold text-secondary">{label}</div>
+          <div className="font-headline text-2xl text-primary" aria-label={`${label}: ${ready ? count : "nicht geladen"}`}>{ready ? count : "–"}</div>
+          <div className="mt-1 text-xs text-muted-foreground">Zusagen</div>
+        </StitchCard>)}
       </div>
-
-      {/* Filter und Suche */}
-      <StitchCard tone="surface" className="p-4 md:p-6 border-2 border-border/60">
-        <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)}>
-          <TabsList className="grid w-full grid-cols-3 gap-1 md:gap-0">
-            <TabsTrigger value="all" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3">
-              <List className="h-3.5 w-3.5 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">Alle</span>
-              <span className="sm:hidden">Alle</span>
-              <span className="hidden md:inline"> ({totalCount})</span>
-            </TabsTrigger>
-            <TabsTrigger value="byClass" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3">
-              <Award className="h-3.5 w-3.5 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">Nach Klasse</span>
-              <span className="sm:hidden">Klasse</span>
-            </TabsTrigger>
-            <TabsTrigger value="byLeague" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-3">
-              <Filter className="h-3.5 w-3.5 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">Nach Liga</span>
-              <span className="sm:hidden">Liga</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="mt-4">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <Input
-              placeholder="Suche nach Name oder E-Mail..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 touch-manipulation"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="p-2 hover:bg-accent rounded-md transition-colors touch-manipulation flex-shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </StitchCard>
-
-      {/* Anmeldungen-Liste */}
-      <div className="space-y-4">
-        {loading ? (
-          <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
-            <p className="text-muted-foreground">Lade Anmeldungen...</p>
+      {error ? (
+        <StitchCard tone="surface" className="space-y-4 p-5" role="alert">
+          <div className="flex gap-3"><AlertCircle className="h-5 w-5 shrink-0 text-secondary" aria-hidden="true" /><p>{error}</p></div>
+          <StitchButton variant="navy" onClick={async () => { if (!seasonYear) await refreshSettings(); setReloadToken((value) => value + 1); }}>Erneut laden</StitchButton>
+        </StitchCard>
+      ) : !ready ? <StitchCard tone="surface" className="p-8 text-center text-muted-foreground" role="status">Lade Anmeldungen …</StitchCard> : (
+        <>
+          <StitchCard tone="surface" className="space-y-4 p-4 md:p-6">
+            <Tabs value={filterTab} onValueChange={(value) => setFilterTab(value as typeof filterTab)}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all" className="gap-2"><List className="h-4 w-4" aria-hidden="true" />Alle</TabsTrigger>
+                <TabsTrigger value="byClass" className="gap-2"><Award className="h-4 w-4" aria-hidden="true" />Klasse</TabsTrigger>
+                <TabsTrigger value="byLeague" className="gap-2"><Filter className="h-4 w-4" aria-hidden="true" />Liga</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <Input aria-label="Anmeldungen nach Name oder E-Mail suchen" placeholder="Name oder E-Mail suchen" value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0" />
+              {search && <StitchButton variant="ghost" size="icon" aria-label="Suche zurücksetzen" onClick={() => setSearch("")}><X className="h-4 w-4" aria-hidden="true" /></StitchButton>}
+            </div>
           </StitchCard>
-        ) : filterTab === "all" ? (
-          <>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-primary">
-                {search ? `Suchergebnisse (${filtered.length})` : `Alle Anmeldungen (${filtered.length})`}
-              </h2>
-            </div>
-            {filtered.length === 0 ? (
-              <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  {search ? "Keine Anmeldungen gefunden." : "Noch keine Anmeldungen vorhanden."}
-                </p>
-              </StitchCard>
-            ) : (
-              <div className="space-y-3">
-                {filtered.map((registration) => renderRegistrationCard(registration))}
-              </div>
-            )}
-          </>
-        ) : filterTab === "byClass" ? (
-          <>
-            <h2 className="text-lg font-semibold text-primary">Nach Wertungsklasse gruppiert</h2>
-            {Object.keys(groupedByClass).length === 0 ? (
-              <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Noch keine Anmeldungen vorhanden.</p>
-              </StitchCard>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedByClass)
-                  .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([className, classRegistrations]) => {
-                    const filteredClassRegs = search.trim()
-                      ? classRegistrations.filter((reg) => {
-                          const profile = reg.profiles;
-                          const name = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.toLowerCase();
-                          const email = (profile.email ?? "").toLowerCase();
-                          const query = search.toLowerCase();
-                          return name.includes(query) || email.includes(query);
-                        })
-                      : classRegistrations;
-
-                    if (filteredClassRegs.length === 0) return null;
-
-                    return (
-                      <div key={className} className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-base font-headline text-primary">{className}</h3>
-                          <StitchBadge tone="ghost" className="text-[0.58rem] normal-case tracking-normal">
-                            {filteredClassRegs.length} {filteredClassRegs.length === 1 ? "Teilnehmer" : "Teilnehmer"}
-                          </StitchBadge>
-                        </div>
-                        <div className="space-y-2 pl-4 border-l-2 border-primary/20">
-                          {filteredClassRegs.map((registration) => renderRegistrationCard(registration))}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold text-primary">Nach Liga gruppiert</h2>
-            {Object.keys(groupedByLeague).length === 0 ? (
-              <StitchCard tone="surface" className="p-8 text-center border-2 border-border/60">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Noch keine Anmeldungen vorhanden.</p>
-              </StitchCard>
-            ) : (
-              <div className="space-y-6">
-                {[
-                  { key: "lead", label: "Vorstieg", count: groupedByLeague.lead.length },
-                  { key: "toprope", label: "Toprope", count: groupedByLeague.toprope.length },
-                  { key: "unknown", label: "Unbekannt", count: groupedByLeague.unknown.length },
-                ]
-                  .filter(({ count }) => count > 0)
-                  .map(({ key, label }) => {
-                    const leagueRegs = groupedByLeague[key as keyof typeof groupedByLeague];
-                    const filteredLeagueRegs = search.trim()
-                      ? leagueRegs.filter((reg) => {
-                          const profile = reg.profiles;
-                          const name = `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.toLowerCase();
-                          const email = (profile.email ?? "").toLowerCase();
-                          const query = search.toLowerCase();
-                          return name.includes(query) || email.includes(query);
-                        })
-                      : leagueRegs;
-
-                    if (filteredLeagueRegs.length === 0) return null;
-
-                    return (
-                      <div key={key} className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-base font-headline text-primary">{label}</h3>
-                          <StitchBadge tone="ghost" className="text-[0.58rem] normal-case tracking-normal">
-                            {filteredLeagueRegs.length} {filteredLeagueRegs.length === 1 ? "Teilnehmer" : "Teilnehmer"}
-                          </StitchBadge>
-                        </div>
-                        <div className="space-y-2 pl-4 border-l-2 border-primary/20">
-                          {filteredLeagueRegs.map((registration) => renderRegistrationCard(registration))}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Löschen-Dialog */}
-      <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+          {filtered.length === 0 ? <StitchCard tone="surface" className="space-y-3 p-8 text-center text-muted-foreground">
+            <Users className="mx-auto h-10 w-10" aria-hidden="true" /><p>{search ? "Keine passenden Anmeldungen gefunden." : "Noch keine aktiven Zusagen für diese Saison."}</p>
+          </StitchCard> : groups.map((group) => <section key={group.label} className="space-y-3">
+            <h2 className="font-headline text-lg text-primary">{group.label} ({group.rows.length})</h2>{group.rows.map(renderRegistration)}
+          </section>)}
+          <p className="text-sm leading-relaxed text-muted-foreground">Abgesagte Anmeldungen und andere Saisons sind hier nicht enthalten. Die Historie bleibt im Audit erhalten. Zulassungen werden separat durch die Orga freigegeben.</p>
+        </>
+      )}
+      <AlertDialog open={!!cancellingRegistration} onOpenChange={(open) => { if (!open && !cancelling) setCancellingRegistration(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Anmeldung entfernen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchtest du diese Finale-Anmeldung wirklich entfernen? Der Teilnehmer wird darüber informiert, dass seine Anmeldung storniert wurde.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Anmeldung absagen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Anmeldung von {cancellingRegistration ? participantName(cancellingRegistration) : "dieser Person"} wird als abgesagt gespeichert und aus der aktuellen Startliste genommen. Die Änderung bleibt protokolliert. Es wird keine automatische E-Mail versendet; bitte informiere die Person separat.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto touch-manipulation">Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deletingId && handleDelete(deletingId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto touch-manipulation"
-            >
-              Entfernen
-            </AlertDialogAction>
+          {cancelError && <p role="alert" className="text-sm text-destructive">{cancelError}</p>}
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={cancelling}>Zurück</AlertDialogCancel>
+            <AlertDialogAction disabled={cancelling} onClick={(event) => { event.preventDefault(); void handleCancel(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{cancelling ? "Wird gespeichert …" : "Absage speichern"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

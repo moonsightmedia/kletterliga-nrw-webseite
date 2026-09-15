@@ -15,6 +15,8 @@ import {
 import { useParticipantCompetitionData } from "@/app/pages/participant/useParticipantCompetitionData";
 import { upsertResult } from "@/services/appApi";
 import { cn } from "@/lib/utils";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
+import { ReadonlyResult } from "./ReadonlyResult";
 
 type PointsOption = 0 | 2.5 | 5 | 7.5 | 10 | "flash";
 
@@ -34,6 +36,7 @@ const POINTS_OPTIONS: Array<{
 const ResultEntry = () => {
   const { gymId, routeId } = useParams();
   const { profile } = useAuth();
+  const { phase, canEditResults, qualificationEnd } = useQualificationPhase();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { viewerMasterRedemption } = useParticipantCompetitionData();
@@ -80,6 +83,10 @@ const ResultEntry = () => {
 
   const handleSave = async () => {
     if (!profile?.id || !routeId) return;
+    if (!canEditResults) {
+      toast({ title: "Ergebniseingabe gesperrt", description: "Qualifikationsergebnisse können derzeit nicht verändert werden." });
+      return;
+    }
 
     if (!hasOfficialMasterRedemption) {
       toast({
@@ -139,7 +146,7 @@ const ResultEntry = () => {
     navigate(`/app/gyms/${gymId}/routes`);
   };
 
-  if (pageLoading) {
+  if (pageLoading || phase === "loading") {
     return (
       <ParticipantStateCard
         title="Ergebnisformular lädt"
@@ -161,6 +168,10 @@ const ResultEntry = () => {
         </p>
       </StitchCard>
     );
+  }
+
+  if (!canEditResults) {
+    return <ReadonlyResult route={route} result={existingResult} phase={phase} qualificationEnd={qualificationEnd} />;
   }
 
   if (!hasOfficialMasterRedemption) {

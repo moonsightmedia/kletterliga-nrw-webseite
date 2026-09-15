@@ -1008,7 +1008,7 @@ export async function deleteProfile(profileId: string) {
   return { error: null };
 }
 
-export async function upsertResult(result: Omit<Result, "id" | "created_at"> & { id?: string }) {
+export async function upsertResult(result: Omit<Result, "id" | "created_at" | "updated_at"> & { id?: string }) {
   // If id is provided, use it for upsert
   if (result.id) {
     return supabase.from("results").upsert(result).select("*").single<Result>();

@@ -11,6 +11,7 @@ import {
   getMarketingEmailStatusLabel,
 } from "@/data/participationConsent";
 import { cn } from "@/lib/utils";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
 
 const getPageTitle = (path: string) => {
   if (path.startsWith("/app/participation/redeem")) return "Teilnahme";
@@ -132,11 +133,13 @@ export const ParticipantLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profileConsent } = useAuth();
-  const title = getPageTitle(location.pathname);
+  const { hasEnded, canEditResults } = useQualificationPhase();
   const isHome = location.pathname === "/app";
+  const isSemifinalPage = location.pathname === "/app/finale" || (isHome && hasEnded);
+  const title = isSemifinalPage ? "Halbfinale" : location.pathname.includes("/result") && !canEditResults ? "Ergebnis ansehen" : getPageTitle(location.pathname);
   const isGymDetail = isGymDetailPath(location.pathname);
   const isRouteFlow = isRouteFlowPath(location.pathname);
-  const isImmersivePage = isHome || isGymDetail || isRouteFlow;
+  const isImmersivePage = isHome || isSemifinalPage || isGymDetail || isRouteFlow;
   const routeFlowGymId = getGymIdFromPath(location.pathname);
   const routeFlowBackTarget = routeFlowGymId
     ? location.pathname.includes("/result")
@@ -174,7 +177,7 @@ export const ParticipantLayout = () => {
   return (
     <div
       className={cn(
-        "stitch-app",
+        "stitch-app stitch-participant",
         isImmersivePage
           ? "min-h-screen bg-[radial-gradient(circle_at_top,rgba(161,85,35,0.08),transparent_24%),linear-gradient(180deg,#003d55_0%,#002637_100%)] text-[#f2dcab]"
           : "stitch-app-shell",
@@ -183,7 +186,8 @@ export const ParticipantLayout = () => {
       <header className="stitch-topbar border-b-0 bg-[rgba(0,61,85,0.94)]">
         <div
           className={cn(
-            "mx-auto flex w-full max-w-md items-center justify-between gap-4",
+            "mx-auto flex w-full items-center justify-between gap-4",
+            isSemifinalPage ? "max-w-4xl" : "max-w-md",
             "h-16 px-6",
           )}
         >
@@ -345,7 +349,7 @@ export const ParticipantLayout = () => {
       <main
         className={cn(
           "stitch-page-pad mx-auto w-full",
-          isGymDetail || isRouteFlow || isParticipantProfileScreen
+          isSemifinalPage ? "max-w-4xl px-4 pb-32 pt-6 sm:px-6" : isGymDetail || isRouteFlow || isParticipantProfileScreen
             ? "max-w-md px-0 pb-32 pt-0"
             : isHome
               ? "max-w-md px-4 pb-32 pt-6 sm:px-6"

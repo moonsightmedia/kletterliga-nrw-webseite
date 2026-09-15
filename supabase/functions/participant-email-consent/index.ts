@@ -344,7 +344,13 @@ async function ensureProfileRow(user: User) {
     league: metadata.league === "toprope" || metadata.league === "lead" ? metadata.league : null,
   };
 
-  const { error } = await supabase.from("profiles").upsert(profileSeed, { onConflict: "id" });
+  // This participant-callable endpoint uses a service credential. Auth metadata
+  // is user-editable and must never overwrite an existing official profile.
+  // ON CONFLICT DO NOTHING also closes the read-then-insert race during signup.
+  const { error } = await supabase.from("profiles").upsert(profileSeed, {
+    onConflict: "id",
+    ignoreDuplicates: true,
+  });
   if (error) {
     throw new Error("Das Teilnehmerprofil konnte nicht vorbereitet werden.");
   }
