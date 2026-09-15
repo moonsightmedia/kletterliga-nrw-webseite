@@ -124,6 +124,15 @@ try {
     await page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' }).waitFor({ state: 'visible', timeout: 30000 });
     await page.screenshot({ path: resolve(output, 'eligible-mobile.png'), fullPage: true });
     await page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' }).click();
+    const confirmation = page.getByRole('alertdialog', { name: 'Bereit fürs Halbfinale?' });
+    await confirmation.waitFor();
+    check('Opening confirmation does not register', !(await state()).registered);
+    await page.screenshot({ path: resolve(output, 'confirmation-mobile.png'), fullPage: true });
+    await confirmation.getByRole('button', { name: 'Zurück', exact: true }).click();
+    await confirmation.waitFor({ state: 'hidden' });
+    check('Cancelling confirmation leaves registration unchanged', !(await state()).registered);
+    await page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' }).click();
+    await confirmation.getByRole('button', { name: 'Jetzt verbindlich anmelden', exact: true }).click();
     await page.getByRole('button', { name: /Anmeldung zurückziehen|Vom Halbfinale abmelden|Abmelden/i }).waitFor({ state: 'visible', timeout: 15000 });
     check('Mobile UI registration persisted by real RPC', (await state()).registered);
     await page.reload({ waitUntil: 'networkidle' });
@@ -138,6 +147,7 @@ try {
     await page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' }).waitFor({ state: 'visible', timeout: 15000 });
     check('Mobile cancellation persists while retaining row', !(await state()).registered && unwrap('Cancelled row', await admin.from('finale_registrations').select('registration_status').eq('id', rows[0].id).single()).registration_status === 'cancelled');
     await page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' }).click();
+    await confirmation.getByRole('button', { name: 'Jetzt verbindlich anmelden', exact: true }).click();
     await page.getByRole('button', { name: /Anmeldung zurückziehen|Vom Halbfinale abmelden|Abmelden/i }).waitFor({ state: 'visible', timeout: 15000 });
     check('Re-registration works', (await state()).registered);
     await context.close();
