@@ -106,6 +106,15 @@ try {
   check('Real RPC returns approved class', (await state()).eligible && (await state()).class_label === 'Ü15-m');
   if (mode === 'closed') {
     check('Global closed phase denies registration', !(await state()).registration_open && Boolean((await participant.client.rpc('register_for_semifinal')).error));
+    const runtimeRequire = createRequire('C:/Users/Janosch/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json');
+    const { chromium } = runtimeRequire('playwright');
+    browser = await chromium.launch({ headless: true, executablePath: 'C:/Users/Janosch/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe' });
+    const { page, context } = await loginPage(participant);
+    const signup = page.getByRole('button', { name: 'Verbindlich zum Halbfinale anmelden' });
+    await signup.waitFor({ state: 'visible', timeout: 30000 });
+    check('Deployed home shows real closed registration UI', await signup.isDisabled());
+    await page.screenshot({ path: resolve(output, 'closed-mobile.png'), fullPage: true });
+    await context.close();
   } else {
     if (mode === 'open') check('Strict U15 cutoff published', settings.age_u16_max === 14);
     const runtimeRequire = createRequire('C:/Users/Janosch/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json');

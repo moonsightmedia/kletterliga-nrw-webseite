@@ -1,5 +1,44 @@
 # Teilnehmer-App nach der Qualifikation — Releaseprotokoll
 
+## Produktiv geöffnet am 15.09.2026, 10:08 Uhr (Europe/Berlin)
+
+[Teilnehmer-App](https://www.kletterliga-nrw.de/app): neue Startseite produktiv,
+148 freigegebene Teilnehmer, Anmeldung geöffnet bis 27.09.2026, 23:59 Uhr.
+Das geprüfte Öffnungsskript wurde um 08:08:02 UTC committed. Nach dem finalen
+Test: 148 echte aktivierte Teilnehmer, 148 passende Freigaben, sechs ohne
+Ergebnisse, keine verbliebenen QA-Accounts, keine echten Registrierungen zum
+Prüfzeitpunkt 10:09 Uhr. Samuel ist als Toprope Ü15-m freigegeben.
+
+Release über [PR #12](https://github.com/moonsightmedia/kletterliga-nrw-webseite/pull/12),
+Feature `dc46b3e`, main-Merge `e65265e`. Beide Production-Builds erfolgreich.
+Wichtig: Die Canonical liegt im Team `kletterliga-nrws-projects`, **nicht** im
+lokal verknüpften Team `moonsight-media`. Ein direkter CLI-Deploy dort aktualisiert
+nur dessen Vercel-Aliases. Der anschließende GitHub-Merge hat den bestehenden
+Canonical-Releaseweg ausgelöst; keine Domain-/DNS-Zuordnung wurde verändert.
+Canonical-Deployment: `dpl_6nx5238tPoLpe3NLDRq5Z6yjHrz2`.
+
+Der echte Browser-Smoke wurde vor dem Öffnen auf der Canonical mit geschlossener
+Anmeldung bestanden (12 Prüfungen), danach der vollständige offene Flow mit
+23 Prüfungen. Passwortlogin, Anmeldung, Reload, Abmeldung, Wiederanmeldung,
+Admin-UI-Absage und Audit funktionieren dort ohne API-Mocks. Keine Browserfehler
+oder fehlgeschlagenen Requests; temporäre QA-Konten gezielt entfernt.
+Reports: `.qa-post-qualification/live-closed/report.json` und `live-open/report.json`.
+
+Finaler Vollvergleich: 19 der 21 bisherigen public-Tabellen sind unverändert,
+darunter alle 221 Profile, 4.047 Ergebnisse, 160 Routen, Codes und Einwilligungen.
+Bewusst geändert sind nur die Saisonsettings und elf zusätzliche Auditzeilen
+aus den eigenen QA-Profilvorgängen. Die neuen Eligibility-/Registrierungsaudits
+protokollieren Freigaben und Tests zusätzlich. Bericht:
+`.qa-post-qualification/release-final-check.jsonl`,
+`fingerprints-before-opening.jsonl`, `fingerprints-after-opening.jsonl`.
+
+Notion „Finale 03.10.“ wurde aktualisiert und nachgelesen. Noch offen und dort
+getrennt notiert: korrektes Geburtsdatum für den bekannten U15-w-Prüffall,
+bestätigte Check-in-/Startzeiten, Veranstaltungstagswertung und gesonderte
+Teilnehmerkommunikation. Keine Teilnehmer-/Hallenmails in diesem Release.
+Die vollständige repositoryweite Typprüfung bleibt wegen dokumentierter
+Altfehler/Fixtures separat offen; Build, 198 Vitest-Tests und Feature-QA grün.
+
 ## Freigabeprüfung am 15.09.2026
 
 Orga-Entscheidung: Alle 148 aktivierten Teilnehmer dürfen starten, einschließlich

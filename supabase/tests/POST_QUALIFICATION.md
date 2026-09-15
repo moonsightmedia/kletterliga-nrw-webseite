@@ -2,6 +2,14 @@
 
 ## Registration release verification (2026-09-15)
 
+Registration is now open on the canonical production site from 10:08 CEST.
+After PR #12 / main `e65265e`, the canonical closed-state smoke passed 12 checks,
+then the actual open-state UI/Auth/PostgREST flow passed 23 checks with exact
+synthetic-account cleanup and unchanged existing profile/result/route hashes.
+There are 148 real activated participants and matching approved class snapshots;
+the six zero-result participants are included. No QA accounts remain.
+See the release protocol for the two distinct Vercel teams and exact deployment.
+
 The Orga has now approved all 148 activated participants, including six without
 results, and the strict under-15 cutoff at 2026-05-01. Reviewed operational SQL
 is in `scripts/approve-semifinal-2026.sql` and `scripts/open-semifinal-2026.sql`;
