@@ -5,6 +5,7 @@ import { MaterialIcon } from "@/app/components/MaterialIcon";
 import { ParticipantProfileChangeRequestDialog } from "./ParticipantProfileChangeRequestDialog";
 import { useParticipantProfileEditor } from "./useParticipantProfileEditor";
 import { cn } from "@/lib/utils";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
 
 const getInitials = (name: string) =>
   name
@@ -50,6 +51,7 @@ const ChipOption = ({
 
 const ProfileEditScreen = () => {
   const navigate = useNavigate();
+  const { canEditResults } = useQualificationPhase();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     gyms,
@@ -147,9 +149,12 @@ const ProfileEditScreen = () => {
               <input
                 type="date"
                 value={form.birthDate}
+                readOnly={!canEditResults}
+                aria-describedby={!canEditResults ? "birth-date-locked-hint" : undefined}
                 onChange={(event) => setForm((current) => ({ ...current, birthDate: event.target.value }))}
                 className="w-full border-0 border-b-2 border-[#003D55]/20 bg-transparent px-2 py-2 text-2xl font-semibold text-[#003D55] outline-none transition-all focus:border-[#003D55]"
               />
+              {!canEditResults && <span id="birth-date-locked-hint" className="text-sm leading-6 text-[#003d55]">Dein Geburtsdatum ist für die Wertung gesperrt. Notwendige Korrekturen bitte bei der Organisation anfragen.</span>}
             </label>
 
             <div className="space-y-3">
@@ -253,7 +258,7 @@ const ProfileEditScreen = () => {
         disabled={changeRequestDisabled}
         showNoChangeHint={changeState.hasNoChange}
         showSameValuesHint={changeState.hasSameValues && !changeState.hasLeagueChange && !changeState.hasGenderChange}
-        onSubmit={handleChangeRequestSubmit}
+        onSubmit={async () => { await handleChangeRequestSubmit(); }}
       />
     </>
   );

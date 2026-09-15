@@ -1,5 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap");
 
+/* Keep keyboard-focused controls clear of the participant header and fixed dock. */
+html:has(.stitch-participant) {
+  scroll-padding-top: 5rem;
+  scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+}
+
+.stitch-participant main :is(a, button, input, select, textarea) {
+  scroll-margin-block: 5rem calc(8rem + env(safe-area-inset-bottom));
+}
+
 .stitch-app {
     --stitch-navy: #003d55;
     --stitch-navy-deep: #002637;
@@ -212,6 +222,94 @@
 
 .stitch-scroll-x::-webkit-scrollbar {
   display: none;
+}
+
+/* The semifinal is the next state of the dark participant dashboard. */
+.semifinal-page {
+  min-width: 0;
+  color: var(--stitch-cream);
+  overflow-wrap: anywhere;
+}
+.semifinal-hero { display: flex; flex-direction: column; gap: 1.1rem; padding: .4rem 0 1.5rem; }
+.semifinal-season-tag { display: inline-flex; align-items: center; gap: .55rem; font-size: .62rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--stitch-cream); }
+.semifinal-title { font-size: clamp(2.65rem, 9vw, 4rem); line-height: .95; margin-top: 1rem; }
+.semifinal-title span { color: #cf8149; }
+.semifinal-title:focus { outline: none; }
+.semifinal-hero-copy { margin-top: .85rem; font-size: .95rem; line-height: 1.6; color: #e0d1b0; }
+.semifinal-event-meta { display: flex; flex-wrap: wrap; gap: .65rem 1.4rem; font-size: .8rem; font-weight: 600; color: #e0d1b0; }
+.semifinal-event-meta p { display: flex; align-items: center; gap: .6rem; }
+.semifinal-event-meta svg { flex-shrink: 0; color: var(--stitch-cream); }
+.semifinal-season { padding: 1rem 1.1rem .85rem; border-radius: .75rem; background: rgba(242,220,171,.045); }
+.semifinal-season-caption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .45rem 1rem; color: #d5c9ad; font-size: .7rem; }
+.semifinal-season-caption p { display: flex; align-items: center; gap: .4rem; font-weight: 700; }
+.qualification-timeline { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.qualification-timeline li { position: relative; min-width: 1.7rem; flex: 1; text-align: center; }
+.qualification-timeline__track { height: 3px; overflow: hidden; background: rgba(242,220,171,.12); border-radius: 3px; }
+.qualification-timeline__track span { display: block; height: 100%; background: var(--stitch-cream); transform-origin: left; }
+.qualification-timeline__node { display: flex; align-items: center; justify-content: center; width: 1.2rem; height: 1.2rem; margin: -.7rem auto 0; position: relative; border-radius: 50%; background: var(--stitch-cream); color: var(--stitch-navy); }
+.qualification-timeline__label { display: block; margin-top: .4rem; color: #d5c9ad; font-size: .63rem; line-height: 1.35; overflow-wrap: anywhere; }
+.semifinal-grid { display: grid; gap: 1.25rem; margin-top: 1.5rem; align-items: start; }
+.semifinal-panel { min-width: 0; padding: 1.35rem 1.2rem; border-radius: .75rem; background: rgba(242,220,171,.065); }
+.semifinal-registration { box-shadow: inset 3px 0 0 var(--stitch-terracotta); }
+.semifinal-eyebrow { color: #d5c9ad; }
+.semifinal-section-title { margin-top: .6rem; font-size: clamp(1.1rem, 4.8vw, 1.5rem); line-height: 1.15; }
+.semifinal-copy { font-size: .86rem; line-height: 1.7; color: #e0d1b0; }
+.semifinal-deadline { display: flex; align-items: start; gap: .75rem; margin: 1.15rem 0; padding: .9rem 1rem; border-radius: .6rem; background: rgba(0,38,55,.32); }
+.semifinal-deadline > svg { flex-shrink: 0; margin-top: .2rem; }
+.semifinal-page .semifinal-primary { width: 100%; min-height: 3.2rem; white-space: normal; letter-spacing: .07em; line-height: 1.65; font-size: .73rem; text-align: center; box-shadow: 0 10px 24px rgba(0,38,55,.12); }
+.semifinal-page .semifinal-primary:disabled { opacity: 1; color: #e3d3b6; background: #4f6267; border-color: transparent; box-shadow: none; cursor: not-allowed; }
+.semifinal-page .semifinal-secondary { width: 100%; white-space: normal; letter-spacing: .07em; color: var(--stitch-cream); background: rgba(242,220,171,.07); }
+.semifinal-page .semifinal-primary:focus-visible, .semifinal-page .semifinal-secondary:focus-visible { outline: 2px solid var(--stitch-cream); outline-offset: 4px; box-shadow: none; }
+.semifinal-message { background: rgba(242,220,171,.09); border-radius: .6rem; padding: 1rem; }
+.semifinal-aside { display: grid; gap: 1.25rem; min-width: 0; }
+.semifinal-facts dt { color: var(--stitch-cream); }
+.semifinal-facts dd { color: #e0d1b0; }
+.semifinal-text-link { display: inline-flex; align-items: center; gap: .65rem; min-height: 44px; color: var(--stitch-cream); font-size: .85rem; font-weight: 700; border-radius: .35rem; }
+.semifinal-text-link:hover { color: #fff0cd; }
+.semifinal-text-link:focus-visible, .semifinal-archive-link:focus-visible { outline: 2px solid var(--stitch-cream); outline-offset: 4px; }
+.semifinal-archive { min-width: 0; padding: .5rem .15rem; }
+.semifinal-archive h2 { color: #d5c9ad; font-family: "Manrope", sans-serif; line-height: 1.6; }
+.semifinal-archive-link { display: flex; align-items: center; gap: .65rem; margin-top: .75rem; padding: .7rem .8rem; min-height: 46px; border-radius: .6rem; background: rgba(242,220,171,.045); color: var(--stitch-cream); font-size: .8rem; font-weight: 700; }
+.semifinal-archive-link svg { flex-shrink: 0; }
+.semifinal-archive-link span { flex: 1; }
+.semifinal-archive-link:hover { background: rgba(242,220,171,.1); }
+.qualification-finish { max-width: 36rem; min-height: min(36rem, calc(100svh - 13rem)); margin: 0 auto; padding: 1.5rem 0; color: var(--stitch-cream); text-align: center; }
+.qualification-finish__mark { position: relative; display: grid; place-items: center; width: 7rem; height: 7rem; margin: 0 auto 1.6rem; }
+.qualification-finish__mark svg:not([viewBox="0 0 120 120"]) { position: absolute; }
+.qualification-finish__mark > svg:first-child { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.qualification-finish__ring-track, .qualification-finish__ring { fill: none; stroke-width: 3; stroke: rgba(242,220,171,.13); }
+.qualification-finish__ring { stroke: var(--stitch-cream); stroke-linecap: round; stroke-dasharray: 100; animation: qualification-ring 1.8s cubic-bezier(.22,.6,.3,1) both; }
+.qualification-finish__flag { animation: qualification-flag-out .2s 1.6s both; }
+.qualification-finish__check { animation: qualification-check-in .3s 1.7s both; }
+.qualification-finish > .stitch-kicker { color: #d5c9ad; font-size: .6rem; line-height: 1.8; }
+.qualification-finish h1 { margin-top: 1rem; font-size: clamp(1.9rem, 6.6vw, 3rem); line-height: 1.05; }
+.qualification-finish h1 span { color: #d9925e; }
+.qualification-finish__copy { margin-top: 1.2rem; font-size: .85rem; line-height: 1.8; color: #e0d1b0; }
+.qualification-finish__timeline { margin: 1.6rem auto 0; padding: 1.1rem; max-width: 29rem; background: rgba(242,220,171,.055); border-radius: .75rem; }
+.qualification-finish__caption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .7rem; font-weight: 700; }
+.qualification-finish__percent { animation: qualification-check-in .2s 1.7s both; }
+.qualification-timeline--animated .qualification-timeline__track span { animation: qualification-stage-fill var(--stage-duration) var(--stage-delay) ease-out both; }
+.qualification-timeline--animated .qualification-timeline__node { animation: qualification-stage-node .25s calc(var(--stage-delay) + var(--stage-duration)) both; }
+.qualification-finish__next { margin-top: 1.4rem; font-size: .75rem; color: #d5c9ad; }
+.qualification-finish--closing { animation: qualification-exit .4s ease-in both; }
+@keyframes qualification-ring { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes qualification-stage-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes qualification-stage-node { from { background: #254c5b; color: transparent; } to { background: #f2dcab; color: #003d55; } }
+@keyframes qualification-flag-out { to { opacity: 0; transform: translateY(-4px); } }
+@keyframes qualification-check-in { from { opacity: 0; transform: translateY(4px) scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes qualification-exit { to { opacity: 0; transform: translateY(-8px); } }
+@media (min-width: 640px) {
+  .semifinal-hero { padding-top: .8rem; }
+  .semifinal-panel { padding: 1.5rem; }
+}
+@media (min-width: 820px) {
+  .semifinal-hero { flex-direction: row; align-items: end; justify-content: space-between; gap: 2rem; }
+  .semifinal-event-meta { flex-direction: column; margin-bottom: .3rem; max-width: 17rem; }
+  .semifinal-grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qualification-finish, .qualification-finish *, .qualification-timeline * { animation: none !important; transition: none !important; }
+  .qualification-finish__flag { display: none; }
 }
 
   .stitch-scroll-x-touch {

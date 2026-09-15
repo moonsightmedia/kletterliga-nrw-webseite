@@ -4,7 +4,7 @@ import LeagueDashboard from "@/app/pages/admin/LeagueDashboard";
 const appApiMocks = vi.hoisted(() => ({
   listProfiles: vi.fn(),
   listGyms: vi.fn(),
-  listResults: vi.fn(),
+  countResults: vi.fn(),
   listRoutes: vi.fn(),
   listAdminSettings: vi.fn(),
   listPartnerVoucherRedemptions: vi.fn(),
@@ -13,7 +13,7 @@ const appApiMocks = vi.hoisted(() => ({
 vi.mock("@/services/appApi", () => ({
   listProfiles: appApiMocks.listProfiles,
   listGyms: appApiMocks.listGyms,
-  listResults: appApiMocks.listResults,
+  countResults: appApiMocks.countResults,
   listRoutes: appApiMocks.listRoutes,
   listAdminSettings: appApiMocks.listAdminSettings,
   listPartnerVoucherRedemptions: appApiMocks.listPartnerVoucherRedemptions,
@@ -27,7 +27,7 @@ describe("LeagueDashboard", () => {
       error: null,
     });
     appApiMocks.listGyms.mockResolvedValue({ data: [{ id: "g-1" }], error: null });
-    appApiMocks.listResults.mockResolvedValue({ data: [{ id: "r-1" }], error: null });
+    appApiMocks.countResults.mockResolvedValue({ data: 1, error: null });
     appApiMocks.listRoutes.mockResolvedValue({ data: [{ id: "route-1", active: true }], error: null });
     appApiMocks.listAdminSettings.mockResolvedValue({
       data: [{ id: "settings-1", season_year: "2026" }],

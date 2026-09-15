@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowRight, Clock3, Globe, Lock, MapPin, Mountain, Star } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthProvider";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
 import { RouteHighlightCard } from "@/app/components/RouteHighlightCard";
 import { ParticipantStateCard } from "@/app/pages/participant/ParticipantProfileContent";
 import { useParticipantGymDetailQuery } from "@/app/pages/participant/participantQueries";
@@ -37,6 +38,7 @@ const formatAverageMetric = (value: number) => {
 const GymDetail = () => {
   const { gymId } = useParams();
   const { profile, user } = useAuth();
+  const { hasEnded } = useQualificationPhase();
   const {
     gym,
     routes,
@@ -394,7 +396,7 @@ const GymDetail = () => {
         </div>
       </section>
 
-      {!codeRedeemed ? (
+      {!codeRedeemed && !hasEnded ? (
         <section className="mt-8 px-4">
           <StitchCard
             tone="cream"
@@ -427,8 +429,8 @@ const GymDetail = () => {
             size="lg"
             className="h-16 w-full rounded-xl px-6 text-sm tracking-[0.18em] shadow-[0_18px_36px_rgba(161,85,35,0.32)]"
           >
-            <Link to={codeRedeemed ? `/app/gyms/${gym.id}/routes` : `/app/gyms/redeem?gymId=${encodeURIComponent(gym.id)}`}>
-              {codeRedeemed ? "Routen öffnen" : "Halle freischalten"}
+            <Link to={codeRedeemed || hasEnded ? `/app/gyms/${gym.id}/routes` : `/app/gyms/redeem?gymId=${encodeURIComponent(gym.id)}`}>
+              {hasEnded ? "Routen & Ergebnisse ansehen" : codeRedeemed ? "Routen öffnen" : "Halle freischalten"}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </StitchButton>

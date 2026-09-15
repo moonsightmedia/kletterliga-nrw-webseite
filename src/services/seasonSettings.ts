@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { buildSeasonRangeFromQualification } from "@/app/pages/participant/participantData";
 import { listAdminSettings } from "./appApi";
 import type { AdminSettings, Stage } from "./appTypes";
+import { getQualificationPhase } from "./qualificationPhase";
 
 let settingsCache: AdminSettings | null = null;
 let settingsPromise: Promise<AdminSettings | null> | null = null;
@@ -10,10 +11,13 @@ const loadSettings = async (): Promise<AdminSettings | null> => {
   if (settingsCache) return settingsCache;
   if (settingsPromise) return settingsPromise;
   
-  settingsPromise = listAdminSettings().then(({ data }) => {
+  settingsPromise = listAdminSettings().then(({ data, error }) => {
+    if (error) return null;
     const current = data?.[0] ?? null;
     settingsCache = current;
     return current;
+  }).catch(() => null).finally(() => {
+    settingsPromise = null;
   });
   
   return settingsPromise;
@@ -136,11 +140,7 @@ export const useSeasonSettings = () => {
   }, [settings?.qualification_end, settings?.qualification_start, settings?.stages]);
 
   const isQualificationActive = (): boolean => {
-    if (!settings?.qualification_start || !settings?.qualification_end) return false;
-    const now = new Date();
-    const start = new Date(settings.qualification_start);
-    const end = new Date(settings.qualification_end);
-    return now >= start && now <= end;
+    return getQualificationPhase(settings?.qualification_start, settings?.qualification_end) === "active";
   };
 
   const getSeasonYear = (): string => {
