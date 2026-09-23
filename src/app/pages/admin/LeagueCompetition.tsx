@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { listAdminSemifinalRegistrations, type AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
 import { supabase } from "@/services/supabase";
-import { competitionClassKey, exactCompetitionEmailPattern, registeredCompetitionClasses, validateCompetitionConfig } from "@/lib/competitionConfig";
-import { correctCompetitionResult, getCompetitionAdmin, getCompetitionDay, saveCompetitionConfig, setCompetitionPhase, setCompetitionStaff, type CompetitionAdminData, type CompetitionAdminResult, type CompetitionConfig, type CompetitionDay } from "@/services/competitionDay";
+import { competitionClassKey, exactCompetitionEmailPattern, registeredCompetitionClasses, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
+import { correctCompetitionResult, getCompetitionAdmin, getCompetitionDay, saveCompetitionConfig, saveCompetitionRouteDraft, setCompetitionPhase, setCompetitionStaff, type CompetitionAdminData, type CompetitionAdminResult, type CompetitionConfig, type CompetitionDay } from "@/services/competitionDay";
 
 const emptyConfig = (): CompetitionConfig => ({ routes: [], assignments: [], zone_points: Array(11).fill(0), flash_bonus: 0 });
 const leagueLabel = (league: string) => league === "lead" ? "Vorstieg" : "Toprope";
@@ -59,6 +59,11 @@ export default function LeagueCompetition() {
   const locked = Boolean(day?.event?.opened_at);
   const canConfigure = !locked && !busy;
   const validation = validateCompetitionConfig(config, classes);
+  const routeValidation = validateCompetitionRouteDraft(config.routes);
+  const otherUnsavedChanges = Boolean(admin && (JSON.stringify(config.assignments) !== JSON.stringify(admin.config.assignments)
+    || JSON.stringify(config.zone_points) !== JSON.stringify(admin.config.zone_points)
+    || config.flash_bonus !== admin.config.flash_bonus));
+  const canSaveRouteDraft = canConfigure && dirty && !routeValidation && !otherUnsavedChanges && !admin?.config.assignments.length && !admin?.staff.length;
   const change = (next: CompetitionConfig) => { setConfig(next); setDirty(true); setNotice(""); };
 
   async function action(run: () => Promise<unknown>, success: string, allowDirty = false) {
@@ -106,6 +111,7 @@ export default function LeagueCompetition() {
         <h2 id="competition-setup" className="stitch-headline text-2xl">1. Routen & Klassen</h2>
         {locked && <StitchCard tone="cream" className="p-4 text-sm">Die Zuordnung und Wertung sind seit der ersten Öffnung gesperrt. So klettern alle Teilnehmenden einer Klasse unter denselben Bedingungen.</StitchCard>}
         <div className="flex flex-wrap gap-2">{[12, 14].map((count) => <StitchButton key={count} variant="outline" size="sm" disabled={!canConfigure || config.routes.length >= count} onClick={() => addRoutes(count)}>Auf {count} Routen ergänzen</StitchButton>)}<StitchButton variant="outline" size="sm" disabled={!canConfigure || config.routes.length >= 30} onClick={() => addRoutes(config.routes.length + 1)}><Plus size={16} /> Route</StitchButton></div>
+        {!locked && <div className="space-y-2"><p className="text-sm leading-6">Routen können zunächst allein als Entwurf gespeichert werden. Klassen und Punktwerte bleiben unberührt; die Ergebniseingabe wird dadurch nicht geöffnet.</p><StitchButton variant="outline" disabled={!canSaveRouteDraft} onClick={() => season && void action(() => saveCompetitionRouteDraft(season, config.routes), "Routenentwurf gespeichert. Die Ergebniseingabe bleibt geschlossen.", true)}><Check size={18} /> Nur Routenentwurf speichern</StitchButton>{otherUnsavedChanges && <p role="status" className="text-sm">Für einen reinen Routenentwurf dürfen keine ungespeicherten Klassen- oder Punkteänderungen vorliegen.</p>}{routeValidation && dirty && <p role="status" className="text-sm">{routeValidation}</p>}</div>}
         <div className="grid gap-3 md:grid-cols-2">{config.routes.map((route, index) => <StitchCard key={route.number} className="space-y-3 p-4">
           <div className="flex items-center justify-between"><h3 className="stitch-headline text-lg">Route {route.number}</h3><StitchButton variant="ghost" size="icon" aria-label={`Route ${route.number} entfernen`} disabled={!canConfigure} onClick={() => change({ ...config, routes: config.routes.filter((r) => r.number !== route.number), assignments: config.assignments.map((a) => ({ ...a, route_numbers: a.route_numbers.filter((n) => n !== route.number) })) })}><Trash2 size={16} /></StitchButton></div>
           {([['name', 'Name'], ['grade', 'Schwierigkeit (Planwert)'], ['color', 'Farbe / Erkennung']] as const).map(([key, label]) => <StitchTextField key={key} label={`${label} · Route ${route.number}`} value={route[key]} maxLength={key === "name" ? 100 : 40} disabled={!canConfigure} onChange={(e) => change({ ...config, routes: config.routes.map((r, i) => i === index ? { ...r, [key]: e.target.value } : r) })} />)}

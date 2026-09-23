@@ -61,6 +61,14 @@ describe("competition participant day page", () => {
     expect(await screen.findByText("Die Wettkampfeingabe wurde noch nicht vorbereitet.")).toBeInTheDocument();
   });
 
+  it("shows an accessible preparation state for a route-only draft", async () => {
+    api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null }, routes: [] }));
+    mountPage();
+    expect(await screen.findByRole("heading", { name: "Routen in Vorbereitung" })).toBeInTheDocument();
+    expect(screen.getByText("Die Ergebniseingabe ist noch geschlossen. Deine Qualifikation und Anmeldung bleiben unverändert.")).toHaveClass("text-[#003d55]");
+    expect(screen.queryByRole("button", { name: /Route 1 Linie 1/ })).not.toBeInTheDocument();
+  });
+
   it("automatically saves a scoped draft on input, restores it, and rejects invalid saved values", async () => {
     const view = mountPage();
     await chooseRoute();

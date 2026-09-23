@@ -52,6 +52,7 @@ function readableError(error: unknown): string {
     COMPETITION_QR_INVALID: "Der QR-Code ist ungültig. Bitte scanne den Code der Route erneut.",
     COMPETITION_RESULT_IMMUTABLE: "Dieses Ergebnis ist bereits abgegeben und kann nicht geändert werden.",
     COMPETITION_CONFIG_LOCKED: "Die Wettkampfeinstellungen sind nach dem Öffnen gesperrt.",
+    COMPETITION_DRAFT_ONLY: "Der Routenentwurf kann nur vor der Klassenzuordnung und Helferfreigabe separat gespeichert werden.",
   };
   for (const [key, value] of Object.entries(messages)) if (message.includes(key)) return value;
   return "Die Aktion konnte nicht abgeschlossen werden. Bitte erneut versuchen.";
@@ -61,6 +62,8 @@ export const getCompetitionDay = (season: string) => rpc<CompetitionDay>("get_co
 export const getCompetitionStaffRoutes = (season: string) => rpc<CompetitionStaffRoute[]>("get_competition_staff_routes", { p_season: season });
 export const saveCompetitionConfig = (season: string, config: CompetitionConfig) =>
   rpc<void>("save_competition_config", { p_season: season, p_config: config });
+export const saveCompetitionRouteDraft = (season: string, routes: CompetitionRouteInput[]) =>
+  rpc<void>("save_competition_route_draft", { p_season: season, p_routes: routes });
 export const getCompetitionAdmin = (season: string) => rpc<CompetitionAdminData>("get_competition_admin", { p_season: season });
 export const setCompetitionPhase = (season: string, phase: Exclude<CompetitionPhase, "draft">) =>
   rpc<void>("set_competition_phase", { p_season: season, p_phase: phase });

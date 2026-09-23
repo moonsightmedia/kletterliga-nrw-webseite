@@ -51,10 +51,16 @@ try {
   `);
   const migration = await readFile(path.resolve("supabase/migrations/20260923160000_competition_day.sql"), "utf8");
   await db.exec(migration);
+  const draftMigration = await readFile(path.resolve("supabase/migrations/20260923180000_competition_route_draft.sql"), "utf8");
+  await db.exec(draftMigration);
   const sqlSuite = await readFile(path.resolve("supabase/tests/competition_day.sql"), "utf8");
   try { await db.exec(sqlSuite); }
   catch (error) { process.stderr.write(`competition_day.sql failed: ${error.message} ${error.where ?? ""}\n`); throw error; }
   process.stdout.write("PASS: supabase/tests/competition_day.sql passed in the minimal PGlite schema.\n");
+  const draftSuite = await readFile(path.resolve("supabase/tests/competition_route_draft.sql"), "utf8");
+  try { await db.exec(draftSuite); }
+  catch (error) { process.stderr.write(`competition_route_draft.sql failed: ${error.message} ${error.where ?? ""}\n`); throw error; }
+  process.stdout.write("PASS: supabase/tests/competition_route_draft.sql passed in the minimal PGlite schema.\n");
 
   await query(`insert into auth.users(id) values
     ('99999999-6000-4000-8000-000000000001'),('99999999-6000-4000-8000-000000000002'),
@@ -72,6 +78,7 @@ try {
     ('99999999-6000-4000-8000-000000000002','2026','registered'),
     ('99999999-6000-4000-8000-000000000003','2026','registered'),
     ('99999999-6000-4000-8000-000000000004','2026','cancelled')`);
+  await query("insert into public.admin_settings(season_year) values('2026')");
 
   await query(`select set_config('request.jwt.claim.sub','99999999-6000-4000-8000-000000000001',false),
     set_config('request.jwt.claims','{"sub":"99999999-6000-4000-8000-000000000001","role":"authenticated"}',false)`);
@@ -80,6 +87,13 @@ try {
   assert(result.rows[0].data.config.zone_points.length === 11 && result.rows[0].data.config.zone_points.every((point) => point === 0), "empty admin config supplies 11 placeholder zone scores and no event");
   result = await query(`select public.get_competition_day('2026') as data`);
   assert(result.rows[0].data.event === null, "no event is seeded automatically");
+
+  const draftRoutes = Array.from({ length: 14 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "", color: "" }));
+  await query("select public.save_competition_route_draft('2026',$1::jsonb)", [JSON.stringify(draftRoutes)]);
+  result = await query("select public.get_competition_admin('2026') as data");
+  assert(result.rows[0].data.config.routes.length === 14 && result.rows[0].data.config.assignments.length === 0, "route-only draft saves 14 placeholders without inventing assignments");
+  result = await query("select public.get_competition_day('2026') as data");
+  assert(result.rows[0].data.event.phase === "draft" && result.rows[0].data.event.opened_at === null, "route-only draft keeps event unopened");
 
   const routes = Array.from({ length: 12 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "6a", color: "blue" }));
   const config = {
