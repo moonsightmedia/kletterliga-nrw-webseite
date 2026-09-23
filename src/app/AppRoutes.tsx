@@ -42,6 +42,10 @@ const PartnerVoucherRedeem = lazy(
   () => import("@/app/pages/participant/PartnerVoucherRedeem"),
 );
 const Finale = lazy(() => import("@/app/pages/participant/Finale"));
+const CompetitionDay = lazy(() => import("@/app/pages/participant/CompetitionDay"));
+const JudgeDashboard = lazy(() => import("@/app/pages/competition/JudgeDashboard"));
+const CompetitionStandings = lazy(() => import("@/app/pages/competition/CompetitionStandings"));
+const LeagueCompetition = lazy(() => import("@/app/pages/admin/LeagueCompetition"));
 const FeatureLocked = lazy(() => import("@/app/pages/participant/FeatureLocked"));
 
 const AdminHome = lazy(() => import("@/app/pages/admin/AdminHome"));
@@ -202,6 +206,9 @@ export const appRoutes = (
         }
       />
       <Route path="profile" element={<Profile />} />
+      <Route path="wettkampf" element={<CompetitionDay />} />
+      <Route path="wettkampf/rangliste" element={<CompetitionStandings />} />
+      <Route path="schiedsrichter" element={<JudgeDashboard />} />
       <Route path="profile/edit" element={<ProfileEditScreen />} />
       <Route path="profile/history" element={<ProfileHistory />} />
       <Route path="profile/partner-voucher" element={<PartnerVoucherRedeem />} />
@@ -364,6 +371,7 @@ export const appRoutes = (
           </RoleGuard>
         }
       />
+      <Route path="league/wettkampf" element={<RoleGuard allow={["league_admin"]}><LeagueCompetition /></RoleGuard>} />
       <Route
         path="league/change-requests"
         element={

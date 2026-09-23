@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { useQualificationPhase } from "@/services/useQualificationPhase";
 
 const getPageTitle = (path: string) => {
+  if (path.startsWith("/app/wettkampf/rangliste")) return "Halbfinalwertung";
+  if (path.startsWith("/app/wettkampf")) return "Meine Halbfinalrouten";
+  if (path.startsWith("/app/schiedsrichter")) return "Schiedsrichter";
   if (path.startsWith("/app/participation/redeem")) return "Teilnahme";
   if (path.startsWith("/app/gyms/redeem")) return "Code einlösen";
   if (path.includes("/app/gyms/") && path.endsWith("/routes")) return "Routen";
@@ -135,11 +138,12 @@ export const ParticipantLayout = () => {
   const { profileConsent } = useAuth();
   const { hasEnded, canEditResults } = useQualificationPhase();
   const isHome = location.pathname === "/app";
+  const isCompetitionPage = location.pathname === "/app/wettkampf";
   const isSemifinalPage = location.pathname === "/app/finale" || (isHome && hasEnded);
   const title = isSemifinalPage ? "Halbfinale" : location.pathname.includes("/result") && !canEditResults ? "Ergebnis ansehen" : getPageTitle(location.pathname);
   const isGymDetail = isGymDetailPath(location.pathname);
   const isRouteFlow = isRouteFlowPath(location.pathname);
-  const isImmersivePage = isHome || isSemifinalPage || isGymDetail || isRouteFlow;
+  const isImmersivePage = isHome || isSemifinalPage || isGymDetail || isRouteFlow || isCompetitionPage;
   const routeFlowGymId = getGymIdFromPath(location.pathname);
   const routeFlowBackTarget = routeFlowGymId
     ? location.pathname.includes("/result")
@@ -187,7 +191,7 @@ export const ParticipantLayout = () => {
         <div
           className={cn(
             "mx-auto flex w-full items-center justify-between gap-4",
-            isSemifinalPage ? "max-w-4xl" : "max-w-md",
+            isSemifinalPage || isCompetitionPage ? "max-w-4xl" : "max-w-md",
             "h-16 px-6",
           )}
         >
@@ -349,7 +353,7 @@ export const ParticipantLayout = () => {
       <main
         className={cn(
           "stitch-page-pad mx-auto w-full",
-          isSemifinalPage ? "max-w-4xl px-4 pb-32 pt-6 sm:px-6" : isGymDetail || isRouteFlow || isParticipantProfileScreen
+          isSemifinalPage || isCompetitionPage ? "max-w-4xl px-4 pb-32 pt-6 sm:px-6" : isGymDetail || isRouteFlow || isParticipantProfileScreen
             ? "max-w-md px-0 pb-32 pt-0"
             : isHome
               ? "max-w-md px-4 pb-32 pt-6 sm:px-6"
