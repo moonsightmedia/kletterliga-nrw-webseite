@@ -157,7 +157,7 @@ const publicRoutes = [
       {
         title: "Halbfinale, Finals und Publikum",
         body:
-          "Halbfinale und Finals finden an einem Tag statt. Der detaillierte Zeitplan sowie Hinweise zu Einlass, Zuschauerbereichen und Anreise werden nach Abschluss der Veranstaltungsplanung ergänzt.",
+          "Das Halbfinale läuft am 3. Oktober von 09:00 bis 16:00 Uhr; die Finalrunden beginnen ab 16:30 Uhr. Hinweise zum minutengenauen Ablauf, Einlass, Zuschauerbereichen und zur Anreise werden nach Abschluss der Veranstaltungsplanung ergänzt.",
       },
       {
         title: "Veganer Foodtruck und Sale-Stand vom Kletterladen NRW",

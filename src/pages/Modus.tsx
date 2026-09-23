@@ -498,7 +498,7 @@ const Modus = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
-                        <span>Zeitfenster: <strong className="text-accent">10:00 – 16:00 Uhr</strong></span>
+                        <span>Zeitfenster: <strong className="text-accent">09:00 – 16:00 Uhr</strong></span>
                       </li>
                     </ul>
                   </div>

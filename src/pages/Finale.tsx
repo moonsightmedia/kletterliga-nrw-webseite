@@ -136,7 +136,7 @@ const finaleHighlights = [
     icon: Trophy,
     title: "Halbfinale und Finals",
     description:
-      "Der Wettkampftag führt vom Halbfinale in die entscheidenden Finalrunden. Der detaillierte Ablauf wird nach Abschluss der Planung veröffentlicht.",
+      "Das Halbfinale läuft von 09:00 bis 16:00 Uhr. Die Finalrunden beginnen ab 16:30 Uhr; weitere Ablaufdetails folgen.",
   },
   {
     icon: Users,
@@ -150,7 +150,7 @@ const faqs = [
   {
     question: "Wann und wo findet das Finale 2026 statt?",
     answer:
-      "Am Samstag, 3. Oktober 2026, in der Kletterwelt Sauerland, Rosmarter Allee 12 in 58762 Altena.",
+      "Am Samstag, 3. Oktober 2026, in der Kletterwelt Sauerland, Rosmarter Allee 12 in 58762 Altena. Das Halbfinale beginnt um 09:00 Uhr.",
   },
   {
     question: "Wie qualifiziere ich mich für den Finaltag?",
@@ -180,7 +180,7 @@ const faqs = [
   {
     question: "Wann wird der genaue Zeitplan veröffentlicht?",
     answer:
-      "Der minutengenaue Ablauf mit Check-in, Startzeiten und Siegerehrung wird derzeit finalisiert und rechtzeitig vor dem Event auf dieser Seite ergänzt.",
+      "Das Halbfinale ist von 09:00 bis 16:00 Uhr geplant; die Finalrunden beginnen ab 16:30 Uhr. Der minutengenaue Ablauf mit Check-in, Startzeiten und Siegerehrung wird derzeit finalisiert und rechtzeitig vor dem Event auf dieser Seite ergänzt.",
   },
 ];
 
