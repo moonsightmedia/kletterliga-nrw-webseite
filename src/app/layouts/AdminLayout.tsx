@@ -44,6 +44,7 @@ const adminNav = [
   { to: "/app/admin/league/results", label: "Ergebnisse", icon: ClipboardList, role: "league_admin" },
   { to: "/app/admin/league/route-feedback", label: "Routenfeedback", icon: MessageCircle, role: "league_admin" },
   { to: "/app/admin/league/finale", label: "Finale-Anmeldungen", icon: Trophy, role: "league_admin" },
+  { to: "/app/admin/league/wettkampf", label: "Wettkampftag", icon: Flag, role: "league_admin" },
   { to: "/app/admin/league/change-requests", label: "Änderungsanfragen", icon: FileText, role: "league_admin" },
   { to: "/app/admin/league/codes", label: "Code-Verwaltung", icon: Key, role: "league_admin" },
   { to: "/app/admin/league/mastercodes", label: "Mastercodes", icon: TicketCheck, role: "league_admin" },

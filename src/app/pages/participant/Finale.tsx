@@ -120,6 +120,14 @@ const Finale = () => {
         </section>
 
         <div className="semifinal-aside">
+          <section className="semifinal-panel" aria-labelledby="competition-day-heading">
+            <p className="stitch-kicker semifinal-eyebrow">Am Veranstaltungstag</p>
+            <h2 id="competition-day-heading" className="stitch-headline semifinal-section-title">Deine fünf Routen</h2>
+            <p className="semifinal-copy mt-3">Hier findest du nach der Routenzuordnung deine Halbfinalrouten. Ergebnisse trägst du nach dem Klettern ein und scannst den Routen-QR beim Schiedsrichter direkt in der App.</p>
+            <Link to="/app/wettkampf" className="semifinal-archive-link"><Trophy size={17} aria-hidden="true" /><span>Zum Wettkampftag</span><ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/app/wettkampf/rangliste" className="semifinal-archive-link"><ListOrdered size={17} aria-hidden="true" /><span>Halbfinalwertung ansehen</span><ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/app/schiedsrichter" className="semifinal-text-link mt-3">Zugang für Schiedsrichter<ArrowRight size={16} aria-hidden="true" /></Link>
+          </section>
           <section className="semifinal-panel" aria-labelledby="event-info-heading">
             <p className="stitch-kicker semifinal-eyebrow">Für deinen Wettkampftag</p>
             <h2 id="event-info-heading" className="stitch-headline semifinal-section-title">Gut zu wissen</h2>

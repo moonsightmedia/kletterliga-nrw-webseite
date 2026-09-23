@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import { qrScannerBox } from "@/lib/qrScannerLayout";
 
 interface CodeQrScannerProps {
   /** Called when a code was successfully scanned. Parent should close the dialog and use the value. */
@@ -61,7 +62,7 @@ export function CodeQrScanner({ onScan, onError }: CodeQrScannerProps) {
 
         const config = {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
+          qrbox: qrScannerBox,
           aspectRatio: 1,
           videoConstraints: {
             facingMode: "environment", // Prefer back camera
