@@ -6,6 +6,7 @@ vi.mock("@/services/supabase", () => ({ supabase: { rpc } }));
 import {
   correctCompetitionResult, getCompetitionAdmin, getCompetitionDay,
   getCompetitionStaffRoutes, listCompetitionStandings, saveCompetitionConfig,
+  saveCompetitionRouteDraft,
   setCompetitionPhase, setCompetitionStaff, submitCompetitionResult,
 } from "@/services/competitionDay";
 
@@ -43,6 +44,12 @@ describe("competition-day RPC contract", () => {
     ]);
   });
 
+  it("sends only the route list for a provisional draft", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await saveCompetitionRouteDraft("2026", config.routes);
+    expect(rpc).toHaveBeenCalledWith("save_competition_route_draft", { p_season: "2026", p_routes: config.routes });
+  });
+
   it("sends participant submissions without a caller supplied identity", async () => {
     rpc.mockResolvedValue({ data: { id: "result-id" }, error: null });
     await submitCompetitionResult({ season: "2026", routeId: "route-id", zone: 10, flash: true, qrToken: "opaque" });
@@ -76,6 +83,7 @@ describe("competition-day RPC contract", () => {
     ["COMPETITION_QR_INVALID", "QR-Code"],
     ["COMPETITION_RESULT_IMMUTABLE", "nicht geändert"],
     ["COMPETITION_CONFIG_LOCKED", "gesperrt"],
+    ["COMPETITION_DRAFT_ONLY", "Routenentwurf"],
   ])("shows a useful message for %s", async (marker, message) => {
     rpc.mockResolvedValue({ data: null, error: { message: marker } });
     await expect(getCompetitionDay("2026")).rejects.toThrow(message);

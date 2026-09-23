@@ -3,8 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 
-const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), phase: vi.fn(), staff: vi.fn(), correct: vi.fn() }));
-vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCompetitionAdmin: api.admin, saveCompetitionConfig: api.save, setCompetitionPhase: api.phase, setCompetitionStaff: api.staff, correctCompetitionResult: api.correct }));
+const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), draft: vi.fn(), phase: vi.fn(), staff: vi.fn(), correct: vi.fn() }));
+vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCompetitionAdmin: api.admin, saveCompetitionConfig: api.save, saveCompetitionRouteDraft: api.draft, setCompetitionPhase: api.phase, setCompetitionStaff: api.staff, correctCompetitionResult: api.correct }));
 vi.mock("@/services/semifinalAdminApi", () => ({ listAdminSemifinalRegistrations: api.roster }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/supabase", () => ({ supabase: { from: vi.fn() } }));
@@ -34,6 +34,19 @@ describe("competition admin", () => {
     view(); fireEvent.change(await screen.findByLabelText("Name · Route 1"), { target: { value: "Neuer Name" } });
     expect(screen.getByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Konfiguration speichern" })).toBeEnabled();
+  });
+  it("can explicitly save 14 placeholder routes without scoring or class assignments", async () => {
+    api.day.mockResolvedValue({ event: null, routes: [] });
+    api.admin.mockResolvedValue({ config: { routes: [], assignments: [], zone_points: Array(11).fill(0), flash_bonus: 0 }, staff: [], results: [] });
+    api.draft.mockResolvedValue(null);
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: "Auf 14 Routen ergänzen" }));
+    const save = screen.getByRole("button", { name: "Nur Routenentwurf speichern" });
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+    await waitFor(() => expect(api.draft).toHaveBeenCalledWith("2026", Array.from({ length: 14 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "", color: "" }))));
+    expect(api.save).not.toHaveBeenCalled();
+    expect(api.phase).not.toHaveBeenCalled();
   });
   it("locks sporting config but keeps pause and staff controls after first opening", async () => {
     api.day.mockResolvedValue({ event: { phase: "open", opened_at: "2026-10-03" }, routes: [] });
