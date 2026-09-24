@@ -2,6 +2,7 @@ import { lazy, type ReactNode } from "react";
 import { Navigate, Route } from "react-router-dom";
 import { AuthLayout } from "@/app/layouts/AuthLayout";
 import { ParticipantLayout } from "@/app/layouts/ParticipantLayout";
+import { JudgeLayout } from "@/app/layouts/JudgeLayout";
 import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
 import { useLaunchSettings } from "@/config/launch";
@@ -108,6 +109,8 @@ export const appRoutes = (
       <Route path="/app/invite/gym/:token" element={<GymInvite />} />
     </Route>
 
+    <Route path="/app/schiedsrichter" element={<JudgeLayout><JudgeDashboard /></JudgeLayout>} />
+
     <Route
       path="/app"
       element={
@@ -208,7 +211,6 @@ export const appRoutes = (
       <Route path="profile" element={<Profile />} />
       <Route path="wettkampf" element={<CompetitionDay />} />
       <Route path="wettkampf/rangliste" element={<CompetitionStandings />} />
-      <Route path="schiedsrichter" element={<JudgeDashboard />} />
       <Route path="profile/edit" element={<ProfileEditScreen />} />
       <Route path="profile/history" element={<ProfileHistory />} />
       <Route path="profile/partner-voucher" element={<PartnerVoucherRedeem />} />

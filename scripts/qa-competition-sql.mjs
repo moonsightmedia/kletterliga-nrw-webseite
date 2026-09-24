@@ -53,6 +53,8 @@ try {
   await db.exec(migration);
   const draftMigration = await readFile(path.resolve("supabase/migrations/20260923180000_competition_route_draft.sql"), "utf8");
   await db.exec(draftMigration);
+  const judgeMigration = await readFile(path.resolve("supabase/migrations/20260924110000_competition_judge_shared_access.sql"), "utf8");
+  await db.exec(judgeMigration);
   const sqlSuite = await readFile(path.resolve("supabase/tests/competition_day.sql"), "utf8");
   try { await db.exec(sqlSuite); }
   catch (error) { process.stderr.write(`competition_day.sql failed: ${error.message} ${error.where ?? ""}\n`); throw error; }
@@ -94,6 +96,36 @@ try {
   assert(result.rows[0].data.config.routes.length === 14 && result.rows[0].data.config.assignments.length === 0, "route-only draft saves 14 placeholders without inventing assignments");
   result = await query("select public.get_competition_day('2026') as data");
   assert(result.rows[0].data.event.phase === "draft" && result.rows[0].data.event.opened_at === null, "route-only draft keeps event unopened");
+
+  const judgeCode = "AbCdEfGhJkMnPqRsTuVwXyZ2";
+  const rotatedCode = "QwErTyUiOpAsDfGhJkLzXcV4";
+  result = await query("select public.get_competition_judge_access_status('2026') as configured");
+  assert(result.rows[0].configured === false, "judge access is disabled until the admin creates a code");
+  await query("select public.set_competition_judge_password('2026',$1)", [judgeCode]);
+  result = await query("select public.get_competition_judge_access_status('2026') as configured");
+  assert(result.rows[0].configured === true, "admin can enable shared judge access without opening scoring");
+  await db.exec("reset role");
+  await query("select set_config('request.jwt.claim.sub','',false), set_config('request.jwt.claims','{\"role\":\"anon\"}',false)");
+  await db.exec("set role anon");
+  await expectError("select * from public.competition_day_judge_access", "permission denied", "anon cannot read the stored judge hash");
+  await expectError("select public.get_competition_judge_routes('2026','000000000000000000000000')", "COMPETITION_JUDGE_PASSWORD_INVALID", "invalid shared judge code is rejected");
+  result = await query("select public.get_competition_judge_routes('2026',$1) as data", [judgeCode]);
+  assert(result.rows[0].data.routes.length === 14 && result.rows[0].data.event.phase === "draft", "anon with code reads only the 14 route QR entries and event phase");
+  assert(!('results' in result.rows[0].data) && !('staff' in result.rows[0].data), "shared judge response excludes results and staff");
+  await expectError("select public.set_competition_judge_password('2026','000000000000000000000000')", "permission denied", "anon cannot rotate the judge code");
+  await expectError("select public.submit_competition_result('2026',null,0,false,'x')", "permission denied", "anon judge access cannot submit results");
+  await db.exec("reset role");
+  await query("select set_config('request.jwt.claim.sub','99999999-6000-4000-8000-000000000001',false), set_config('request.jwt.claims','{\"sub\":\"99999999-6000-4000-8000-000000000001\",\"role\":\"authenticated\"}',false)");
+  await db.exec("set role authenticated");
+  await query("select public.set_competition_judge_password('2026',$1)", [rotatedCode]);
+  await db.exec("reset role");
+  await db.exec("set role anon");
+  await expectError(`select public.get_competition_judge_routes('2026','${judgeCode}')`, "COMPETITION_JUDGE_PASSWORD_INVALID", "old shared code is invalid after rotation");
+  result = await query("select public.get_competition_judge_routes('2026',$1) as data", [rotatedCode]);
+  assert(result.rows[0].data.routes.length === 14, "rotated code opens the same untouched routes");
+  await db.exec("reset role");
+  await query("select set_config('request.jwt.claim.sub','99999999-6000-4000-8000-000000000001',false), set_config('request.jwt.claims','{\"sub\":\"99999999-6000-4000-8000-000000000001\",\"role\":\"authenticated\"}',false)");
+  await db.exec("set role authenticated");
 
   const routes = Array.from({ length: 12 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "6a", color: "blue" }));
   const config = {

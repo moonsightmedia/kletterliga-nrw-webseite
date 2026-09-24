@@ -17,7 +17,7 @@ export const hasSeenAppStartupSplash = () => {
 };
 
 export const shouldShowAppStartupSplash = (pathname: string) =>
-  isAppPathname(pathname) && !hasSeenAppStartupSplash();
+  isAppPathname(pathname) && pathname !== "/app/schiedsrichter" && !hasSeenAppStartupSplash();
 
 export const markAppStartupSplashSeen = () => {
   if (typeof sessionStorage === "undefined") return;

@@ -2,14 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import JudgeDashboard from "@/app/pages/competition/JudgeDashboard";
 
-const auth = vi.hoisted(() => ({ profile: { id: "judge-profile" }, loading: false }));
 const settings = vi.hoisted(() => ({ settings: { season_year: "2026" }, loading: false, refreshSettings: vi.fn() }));
-const service = vi.hoisted(() => ({
-  getCompetitionDay: vi.fn(),
-  getCompetitionStaffRoutes: vi.fn(),
-}));
+const service = vi.hoisted(() => ({ getCompetitionJudgeRoutes: vi.fn() }));
 
-vi.mock("@/app/auth/AuthProvider", () => ({ useAuth: () => auth }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => settings }));
 vi.mock("@/services/competitionDay", () => service);
 
@@ -17,34 +12,70 @@ const routes = [
   { id: "route-a", number: 1, name: "Kante", grade: "6", color: "red", qr_token: "private-a" },
   { id: "route-b", number: 2, name: "Dach", grade: "7", color: "blue", qr_token: "private-b" },
 ];
+const code = "AbCdEfGhJkMnPqRsTuVwXyZ2";
+
+function unlock() {
+  fireEvent.change(screen.getByLabelText("Schiedsrichter-Code"), { target: { value: code } });
+  fireEvent.click(screen.getByRole("button", { name: "Bereich öffnen" }));
+}
 
 describe("judge dashboard", () => {
   beforeEach(() => {
     localStorage.clear();
-    service.getCompetitionDay.mockResolvedValue({ event: { id: "event-1", phase: "open" }, is_staff: true, is_admin: false });
-    service.getCompetitionStaffRoutes.mockResolvedValue(routes);
+    vi.clearAllMocks();
+    service.getCompetitionJudgeRoutes.mockResolvedValue({ event: { id: "event-1", phase: "open" }, routes });
   });
   afterEach(() => cleanup());
 
-  it("shows an explicit permission denial for profiles without event staff access", async () => {
-    service.getCompetitionDay.mockResolvedValue({ event: { id: "event-1", phase: "open" }, is_staff: false, is_admin: false });
+  it("opens without an app account after the shared code is entered", async () => {
     render(<JudgeDashboard />);
-    expect(await screen.findByRole("heading", { name: "Keine Schiedsrichterfreigabe" })).toBeInTheDocument();
-    expect(service.getCompetitionStaffRoutes).not.toHaveBeenCalled();
+    expect(await screen.findByLabelText("Schiedsrichter-Code")).toBeInTheDocument();
+    expect(service.getCompetitionJudgeRoutes).not.toHaveBeenCalled();
+    unlock();
+    expect(await screen.findByRole("heading", { name: "Routen für die Zeitnahme" })).toBeInTheDocument();
+    expect(service.getCompetitionJudgeRoutes).toHaveBeenCalledWith("2026", code);
   });
 
-  it("refreshes staff access on focus and drops route data when access is revoked", async () => {
-    service.getCompetitionDay
-      .mockResolvedValueOnce({ event: { id: "event-1", phase: "open" }, is_staff: true, is_admin: false })
-      .mockResolvedValueOnce({ event: { id: "event-1", phase: "open" }, is_staff: false, is_admin: false });
+  it("rejects a rotated or invalid code without exposing routes", async () => {
+    service.getCompetitionJudgeRoutes.mockRejectedValue(new Error("Der Schiedsrichter-Code ist ungültig oder wurde ausgetauscht."));
     render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    expect(await screen.findByRole("alert")).toHaveTextContent("ungültig");
+    expect(screen.queryByRole("heading", { name: "Routen für die Zeitnahme" })).not.toBeInTheDocument();
+  });
+
+  it("rechecks the code on focus and hides QR data after rotation", async () => {
+    service.getCompetitionJudgeRoutes
+      .mockResolvedValueOnce({ event: { id: "event-1", phase: "open" }, routes })
+      .mockRejectedValueOnce(new Error("Der Schiedsrichter-Code ist ungültig oder wurde ausgetauscht."));
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
     await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
     fireEvent(window, new Event("focus"));
-    expect(await screen.findByRole("heading", { name: "Keine Schiedsrichterfreigabe" })).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("ungültig");
+    expect(screen.queryByRole("heading", { name: "Routen für die Zeitnahme" })).not.toBeInTheDocument();
   });
 
-  it("runs independent route timers and restores a running timer after remount", async () => {
+  it("keeps local timers visible during a temporary connection failure", async () => {
+    service.getCompetitionJudgeRoutes
+      .mockResolvedValueOnce({ event: { id: "event-1", phase: "open" }, routes })
+      .mockRejectedValueOnce(new Error("network unavailable"));
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
+    fireEvent.click(screen.getByRole("button", { name: "Route 1 starten" }));
+    fireEvent(window, new Event("focus"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Verbindung unterbrochen");
+    expect(screen.getByRole("button", { name: "Route 1 pausieren" })).toBeInTheDocument();
+  });
+
+  it("runs independent route timers and restores them after re-entry", async () => {
     const view = render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
     await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
     fireEvent.click(screen.getByRole("button", { name: "Route 1 starten" }));
     fireEvent.click(screen.getByRole("button", { name: "Route 2 starten" }));
@@ -55,6 +86,8 @@ describe("judge dashboard", () => {
 
     view.unmount();
     render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
     await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
     expect(screen.getByRole("button", { name: "Route 1 pausieren" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Route 2 pausieren" })).toBeInTheDocument();
@@ -62,11 +95,12 @@ describe("judge dashboard", () => {
 
   it("keeps the QR tab limited to route codes and does not reveal token text", async () => {
     render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
     await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
     fireEvent.mouseDown(screen.getByRole("tab", { name: "QR-Codes" }), { button: 0 });
     expect(await screen.findByRole("heading", { name: "Route 1" })).toBeInTheDocument();
     expect(screen.queryByText("private-a")).not.toBeInTheDocument();
     expect(screen.queryByText("private-b")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /Route [12]/ }).length).toBeGreaterThanOrEqual(2);
   });
 });

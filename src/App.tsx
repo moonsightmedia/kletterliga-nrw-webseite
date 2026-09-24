@@ -35,13 +35,14 @@ const queryClient = new QueryClient();
 const RouteFallback = () => {
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
   const isAppRoute = isAppPathname(pathname);
+  const isJudgeRoute = pathname === "/app/schiedsrichter";
 
   return (
     <AppRouteLoadingState
       pathname={pathname}
-      title={isAppRoute ? "App wird geladen" : "Seite wird geladen"}
+      title={isJudgeRoute ? "Schiedsrichterbereich wird geladen" : isAppRoute ? "App wird geladen" : "Seite wird geladen"}
       description={
-        isAppRoute
+        isJudgeRoute ? "Die Wettkampfwerkzeuge werden vorbereitet." : isAppRoute
           ? "Wir bauen den Teilnehmerbereich gerade für dich auf."
           : "Die gewünschte Seite wird gerade vorbereitet."
       }

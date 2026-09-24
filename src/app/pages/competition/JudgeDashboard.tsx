@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { AlertCircle, Clock3, Printer, QrCode, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
-import { useAuth } from "@/app/auth/AuthProvider";
+import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading, StitchTextField } from "@/app/components/StitchPrimitives";
 import { useSeasonSettings } from "@/services/seasonSettings";
-import { getCompetitionDay, getCompetitionStaffRoutes, type CompetitionStaffRoute } from "@/services/competitionDay";
+import { getCompetitionJudgeRoutes, type CompetitionStaffRoute } from "@/services/competitionDay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   COMPETITION_TIMER_DURATION_MS,
@@ -25,6 +24,7 @@ import {
 type DashboardTab = "timers" | "codes";
 type RouteTimerMap = Record<string, CompetitionTimer>;
 type TimerNotice = { id: string; text: string; status: "last-minute" | "finished" };
+const JUDGE_TIMER_DEVICE_KEY = "shared-judge";
 
 function routeUrl(route: CompetitionStaffRoute) {
   return `${window.location.origin}/app/wettkampf#route=${encodeURIComponent(route.id)}&token=${encodeURIComponent(route.qr_token)}`;
@@ -49,7 +49,7 @@ function QrImage({ route, size, className = "" }: { route: CompetitionStaffRoute
 
 const readableLoadError = (error: unknown) => {
   const message = error instanceof Error ? error.message : "";
-  if (/staff|required|permission|berechtigt|admin/i.test(message)) return "Für diesen Wettkampftag ist dein Profil nicht als Schiedsrichter oder Liga-Administration freigeschaltet.";
+  if (/Schiedsrichter-Code/i.test(message)) return message;
   return "Die Wettkampfdaten konnten nicht geladen werden. Prüfe die Verbindung und versuche es erneut.";
 };
 
@@ -58,14 +58,14 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => (
 }[character] ?? character));
 
 export default function JudgeDashboard() {
-  const { profile, loading: authLoading } = useAuth();
   const { settings, loading: settingsLoading, refreshSettings } = useSeasonSettings();
   const season = settings?.season_year ? String(settings.season_year) : null;
+  const [enteredCode, setEnteredCode] = useState("");
+  const [activeCode, setActiveCode] = useState("");
   const [event, setEvent] = useState<{ id: string; phase: string } | null>(null);
   const [routes, setRoutes] = useState<CompetitionStaffRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [tab, setTab] = useState<DashboardTab>("timers");
   const [selectedRouteIds, setSelectedRouteIds] = useState<Set<string>>(new Set());
   const [selectedQrId, setSelectedQrId] = useState<string | null>(null);
@@ -79,26 +79,20 @@ export default function JudgeDashboard() {
   const eventSequence = useRef(0);
   const selectionInitialized = useRef(false);
 
-  const load = useCallback(async () => {
-    if (!profile?.id || !season) return;
+  const load = useCallback(async (code: string, background = false) => {
+    if (!code || !season) return;
     const sequence = ++eventSequence.current;
-    setLoading(true);
+    if (!background) setLoading(true);
     setLoadError(null);
-    setIsAllowed(null);
     try {
-      const day = await getCompetitionDay(season);
+      const day = await getCompetitionJudgeRoutes(season, code);
       if (sequence !== eventSequence.current) return;
-      setEvent(day.event ? { id: day.event.id, phase: day.event.phase } : null);
-      setIsAllowed(Boolean(day.is_staff || day.is_admin));
-      if (!day.event || !(day.is_staff || day.is_admin)) {
-        setRoutes([]);
-      } else {
-        const staffRoutes = await getCompetitionStaffRoutes(season);
-        if (sequence !== eventSequence.current) return;
-        setRoutes(staffRoutes);
+      setEvent(day.event);
+      const staffRoutes = day.routes;
+      setRoutes(staffRoutes);
         let restoredRunningRouteIds: string[] = [];
         try {
-          restoredRunningRouteIds = Object.values(readCompetitionTimers(window.localStorage, profile.id, season))
+          restoredRunningRouteIds = Object.values(readCompetitionTimers(window.localStorage, JUDGE_TIMER_DEVICE_KEY, season))
             .filter((timer) => timer.startedAt !== null && getCompetitionTimerElapsed(timer, Date.now()) < COMPETITION_TIMER_DURATION_MS)
             .map((timer) => timer.routeId);
         } catch { /* Timers remain usable in memory if local storage is blocked. */ }
@@ -109,37 +103,37 @@ export default function JudgeDashboard() {
           return new Set([...staffRoutes.slice(0, 2).map((route) => route.id), ...restoredRunningRouteIds.filter((id) => available.has(id))]);
         });
         setSelectedQrId((current) => current && staffRoutes.some((route) => route.id === current) ? current : staffRoutes[0]?.id ?? null);
-      }
     } catch (error) {
       if (sequence !== eventSequence.current) return;
-      setLoadError(readableLoadError(error));
-      setEvent(null);
-      setRoutes([]);
+      const message = readableLoadError(error);
+      setLoadError(message);
+      if (/Schiedsrichter-Code/i.test(message)) {
+        setActiveCode("");
+        setEvent(null);
+        setRoutes([]);
+      }
     } finally {
-      if (sequence === eventSequence.current) setLoading(false);
+      if (sequence === eventSequence.current && !background) setLoading(false);
     }
-  }, [profile?.id, season]);
+  }, [season]);
 
   useEffect(() => {
-    if (authLoading || settingsLoading) return;
-    if (!profile?.id || !season) {
+    if (settingsLoading) return;
+    if (!activeCode || !season) {
       setLoading(false);
       return;
     }
-    void load();
+    void load(activeCode);
     return () => { eventSequence.current += 1; };
-  }, [authLoading, load, profile?.id, season, settingsLoading]);
+  }, [activeCode, load, season, settingsLoading]);
 
   useEffect(() => {
     const invalidateHiddenView = () => {
       if (document.visibilityState === "hidden") {
         eventSequence.current += 1;
-        setRoutes([]);
-        setEvent(null);
-        setIsAllowed(null);
         return;
       }
-      if (profile?.id && season) void load();
+      if (activeCode && season) void load(activeCode, true);
     };
     window.addEventListener("focus", invalidateHiddenView);
     document.addEventListener("visibilitychange", invalidateHiddenView);
@@ -147,30 +141,38 @@ export default function JudgeDashboard() {
       window.removeEventListener("focus", invalidateHiddenView);
       document.removeEventListener("visibilitychange", invalidateHiddenView);
     };
-  }, [load, profile?.id, season]);
+  }, [activeCode, load, season]);
 
   useEffect(() => {
-    if (!profile?.id || !season) { setTimers(null); return; }
+    if (!activeCode || !season) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load(activeCode, true);
+    }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [activeCode, load, season]);
+
+  useEffect(() => {
+    if (!season) { setTimers(null); return; }
     let storedTimers: RouteTimerMap = {};
     let storedSound = false;
     try {
-      storedTimers = readCompetitionTimers(window.localStorage, profile.id, season);
-      storedSound = window.localStorage.getItem(`${getCompetitionTimerStorageKey(profile.id, season)}:sound`) === "on";
+      storedTimers = readCompetitionTimers(window.localStorage, JUDGE_TIMER_DEVICE_KEY, season);
+      storedSound = window.localStorage.getItem(`${getCompetitionTimerStorageKey(JUDGE_TIMER_DEVICE_KEY, season)}:sound`) === "on";
     } catch { setStorageWarning(true); }
     setTimers(storedTimers);
     setSoundEnabled(storedSound);
-  }, [profile?.id, season]);
+  }, [season]);
 
   useEffect(() => {
-    if (!timers || !profile?.id || !season) return;
-    setStorageWarning(!writeCompetitionTimers(window.localStorage, profile.id, season, timers));
-  }, [profile?.id, season, timers]);
+    if (!timers || !season) return;
+    setStorageWarning(!writeCompetitionTimers(window.localStorage, JUDGE_TIMER_DEVICE_KEY, season, timers));
+  }, [season, timers]);
 
   useEffect(() => {
-    if (!profile?.id || !season) return;
-    try { window.localStorage.setItem(`${getCompetitionTimerStorageKey(profile.id, season)}:sound`, soundEnabled ? "on" : "off"); }
+    if (!season) return;
+    try { window.localStorage.setItem(`${getCompetitionTimerStorageKey(JUDGE_TIMER_DEVICE_KEY, season)}:sound`, soundEnabled ? "on" : "off"); }
     catch { setStorageWarning(true); }
-  }, [profile?.id, season, soundEnabled]);
+  }, [season, soundEnabled]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 250);
@@ -267,17 +269,19 @@ export default function JudgeDashboard() {
   const selectedQrRoute = routes.find((route) => route.id === selectedQrId) ?? routes[0] ?? null;
   const pendingResetRoute = routes.find((route) => route.id === resetTarget);
 
-  if (authLoading || settingsLoading || loading) return <div className="mx-auto max-w-5xl" aria-live="polite"><StitchCard tone="muted" className="animate-pulse p-6"><p className="stitch-kicker">Wettkampftag</p><p className="mt-3 text-sm">Schiedsrichterbereich wird geladen …</p></StitchCard></div>;
-  if (!profile?.id) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="p-6"><h1 className="stitch-headline text-2xl">Anmeldung erforderlich</h1><p className="mt-3 text-sm leading-6">Melde dich mit deinem persönlichen Profil an, um die Schiedsrichteransicht zu öffnen.</p></StitchCard></div>;
+  if (settingsLoading || loading) return <div className="mx-auto max-w-5xl" aria-live="polite"><StitchCard tone="muted" className="animate-pulse p-6"><p className="stitch-kicker">Wettkampftag</p><p className="mt-3 text-sm">Schiedsrichterbereich wird geladen …</p></StitchCard></div>;
   if (!season) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><h1 className="stitch-headline text-2xl">Saison nicht verfügbar</h1><p className="text-sm leading-6">Die aktuelle Saison konnte nicht geladen werden. Bitte versuche es erneut.</p><StitchButton onClick={() => void refreshSettings()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Saisonstatus erneut laden</StitchButton></StitchCard></div>;
-  if (loadError) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><AlertCircle className="h-6 w-6 text-[#a15523]" aria-hidden="true" /><h1 className="stitch-headline text-2xl">Ansicht nicht verfügbar</h1><p className="text-sm leading-6">{loadError}</p><StitchButton onClick={() => void load()} disabled={loading}><RefreshCw className="h-4 w-4" aria-hidden="true" />Erneut laden</StitchButton></StitchCard></div>;
+  if (!activeCode) return <div className="mx-auto max-w-xl space-y-5"><StitchSectionHeading eyebrow={`Kletterliga NRW · ${season}`} title="Schiedsrichter" description="Routenuhren und QR-Codes ohne App-Konto öffnen." titleAs="h1" /><StitchCard tone="surface" className="p-5 sm:p-7"><form className="space-y-5" onSubmit={(event) => { event.preventDefault(); setLoadError(null); setActiveCode(enteredCode.trim()); setEnteredCode(""); }}><StitchTextField label="Schiedsrichter-Code" aria-label="Schiedsrichter-Code" type="password" value={enteredCode} autoComplete="off" minLength={24} maxLength={24} required onChange={(event) => setEnteredCode(event.target.value)} hint="Den Code erhältst du von der Wettkampfleitung." />{loadError && <p role="alert" className="text-sm font-semibold text-[#a15523]">{loadError}</p>}<StitchButton className="w-full" disabled={enteredCode.trim().length !== 24}>Bereich öffnen</StitchButton></form></StitchCard></div>;
+  if (loadError && !event) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><AlertCircle className="h-6 w-6 text-[#a15523]" aria-hidden="true" /><h1 className="stitch-headline text-2xl">Ansicht nicht verfügbar</h1><p className="text-sm leading-6">{loadError}</p><StitchButton onClick={() => void load(activeCode)} disabled={loading}><RefreshCw className="h-4 w-4" aria-hidden="true" />Erneut laden</StitchButton></StitchCard></div>;
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 sm:space-y-7">
+      {loadError && <div role="alert" className="rounded-xl border border-[#a15523]/30 bg-[#f2dcab] px-4 py-3 text-sm font-semibold text-[#003d55]">Verbindung unterbrochen. Die lokalen Uhren laufen weiter; prüfe die Verbindung, bevor du QR-Codes verwendest. <button type="button" className="underline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => void load(activeCode, true)}>Erneut prüfen</button></div>}
       <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <StitchSectionHeading eyebrow={`Kletterliga NRW · ${season ?? ""}`} title="Schiedsrichter" description="Unabhängige Fünf-Minuten-Uhren und Routencodes für deine Station." titleAs="h1" />
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <StitchBadge tone="navy"><Clock3 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />5 MINUTEN</StitchBadge>
+          <StitchButton variant="outline" size="sm" onClick={() => { eventSequence.current += 1; setActiveCode(""); setRoutes([]); setEvent(null); }}>Zugang verlassen</StitchButton>
           <StitchButton variant={soundEnabled ? "navy" : "outline"} size="sm" aria-pressed={soundEnabled} onClick={() => setSound(!soundEnabled)} title={soundEnabled ? "Signalton ausschalten" : "Signalton einschalten"}>
             {soundEnabled ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
             <span className="hidden sm:inline">Ton {soundEnabled ? "an" : "aus"}</span>
@@ -291,9 +295,8 @@ export default function JudgeDashboard() {
         </div>)}
       </section>}
 
-      {!event ? <StitchCard tone="muted" className="space-y-2 p-6"><p className="stitch-kicker text-[#a15523]">Noch kein Wettkampftag</p><h2 className="stitch-headline text-2xl">Die Station ist noch nicht vorbereitet</h2><p className="text-sm leading-6 text-[rgba(27,28,26,0.7)]">Sobald die Wettkampfleitung den Saison-Wettkampftag angelegt hat, erscheinen hier deine freigegebenen Routen.</p><StitchButton variant="outline" onClick={() => void load()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Erneut prüfen</StitchButton></StitchCard>
-        : isAllowed === false ? <StitchCard tone="muted" className="space-y-3 p-6" role="alert"><AlertCircle className="h-6 w-6 text-[#a15523]" aria-hidden="true" /><h2 className="stitch-headline text-2xl">Keine Schiedsrichterfreigabe</h2><p className="text-sm leading-6">Dein Profil ist für diesen Wettkampftag nicht als Schiedsrichter oder Liga-Administration freigegeben. Bitte wende dich an die Wettkampfleitung.</p></StitchCard>
-          : routes.length === 0 ? <StitchCard tone="muted" className="space-y-3 p-6"><h2 className="stitch-headline text-2xl">Noch keine Routen zugewiesen</h2><p className="text-sm leading-6">Deine Schiedsrichterfreigabe ist aktiv, aber es sind aktuell keine Routen für deine Station verfügbar.</p><StitchButton variant="outline" onClick={() => void load()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Routen erneut laden</StitchButton></StitchCard>
+      {!event ? <StitchCard tone="muted" className="space-y-2 p-6"><p className="stitch-kicker text-[#a15523]">Noch kein Wettkampftag</p><h2 className="stitch-headline text-2xl">Die Station ist noch nicht vorbereitet</h2><p className="text-sm leading-6 text-[rgba(27,28,26,0.7)]">Sobald die Wettkampfleitung den Saison-Wettkampftag angelegt hat, erscheinen hier die Routen.</p><StitchButton variant="outline" onClick={() => void load(activeCode)}><RefreshCw className="h-4 w-4" aria-hidden="true" />Erneut prüfen</StitchButton></StitchCard>
+        : routes.length === 0 ? <StitchCard tone="muted" className="space-y-3 p-6"><h2 className="stitch-headline text-2xl">Noch keine Routen vorhanden</h2><p className="text-sm leading-6">Die Wettkampfleitung hat noch keine Routen für diese Saison angelegt.</p><StitchButton variant="outline" onClick={() => void load(activeCode)}><RefreshCw className="h-4 w-4" aria-hidden="true" />Routen erneut laden</StitchButton></StitchCard>
             : <>
               <Tabs value={tab} onValueChange={(value) => setTab(value as DashboardTab)} className="space-y-5">
                 <TabsList aria-label="Schiedsrichterwerkzeuge" className="grid h-auto w-full grid-cols-2 rounded-2xl bg-[#ede8e1] p-1.5">
