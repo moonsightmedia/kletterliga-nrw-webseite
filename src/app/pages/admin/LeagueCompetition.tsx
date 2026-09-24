@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Copy, Plus, QrCode, RefreshCw, Shield, Trash2 } from "lucide-react";
+import { Check, Copy, ListOrdered, Plus, QrCode, RefreshCw, Shield, ToggleRight, Trash2 } from "lucide-react";
 import { StitchBadge, StitchButton, StitchCard, StitchTextField } from "@/app/components/StitchPrimitives";
+import { CompetitionCustomColor } from "@/app/components/CompetitionCustomColor";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSeasonSettings } from "@/services/seasonSettings";
@@ -44,6 +46,7 @@ export default function LeagueCompetition() {
   const [resultSearch, setResultSearch] = useState("");
   const [selectedRouteNumber, setSelectedRouteNumber] = useState<number | null>(null);
   const [routeToRemove, setRouteToRemove] = useState<number | null>(null);
+  const [operationsMenu, setOperationsMenu] = useState("");
 
   const reload = useCallback(async () => {
     if (!season) return;
@@ -154,6 +157,7 @@ export default function LeagueCompetition() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-full ring-1 ring-black/20" style={{ backgroundColor: color.value }}>{selected && <Check size={16} strokeWidth={3} className={["#f2cf35", "#ffffff", "#71c7b0"].includes(color.value) ? "text-[#003d55]" : "text-white"} />}</span>
                 </button>;
               })}</div>
+              <CompetitionCustomColor key={selectedRoute.number} value={selectedRoute.color} disabled={!canConfigure} onChange={(color) => change({ ...config, routes: config.routes.map((route) => route.number === selectedRoute.number ? { ...route, color } : route) })} />
             </fieldset>
             <fieldset disabled={!canConfigure} className="space-y-2">
               <legend className="mb-2 text-sm font-bold">Klassen für diese Route</legend>
@@ -183,29 +187,36 @@ export default function LeagueCompetition() {
           }}><Check size={18} /> Änderungen speichern</StitchButton>
         </div>}
       </section>
-      <section aria-label="Wettkampfbetrieb" className="grid gap-5 rounded-xl bg-[#ede9e1] p-4 sm:p-5 lg:grid-cols-2">
-        <div className="space-y-3">
-          <h2 className="stitch-headline text-xl">Schiedsrichter</h2>
+      <Accordion type="single" collapsible value={operationsMenu} onValueChange={setOperationsMenu} className="space-y-2" aria-label="Wettkampfbetrieb">
+        <AccordionItem value="entry" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
+          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ToggleRight size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebniseingabe</span><span className="block text-xs font-normal text-[#526b72]">{day.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</span></span></AccordionTrigger>
+          <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
+          <p className="text-sm">Zone 1–10 = 1–10 Punkte. Keine Zone erreicht = 0.{config.flash_bonus > 0 ? " Flash: +" + config.flash_bonus + (config.flash_bonus === 1 ? " Punkt." : " Punkte.") : ""}</p>
+          <StitchButton disabled={busy || !day.event || dirty || (day.event.phase !== "open" && (Boolean(validation) || scoringNeedsSave))} onClick={() => setPhaseDialog(day.event?.phase === "open" ? "closed" : "open")}>{day.event?.phase === "open" ? "Eingabe schließen" : "Eingabe öffnen"}</StitchButton>
+          <p className="text-xs leading-5 text-[#526b72]">Nach der ersten Öffnung ist die Routenzuordnung gesperrt.</p>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="judges" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
+          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><Shield size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Schiedsrichter</span><span className="block text-xs font-normal text-[#526b72]">{judgeCodeConfigured ? "Zugangscode aktiv" : "Zugangscode noch nicht eingerichtet"}</span></span></AccordionTrigger>
+          <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
           <StitchButton asChild variant="outline" size="sm"><Link to="/app/schiedsrichter"><QrCode size={16} /> Schiedsrichteransicht</Link></StitchButton>
           {!day.event ? <p className="text-sm">Zuerst die Routen speichern.</p> : <>
             <p className="text-sm">{judgeCodeConfigured ? "Zugangscode eingerichtet." : "Noch kein Zugangscode eingerichtet."}</p>
             <StitchButton variant="outline" size="sm" disabled={busy || dirty} onClick={() => setJudgeCodeDialog(true)}><Shield size={16} />{judgeCodeConfigured ? "Neuen Code erzeugen" : "Zugangscode erzeugen"}</StitchButton>
             {generatedJudgeCode && <div className="space-y-2 rounded-lg bg-[#f2dcab] p-3" role="status"><p className="text-xs">Code jetzt kopieren und an die Schiedsrichter weitergeben.</p><p className="break-all font-mono font-bold select-all">{generatedJudgeCode}</p><StitchButton variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(generatedJudgeCode); setCopyError(""); } catch { setCopyError("Bitte den Code markieren und selbst kopieren."); } }}><Copy size={16} /> Code kopieren</StitchButton>{copyError && <p role="alert" className="text-sm">{copyError}</p>}</div>}
           </>}
-        </div>
-        <div className="space-y-3">
-          <h2 className="stitch-headline text-xl">Ergebniseingabe</h2>
-          <p className="text-sm">Zone 1–10 = 1–10 Punkte. Keine Zone erreicht = 0.{config.flash_bonus > 0 ? " Flash: +" + config.flash_bonus + (config.flash_bonus === 1 ? " Punkt." : " Punkte.") : ""}</p>
-          <StitchButton disabled={busy || !day.event || dirty || (day.event.phase !== "open" && (Boolean(validation) || scoringNeedsSave))} onClick={() => setPhaseDialog(day.event?.phase === "open" ? "closed" : "open")}>{day.event?.phase === "open" ? "Eingabe schließen" : "Eingabe öffnen"}</StitchButton>
-          <p className="text-xs leading-5 text-[#526b72]">Nach der ersten Öffnung ist die Routenzuordnung gesperrt.</p>
-        </div>
-      </section>
-      <section aria-labelledby="competition-results" className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h2 id="competition-results" className="stitch-headline text-xl">Ergebnisse · {admin.results.length}</h2><Link className="min-h-11 py-3 text-sm font-bold underline underline-offset-4" to="/app/wettkampf/rangliste">Live-Wertung</Link></div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="results" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
+          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ListOrdered size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebnisse</span><span className="block text-xs font-normal text-[#526b72]">{admin.results.length} Einträge · Kontrolle und Korrekturen</span></span></AccordionTrigger>
+          <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
+            <Link className="inline-block min-h-11 py-3 text-sm font-bold underline underline-offset-4" to="/app/wettkampf/rangliste">Live-Wertung öffnen</Link>
         {admin.results.length > 0 && <StitchTextField label="Ergebnisse nach Namen filtern" value={resultSearch} onChange={(e) => setResultSearch(e.target.value)} />}
         {!admin.results.length && <p className="text-sm text-[#526b72]">Noch keine Ergebnisse eingetragen.</p>}
         {admin.results.filter((r) => r.name.toLocaleLowerCase("de").includes(resultSearch.toLocaleLowerCase("de"))).map((result) => <StitchCard key={result.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><h3 className="font-bold">{result.name}</h3><p className="text-sm">{leagueLabel(result.league)} · {result.class_label} · Route {day.routes.find((r) => r.id === result.route_id)?.number ?? "–"}</p><p className="mt-1">Zone {result.zone}{result.flash ? " · Flash" : ""} · <strong>{result.points} Punkte</strong></p></div><StitchButton size="sm" variant="outline" disabled={busy || dirty} onClick={() => { setCorrection(result); setCorrectZone(result.zone); setCorrectFlash(result.flash); setReason(""); }}>Korrigieren</StitchButton></StitchCard>)}
-      </section>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </>}
     <AlertDialog open={routeToRemove !== null} onOpenChange={(open) => !open && setRouteToRemove(null)}>
       <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">

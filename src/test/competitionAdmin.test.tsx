@@ -24,7 +24,8 @@ describe("competition admin", () => {
     expect(api.phase).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
   });
   it("requires explicit confirmation to open", async () => {
-    view(); fireEvent.click(await screen.findByRole("button", { name: "Eingabe öffnen" }));
+    view(); fireEvent.click(await screen.findByRole("button", { name: /^Ergebniseingabe/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Eingabe öffnen" }));
     expect(await screen.findByRole("alertdialog")).toHaveTextContent("Nach der ersten Öffnung sind diese Einstellungen gesperrt");
     expect(api.phase).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Bestätigen" }));
@@ -32,6 +33,7 @@ describe("competition admin", () => {
   });
   it("does not allow opening when configuration has unsaved edits", async () => {
     view(); fireEvent.change(await screen.findByLabelText("Name · Route 1"), { target: { value: "Neuer Name" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Ergebniseingabe/ }));
     expect(screen.getByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
   });
@@ -51,12 +53,16 @@ describe("competition admin", () => {
   it("locks sporting config but keeps pause and shared-code controls after first opening", async () => {
     api.day.mockResolvedValue({ event: { phase: "open", opened_at: "2026-10-03" }, routes: [] });
     view(); expect(await screen.findByLabelText("Name · Route 1")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Eigene Farbe" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Ergebniseingabe/ }));
     expect(screen.getByRole("button", { name: "Eingabe schließen" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Schiedsrichter/ }));
     expect(screen.getByRole("button", { name: "Zugangscode erzeugen" })).toBeEnabled();
   });
   it("generates a strong shared code only after an explicit admin action", async () => {
     api.setJudgeCode.mockResolvedValue(null);
     view();
+    fireEvent.click(await screen.findByRole("button", { name: /^Schiedsrichter/ }));
     await screen.findByRole("button", { name: "Zugangscode erzeugen" });
     expect(api.setJudgeCode).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Zugangscode erzeugen" }));
@@ -76,8 +82,8 @@ describe("competition admin", () => {
     expect(screen.queryByLabelText("Name · Route 1")).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vorbereitungsstand" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Zone 1")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Blau", exact: true }));
-    expect(screen.getByRole("button", { name: "Blau", exact: true })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Blau" }));
+    expect(screen.getByRole("button", { name: "Blau" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Ungespeicherte Änderungen.")).toBeInTheDocument();
     expect(api.save).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
@@ -100,6 +106,7 @@ describe("competition admin", () => {
   it("requires saving the fixed scoring before opening an old unconfigured draft", async () => {
     api.admin.mockResolvedValue({ config: { ...config, zone_points: Array(11).fill(0) }, staff: [], results: [] });
     view();
+    fireEvent.click(await screen.findByRole("button", { name: /^Ergebniseingabe/ }));
     expect(await screen.findByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
@@ -115,5 +122,31 @@ describe("competition admin", () => {
     expect(screen.queryByLabelText("Name · Route 1")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Vorstieg Ü15-m für Route 2" })).toHaveTextContent("4/5");
     expect(api.save).not.toHaveBeenCalled();
+  });
+  it("keeps operations collapsed and opens one menu at a time", async () => {
+    view();
+    const entry = await screen.findByRole("button", { name: /^Ergebniseingabe/ });
+    expect(entry).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: "Eingabe öffnen" })).not.toBeInTheDocument();
+    fireEvent.click(entry);
+    expect(entry).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: /^Ergebnisse/ }));
+    expect(entry).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("Noch keine Ergebnisse eingetragen.")).toBeVisible();
+  });
+  it("validates and saves a custom color with the route configuration", async () => {
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: "Eigene Farbe" }));
+    const input = screen.getByLabelText("Farbcode (Hex)");
+    fireEvent.change(input, { target: { value: "#xyz" } });
+    expect(screen.getByRole("button", { name: "Farbe übernehmen" })).toBeDisabled();
+    fireEvent.change(input, { target: { value: "#AbC" } });
+    fireEvent.click(screen.getByRole("button", { name: "Farbe übernehmen" }));
+    expect(screen.queryByLabelText("Farbcode (Hex)")).not.toBeInTheDocument();
+    expect(api.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({
+      routes: expect.arrayContaining([expect.objectContaining({ number: 1, color: "#aabbcc" })]),
+    })));
   });
 });
