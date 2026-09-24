@@ -139,16 +139,14 @@ export default function LeagueCompetition() {
               const selected = selectedRoute?.number === route.number;
               return <button key={route.number} type="button" aria-label={"Route " + route.number + " bearbeiten"} aria-pressed={selected} onClick={() => setSelectedRouteNumber(route.number)} className={"min-h-24 min-w-0 rounded-xl p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] focus-visible:ring-offset-2 " + (selected ? "bg-[#003d55] text-[#f2dcab]" : "bg-[#ede9e1] text-[#003d55] hover:bg-[#f8edcf]")}>
                 <span className="flex items-center gap-2"><span aria-hidden="true" className="h-4 w-4 shrink-0 rounded-full ring-1 ring-black/20" style={{ backgroundColor: competitionRouteColor(route.color).value }} /><strong className="stitch-headline text-lg">Route {route.number}</strong></span>
-                <span className="mt-1 block truncate text-xs">{route.grade || "Grad offen"} · {competitionRouteColor(route.color).label}</span>
+                <span className="mt-1 block truncate text-xs">{competitionRouteColor(route.color).label}</span>
                 <span className="mt-1 block text-xs opacity-80">{inClasses.length ? inClasses.length + (inClasses.length === 1 ? " Klasse" : " Klassen") : "Keine Klasse"}</span>
               </button>;
             })}
           </div>
           {selectedRoute && <StitchCard className="min-w-0 space-y-5 p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3"><h3 className="stitch-headline text-2xl">Route {selectedRoute.number}</h3><StitchButton variant="ghost" size="icon" aria-label={"Route " + selectedRoute.number + " entfernen"} disabled={!canConfigure} onClick={() => setRouteToRemove(selectedRoute.number)}><Trash2 size={16} /></StitchButton></div>
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)]">
-              {([["name", "Name"], ["grade", "Schwierigkeit"]] as const).map(([key, label]) => <StitchTextField key={key} label={label + " · Route " + selectedRoute.number} value={selectedRoute[key]} maxLength={key === "name" ? 100 : 40} disabled={!canConfigure} onChange={(e) => change({ ...config, routes: config.routes.map((route) => route.number === selectedRoute.number ? { ...route, [key]: e.target.value } : route) })} />)}
-            </div>
+            <StitchTextField label={"Name · Route " + selectedRoute.number} value={selectedRoute.name} maxLength={100} disabled={!canConfigure} onChange={(e) => change({ ...config, routes: config.routes.map((route) => route.number === selectedRoute.number ? { ...route, name: e.target.value } : route) })} />
             <fieldset disabled={!canConfigure} className="space-y-2">
               <legend className="mb-2 text-sm font-bold">Farbe <span className="font-normal text-[#526b72]">· {competitionRouteColor(selectedRoute.color).label}</span></legend>
               <div className="flex flex-wrap gap-2">{competitionRouteColors.map((color) => {

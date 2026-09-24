@@ -80,6 +80,9 @@ describe("competition admin", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Route 2 bearbeiten" }));
     expect(screen.getByLabelText("Name · Route 2")).toBeInTheDocument();
     expect(screen.queryByLabelText("Name · Route 1")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Schwierigkeit/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Route 2 bearbeiten" })).not.toHaveTextContent("6a");
+    expect(screen.queryByText(/Grad offen/)).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vorbereitungsstand" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Zone 1")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Blau" }));
@@ -89,7 +92,7 @@ describe("competition admin", () => {
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
     await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({
       zone_points: Array.from({ length: 11 }, (_, i) => i),
-      routes: expect.arrayContaining([expect.objectContaining({ number: 2, color: "#327bc1" })]),
+      routes: expect.arrayContaining([expect.objectContaining({ number: 2, color: "#327bc1", grade: "6a" })]),
     })));
   });
   it("limits a class to five routes and allows moving its assignment to another route", async () => {
