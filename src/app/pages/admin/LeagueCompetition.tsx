@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Flag, Plus, QrCode, RefreshCw, Shield, Trash2 } from "lucide-react";
+import { Check, Copy, Flag, Plus, QrCode, RefreshCw, Shield, Trash2 } from "lucide-react";
 import { StitchBadge, StitchButton, StitchCard, StitchTextField } from "@/app/components/StitchPrimitives";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { listAdminSemifinalRegistrations, type AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
-import { supabase } from "@/services/supabase";
-import { competitionClassKey, exactCompetitionEmailPattern, registeredCompetitionClasses, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
-import { correctCompetitionResult, getCompetitionAdmin, getCompetitionDay, saveCompetitionConfig, saveCompetitionRouteDraft, setCompetitionPhase, setCompetitionStaff, type CompetitionAdminData, type CompetitionAdminResult, type CompetitionConfig, type CompetitionDay } from "@/services/competitionDay";
+import { competitionClassKey, registeredCompetitionClasses, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
+import { correctCompetitionResult, getCompetitionAdmin, getCompetitionDay, getCompetitionJudgeAccessStatus, saveCompetitionConfig, saveCompetitionRouteDraft, setCompetitionJudgePassword, setCompetitionPhase, type CompetitionAdminData, type CompetitionAdminResult, type CompetitionConfig, type CompetitionDay } from "@/services/competitionDay";
 
 const emptyConfig = (): CompetitionConfig => ({ routes: [], assignments: [], zone_points: Array(11).fill(0), flash_bonus: 0 });
 const leagueLabel = (league: string) => league === "lead" ? "Vorstieg" : "Toprope";
 const phaseLabels = { draft: "In Vorbereitung", open: "Eingabe offen", closed: "Eingabe geschlossen" };
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Die Aktion konnte nicht abgeschlossen werden. Bitte erneut versuchen.";
-type StaffChoice = { id: string; first_name: string | null; last_name: string | null; email: string | null };
+const createJudgeCode = () => {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+};
 
 export default function LeagueCompetition() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
@@ -29,8 +32,9 @@ export default function LeagueCompetition() {
   const [notice, setNotice] = useState("");
   const [dirty, setDirty] = useState(false);
   const [phaseDialog, setPhaseDialog] = useState<"open" | "closed" | null>(null);
-  const [staffEmail, setStaffEmail] = useState("");
-  const [staffChoice, setStaffChoice] = useState<StaffChoice | null>(null);
+  const [judgeCodeConfigured, setJudgeCodeConfigured] = useState(false);
+  const [generatedJudgeCode, setGeneratedJudgeCode] = useState("");
+  const [copyError, setCopyError] = useState("");
   const [correction, setCorrection] = useState<CompetitionAdminResult | null>(null);
   const [correctZone, setCorrectZone] = useState(0);
   const [correctFlash, setCorrectFlash] = useState(false);
@@ -41,8 +45,9 @@ export default function LeagueCompetition() {
     if (!season) return;
     setLoading(true);
     try {
-      const [current, administration, roster] = await Promise.all([getCompetitionDay(season), getCompetitionAdmin(season), listAdminSemifinalRegistrations(season)]);
+      const [current, administration, roster, codeConfigured] = await Promise.all([getCompetitionDay(season), getCompetitionAdmin(season), listAdminSemifinalRegistrations(season), getCompetitionJudgeAccessStatus(season)]);
       setDay(current); setAdmin(administration); setRegistrations(roster);
+      setJudgeCodeConfigured(codeConfigured);
       setConfig(administration.config?.routes?.length ? administration.config : emptyConfig());
       setDirty(false); setError("");
       return true;
@@ -100,7 +105,7 @@ export default function LeagueCompetition() {
     <StitchCard tone="navy" className="space-y-4 p-5 sm:p-8">
       <div className="flex flex-wrap items-center gap-3"><Flag aria-hidden="true" /><StitchBadge tone="cream">{day?.event ? phaseLabels[day.event.phase] : "Noch nicht eingerichtet"}</StitchBadge></div>
       <h1 className="stitch-headline text-3xl text-[#f2dcab]">Wettkampftag · Halbfinale</h1>
-      <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]">Saison {season ?? "–"}. Physische Routen anlegen, jeder Klasse fünf Routen zuordnen und Helferzugänge freigeben. Qualifikation und Anmeldung bleiben unverändert.</p>
+      <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]">Saison {season ?? "–"}. Physische Routen anlegen, jeder Klasse fünf Routen zuordnen und den gemeinsamen Schiedsrichter-Code erzeugen. Qualifikation und Anmeldung bleiben unverändert.</p>
       <div className="flex flex-wrap gap-3"><StitchButton asChild variant="cream"><Link to="/app/schiedsrichter"><QrCode size={18} /> Schiedsrichteransicht</Link></StitchButton><StitchButton asChild variant="outline"><Link to="/app/wettkampf/rangliste">Live-Wertung</Link></StitchButton></div>
     </StitchCard>
     {error && <div role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</div>}
@@ -130,12 +135,18 @@ export default function LeagueCompetition() {
         {!locked && <><p className="text-sm" role="status">{validation ?? (dirty ? "Zuordnung vollständig. Änderungen noch nicht gespeichert." : "Zuordnung vollständig gespeichert.")}</p><StitchButton disabled={busy || Boolean(validation) || !dirty} onClick={() => season && void action(() => saveCompetitionConfig(season, config), "Routen, Klassen und Wertung sind gespeichert.", true)}><Check size={18} /> Konfiguration speichern</StitchButton></>}
       </section>
       <section aria-labelledby="competition-access" className="space-y-4">
-        <h2 id="competition-access" className="stitch-headline text-2xl">3. Schiedsrichterzugänge</h2>
-        <p className="text-sm leading-6">Helfer melden sich mit einem vorhandenen App-Konto an. Die Freigabe erlaubt nur Routen-QR-Codes und Stoppuhren, keine Liga-Verwaltung und keine Ergebnisbestätigung.</p>
-        {!day.event ? <p>Bitte zunächst die Konfiguration speichern.</p> : <>
-          <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={async (e) => { e.preventDefault(); if (busy) return; setBusy(true); setError(""); setStaffChoice(null); try { const email = staffEmail.trim(); if (!email.includes("@")) throw new Error("Bitte eine vollständige E-Mail-Adresse eingeben."); const { data, error: lookupError } = await supabase.from("profiles").select("id,first_name,last_name,email").ilike("email", exactCompetitionEmailPattern(email)).is("archived_at", null).limit(2); if (lookupError) throw lookupError; if (!data || data.length !== 1) throw new Error("Kein eindeutiges aktives Konto gefunden. Die Person muss bereits ein App-Konto haben."); setStaffChoice(data[0]); } catch (err) { setError(errorText(err)); } finally { setBusy(false); } }}><div className="min-w-0 flex-1"><StitchTextField label="E-Mail des Helferkontos" type="email" value={staffEmail} onChange={(e) => { setStaffEmail(e.target.value); setStaffChoice(null); }} required /></div><StitchButton variant="outline" disabled={busy}>Konto suchen</StitchButton></form>
-          {staffChoice && <StitchCard tone="cream" className="space-y-3 p-4"><p>{staffChoice.first_name} {staffChoice.last_name} · <span className="break-all">{staffChoice.email}</span></p><StitchButton disabled={busy} onClick={() => season && void action(() => setCompetitionStaff(season, staffChoice.id, true), "Schiedsrichterzugang freigegeben.").then((ok) => { if (ok) { setStaffChoice(null); setStaffEmail(""); } })}><Shield size={16} /> Zugang freigeben</StitchButton></StitchCard>}
-          {admin.staff.map((member) => <div key={member.profile_id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4"><span>{member.name || "Helferkonto"}</span><StitchButton size="sm" variant="outline" disabled={busy} onClick={() => season && void action(() => setCompetitionStaff(season, member.profile_id, false), "Helferzugang entzogen. Bereits ausgedruckte oder gespeicherte QR-Codes bleiben gültig.")}>Zugang entziehen</StitchButton></div>)}
+        <p className="text-sm leading-6">Schiedsrichter öffnen <span className="font-bold">/app/schiedsrichter</span> ohne App-Konto. Ein gemeinsamer Code schaltet nur die Stoppuhren und Routen-QR-Codes frei – keine Ergebnisänderung oder Liga-Verwaltung.</p>
+        {!day.event ? <p>Bitte zunächst einen Routenentwurf speichern.</p> : <>
+          <p className="text-sm font-semibold">Gemeinsamer Zugang: {judgeCodeConfigured ? "Code eingerichtet" : "Noch kein Code eingerichtet"}</p>
+          <StitchButton disabled={busy || dirty} onClick={async () => {
+            if (!season || busy) return;
+            const code = createJudgeCode();
+            const ok = await action(() => setCompetitionJudgePassword(season, code), judgeCodeConfigured ? "Alter Schiedsrichter-Code ersetzt." : "Schiedsrichter-Code eingerichtet.");
+            if (ok) { setGeneratedJudgeCode(code); setJudgeCodeConfigured(true); setCopyError(""); }
+          }}><Shield size={16} />{judgeCodeConfigured ? "Neuen Code erzeugen" : "Zugangscode erzeugen"}</StitchButton>
+          {generatedJudgeCode && <StitchCard tone="cream" className="space-y-3 p-4" role="status"><p className="text-sm font-bold">Diesen Code jetzt sicher an die Schiedsrichter weitergeben. Er wird nur hier einmal angezeigt.</p><p className="break-all font-mono text-lg font-bold tracking-wider select-all">{generatedJudgeCode}</p><StitchButton variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(generatedJudgeCode); setCopyError(""); } catch { setCopyError("Kopieren nicht möglich. Bitte den Code markieren und selbst kopieren."); } }}><Copy size={16} /> Code kopieren</StitchButton>{copyError && <p role="alert" className="text-sm">{copyError}</p>}</StitchCard>}
+          <p className="text-xs leading-5">Ein neuer Code sperrt den alten für diese Seite. Bereits ausgedruckte oder gespeicherte Routen-QR-Codes bleiben jedoch gültig und müssen bei Missbrauch gesondert ersetzt werden.</p>
+          {admin.staff.length > 0 && <p role="alert" className="text-sm">Hinweis: Es bestehen noch {admin.staff.length} frühere personenbezogene Helferfreigaben. Diese sind vom neuen Code unabhängig.</p>}
         </>}
       </section>
       <section aria-labelledby="competition-phase" className="space-y-4">

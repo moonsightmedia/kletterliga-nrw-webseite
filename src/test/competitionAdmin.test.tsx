@@ -3,8 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 
-const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), draft: vi.fn(), phase: vi.fn(), staff: vi.fn(), correct: vi.fn() }));
-vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCompetitionAdmin: api.admin, saveCompetitionConfig: api.save, saveCompetitionRouteDraft: api.draft, setCompetitionPhase: api.phase, setCompetitionStaff: api.staff, correctCompetitionResult: api.correct }));
+const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), draft: vi.fn(), phase: vi.fn(), judgeStatus: vi.fn(), setJudgeCode: vi.fn(), correct: vi.fn() }));
+vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCompetitionAdmin: api.admin, getCompetitionJudgeAccessStatus: api.judgeStatus, saveCompetitionConfig: api.save, saveCompetitionRouteDraft: api.draft, setCompetitionPhase: api.phase, setCompetitionJudgePassword: api.setJudgeCode, correctCompetitionResult: api.correct }));
 vi.mock("@/services/semifinalAdminApi", () => ({ listAdminSemifinalRegistrations: api.roster }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/supabase", () => ({ supabase: { from: vi.fn() } }));
@@ -16,6 +16,7 @@ describe("competition admin", () => {
     api.day.mockResolvedValue({ event: { phase: "draft", opened_at: null }, routes: config.routes.map((r) => ({ ...r, id: String(r.number) })) });
     api.admin.mockResolvedValue({ config, staff: [], results: [] });
     api.roster.mockResolvedValue([{ eligibility_status: "eligible", approved_league: "lead", approved_class_label: "Ü15-m" }]);
+    api.judgeStatus.mockResolvedValue(false);
   });
   afterEach(cleanup);
   it("shows required classes and has no automatic writes", async () => {
@@ -48,10 +49,22 @@ describe("competition admin", () => {
     expect(api.save).not.toHaveBeenCalled();
     expect(api.phase).not.toHaveBeenCalled();
   });
-  it("locks sporting config but keeps pause and staff controls after first opening", async () => {
+  it("locks sporting config but keeps pause and shared-code controls after first opening", async () => {
     api.day.mockResolvedValue({ event: { phase: "open", opened_at: "2026-10-03" }, routes: [] });
     view(); expect(await screen.findByLabelText("Name · Route 1")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Eingabe schließen" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Konto suchen" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Zugangscode erzeugen" })).toBeEnabled();
+  });
+  it("generates a strong shared code only after an explicit admin action", async () => {
+    api.setJudgeCode.mockResolvedValue(null);
+    view();
+    await screen.findByRole("button", { name: "Zugangscode erzeugen" });
+    expect(api.setJudgeCode).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Zugangscode erzeugen" }));
+    await waitFor(() => expect(api.setJudgeCode).toHaveBeenCalledOnce());
+    const [season, code] = api.setJudgeCode.mock.calls[0];
+    expect(season).toBe("2026");
+    expect(code).toMatch(/^[A-Za-z0-9]{24}$/);
+    expect(await screen.findByText(code)).toBeInTheDocument();
   });
 });

@@ -5,9 +5,9 @@ vi.mock("@/services/supabase", () => ({ supabase: { rpc } }));
 
 import {
   correctCompetitionResult, getCompetitionAdmin, getCompetitionDay,
-  getCompetitionStaffRoutes, listCompetitionStandings, saveCompetitionConfig,
+  getCompetitionStaffRoutes, getCompetitionJudgeRoutes, getCompetitionJudgeAccessStatus, listCompetitionStandings, saveCompetitionConfig,
   saveCompetitionRouteDraft,
-  setCompetitionPhase, setCompetitionStaff, submitCompetitionResult,
+  setCompetitionJudgePassword, setCompetitionPhase, setCompetitionStaff, submitCompetitionResult,
 } from "@/services/competitionDay";
 
 const config = {
@@ -30,6 +30,19 @@ describe("competition-day RPC contract", () => {
     rpc.mockResolvedValue({ data: [{ id: "route-id", number: 1, name: "Route", grade: "6a", color: "blau", qr_token: "opaque" }], error: null });
     await getCompetitionStaffRoutes("2026");
     expect(rpc).toHaveBeenCalledWith("get_competition_staff_routes", { p_season: "2026" });
+  });
+
+  it("uses dedicated shared-code RPCs without altering participant authorization", async () => {
+    const code = "AbCdEfGhJkMnPqRsTuVwXyZ2";
+    rpc.mockResolvedValue({ data: null, error: null });
+    await setCompetitionJudgePassword("2026", code);
+    await getCompetitionJudgeAccessStatus("2026");
+    await getCompetitionJudgeRoutes("2026", code);
+    expect(rpc.mock.calls).toEqual([
+      ["set_competition_judge_password", { p_season: "2026", p_password: code }],
+      ["get_competition_judge_access_status", { p_season: "2026" }],
+      ["get_competition_judge_routes", { p_season: "2026", p_password: code }],
+    ]);
   });
 
   it("sends config, phase, and event staff changes through fixed RPCs", async () => {

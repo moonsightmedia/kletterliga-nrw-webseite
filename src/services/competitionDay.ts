@@ -21,6 +21,7 @@ export interface CompetitionDay {
   routes: CompetitionRoute[]; results: CompetitionResult[]; is_staff: boolean; is_admin: boolean;
 }
 export interface CompetitionStaffRoute extends CompetitionRoute { qr_token: string }
+export interface CompetitionJudgeAccess { event: { id: string; phase: CompetitionPhase }; routes: CompetitionStaffRoute[] }
 export interface CompetitionStaffMember { profile_id: string; name: string }
 export interface CompetitionAdminResult extends CompetitionResult {
   name: string; league: CompetitionLeague; class_label: string;
@@ -53,6 +54,7 @@ function readableError(error: unknown): string {
     COMPETITION_RESULT_IMMUTABLE: "Dieses Ergebnis ist bereits abgegeben und kann nicht geändert werden.",
     COMPETITION_CONFIG_LOCKED: "Die Wettkampfeinstellungen sind nach dem Öffnen gesperrt.",
     COMPETITION_DRAFT_ONLY: "Der Routenentwurf kann nur vor der Klassenzuordnung und Helferfreigabe separat gespeichert werden.",
+    COMPETITION_JUDGE_PASSWORD_INVALID: "Der Schiedsrichter-Code ist ungültig oder wurde ausgetauscht.",
   };
   for (const [key, value] of Object.entries(messages)) if (message.includes(key)) return value;
   return "Die Aktion konnte nicht abgeschlossen werden. Bitte erneut versuchen.";
@@ -60,6 +62,12 @@ function readableError(error: unknown): string {
 
 export const getCompetitionDay = (season: string) => rpc<CompetitionDay>("get_competition_day", { p_season: season });
 export const getCompetitionStaffRoutes = (season: string) => rpc<CompetitionStaffRoute[]>("get_competition_staff_routes", { p_season: season });
+export const getCompetitionJudgeRoutes = (season: string, password: string) =>
+  rpc<CompetitionJudgeAccess>("get_competition_judge_routes", { p_season: season, p_password: password });
+export const getCompetitionJudgeAccessStatus = (season: string) =>
+  rpc<boolean>("get_competition_judge_access_status", { p_season: season });
+export const setCompetitionJudgePassword = (season: string, password: string) =>
+  rpc<void>("set_competition_judge_password", { p_season: season, p_password: password });
 export const saveCompetitionConfig = (season: string, config: CompetitionConfig) =>
   rpc<void>("save_competition_config", { p_season: season, p_config: config });
 export const saveCompetitionRouteDraft = (season: string, routes: CompetitionRouteInput[]) =>
