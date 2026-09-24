@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import JudgeDashboard from "@/app/pages/competition/JudgeDashboard";
+import { getCompetitionTimerStorageKey } from "@/lib/competitionTimers";
 
 const settings = vi.hoisted(() => ({ settings: { season_year: "2026" }, loading: false, refreshSettings: vi.fn() }));
 const service = vi.hoisted(() => ({ getCompetitionJudgeRoutes: vi.fn() }));
@@ -91,6 +92,33 @@ describe("judge dashboard", () => {
     await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
     expect(screen.getByRole("button", { name: "Route 1 pausieren" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Route 2 pausieren" })).toBeInTheDocument();
+  });
+
+  it("remembers the chosen station and gives every timer a direct QR shortcut", async () => {
+    localStorage.setItem("kletterliga:judge-routes:2026", JSON.stringify(["route-b"]));
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
+    expect(screen.queryByRole("button", { name: "Route 1 starten" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Route 2 starten" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "QR-Code für Route 2 anzeigen" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("Route 2");
+    expect(await screen.findByAltText("QR-Code Route 2")).toBeInTheDocument();
+  });
+
+  it("shows explicit last-minute and end-of-time instructions", async () => {
+    localStorage.setItem(getCompetitionTimerStorageKey("shared-judge", "2026"), JSON.stringify({
+      "route-a": { routeId: "route-a", elapsedMs: 0, startedAt: Date.now() - 4 * 60 * 1000 - 5000 },
+      "route-b": { routeId: "route-b", elapsedMs: 5 * 60 * 1000, startedAt: null },
+    }));
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    await screen.findByRole("heading", { name: "Routen für die Zeitnahme" });
+    expect(screen.getByText("Letzte Minute jetzt laut ankündigen.")).toBeInTheDocument();
+    expect(screen.getByText("Fünf Minuten vorbei – Kletternde ablassen.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Route 2 beendet" })).toBeDisabled();
   });
 
   it("keeps the QR tab limited to route codes and does not reveal token text", async () => {

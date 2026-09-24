@@ -19,6 +19,20 @@ unter `/app/schiedsrichter`. Schiedsrichter benötigen dort kein App-Konto.
    Minute bei sichtbarer Seite) fehl. Bereits kopierte oder gedruckte
    Routen-QR-Codes werden dadurch **nicht** ungültig.
 
+## Bedienung an der Route
+
+- Die ausgewählten Stationsrouten bleiben auf demselben Gerät gespeichert.
+  Laufende Uhren können nicht versehentlich aus der Ansicht entfernt werden.
+- Jede Route hat eine eigene Uhr. Start, Pause/Fortsetzen und Zurücksetzen sind
+  getrennt; Zurücksetzen verlangt eine Bestätigung. Bei 1:00 Restzeit wird die
+  letzte Minute angezeigt, bei 0:00 muss die kletternde Person abgelassen werden.
+- Über das QR-Symbol an einer Uhr öffnet sich der passende Routen-Code direkt.
+  Laufende Zeiten bleiben im QR-Dialog und beim Wechsel zur QR-Übersicht sichtbar.
+- Die Wettkampfphase wird angezeigt: Solange die Ergebniseingabe geschlossen
+  ist, können Uhren getestet, aber keine Ergebnisse mit QR bestätigt werden.
+- Signalton ist optional. Das Handy muss während der Zeitnahme sichtbar bleiben;
+  Browser können Ton und Hinweise bei gesperrtem Bildschirm verzögern.
+
 ## Sicherheitsgrenzen
 
 - Die Datenbank speichert nur einen gesalzenen Hash des Codes; die Tabelle hat

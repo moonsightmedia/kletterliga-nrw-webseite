@@ -60,8 +60,33 @@ try {
     await page.getByRole('button', { name: 'Route 2 starten' }).click();
     check(`${width}: two independent timers running`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
     await page.screenshot({ path: resolve(out, `judge-${width}-timers.png`) });
+    await page.getByRole('button', { name: 'QR-Code für Route 1 anzeigen' }).click();
+    await page.getByRole('dialog').getByAltText('QR-Code Route 1').waitFor();
+    await page.waitForTimeout(400);
+    check(`${width}: direct route QR keeps both times visible`, await page.getByRole('dialog').getByLabel('Aktuelle Routenzeiten').locator('span').count() === 2);
+    const dialogBounds = await page.getByRole('dialog').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, height: rect.height, viewport: window.innerHeight };
+    });
+    check(`${width}: quick QR dialog fits viewport`, dialogBounds.top >= -1 && dialogBounds.bottom <= dialogBounds.viewport + 1);
+    await page.screenshot({ path: resolve(out, `judge-${width}-quick-qr.png`) });
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    check(`${width}: direct route QR does not stop timers`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    await page.getByRole('button', { name: 'Route 1 zurücksetzen' }).click();
+    await page.getByRole('alertdialog').getByText(/bisherige Zeit wird gelöscht/).waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('alertdialog').waitFor({ state: 'hidden' });
+    check(`${width}: reset requires confirmation`, await page.getByRole('button', { name: 'Route 1 pausieren' }).count() === 1);
     await page.getByRole('tab', { name: 'QR-Codes' }).click();
     await page.getByAltText('QR-Code Route 1').waitFor();
+    if (width <= 390) await page.evaluate(() => window.scrollTo(0, 400));
+    const sticky = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      headerTop: document.querySelector('.stitch-app-shell > header')?.getBoundingClientRect().top,
+      railTop: document.querySelector('.judge-live-rail')?.getBoundingClientRect().top,
+    }));
+    if (width <= 390) check(`${width}: route times stay visible while scrolling QR codes`, sticky.scrollY > 0 && sticky.headerTop >= -1 && sticky.railTop >= 63 && sticky.railTop <= 65);
     await page.screenshot({ path: resolve(out, `judge-${width}-qr.png`) });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     check(`${width}: no horizontal overflow`, !overflow);
@@ -73,6 +98,16 @@ try {
     await page.getByRole('button', { name: 'Bereich öffnen' }).click();
     await page.getByRole('button', { name: 'Route 1 pausieren' }).waitFor();
     check(`${width}: timer survives reload after re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    if (width === 390) {
+      await page.locator('summary').getByText('Betreute Routen ändern').click();
+      await page.getByLabel('Timer für Route 3 anzeigen').check();
+      check('390: station selection saved on device', JSON.parse(await page.evaluate(() => localStorage.getItem('kletterliga:judge-routes:2026'))).includes(routes[2].id));
+      await page.reload();
+      await page.getByLabel('Schiedsrichter-Code').fill(code);
+      await page.getByRole('button', { name: 'Bereich öffnen' }).click();
+      await page.getByRole('button', { name: 'Route 3 starten' }).waitFor();
+      check('390: selected third route restored after re-entry', await page.getByRole('button', { name: 'Route 3 starten' }).count() === 1);
+    }
     await context.close();
   }
 } catch (error) {
