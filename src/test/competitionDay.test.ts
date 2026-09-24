@@ -63,6 +63,14 @@ describe("competition-day RPC contract", () => {
     expect(rpc).toHaveBeenCalledWith("save_competition_route_draft", { p_season: "2026", p_routes: config.routes });
   });
 
+  it("always saves one point per zone while preserving the existing flash bonus", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await saveCompetitionConfig("2026", { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone * 5) });
+    expect(rpc).toHaveBeenCalledWith("save_competition_config", {
+      p_season: "2026", p_config: { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone) },
+    });
+  });
+
   it("sends participant submissions without a caller supplied identity", async () => {
     rpc.mockResolvedValue({ data: { id: "result-id" }, error: null });
     await submitCompetitionResult({ season: "2026", routeId: "route-id", zone: 10, flash: true, qrToken: "opaque" });

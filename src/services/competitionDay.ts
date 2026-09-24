@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { competitionZonePoints } from "@/lib/competitionConfig";
 
 export type CompetitionPhase = "draft" | "open" | "closed";
 export type CompetitionLeague = "toprope" | "lead";
@@ -69,7 +70,7 @@ export const getCompetitionJudgeAccessStatus = (season: string) =>
 export const setCompetitionJudgePassword = (season: string, password: string) =>
   rpc<void>("set_competition_judge_password", { p_season: season, p_password: password });
 export const saveCompetitionConfig = (season: string, config: CompetitionConfig) =>
-  rpc<void>("save_competition_config", { p_season: season, p_config: config });
+  rpc<void>("save_competition_config", { p_season: season, p_config: { ...config, zone_points: [...competitionZonePoints] } });
 export const saveCompetitionRouteDraft = (season: string, routes: CompetitionRouteInput[]) =>
   rpc<void>("save_competition_route_draft", { p_season: season, p_routes: routes });
 export const getCompetitionAdmin = (season: string) => rpc<CompetitionAdminData>("get_competition_admin", { p_season: season });

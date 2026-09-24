@@ -69,6 +69,20 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: /Route 1 Linie 1/ })).not.toBeInTheDocument();
   });
 
+  it("shows named route colors and lets a zero-zone attempt be submitted separately", async () => {
+    api.load.mockResolvedValueOnce(makeData({ routes: routeSet.map((route) => ({ ...route, color: "#327bc1" })) }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.getAllByText("Farbe: Blau")).toHaveLength(5);
+    expect(screen.getByText(/Zone 1–10 bringt 1–10 Punkte/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keine Zone erreicht · 0 Punkte" }));
+    fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
+    act(() => api.scan?.(validQr()));
+    fireEvent.click(screen.getByRole("button", { name: "Ergebnis absenden" }));
+    await waitFor(() => expect(api.submit).toHaveBeenCalledWith(expect.objectContaining({ zone: 0, flash: false })));
+    expect(await screen.findByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte0");
+  });
+
   it("automatically saves a scoped draft on input, restores it, and rejects invalid saved values", async () => {
     const view = mountPage();
     await chooseRoute();

@@ -20,8 +20,7 @@ describe("competition admin", () => {
   });
   afterEach(cleanup);
   it("shows required classes and has no automatic writes", async () => {
-    view(); expect(await screen.findByText("Vorstieg · Ü15-m")).toBeInTheDocument();
-    expect(screen.getByText("1 Personen · 5/5 Routen")).toBeInTheDocument();
+    view(); expect(await screen.findByRole("button", { name: "Vorstieg Ü15-m für Route 1" })).toHaveTextContent("5/5");
     expect(api.phase).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
   });
   it("requires explicit confirmation to open", async () => {
@@ -34,7 +33,7 @@ describe("competition admin", () => {
   it("does not allow opening when configuration has unsaved edits", async () => {
     view(); fireEvent.change(await screen.findByLabelText("Name · Route 1"), { target: { value: "Neuer Name" } });
     expect(screen.getByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Konfiguration speichern" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
   });
   it("can explicitly save 14 placeholder routes without scoring or class assignments", async () => {
     api.day.mockResolvedValue({ event: null, routes: [] });
@@ -42,7 +41,7 @@ describe("competition admin", () => {
     api.draft.mockResolvedValue(null);
     view();
     fireEvent.click(await screen.findByRole("button", { name: "Auf 14 Routen ergänzen" }));
-    const save = screen.getByRole("button", { name: "Nur Routenentwurf speichern" });
+    const save = screen.getByRole("button", { name: "Änderungen speichern" });
     expect(save).toBeEnabled();
     fireEvent.click(save);
     await waitFor(() => expect(api.draft).toHaveBeenCalledWith("2026", Array.from({ length: 14 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "", color: "" }))));
@@ -70,16 +69,41 @@ describe("competition admin", () => {
     expect(code).toMatch(/^[A-Za-z0-9]{24}$/);
     expect(await screen.findByText(code)).toBeInTheDocument();
   });
-  it("shows readiness, keeps all sections reachable, and edits just the selected route", async () => {
+  it("edits classes and color on the selected route without a scoring form", async () => {
     view();
-    expect(await screen.findByRole("region", { name: "Vorbereitungsstand" })).toHaveTextContent("Physische Routen");
-    expect(screen.getByRole("navigation", { name: "Wettkampftag-Bereiche" })).toHaveTextContent("Schiedsrichter");
-    fireEvent.click(screen.getByRole("button", { name: /Route 2.*6a.*1 Klasse/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Route 2 bearbeiten" }));
     expect(screen.getByLabelText("Name · Route 2")).toBeInTheDocument();
     expect(screen.queryByLabelText("Name · Route 1")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Name · Route 2"), { target: { value: "Neue Linie" } });
+    expect(screen.queryByRole("region", { name: "Vorbereitungsstand" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Zone 1")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Blau", exact: true }));
+    expect(screen.getByRole("button", { name: "Blau", exact: true })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Ungespeicherte Änderungen.")).toBeInTheDocument();
     expect(api.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({
+      zone_points: Array.from({ length: 11 }, (_, i) => i),
+      routes: expect.arrayContaining([expect.objectContaining({ number: 2, color: "#327bc1" })]),
+    })));
+  });
+  it("limits a class to five routes and allows moving its assignment to another route", async () => {
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: "Route 6 bearbeiten" }));
+    expect(screen.getByRole("button", { name: "Vorstieg Ü15-m für Route 6" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Route 1 bearbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vorstieg Ü15-m für Route 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Route 6 bearbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vorstieg Ü15-m für Route 6" }));
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({ assignments: [{ league: "lead", class_label: "Ü15-m", route_numbers: [2, 3, 4, 5, 6] }] })));
+  });
+  it("requires saving the fixed scoring before opening an old unconfigured draft", async () => {
+    api.admin.mockResolvedValue({ config: { ...config, zone_points: Array(11).fill(0) }, staff: [], results: [] });
+    view();
+    expect(await screen.findByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({ zone_points: Array.from({ length: 11 }, (_, i) => i) })));
   });
   it("confirms route removal and does not save or remove assignments automatically", async () => {
     view();
@@ -89,7 +113,7 @@ describe("competition admin", () => {
     expect(api.save).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Route entfernen" }));
     expect(screen.queryByLabelText("Name · Route 1")).not.toBeInTheDocument();
-    expect(screen.getByText("1 Personen · 4/5 Routen")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vorstieg Ü15-m für Route 2" })).toHaveTextContent("4/5");
     expect(api.save).not.toHaveBeenCalled();
   });
 });

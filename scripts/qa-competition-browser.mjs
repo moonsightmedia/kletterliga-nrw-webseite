@@ -84,6 +84,7 @@ try {
     check(`participant ${width}: saved result locked`, await f.page.getByRole('button', { name: 'Ergebnis absenden' }).count() === 0);
     await f.capture('saved'); await f.close();
 
+    if (process.env.QA_SKIP_JUDGE !== '1') {
     const j = await fixture('judge', width);
     await j.page.goto(base + '/app/schiedsrichter');
     await j.page.getByLabel('Schiedsrichter-Code').waitFor();
@@ -149,10 +150,21 @@ try {
     check(`judge ${width}: no shared code in browser storage`, !(await j.page.evaluate(() => JSON.stringify(localStorage) + JSON.stringify(sessionStorage))).includes(judgeCode));
     await j.close();
     }
+    }
 
     const a = await fixture('admin', width, 'draft');
     await a.page.goto(base + '/app/admin/league/wettkampf');
     await a.page.getByLabel('Name · Route 1', { exact: true }).waitFor();
+    await a.capture('overview');
+    await a.page.getByRole('button', { name: 'Route 13 bearbeiten', exact: true }).click();
+    await a.page.getByRole('button', { name: 'Blau', exact: true }).click();
+    await a.page.getByLabel('Name · Route 13', { exact: true }).scrollIntoViewIfNeeded();
+    await a.capture('route-editor');
+    check(`admin ${width}: color selected with swatch`, await a.page.getByRole('button', { name: 'Blau', exact: true }).getAttribute('aria-pressed') === 'true');
+    await a.page.getByRole('button', { name: 'Änderungen speichern' }).click();
+    await a.page.getByText('Routen und Klassen gespeichert.', { exact: true }).waitFor();
+    check(`admin ${width}: fixed scoring and color saved`, a.state.config.routes[12].color === '#327bc1' && JSON.stringify(a.state.config.zone_points) === '[0,1,2,3,4,5,6,7,8,9,10]');
+    await a.page.getByRole('button', { name: 'Route 1 bearbeiten', exact: true }).click();
     await a.page.getByRole('button', { name: 'Zugangscode erzeugen' }).click();
     check(`admin ${width}: judge code requires confirmation`, !a.state.writes.includes('set_competition_judge_password'));
     await a.page.getByRole('button', { name: 'Code jetzt erzeugen' }).click();
@@ -161,8 +173,8 @@ try {
     await a.capture('config');
     await a.page.getByLabel('Name · Route 1', { exact: true }).fill('Überarbeitete Testlinie');
     check(`admin ${width}: unsaved config blocks opening`, await a.page.getByRole('button', { name: 'Eingabe öffnen' }).isDisabled());
-    await a.page.getByRole('button', { name: 'Konfiguration speichern' }).click();
-    await a.page.getByText('Routen, Klassen und Wertung sind gespeichert.', { exact: true }).waitFor();
+    await a.page.getByRole('button', { name: 'Änderungen speichern' }).click();
+    await a.page.getByText('Routen und Klassen gespeichert.', { exact: true }).waitFor();
     check(`admin ${width}: config saved via intercepted RPC`, a.state.config.routes[0].name === 'Überarbeitete Testlinie');
     await a.page.getByRole('button', { name: 'Eingabe öffnen' }).click();
     await a.capture('confirm');

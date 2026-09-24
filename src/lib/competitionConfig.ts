@@ -1,6 +1,8 @@
 import type { CompetitionConfig, CompetitionAssignment, CompetitionRouteInput } from "@/services/competitionDay";
 import type { AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
 
+export const competitionZonePoints = Array.from({ length: 11 }, (_, zone) => zone);
+
 export const competitionClassKey = (row: Pick<CompetitionAssignment, "league" | "class_label">) => `${row.league}:${row.class_label}`;
 export const exactCompetitionEmailPattern = (email: string) => email.trim().replace(/[\\%_]/g, "\\$&");
 
