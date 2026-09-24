@@ -12,8 +12,10 @@ unter `/app/schiedsrichter`. Schiedsrichter benötigen dort kein App-Konto.
    ablegen; nicht in Git, Notion, Obsidian oder Gruppen-Links veröffentlichen.
 3. Schiedsrichter öffnen `https://www.kletterliga-nrw.de/app/schiedsrichter`
    und geben diesen Code ein. Sie erhalten Routen-QR-Codes und lokale
-   Fünf-Minuten-Uhren. Nach einem Reload ist der Code erneut nötig; laufende
-   Uhren bleiben auf demselben Gerät erhalten.
+   Fünf-Minuten-Uhren. Nach erfolgreicher Prüfung bleibt der Zugang auf diesem
+   Gerät für zwölf Stunden als Zugang gemerkt, auch nach Tab-Schließen.
+   Beim nächsten Öffnen wird er vor Anzeige der QR-Codes erneut serverseitig
+   geprüft. Laufende Uhren bleiben auf demselben Gerät erhalten.
 4. Bei Weitergabe an Unbefugte im Adminpanel „Neuen Code erzeugen“. Der alte
    Code schlägt bei der nächsten Prüfung (Fokus bzw. spätestens nach einer
    Minute bei sichtbarer Seite) fehl. Bereits kopierte oder gedruckte
@@ -45,9 +47,15 @@ unter `/app/schiedsrichter`. Schiedsrichter benötigen dort kein App-Konto.
   offizielle Ergebnis-Zeitnahme.
 - QR-Codes sind statisch und kopierbar. Das System ersetzt keine physische
   Aufsicht des Schiedsrichters an der Route.
-- Keine Speicherung des Zugangscodes in localStorage oder sessionStorage;
-  ein offener Tab hält ihn nur im Arbeitsspeicher. Bei Netzproblemen bleiben
-  lokale Uhren sichtbar, während die Verbindung erneut geprüft werden muss.
+- Der gemeinsame Code liegt nach erfolgreicher Eingabe im `localStorage` dieses
+  Browserprofils; nach zwölf Stunden wird er nicht mehr akzeptiert und beim
+  nächsten Öffnen gelöscht. Andere Personen mit Zugriff auf das
+  entsperrte Gerät oder Skripte derselben Website können ihn innerhalb dieser
+  Frist verwenden. Deshalb auf geteilten Geräten „Verlassen“ wählen; das löscht
+  den gespeicherten Zugang. Bei Code-Rotation, Ablauf oder ungültigem Eintrag
+  wird er ebenfalls entfernt. Eine automatische Freigabe ohne erneute
+  Serverprüfung findet nicht statt. Bei Netzproblemen bleiben lokale Uhren
+  sichtbar, während die Verbindung erneut geprüft werden muss.
 
 Die Migration `20260924110000_competition_judge_shared_access.sql` legt nur eine
 neue Tabelle und drei RPCs an. Sie ändert keine Qualifikations-, Anmelde- oder

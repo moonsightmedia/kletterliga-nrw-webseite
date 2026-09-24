@@ -24,6 +24,7 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 try {
   for (const width of [320, 390, 768, 1440]) {
     const context = await browser.newContext({ viewport: { width, height: width === 320 ? 568 : 900 }, locale: 'de-DE', serviceWorkers: 'block' });
+    let accessChecks = 0;
     await context.route('**/*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
@@ -32,6 +33,7 @@ try {
       if (request.method() === 'OPTIONS') return reply({});
       if (url.pathname.includes('/rpc/get_public_admin_settings')) return reply(settings);
       if (url.pathname.includes('/rpc/get_competition_judge_routes')) {
+        accessChecks += 1;
         const input = request.postDataJSON();
         return input.p_password === code
           ? reply({ event: { id: 'synthetic-event', phase: 'draft' }, routes })
@@ -52,6 +54,7 @@ try {
       await page.getByRole('button', { name: 'Bereich öffnen' }).click();
       await page.getByRole('alert').getByText(/ungültig/).waitFor();
       check('wrong code keeps QR codes hidden', await page.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
+      check(`${width}: wrong code is not remembered`, await page.evaluate(() => localStorage.getItem('kletterliga:judge-access:v1') === null));
     }
     await page.getByLabel('Schiedsrichter-Code').fill(code);
     await page.getByRole('button', { name: 'Bereich öffnen' }).click();
@@ -111,23 +114,30 @@ try {
     await page.screenshot({ path: resolve(out, `judge-${width}-qr.png`) });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     check(`${width}: no horizontal overflow`, !overflow);
-    check(`${width}: code not stored in browser storage`, !(await page.evaluate(() => JSON.stringify(localStorage) + JSON.stringify(sessionStorage))).includes(code));
+    check(`${width}: verified access remembered only in localStorage`, await page.evaluate(() => Boolean(localStorage.getItem('kletterliga:judge-access:v1')) && !JSON.stringify(sessionStorage).includes('AbCdEfGhJkMnPqRsTuVwXyZ2')));
+    const checksBeforeReload = accessChecks;
     await page.reload();
-    await page.getByLabel('Schiedsrichter-Code').waitFor();
-    check(`${width}: reload requires code again`, await page.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
-    await page.getByLabel('Schiedsrichter-Code').fill(code);
-    await page.getByRole('button', { name: 'Bereich öffnen' }).click();
     await page.getByRole('button', { name: 'Route 1 pausieren' }).waitFor();
-    check(`${width}: timer survives reload after re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    check(`${width}: reload revalidates remembered access`, accessChecks > checksBeforeReload);
+    check(`${width}: timer survives automatic re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
     if (width === 390) {
       await page.locator('summary').getByText('Betreute Routen ändern').click();
       await page.getByLabel('Timer für Route 3 anzeigen').check();
       check('390: station selection saved on device', JSON.parse(await page.evaluate(() => localStorage.getItem('kletterliga:judge-routes:2026'))).includes(routes[2].id));
       await page.reload();
-      await page.getByLabel('Schiedsrichter-Code').fill(code);
-      await page.getByRole('button', { name: 'Bereich öffnen' }).click();
       await page.getByRole('button', { name: 'Route 3 starten' }).waitFor();
-      check('390: selected third route restored after re-entry', await page.getByRole('button', { name: 'Route 3 starten' }).count() === 1);
+      check('390: selected third route restored automatically', await page.getByRole('button', { name: 'Route 3 starten' }).count() === 1);
+      await page.close();
+      const reopened = await context.newPage();
+      await reopened.goto(base + '/app/schiedsrichter');
+      await reopened.getByRole('tab', { name: 'Routenuhren' }).waitFor();
+      check('390: closing and reopening tab preserves access', await reopened.getByLabel('Schiedsrichter-Code').count() === 0);
+      await reopened.getByRole('button', { name: 'Verlassen' }).click();
+      await reopened.getByLabel('Schiedsrichter-Code').waitFor();
+      check('390: leaving removes remembered access', await reopened.evaluate(() => localStorage.getItem('kletterliga:judge-access:v1') === null));
+      await reopened.reload();
+      await reopened.getByLabel('Schiedsrichter-Code').waitFor();
+      check('390: reload after leaving requires code', await reopened.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
     }
     await context.close();
   }

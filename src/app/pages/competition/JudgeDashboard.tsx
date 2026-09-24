@@ -7,6 +7,7 @@ import { StitchButton, StitchCard, StitchTextField } from "@/app/components/Stit
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { getCompetitionJudgeRoutes, type CompetitionStaffRoute } from "@/services/competitionDay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { clearJudgeAccess, readJudgeAccess, saveJudgeAccess } from "@/lib/judgeAccessSession";
 import {
   COMPETITION_TIMER_DURATION_MS,
   COMPETITION_TIMER_WARNING_MS,
@@ -66,6 +67,7 @@ export default function JudgeDashboard() {
   const season = settings?.season_year ? String(settings.season_year) : null;
   const [enteredCode, setEnteredCode] = useState("");
   const [activeCode, setActiveCode] = useState("");
+  const [accessReadySeason, setAccessReadySeason] = useState<string | null>(null);
   const [event, setEvent] = useState<{ id: string; phase: string } | null>(null);
   const [routes, setRoutes] = useState<CompetitionStaffRoute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +85,14 @@ export default function JudgeDashboard() {
   const alerted = useRef(new Set<string>());
   const eventSequence = useRef(0);
   const selectionInitialized = useRef(false);
+  const pendingRememberCode = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (settingsLoading || !season) return;
+    try { setActiveCode(readJudgeAccess(window.localStorage, season) ?? ""); }
+    catch { setActiveCode(""); }
+    setAccessReadySeason(season);
+  }, [season, settingsLoading]);
 
   const load = useCallback(async (code: string, background = false) => {
     if (!code || !season) return;
@@ -95,6 +105,12 @@ export default function JudgeDashboard() {
       setEvent(day.event);
       const staffRoutes = day.routes;
       setRoutes(staffRoutes);
+      if (pendingRememberCode.current === code) {
+        try {
+          if (!saveJudgeAccess(window.localStorage, season, code)) setStorageWarning(true);
+        } catch { setStorageWarning(true); }
+        pendingRememberCode.current = null;
+      }
         let restoredRunningRouteIds: string[] = [];
         let savedRouteIds: string[] | null = null;
         try {
@@ -118,6 +134,8 @@ export default function JudgeDashboard() {
       const message = readableLoadError(error);
       setLoadError(message);
       if (/Schiedsrichter-Code/i.test(message)) {
+        try { clearJudgeAccess(window.localStorage); } catch { /* Storage may be disabled. */ }
+        pendingRememberCode.current = null;
         setActiveCode("");
         setEvent(null);
         setRoutes([]);
@@ -129,14 +147,14 @@ export default function JudgeDashboard() {
   }, [season]);
 
   useEffect(() => {
-    if (settingsLoading) return;
+    if (settingsLoading || accessReadySeason !== season) return;
     if (!activeCode || !season) {
       setLoading(false);
       return;
     }
     void load(activeCode);
     return () => { eventSequence.current += 1; };
-  }, [activeCode, load, season, settingsLoading]);
+  }, [accessReadySeason, activeCode, load, season, settingsLoading]);
 
   useEffect(() => {
     const invalidateHiddenView = () => {
@@ -296,8 +314,8 @@ export default function JudgeDashboard() {
   if (!season) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><h1 className="stitch-headline text-2xl">Saison nicht verfügbar</h1><p className="text-sm leading-6">Die aktuelle Saison konnte nicht geladen werden. Bitte versuche es erneut.</p><StitchButton onClick={() => void refreshSettings()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Saisonstatus erneut laden</StitchButton></StitchCard></div>;
   if (!activeCode) return <div className="mx-auto max-w-xl space-y-6 pb-8">
     <div className="space-y-3 pt-4 sm:pt-8"><p className="stitch-kicker text-[#a15523]">Wettkampftag · {season}</p><h1 className="stitch-headline text-3xl leading-none sm:text-4xl">Deine Station.<br />Dein Überblick.</h1><p className="max-w-md text-sm leading-6 text-[#425967]">Fünf-Minuten-Uhren und Routen-QRs für den Einsatz an der Wand. Kein App-Konto nötig.</p></div>
-    <StitchCard tone="surface" className="p-5 sm:p-7"><form className="space-y-5" onSubmit={(event) => { event.preventDefault(); setLoadError(null); setActiveCode(enteredCode.trim()); setEnteredCode(""); }}><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[#f2dcab] text-[#003d55]"><LockKeyhole className="h-5 w-5" aria-hidden="true" /></span><div><h2 className="stitch-headline text-lg">Schiedsrichter-Zugang</h2><p className="text-xs text-[#425967]">Den Code erhältst du von der Wettkampfleitung.</p></div></div><StitchTextField label="Schiedsrichter-Code" aria-label="Schiedsrichter-Code" type="password" value={enteredCode} autoComplete="off" minLength={24} maxLength={24} required onChange={(event) => setEnteredCode(event.target.value)} />{loadError && <p role="alert" className="rounded-xl bg-[#fff0df] px-4 py-3 text-sm font-semibold text-[#803712]">{loadError}</p>}<StitchButton className="w-full" disabled={enteredCode.trim().length !== 24}>Bereich öffnen</StitchButton></form></StitchCard>
-    <p className="px-1 text-xs leading-5 text-[#425967]">Der Zugangscode wird nicht auf diesem Gerät gespeichert. Nach einem Neuladen gibst du ihn erneut ein; lokale Uhren bleiben erhalten.</p>
+    <StitchCard tone="surface" className="p-5 sm:p-7"><form className="space-y-5" onSubmit={(event) => { event.preventDefault(); const code = enteredCode.trim(); pendingRememberCode.current = code; setLoadError(null); setActiveCode(code); setEnteredCode(""); }}><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[#f2dcab] text-[#003d55]"><LockKeyhole className="h-5 w-5" aria-hidden="true" /></span><div><h2 className="stitch-headline text-lg">Schiedsrichter-Zugang</h2><p className="text-xs text-[#425967]">Den Code erhältst du von der Wettkampfleitung.</p></div></div><StitchTextField label="Schiedsrichter-Code" aria-label="Schiedsrichter-Code" type="password" value={enteredCode} autoComplete="off" minLength={24} maxLength={24} required onChange={(event) => setEnteredCode(event.target.value)} />{loadError && <p role="alert" className="rounded-xl bg-[#fff0df] px-4 py-3 text-sm font-semibold text-[#803712]">{loadError}</p>}<StitchButton className="w-full" disabled={enteredCode.trim().length !== 24}>Bereich öffnen</StitchButton></form></StitchCard>
+    <p className="px-1 text-xs leading-5 text-[#425967]">Nach erfolgreicher Eingabe bleibt der Zugang auf diesem Gerät bis zu 12 Stunden erhalten – auch wenn du den Tab schließt. Auf gemeinsam genutzten Geräten danach „Verlassen“ wählen.</p>
   </div>;
   if (loadError && !event) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><AlertCircle className="h-6 w-6 text-[#a15523]" aria-hidden="true" /><h1 className="stitch-headline text-2xl">Ansicht nicht verfügbar</h1><p className="text-sm leading-6">{loadError}</p><StitchButton onClick={() => void load(activeCode)} disabled={loading}><RefreshCw className="h-4 w-4" aria-hidden="true" />Erneut laden</StitchButton></StitchCard></div>;
 
@@ -308,7 +326,7 @@ export default function JudgeDashboard() {
         <div><p className="stitch-kicker text-[#a15523]">Halbfinale · {season}</p><h1 className="stitch-headline mt-2 text-2xl leading-none sm:text-3xl">Schiedsrichter-Station</h1><p className="mt-2 text-sm text-[#425967]">{visibleTimerRoutes.length} {visibleTimerRoutes.length === 1 ? "Route" : "Routen"} im Blick · 5 Minuten pro Start</p></div>
         <div className="flex items-center gap-2">
           <StitchButton variant={soundEnabled ? "navy" : "outline"} size="sm" className="min-h-11 tracking-normal" aria-pressed={soundEnabled} aria-label={`Signalton ${soundEnabled ? "ausschalten" : "einschalten"}`} onClick={() => setSound(!soundEnabled)} title={soundEnabled ? "Signalton ausschalten" : "Signalton einschalten"}>{soundEnabled ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}<span className="hidden min-[390px]:inline">Ton {soundEnabled ? "an" : "aus"}</span></StitchButton>
-          <StitchButton variant="ghost" size="sm" className="min-h-11 tracking-normal" onClick={() => { eventSequence.current += 1; setActiveCode(""); setRoutes([]); setEvent(null); setQuickQrId(null); }}>Verlassen</StitchButton>
+          <StitchButton variant="ghost" size="sm" className="min-h-11 tracking-normal" onClick={() => { eventSequence.current += 1; try { clearJudgeAccess(window.localStorage); } catch { /* Storage may be disabled. */ } pendingRememberCode.current = null; setActiveCode(""); setRoutes([]); setEvent(null); setQuickQrId(null); }}>Verlassen</StitchButton>
         </div>
       </header>
 
@@ -351,7 +369,7 @@ export default function JudgeDashboard() {
                     </label>;
                     })}</div>
                   </details>
-                  {storageWarning && <p role="alert" className="mt-3 text-sm font-semibold text-[#803712]">Speichern auf diesem Gerät ist nicht verfügbar. Laufende Zeiten gehen beim Schließen möglicherweise verloren.</p>}
+                  {storageWarning && <p role="alert" className="mt-3 text-sm font-semibold text-[#803712]">Speichern auf diesem Gerät ist nicht verfügbar. Zugang und laufende Zeiten gehen beim Schließen möglicherweise verloren.</p>}
                 </StitchCard>
 
                 {visibleTimerRoutes.length === 0 ? <StitchCard tone="muted" className="order-2 p-6 text-center"><p className="text-sm">Noch keine Routenuhr ausgewählt. Öffne „Betreute Routen ändern“ und wähle deine Station.</p></StitchCard>
