@@ -16,6 +16,7 @@ Ein ruhiges, kontrastreiches Zeitnahme-Instrument im Kletterliga-Design: Die bet
 - Je Route: Nummer und Name, eindeutiger Status, große verbleibende Zeit, Fortschrittsbalken, eine dominante Start/Pause/Fortsetzen-Aktion, sekundär QR und geschütztes Zurücksetzen.
 - Letzte Minute und Ablauf: Farbe **plus Text** und eine dauerhaft sichtbare Statusleiste. Der Ton ist optional und ergänzt die visuelle Anzeige nur.
 - QR: direkt von jeder Routenuhr erreichbar; in der QR-Übersicht steht der ausgewählte Code auf Mobilgeräten vor der langen Routenauswahl. Druck ist eine nachgeordnete Aktion.
+- QR-Lesbarkeit: Auf schmalen Handys öffnet der Code bildschirmfüllend; die Scanfläche nutzt nahezu die verfügbare Breite. Die URL und serverseitige Tokenprüfung bleiben unverändert. Die Erzeugung nutzt Fehlerkorrekturstufe M mit vier Modulen Ruhezone statt der zuvor sehr dichten Stufe H; der Druckbogen zeigt 55-mm-Codes.
 - Zugriff: Code nur im Arbeitsspeicher, kein App-Konto; bei Verbindungsproblemen laufen lokale Uhren weiter, QR-Freigabe wird erneut geprüft.
 
 ## Responsive und Barrierefreiheit
@@ -29,3 +30,4 @@ Ein ruhiges, kontrastreiches Zeitnahme-Instrument im Kletterliga-Design: Die bet
 
 - Die Uhren sind lokale Hilfsmittel, nicht die offizielle Ergebniszeit. Browser-/Betriebssystem-Alarme im Hintergrund sind nicht garantiert; der Bildschirm muss während der Zeitnahme sichtbar bleiben.
 - Kein Umbau der Ergebnisabgabe oder des Schiedsrichter-Zugangs-RPC.
+- Automatisiert wurde das sichtbare QR-Bild mit dem in der Teilnehmer-App verwendeten Decoder bei 320 und 390 px ausgelesen. Ein physischer Kamera-Scan bei Hallenlicht bleibt vor dem Wettkampf nötig.

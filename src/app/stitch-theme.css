@@ -391,6 +391,29 @@ html:has(.judge-layout), body:has(.judge-layout), #root:has(.judge-layout) {
 
 .judge-qr-shortcut:hover { background: #e6c986; }
 
+/* A route QR must remain camera-readable on a narrow judge phone. */
+@media (max-width: 639px) {
+  .judge-qr-dialog {
+    inset: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: max(1rem, env(safe-area-inset-top)) 0.75rem max(1rem, env(safe-area-inset-bottom));
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow-y: auto;
+  }
+
+  .judge-qr-artwork {
+    flex: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .judge-workstation *, .judge-workstation *::before, .judge-workstation *::after {
     animation-duration: 0.01ms !important;

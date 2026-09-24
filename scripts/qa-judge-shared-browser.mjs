@@ -16,13 +16,14 @@ const wrongCode = '000000000000000000000000';
 const routes = Array.from({ length: 14 }, (_, i) => ({
   id: `00000000-0000-4000-8000-${String(300 + i).padStart(12, '0')}`,
   number: i + 1, name: `Testlinie ${i + 1}`, grade: '6a', color: 'Terrakotta',
-  qr_token: `synthetic-qr-${i + 1}`,
+  // Eight extra characters cover the longer production origin during local QA.
+  qr_token: String(i + 1).padStart(72, 'a'),
 }));
 const settings = { id: 'synthetic', season_year: '2026', qualification_start: '2026-05-01', qualification_end: '2026-09-13' };
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || 'C:/Users/Janosch/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe' });
 try {
   for (const width of [320, 390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 }, locale: 'de-DE', serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport: { width, height: width === 320 ? 568 : 900 }, locale: 'de-DE', serviceWorkers: 'block' });
     await context.route('**/*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
@@ -46,7 +47,7 @@ try {
     await page.getByLabel('Schiedsrichter-Code').waitFor();
     check(`${width}: no redirect to app login`, page.url().endsWith('/app/schiedsrichter'));
     await page.screenshot({ path: resolve(out, `judge-${width}-gate.png`) });
-    if (width === 390) {
+    if (width <= 390) {
       await page.getByLabel('Schiedsrichter-Code').fill(wrongCode);
       await page.getByRole('button', { name: 'Bereich öffnen' }).click();
       await page.getByRole('alert').getByText(/ungültig/).waitFor();
@@ -63,6 +64,26 @@ try {
     await page.getByRole('button', { name: 'QR-Code für Route 1 anzeigen' }).click();
     await page.getByRole('dialog').getByAltText('QR-Code Route 1').waitFor();
     await page.waitForTimeout(400);
+    const qrImage = page.getByRole('dialog').getByAltText('QR-Code Route 1');
+    const qrBounds = await qrImage.boundingBox();
+    if (width <= 390) {
+      check(`${width}: mobile QR has room to scan`, Boolean(qrBounds && qrBounds.width >= width - 56));
+    }
+    if (width <= 390) {
+      await page.addScriptTag({ path: resolve('node_modules/html5-qrcode/html5-qrcode.min.js') });
+      const qrScreenshot = await qrImage.screenshot();
+      const decoded = await page.evaluate(async (base64) => {
+        const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+        const file = new File([bytes], 'route.png', { type: 'image/png' });
+        const container = document.createElement('div');
+        container.id = 'qr-decode-check';
+        document.body.append(container);
+        const scanner = new window.Html5Qrcode(container.id);
+        try { return await scanner.scanFile(file, true); }
+        finally { scanner.clear(); container.remove(); }
+      }, qrScreenshot.toString('base64'));
+      check(`${width}: participant scanner decodes visible full-length route QR`, decoded === `${base}/app/wettkampf#route=${routes[0].id}&token=${routes[0].qr_token}`);
+    }
     check(`${width}: direct route QR keeps both times visible`, await page.getByRole('dialog').getByLabel('Aktuelle Routenzeiten').locator('span').count() === 2);
     const dialogBounds = await page.getByRole('dialog').evaluate((element) => {
       const rect = element.getBoundingClientRect();

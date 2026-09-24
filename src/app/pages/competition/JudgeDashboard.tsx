@@ -26,6 +26,8 @@ type DashboardTab = "timers" | "codes";
 type RouteTimerMap = Record<string, CompetitionTimer>;
 type TimerNotice = { id: string; text: string; status: "last-minute" | "finished" };
 const JUDGE_TIMER_DEVICE_KEY = "shared-judge";
+const QR_RENDER_SIZE = 512;
+const QR_ERROR_CORRECTION = "M";
 const selectionStorageKey = (season: string) => `kletterliga:judge-routes:${encodeURIComponent(season)}`;
 
 function routeUrl(route: CompetitionStaffRoute) {
@@ -37,7 +39,7 @@ function QrImage({ route, size, className = "" }: { route: CompetitionStaffRoute
   useEffect(() => {
     let active = true;
     setImage(null);
-    QRCode.toDataURL(routeUrl(route), { width: size, margin: 4, errorCorrectionLevel: "H" })
+    QRCode.toDataURL(routeUrl(route), { width: size, margin: 4, errorCorrectionLevel: QR_ERROR_CORRECTION })
       .then((value) => { if (active) setImage(value); })
       .catch(() => { if (active) setImage(""); });
     return () => { active = false; };
@@ -45,7 +47,7 @@ function QrImage({ route, size, className = "" }: { route: CompetitionStaffRoute
 
   if (image === "") return <div role="status" className={`grid aspect-square w-full place-items-center rounded-2xl bg-[#ede8e1] p-4 text-center text-sm text-[#003d55] ${className}`}>QR-Code konnte nicht erzeugt werden.</div>;
   return image
-    ? <img src={image} alt={`QR-Code Route ${route.number}`} width={size} height={size} className={`block h-auto w-full max-w-full rounded-2xl bg-white p-2 ${className}`} />
+    ? <img src={image} alt={`QR-Code Route ${route.number}`} width={size} height={size} className={`block aspect-square h-auto w-full max-w-full bg-white ${className}`} />
     : <div aria-label="QR-Code wird erzeugt" className={`aspect-square w-full animate-pulse rounded-2xl bg-[#ede8e1] ${className}`} />;
 }
 
@@ -274,11 +276,11 @@ export default function JudgeDashboard() {
     try {
       const codes = await Promise.all(items.map(async (route) => ({
         route,
-        dataUrl: await QRCode.toDataURL(routeUrl(route), { width: 420, margin: 4, errorCorrectionLevel: "H" }),
+        dataUrl: await QRCode.toDataURL(routeUrl(route), { width: QR_RENDER_SIZE, margin: 4, errorCorrectionLevel: QR_ERROR_CORRECTION }),
       })));
       const cards = codes.map(({ route, dataUrl }) => `<article class="route"><img src="${dataUrl}" alt="QR-Code Route ${route.number}"><div><p class="eyebrow">Kletterliga NRW · Wettkampftag</p><h1>Route ${route.number}</h1><p class="name">${escapeHtml(route.name)}</p><p class="hint">Mit dem Scanner in der Kletterliga-App öffnen.</p></div></article>`).join("");
       popup.document.open();
-      popup.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Routen QR-Codes</title><style>body{font-family:Arial,sans-serif;color:#002637;margin:0}.sheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12mm;padding:12mm}.route{display:flex;align-items:center;gap:6mm;break-inside:avoid;padding:5mm;background:#f8f4ee;border-radius:5mm}.route img{width:42mm;height:42mm;flex:none}.route>div{min-width:0;overflow-wrap:anywhere}.eyebrow{font-size:9pt;text-transform:uppercase;letter-spacing:.12em;color:#a15523}.route h1{font-size:25pt;margin:2mm 0}.name{font-size:15pt;margin:0}.hint{font-size:9pt;margin-top:3mm}@media screen and (max-width:700px){.sheet{grid-template-columns:1fr;padding:4mm}.route{gap:3mm;padding:3mm}}@page{size:A4;margin:12mm}@media print{.sheet{padding:0;gap:8mm}.route h1{font-size:22pt}}</style></head><body><main class="sheet">${cards}</main><script>window.addEventListener('load',()=>window.print())</script></body></html>`);
+      popup.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Routen QR-Codes</title><style>body{font-family:Arial,sans-serif;color:#002637;margin:0}.sheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8mm;padding:12mm}.route{display:flex;align-items:center;gap:4mm;break-inside:avoid;padding:3mm;background:#f8f4ee;border-radius:5mm}.route img{width:55mm;height:55mm;flex:none}.route>div{min-width:0;overflow-wrap:anywhere}.eyebrow{font-size:9pt;text-transform:uppercase;letter-spacing:.12em;color:#a15523}.route h1{font-size:25pt;margin:2mm 0}.name{font-size:15pt;margin:0}.hint{font-size:9pt;margin-top:3mm}@media screen and (max-width:700px){.sheet{grid-template-columns:1fr;padding:4mm}.route{gap:3mm;padding:3mm}}@page{size:A4;margin:12mm}@media print{.sheet{padding:0;gap:8mm}.route h1{font-size:22pt}}</style></head><body><main class="sheet">${cards}</main><script>window.addEventListener('load',()=>window.print())</script></body></html>`);
       popup.document.close();
     } catch {
       popup.close();
@@ -382,17 +384,17 @@ export default function JudgeDashboard() {
                   <StitchButton variant="outline" size="sm" className="min-h-11 tracking-normal" onClick={() => void printRoutes(routes)}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Alle QR-Codes drucken</StitchButton>
                   {printError && <p role="alert" className="text-sm font-semibold text-[#803712]">{printError}</p>}
                 </StitchCard>
-                {selectedQrRoute && <StitchCard tone="cream" className="flex min-w-0 flex-col items-center p-4 text-center sm:p-6"><p className="stitch-kicker text-[#803712]">Kletterliga NRW · Halbfinale</p><h3 className="stitch-headline mt-2 text-3xl">Route {selectedQrRoute.number}</h3><p className="mt-1 text-sm font-semibold">{selectedQrRoute.name}</p><div className="my-4 flex w-full max-w-[296px] justify-center rounded-xl bg-white p-2 shadow-[0_12px_28px_rgba(0,38,55,0.1)]"><QrImage route={selectedQrRoute} size={420} className="[image-rendering:pixelated]" /></div><p className="max-w-xs text-xs leading-5 text-[#425967]">Der Code bestätigt nur die physische Route. Ergebnis vorher am eigenen Handy eintragen lassen.</p><StitchButton variant="navy" className="mt-4 w-full tracking-normal sm:w-auto" onClick={() => void printRoutes([selectedQrRoute])}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Route {selectedQrRoute.number} drucken</StitchButton></StitchCard>}
+                {selectedQrRoute && <StitchCard tone="cream" className="flex min-w-0 flex-col items-center p-3 text-center sm:p-6"><p className="stitch-kicker text-[#803712]">Kletterliga NRW · Halbfinale</p><h3 className="stitch-headline mt-2 text-3xl">Route {selectedQrRoute.number}</h3><p className="mt-1 text-sm font-semibold">{selectedQrRoute.name}</p><div className="my-4 flex w-full max-w-[360px] justify-center rounded-xl bg-white p-2 shadow-[0_12px_28px_rgba(0,38,55,0.1)]"><QrImage route={selectedQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div><p className="max-w-xs text-xs leading-5 text-[#425967]">Der Code bestätigt nur die physische Route. Ergebnis vorher am eigenen Handy eintragen lassen.</p><StitchButton variant="navy" className="mt-4 w-full tracking-normal sm:w-auto" onClick={() => void printRoutes([selectedQrRoute])}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Route {selectedQrRoute.number} drucken</StitchButton></StitchCard>}
                 </TabsContent>
               </Tabs>
             </>}
 
       <Dialog open={Boolean(quickQrRoute)} onOpenChange={(open) => { if (!open) setQuickQrId(null); }}>
-        <DialogContent hideCloseButton className="stitch-app max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-xl bg-[#f2dcab] p-5 text-[#003d55] sm:p-6">
+        <DialogContent hideCloseButton className="judge-qr-dialog stitch-app max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-xl bg-[#f2dcab] p-4 text-[#003d55] sm:p-6">
           <DialogClose className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-lg bg-white text-[#003d55] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003d55]" aria-label="QR-Code schließen"><X className="h-5 w-5" aria-hidden="true" /></DialogClose>
           <DialogHeader className="px-0 pt-0 text-left"><p className="stitch-kicker text-[#803712]">Routenbestätigung</p><DialogTitle className="stitch-headline text-2xl">Route {quickQrRoute?.number}</DialogTitle><DialogDescription className="text-sm text-[#425967]">{quickQrRoute?.name} · Ergebnis zuerst am eigenen Handy eintragen, danach diesen Code scannen lassen.</DialogDescription></DialogHeader>
           {trackedRoutes.length > 0 && <div className="flex flex-wrap gap-2" aria-label="Aktuelle Routenzeiten">{trackedRoutes.map((route) => { const timer = timers?.[route.id] ?? resetCompetitionTimer(route.id); const status = getCompetitionTimerStatus(timer, now); const remaining = Math.max(0, COMPETITION_TIMER_DURATION_MS - getCompetitionTimerElapsed(timer, now)); return <span key={route.id} className={`rounded-lg px-2.5 py-1.5 text-xs font-extrabold tabular-nums ${status === "finished" ? "bg-[#803712] text-white" : status === "last-minute" ? "bg-[#a15523] text-white" : "bg-[#003d55] text-[#f2dcab]"}`}>Route {route.number} · {formatCompetitionTimer(remaining)}{status === "finished" ? " · Ende" : status === "last-minute" ? " · letzte Minute" : ""}</span>; })}</div>}
-          {quickQrRoute && <div className="mx-auto w-full max-w-[280px] rounded-xl bg-white p-2"><QrImage route={quickQrRoute} size={420} className="[image-rendering:pixelated]" /></div>}
+          {quickQrRoute && <div className="judge-qr-artwork mx-auto w-full max-w-[360px] rounded-xl bg-white p-2"><QrImage route={quickQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div>}
           <p className="text-center text-xs leading-5 text-[#425967]">Die Routenuhren laufen weiter, während dieser Code geöffnet ist.</p>
         </DialogContent>
       </Dialog>
