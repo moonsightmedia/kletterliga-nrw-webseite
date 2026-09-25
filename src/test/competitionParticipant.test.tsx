@@ -33,12 +33,13 @@ const clickZone = (value: number) => {
   fireEvent.click(button);
 };
 const validQr = (routeId = "route-1") => `${window.location.origin}/app/wettkampf#route=${routeId}&token=secret-token`;
-const mountPage = () => render(<MemoryRouter><CompetitionDay /></MemoryRouter>);
+const mountPage = (initialEntry = "/app/wettkampf") => render(<MemoryRouter initialEntries={[initialEntry]}><CompetitionDay /></MemoryRouter>);
 
 describe("competition participant day page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    window.sessionStorage.clear();
     api.scan = undefined;
     api.load.mockResolvedValue(makeData());
     api.submit.mockImplementation((input: { routeId: string; zone: number; flash: boolean }) => Promise.resolve(makeAcceptedResult(input)));
@@ -163,6 +164,46 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: /QR-Code/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
     expect(screen.getByText(phase === "draft" ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet." : "Für diese Route wurde kein Ergebnis eingetragen. Die Eingabe ist geschlossen.")).toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+  });
+
+  it("allows a local draft-phase probe without sending a result to the server", async () => {
+    api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
+    const view = mountPage("/app/wettkampf?probelauf=1");
+    await chooseRoute();
+    expect(screen.getByText("PROBELAUF")).toBeInTheDocument();
+    clickZone(10);
+    fireEvent.click(screen.getByLabelText("Im ersten Versuch direkt zur 10 (Flash)"));
+    expect(screen.getByRole("button", { name: "Testwert speichern" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
+    expect(await screen.findByText(/Testwert · 12 Punkte/)).toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+    expect(window.localStorage.length).toBe(0);
+    expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toContain('"points":12');
+    view.unmount();
+    api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
+    mountPage("/app/wettkampf?probelauf=1");
+    expect(await screen.findByText(/Testwert · 12 Punkte/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Testwerte löschen" }));
+    expect(screen.queryByText(/Testwert · 12 Punkte/)).not.toBeInTheDocument();
+    expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toBeNull();
+  });
+
+  it("keeps local probe values separate from the real read-only view", async () => {
+    const closedData = makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } });
+    api.load.mockResolvedValue(closedData);
+    const view = mountPage("/app/wettkampf?probelauf=1");
+    await chooseRoute();
+    clickZone(7);
+    fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
+    expect(await screen.findByText(/Testwert · 7 Punkte/)).toBeInTheDocument();
+    view.unmount();
+    mountPage();
+    await chooseRoute();
+    expect(screen.queryByText(/Testwert · 7 Punkte/)).not.toBeInTheDocument();
+    expect(screen.getByText("Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet.")).toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
   });
 
