@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, QrCode, RotateCw, ShieldCheck, Trophy } from "lucide-react";
+import { Check, QrCode, RotateCw, ShieldCheck, Trophy, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getCompetitionDay, submitCompetitionResult } from "@/services/competitionDay";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { competitionRouteColor } from "@/lib/competitionRouteColors";
@@ -282,12 +283,22 @@ export default function CompetitionDay() {
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"><StitchButton className="whitespace-normal text-center tracking-[0.1em]" variant={qrToken ? "navy" : "outline"} disabled={zone === null || submitting} onClick={() => { if (submitLockRef.current) return; persistDraft(zone); setScannerOpen(true); setQrError(null); }}><QrCode aria-hidden="true" size={17} />{qrToken ? "QR-Code erneut scannen" : "QR-Code am Routenposten scannen"}</StitchButton>{probeMode && localProbeAvailable && <StitchButton variant="outline" className="whitespace-normal text-center tracking-[0.1em]" disabled={zone === null || submitting} onClick={() => { setQrToken("lokaler-probelauf"); setScannerOpen(false); setQrError(null); }}>Test-QR bestätigen</StitchButton>}<StitchButton className="whitespace-normal text-center tracking-[0.1em]" disabled={!qrToken || zone === null || submitting || (!probeMode && data.event.phase !== "open")} onClick={() => void submit()}>{submitting ? "Wird eingetragen …" : probeMode ? "Testwert speichern" : "Ergebnis absenden"}</StitchButton></div>
         {qrToken && <p className="flex items-start gap-2 text-xs leading-5 text-[#36515b]"><ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0" size={16} />{probeMode ? "Routen-QR gelesen. Prüfe den Wert und speichere ihn nur im Probelauf." : "QR-Code erkannt. Prüfe deine Wertung und sende sie ausdrücklich ab. Der Scan allein trägt noch kein Ergebnis ein."}</p>}
       </>}
-      {scannerOpen && !submitting && <div className="space-y-3 rounded-xl bg-white/70 p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-[#002637]">Stationscode scannen</h3><button type="button" className="min-h-11 px-3 text-sm underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]" onClick={() => setScannerOpen(false)}>Schließen</button></div><p className="text-sm leading-5 text-[#36515b]">Öffne den Scanner hier in der App und zeige dem Routenposten deinen Bildschirm. Bitte prüfe, dass der Code zur ausgewählten Route gehört.</p><CodeQrScanner onScan={acceptQr} onError={(message) => setQrError(`${message} Bitte erlaube den Kamerazugriff oder versuche es erneut.`)} /></div>}
           </div>}
         </article>;
       })}
     </section>
-    {scannerOpen && <span className="sr-only" role="status">Kamera für QR-Scan geöffnet</span>}
+    <Dialog open={scannerOpen && Boolean(route) && !submitting} onOpenChange={(open) => { if (!open) setScannerOpen(false); }}>
+      <DialogContent hideCloseButton className="stitch-app max-h-[calc(100dvh-1rem)] w-full overflow-y-auto border-0 border-t-0 bg-[#f2dcab] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-6 text-[#003d55] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-md sm:rounded-xl sm:border-0 sm:p-6">
+        <DialogClose className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-lg bg-white text-[#003d55] transition-colors hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003d55]" aria-label="Scanner schließen"><X className="h-5 w-5" aria-hidden="true" /></DialogClose>
+        <DialogHeader className="space-y-2 px-0 pt-0 text-left">
+          <p className="stitch-kicker text-[#a15523]">Routenbestätigung</p>
+          <DialogTitle className="stitch-headline pr-14 text-2xl text-[#003d55]">Stationscode scannen</DialogTitle>
+          <DialogDescription className="text-sm leading-6 text-[#36515b]">Route {route?.number}: Halte die Kamera auf den QR-Code beim Schiedsrichter. Der Scan bestätigt nur die Route und sendet noch kein Ergebnis ab.</DialogDescription>
+        </DialogHeader>
+        {scannerOpen && route && !submitting && <CodeQrScanner onScan={acceptQr} onError={(message) => setQrError(`${message} Bitte erlaube den Kamerazugriff oder versuche es erneut.`)} />}
+        {qrError && <p role="alert" className="text-sm font-semibold leading-5 text-[#ba1a1a]">{qrError}</p>}
+      </DialogContent>
+    </Dialog>
     <footer className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-[#f2dcab]/75"><span className="flex items-center gap-2"><Trophy aria-hidden="true" size={15} />{probeMode ? "Testwerte kannst du oben zurücksetzen. Die echte Wertung bleibt unverändert." : "Ergebnisse sind nach dem Eintragen für dich nicht bearbeitbar. Bitte wende dich bei einem Fehler an die Organisation."}</span><Link className="underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]" to="/app/wettkampf/rangliste">Halbfinalwertung ansehen</Link><StitchButton size="sm" variant="cream" disabled={submitting} onClick={() => void load()}>Status aktualisieren</StitchButton></footer>
   </div>;
 }

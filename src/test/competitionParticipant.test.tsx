@@ -106,6 +106,23 @@ describe("competition participant day page", () => {
     expect(within(firstRoute.closest("article")!).getAllByText(/Route 10/)).toHaveLength(1);
   });
 
+  it("opens the QR scanner in a modal and keeps the selected zone when it closes", async () => {
+    mountPage();
+    await chooseRoute();
+    clickZone(8);
+    const routeCard = screen.getByRole("button", { name: /Route 1 Linie 1/ }).closest("article")!;
+    fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
+    const dialog = await screen.findByRole("dialog", { name: "Stationscode scannen" });
+    expect(within(dialog).getByText(/Route 1: Halte die Kamera/)).toBeInTheDocument();
+    expect(within(dialog).getByText("Scanner-Vorschau")).toBeInTheDocument();
+    expect(within(routeCard).queryByText("Scanner-Vorschau")).not.toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Scanner schließen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "8" })).toHaveAttribute("aria-pressed", "true");
+    expect(api.submit).not.toHaveBeenCalled();
+  });
+
   it("shows named route colors and lets a zero-zone attempt be submitted separately", async () => {
     api.load.mockResolvedValueOnce(makeData({ routes: routeSet.map((route) => ({ ...route, color: "#327bc1" })) }));
     mountPage();
