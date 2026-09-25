@@ -70,6 +70,21 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: /Route 1 Linie 1/ })).not.toBeInTheDocument();
   });
 
+  it("opens the entry panel directly inside the selected route card", async () => {
+    mountPage("/app/wettkampf?probelauf=1");
+    const firstRoute = await screen.findByRole("button", { name: /Route 1 Linie 1/ });
+    fireEvent.click(firstRoute);
+    expect(firstRoute).toHaveAttribute("aria-expanded", "true");
+    expect(firstRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-1");
+    expect(within(firstRoute.closest("article")!).getByRole("heading", { name: /Route 1: Linie 1/ })).toBeInTheDocument();
+    const secondRoute = screen.getByRole("button", { name: /Route 2 Linie 2/ });
+    fireEvent.click(secondRoute);
+    expect(firstRoute).toHaveAttribute("aria-expanded", "false");
+    expect(firstRoute.nextElementSibling).toBeNull();
+    expect(secondRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-2");
+    expect(screen.queryByText(/im ersten Versuch/i)).not.toBeInTheDocument();
+  });
+
   it("shows named route colors and lets a zero-zone attempt be submitted separately", async () => {
     api.load.mockResolvedValueOnce(makeData({ routes: routeSet.map((route) => ({ ...route, color: "#327bc1" })) }));
     mountPage();
@@ -88,7 +103,7 @@ describe("competition participant day page", () => {
     const view = mountPage();
     await chooseRoute();
     fireEvent.click(screen.getByRole("button", { name: "10" }));
-    fireEvent.click(screen.getByLabelText("Im ersten Versuch direkt zur 10 (Flash)"));
+    fireEvent.click(screen.getByLabelText("Flash bei Zone 10"));
     expect(await screen.findByText("Entwurf auf diesem Gerät gespeichert.")).toBeInTheDocument();
     expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 10, flash: true }));
     expect(api.submit).not.toHaveBeenCalled();
@@ -96,7 +111,7 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     expect(screen.getByRole("button", { name: "10" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByLabelText("Im ersten Versuch direkt zur 10 (Flash)")).toBeChecked();
+    expect(screen.getByLabelText("Flash bei Zone 10")).toBeChecked();
     window.localStorage.setItem("competition-day:draft:participant-1:2026:route-2", JSON.stringify({ zone: 10, flash: true }));
     expect(readCompetitionParticipantDraft("competition-day:draft:participant-1:2026:route-2")).toEqual({ zone: 10, flash: true });
     window.localStorage.setItem("bad-draft", JSON.stringify({ zone: 4, flash: true }));
@@ -173,7 +188,7 @@ describe("competition participant day page", () => {
     await chooseRoute();
     expect(screen.getByText("PROBELAUF")).toBeInTheDocument();
     clickZone(10);
-    fireEvent.click(screen.getByLabelText("Im ersten Versuch direkt zur 10 (Flash)"));
+    fireEvent.click(screen.getByLabelText("Flash bei Zone 10"));
     expect(screen.getByRole("button", { name: "Testwert speichern" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
     fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
@@ -251,7 +266,7 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     clickZone(10);
-    fireEvent.click(screen.getByLabelText("Im ersten Versuch direkt zur 10 (Flash)"));
+    fireEvent.click(screen.getByLabelText("Flash bei Zone 10"));
     fireEvent.click(screen.getByRole("button", { name: /QR-Code am Routenposten scannen/ }));
     act(() => api.scan?.(validQr()));
     fireEvent.click(await screen.findByRole("button", { name: "Ergebnis absenden" }));
