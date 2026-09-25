@@ -7,7 +7,7 @@ import { CodeQrScanner } from "@/components/CodeQrScanner";
 import { getCompetitionDay, submitCompetitionResult } from "@/services/competitionDay";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { competitionRouteColor } from "@/lib/competitionRouteColors";
-import { canUseCompetitionProbe } from "@/lib/competitionProbeAccess";
+import { canUseCompetitionProbe, shouldUseCompetitionProbe } from "@/lib/competitionProbeAccess";
 
 type CompetitionDayData = Awaited<ReturnType<typeof getCompetitionDay>>;
 type CompetitionRoute = CompetitionDayData["routes"][number];
@@ -77,10 +77,10 @@ export default function CompetitionDay() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const probeAvailable = canUseCompetitionProbe(profile?.id, localProbeAvailable);
-  const probeMode = probeAvailable && searchParams.get("probelauf") === "1";
   const { settings, loading: settingsLoading } = useSeasonSettings();
   const season = settings?.season_year ? String(settings.season_year) : null;
   const [data, setData] = useState<CompetitionDayData | null>(null);
+  const probeMode = shouldUseCompetitionProbe(profile?.id, localProbeAvailable, data?.event?.phase, searchParams.get("probelauf") === "1");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
@@ -251,7 +251,7 @@ export default function CompetitionDay() {
       <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : readOnly ? data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : "EINGABE GESCHLOSSEN" : "5 ROUTEN"}</StitchBadge>
     </header>
     {probeAvailable && (probeMode
-      ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle Zonen und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton><StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton></div></StitchCard>
+      ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle Zonen und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>
       : <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]"><p className="max-w-xl text-sm">Du kannst die Ergebniseingabe ausprobieren. Die Testwerte ändern keine echten Ergebnisse.</p><StitchButton asChild variant="navy" size="sm"><Link to="?probelauf=1">Probelauf starten</Link></StitchButton></StitchCard>)}
     {!readOnly && <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]/75">Wähle die letzte sicher gehaltene Zone. {data.event.zone_points.every((points, index) => points === index) && "Zone 1–10 bringt 1–10 Punkte. "}{probeMode ? localProbeAvailable ? "Im Probelauf kannst du anschließend den Test-QR bestätigen oder einen passenden Routencode scannen." : "Im Probelauf scannst du anschließend den passenden Routencode. Es wird kein echtes Ergebnis übertragen." : "Danach scannst du hier den QR-Code beim Schiedsrichter."}</p>}
     <section aria-label="Deine Wettkampfrouten" className="space-y-3">
