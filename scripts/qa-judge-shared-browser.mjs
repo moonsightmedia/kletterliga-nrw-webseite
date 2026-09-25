@@ -16,13 +16,15 @@ const wrongCode = '000000000000000000000000';
 const routes = Array.from({ length: 14 }, (_, i) => ({
   id: `00000000-0000-4000-8000-${String(300 + i).padStart(12, '0')}`,
   number: i + 1, name: `Testlinie ${i + 1}`, grade: '6a', color: 'Terrakotta',
-  qr_token: `synthetic-qr-${i + 1}`,
+  // Eight extra characters cover the longer production origin during local QA.
+  qr_token: String(i + 1).padStart(72, 'a'),
 }));
 const settings = { id: 'synthetic', season_year: '2026', qualification_start: '2026-05-01', qualification_end: '2026-09-13' };
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || 'C:/Users/Janosch/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe' });
 try {
   for (const width of [320, 390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 }, locale: 'de-DE', serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport: { width, height: width === 320 ? 568 : 900 }, locale: 'de-DE', serviceWorkers: 'block' });
+    let accessChecks = 0;
     await context.route('**/*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
@@ -31,6 +33,7 @@ try {
       if (request.method() === 'OPTIONS') return reply({});
       if (url.pathname.includes('/rpc/get_public_admin_settings')) return reply(settings);
       if (url.pathname.includes('/rpc/get_competition_judge_routes')) {
+        accessChecks += 1;
         const input = request.postDataJSON();
         return input.p_password === code
           ? reply({ event: { id: 'synthetic-event', phase: 'draft' }, routes })
@@ -46,11 +49,12 @@ try {
     await page.getByLabel('Schiedsrichter-Code').waitFor();
     check(`${width}: no redirect to app login`, page.url().endsWith('/app/schiedsrichter'));
     await page.screenshot({ path: resolve(out, `judge-${width}-gate.png`) });
-    if (width === 390) {
+    if (width <= 390) {
       await page.getByLabel('Schiedsrichter-Code').fill(wrongCode);
       await page.getByRole('button', { name: 'Bereich öffnen' }).click();
       await page.getByRole('alert').getByText(/ungültig/).waitFor();
       check('wrong code keeps QR codes hidden', await page.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
+      check(`${width}: wrong code is not remembered`, await page.evaluate(() => localStorage.getItem('kletterliga:judge-access:v1') === null));
     }
     await page.getByLabel('Schiedsrichter-Code').fill(code);
     await page.getByRole('button', { name: 'Bereich öffnen' }).click();
@@ -60,19 +64,81 @@ try {
     await page.getByRole('button', { name: 'Route 2 starten' }).click();
     check(`${width}: two independent timers running`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
     await page.screenshot({ path: resolve(out, `judge-${width}-timers.png`) });
+    await page.getByRole('button', { name: 'QR-Code für Route 1 anzeigen' }).click();
+    await page.getByRole('dialog').getByAltText('QR-Code Route 1').waitFor();
+    await page.waitForTimeout(400);
+    const qrImage = page.getByRole('dialog').getByAltText('QR-Code Route 1');
+    const qrBounds = await qrImage.boundingBox();
+    if (width <= 390) {
+      check(`${width}: mobile QR has room to scan`, Boolean(qrBounds && qrBounds.width >= width - 56));
+    }
+    if (width <= 390) {
+      await page.addScriptTag({ path: resolve('node_modules/html5-qrcode/html5-qrcode.min.js') });
+      const qrScreenshot = await qrImage.screenshot();
+      const decoded = await page.evaluate(async (base64) => {
+        const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+        const file = new File([bytes], 'route.png', { type: 'image/png' });
+        const container = document.createElement('div');
+        container.id = 'qr-decode-check';
+        document.body.append(container);
+        const scanner = new window.Html5Qrcode(container.id);
+        try { return await scanner.scanFile(file, true); }
+        finally { scanner.clear(); container.remove(); }
+      }, qrScreenshot.toString('base64'));
+      check(`${width}: participant scanner decodes visible full-length route QR`, decoded === `${base}/app/wettkampf#route=${routes[0].id}&token=${routes[0].qr_token}`);
+    }
+    check(`${width}: direct route QR keeps both times visible`, await page.getByRole('dialog').getByLabel('Aktuelle Routenzeiten').locator('span').count() === 2);
+    const dialogBounds = await page.getByRole('dialog').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, height: rect.height, viewport: window.innerHeight };
+    });
+    check(`${width}: quick QR dialog fits viewport`, dialogBounds.top >= -1 && dialogBounds.bottom <= dialogBounds.viewport + 1);
+    await page.screenshot({ path: resolve(out, `judge-${width}-quick-qr.png`) });
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    check(`${width}: direct route QR does not stop timers`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    await page.getByRole('button', { name: 'Route 1 zurücksetzen' }).click();
+    await page.getByRole('alertdialog').getByText(/bisherige Zeit wird gelöscht/).waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('alertdialog').waitFor({ state: 'hidden' });
+    check(`${width}: reset requires confirmation`, await page.getByRole('button', { name: 'Route 1 pausieren' }).count() === 1);
     await page.getByRole('tab', { name: 'QR-Codes' }).click();
     await page.getByAltText('QR-Code Route 1').waitFor();
+    if (width <= 390) await page.evaluate(() => window.scrollTo(0, 400));
+    const sticky = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      headerTop: document.querySelector('.stitch-app-shell > header')?.getBoundingClientRect().top,
+      railTop: document.querySelector('.judge-live-rail')?.getBoundingClientRect().top,
+    }));
+    if (width <= 390) check(`${width}: route times stay visible while scrolling QR codes`, sticky.scrollY > 0 && sticky.headerTop >= -1 && sticky.railTop >= 63 && sticky.railTop <= 65);
     await page.screenshot({ path: resolve(out, `judge-${width}-qr.png`) });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     check(`${width}: no horizontal overflow`, !overflow);
-    check(`${width}: code not stored in browser storage`, !(await page.evaluate(() => JSON.stringify(localStorage) + JSON.stringify(sessionStorage))).includes(code));
+    check(`${width}: verified access remembered only in localStorage`, await page.evaluate(() => Boolean(localStorage.getItem('kletterliga:judge-access:v1')) && !JSON.stringify(sessionStorage).includes('AbCdEfGhJkMnPqRsTuVwXyZ2')));
+    const checksBeforeReload = accessChecks;
     await page.reload();
-    await page.getByLabel('Schiedsrichter-Code').waitFor();
-    check(`${width}: reload requires code again`, await page.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
-    await page.getByLabel('Schiedsrichter-Code').fill(code);
-    await page.getByRole('button', { name: 'Bereich öffnen' }).click();
     await page.getByRole('button', { name: 'Route 1 pausieren' }).waitFor();
-    check(`${width}: timer survives reload after re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    check(`${width}: reload revalidates remembered access`, accessChecks > checksBeforeReload);
+    check(`${width}: timer survives automatic re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
+    if (width === 390) {
+      await page.locator('summary').getByText('Betreute Routen ändern').click();
+      await page.getByLabel('Timer für Route 3 anzeigen').check();
+      check('390: station selection saved on device', JSON.parse(await page.evaluate(() => localStorage.getItem('kletterliga:judge-routes:2026'))).includes(routes[2].id));
+      await page.reload();
+      await page.getByRole('button', { name: 'Route 3 starten' }).waitFor();
+      check('390: selected third route restored automatically', await page.getByRole('button', { name: 'Route 3 starten' }).count() === 1);
+      await page.close();
+      const reopened = await context.newPage();
+      await reopened.goto(base + '/app/schiedsrichter');
+      await reopened.getByRole('tab', { name: 'Routenuhren' }).waitFor();
+      check('390: closing and reopening tab preserves access', await reopened.getByLabel('Schiedsrichter-Code').count() === 0);
+      await reopened.getByRole('button', { name: 'Verlassen' }).click();
+      await reopened.getByLabel('Schiedsrichter-Code').waitFor();
+      check('390: leaving removes remembered access', await reopened.evaluate(() => localStorage.getItem('kletterliga:judge-access:v1') === null));
+      await reopened.reload();
+      await reopened.getByLabel('Schiedsrichter-Code').waitFor();
+      check('390: reload after leaving requires code', await reopened.getByRole('tab', { name: 'QR-Codes' }).count() === 0);
+    }
     await context.close();
   }
 } catch (error) {

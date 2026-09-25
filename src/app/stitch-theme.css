@@ -341,3 +341,82 @@ html:has(.stitch-participant) {
   .stitch-admin-aside {
     box-shadow: 0 12px 32px rgba(0, 38, 55, 0.06);
   }
+
+/* Route-side judge station: restrained Kletterliga colors, readable at a glance. */
+html:has(.judge-layout), body:has(.judge-layout), #root:has(.judge-layout) {
+  overflow-x: clip;
+}
+
+.judge-workstation {
+  scroll-padding-top: 8rem;
+}
+
+.judge-timer-card {
+  background: #fffdfa;
+  box-shadow: 0 10px 28px rgba(0, 38, 55, 0.08);
+}
+
+.judge-timer-card--warning {
+  background: #fff0d8;
+  box-shadow: inset 4px 0 0 #a15523, 0 10px 28px rgba(0, 38, 55, 0.08);
+}
+
+.judge-timer-card--finished {
+  background: #f2dcab;
+  box-shadow: inset 4px 0 0 #a15523, 0 10px 28px rgba(0, 38, 55, 0.08);
+}
+
+.judge-timer-card--warning .judge-timer-track span,
+.judge-timer-card--finished .judge-timer-track span {
+  background: #a15523;
+}
+
+.judge-state {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.judge-state--ready { background: #ede8e1; color: #003d55; }
+.judge-state--running { background: #003d55; color: #f2dcab; }
+.judge-state--warning { background: #a15523; color: #fff; }
+.judge-state--finished { background: #803712; color: #fff; }
+
+.judge-qr-shortcut:hover { background: #e6c986; }
+
+/* A route QR must remain camera-readable on a narrow judge phone. */
+@media (max-width: 639px) {
+  .judge-qr-dialog {
+    inset: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: max(1rem, env(safe-area-inset-top)) 0.75rem max(1rem, env(safe-area-inset-bottom));
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow-y: auto;
+  }
+
+  .judge-qr-artwork {
+    flex: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .judge-workstation *, .judge-workstation *::before, .judge-workstation *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

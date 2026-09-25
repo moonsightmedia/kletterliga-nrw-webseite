@@ -5,7 +5,7 @@ import type { CompetitionConfig } from "@/services/competitionDay";
 const config = (): CompetitionConfig => ({
   routes: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, name: `Route ${i + 1}`, grade: "", color: "" })),
   assignments: [{ league: "lead", class_label: "Ü15 männlich", route_numbers: [1, 3, 5, 7, 12] }],
-  zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 1,
+  zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 0,
 });
 describe("competition configuration", () => {
   it("treats underscores and percent in email lookup literally", () => expect(exactCompetitionEmailPattern(" staff_one%two@example.invalid ")).toBe("staff\\_one\\%two@example.invalid"));

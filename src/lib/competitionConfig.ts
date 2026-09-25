@@ -1,6 +1,8 @@
 import type { CompetitionConfig, CompetitionAssignment, CompetitionRouteInput } from "@/services/competitionDay";
 import type { AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
 
+export const competitionZonePoints = Array.from({ length: 11 }, (_, zone) => zone);
+
 export const competitionClassKey = (row: Pick<CompetitionAssignment, "league" | "class_label">) => `${row.league}:${row.class_label}`;
 export const exactCompetitionEmailPattern = (email: string) => email.trim().replace(/[\\%_]/g, "\\$&");
 
@@ -30,7 +32,6 @@ export function validateCompetitionConfig(config: CompetitionConfig, requiredCla
   const numbers = config.routes.map((route) => route.number);
   const values = config.zone_points;
   if (values.length !== 11 || values.some((n, i) => !Number.isFinite(n) || n < 0 || n > 1000 || (i > 0 && n < values[i - 1])) || values[0] !== 0 || values[10] <= 0) return "Bitte bestätige eine aufsteigende Wertung für die Zonen 0–10. Zone 0 muss 0 Punkte ergeben, Zone 10 mehr als 0.";
-  if (!Number.isFinite(config.flash_bonus) || config.flash_bonus < 0 || config.flash_bonus > 1000) return "Bitte gib einen gültigen Flash-Bonus von 0 bis 1000 ein.";
   if (!config.assignments.length) return "Es fehlt eine Klassenzuordnung.";
   if (new Set(config.assignments.map(competitionClassKey)).size !== config.assignments.length) return "Eine Klasse wurde doppelt zugeordnet.";
   for (const row of config.assignments) {

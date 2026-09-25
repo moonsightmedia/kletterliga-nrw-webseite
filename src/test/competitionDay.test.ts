@@ -13,7 +13,7 @@ import {
 const config = {
   routes: Array.from({ length: 12 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "6a", color: "blau" })),
   assignments: [{ league: "lead" as const, class_label: "U15", route_numbers: [1, 2, 3, 4, 5] }],
-  zone_points: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], flash_bonus: 2,
+  zone_points: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], flash_bonus: 0,
 };
 
 describe("competition-day RPC contract", () => {
@@ -63,17 +63,25 @@ describe("competition-day RPC contract", () => {
     expect(rpc).toHaveBeenCalledWith("save_competition_route_draft", { p_season: "2026", p_routes: config.routes });
   });
 
+  it("always saves one point per zone and removes a legacy flash bonus", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await saveCompetitionConfig("2026", { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone * 5), flash_bonus: 2 });
+    expect(rpc).toHaveBeenCalledWith("save_competition_config", {
+      p_season: "2026", p_config: { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone) },
+    });
+  });
+
   it("sends participant submissions without a caller supplied identity", async () => {
     rpc.mockResolvedValue({ data: { id: "result-id" }, error: null });
-    await submitCompetitionResult({ season: "2026", routeId: "route-id", zone: 10, flash: true, qrToken: "opaque" });
+    await submitCompetitionResult({ season: "2026", routeId: "route-id", zone: 10, qrToken: "opaque" });
     expect(rpc).toHaveBeenCalledWith("submit_competition_result", {
-      p_season: "2026", p_route_id: "route-id", p_zone: 10, p_flash: true, p_qr_token: "opaque",
+      p_season: "2026", p_route_id: "route-id", p_zone: 10, p_flash: false, p_qr_token: "opaque",
     });
   });
 
   it("requires a reason for the audited admin correction RPC", async () => {
     rpc.mockResolvedValue({ data: { id: "result-id" }, error: null });
-    await correctCompetitionResult({ resultId: "result-id", zone: 9, flash: false, reason: "judge entry correction" });
+    await correctCompetitionResult({ resultId: "result-id", zone: 9, reason: "judge entry correction" });
     expect(rpc).toHaveBeenCalledWith("correct_competition_result", {
       p_result_id: "result-id", p_zone: 9, p_flash: false, p_reason: "judge entry correction",
     });
