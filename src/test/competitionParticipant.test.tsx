@@ -124,7 +124,8 @@ describe("competition participant day page", () => {
     const view = mountPage();
     await chooseRoute();
     fireEvent.click(screen.getByRole("button", { name: "10" }));
-    expect(await screen.findByText("Entwurf auf diesem Gerät gespeichert.")).toBeInTheDocument();
+    expect(await screen.findByText("Auswahl automatisch als Entwurf gespeichert. Noch kein Ergebnis eingetragen.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Entwurf speichern" })).not.toBeInTheDocument();
     expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 10 }));
     expect(api.submit).not.toHaveBeenCalled();
     view.unmount();
@@ -172,7 +173,6 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     clickZone(9);
-    fireEvent.click(screen.getByRole("button", { name: "Entwurf speichern" }));
     fireEvent.click(screen.getByRole("button", { name: /QR-Code am Routenposten scannen/ }));
     act(() => api.scan?.(validQr()));
     expect(await screen.findByText(/QR-Code erkannt/)).toBeInTheDocument();
