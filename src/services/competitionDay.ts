@@ -70,7 +70,7 @@ export const getCompetitionJudgeAccessStatus = (season: string) =>
 export const setCompetitionJudgePassword = (season: string, password: string) =>
   rpc<void>("set_competition_judge_password", { p_season: season, p_password: password });
 export const saveCompetitionConfig = (season: string, config: CompetitionConfig) =>
-  rpc<void>("save_competition_config", { p_season: season, p_config: { ...config, zone_points: [...competitionZonePoints] } });
+  rpc<void>("save_competition_config", { p_season: season, p_config: { ...config, zone_points: [...competitionZonePoints], flash_bonus: 0 } });
 export const saveCompetitionRouteDraft = (season: string, routes: CompetitionRouteInput[]) =>
   rpc<void>("save_competition_route_draft", { p_season: season, p_routes: routes });
 export const getCompetitionAdmin = (season: string) => rpc<CompetitionAdminData>("get_competition_admin", { p_season: season });
@@ -78,14 +78,14 @@ export const setCompetitionPhase = (season: string, phase: Exclude<CompetitionPh
   rpc<void>("set_competition_phase", { p_season: season, p_phase: phase });
 export const setCompetitionStaff = (season: string, profileId: string, enabled: boolean) =>
   rpc<void>("set_competition_staff", { p_season: season, p_profile_id: profileId, p_enabled: enabled });
-export const submitCompetitionResult = (input: { season: string; routeId: string; zone: number; flash: boolean; qrToken: string }) =>
+export const submitCompetitionResult = (input: { season: string; routeId: string; zone: number; qrToken: string }) =>
   rpc<CompetitionResult>("submit_competition_result", {
     p_season: input.season, p_route_id: input.routeId, p_zone: input.zone,
-    p_flash: input.flash, p_qr_token: input.qrToken,
+    p_flash: false, p_qr_token: input.qrToken,
   });
-export const correctCompetitionResult = (input: { resultId: string; zone: number; flash: boolean; reason: string }) =>
+export const correctCompetitionResult = (input: { resultId: string; zone: number; reason: string }) =>
   rpc<CompetitionResult>("correct_competition_result", {
-    p_result_id: input.resultId, p_zone: input.zone, p_flash: input.flash, p_reason: input.reason,
+    p_result_id: input.resultId, p_zone: input.zone, p_flash: false, p_reason: input.reason,
   });
 export const listCompetitionStandings = (season: string) =>
   rpc<CompetitionStanding[]>("list_competition_standings", { p_season: season });

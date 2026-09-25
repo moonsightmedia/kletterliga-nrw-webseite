@@ -11,7 +11,7 @@ import { competitionRouteColor } from "@/lib/competitionRouteColors";
 type CompetitionDayData = Awaited<ReturnType<typeof getCompetitionDay>>;
 type CompetitionRoute = CompetitionDayData["routes"][number];
 type SavedResult = CompetitionDayData["results"][number];
-type Draft = { zone: number; flash: boolean };
+type Draft = { zone: number };
 
 const localProbeAvailable = import.meta.env.DEV && typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const makeProbeResultsKey = (profileId: string, season: string, eventId: string) =>
@@ -19,7 +19,7 @@ const makeProbeResultsKey = (profileId: string, season: string, eventId: string)
 const makeDraftKey = (profileId: string, season: string, routeId: string) =>
   `competition-day:draft:${profileId}:${season}:${routeId}`;
 
-function readProbeResults(key: string, routes: CompetitionRoute[], profileId: string, points: number[], bonus: number): SavedResult[] {
+function readProbeResults(key: string, routes: CompetitionRoute[], profileId: string, points: number[]): SavedResult[] {
   try {
     const parsed: unknown = JSON.parse(window.sessionStorage.getItem(key) ?? "[]");
     if (!Array.isArray(parsed)) return [];
@@ -30,8 +30,7 @@ function readProbeResults(key: string, routes: CompetitionRoute[], profileId: st
       if (typeof row.route_id !== "string" || seen.has(row.route_id) ||
         !routes.some((route) => route.id === row.route_id) || row.profile_id !== profileId ||
         !Number.isInteger(row.zone) || row.zone! < 0 || row.zone! > 10 ||
-        typeof row.flash !== "boolean" || (row.flash && row.zone !== 10) ||
-        row.points !== points[row.zone!] + (row.flash ? bonus : 0) ||
+        row.flash !== false || row.points !== points[row.zone!] ||
         typeof row.id !== "string" || typeof row.created_at !== "string") return false;
       seen.add(row.route_id);
       return true;
@@ -49,9 +48,8 @@ function readDraft(key: string): Draft | null {
     const value: unknown = JSON.parse(raw);
     if (!value || typeof value !== "object") return null;
     const candidate = value as Partial<Draft>;
-    if (!Number.isInteger(candidate.zone) || candidate.zone! < 0 || candidate.zone! > 10 || typeof candidate.flash !== "boolean") return null;
-    if (candidate.flash && candidate.zone !== 10) return null;
-    return { zone: candidate.zone!, flash: candidate.flash };
+    if (!Number.isInteger(candidate.zone) || candidate.zone! < 0 || candidate.zone! > 10) return null;
+    return { zone: candidate.zone! };
   } catch {
     return null;
   }
@@ -85,7 +83,6 @@ export default function CompetitionDay() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [zone, setZone] = useState<number | null>(null);
-  const [flash, setFlash] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -127,14 +124,14 @@ export default function CompetitionDay() {
   const probeResultsKey = profile?.id && season && data?.event ? makeProbeResultsKey(profile.id, season, data.event.id) : null;
   const draftKey = profile?.id && season && route
     ? (probeMode ? `competition-day:probe:draft:${profile.id}:${season}:${route.id}` : makeDraftKey(profile.id, season, route.id)) : null;
-  const points = useMemo(() => zone === null || !data?.event ? null : data.event.zone_points[zone] + (flash ? data.event.flash_bonus : 0), [data?.event, flash, zone]);
+  const points = useMemo(() => zone === null || !data?.event ? null : data.event.zone_points[zone], [data?.event, zone]);
 
   useEffect(() => {
     if (!probeMode || !probeResultsKey || !profile?.id || !data?.event || data.routes.length !== 5) {
       setProbeResults([]);
       return;
     }
-    setProbeResults(readProbeResults(probeResultsKey, data.routes, profile.id, data.event.zone_points, data.event.flash_bonus));
+    setProbeResults(readProbeResults(probeResultsKey, data.routes, profile.id, data.event.zone_points));
   }, [probeMode, probeResultsKey, profile?.id, data]);
 
   useEffect(() => {
@@ -146,19 +143,17 @@ export default function CompetitionDay() {
     setScannerOpen(false);
     if (!draftKey || result) {
       setZone(null);
-      setFlash(false);
       return;
     }
     const draft = readDraft(draftKey);
     setZone(draft?.zone ?? null);
-    setFlash(draft?.flash ?? false);
   }, [draftKey, result]);
 
-  const persistDraft = (nextZone: number | null, nextFlash: boolean) => {
+  const persistDraft = (nextZone: number | null) => {
     if (!draftKey || nextZone === null || !data?.event || result || (!probeMode && data.event.phase !== "open")) return false;
-    if (!Number.isInteger(nextZone) || nextZone < 0 || nextZone > 10 || (nextFlash && nextZone !== 10)) return false;
+    if (!Number.isInteger(nextZone) || nextZone < 0 || nextZone > 10) return false;
     try {
-      (probeMode ? window.sessionStorage : window.localStorage).setItem(draftKey, JSON.stringify({ zone: nextZone, flash: nextFlash } satisfies Draft));
+      (probeMode ? window.sessionStorage : window.localStorage).setItem(draftKey, JSON.stringify({ zone: nextZone } satisfies Draft));
       setDraftSaved(true);
       setDraftError(null);
       return true;
@@ -187,13 +182,13 @@ export default function CompetitionDay() {
     submitLockRef.current = true;
     setSubmitting(true);
     setSubmitError(null);
-    persistDraft(zone, flash);
+    persistDraft(zone);
     try {
       if (probeMode) {
         if (!probeResultsKey) throw new Error("Probe storage unavailable");
         const accepted: SavedResult = {
-          id: `probe:${route.id}`, route_id: route.id, profile_id: profile.id, zone, flash,
-          points: data.event.zone_points[zone] + (flash ? data.event.flash_bonus : 0),
+          id: `probe:${route.id}`, route_id: route.id, profile_id: profile.id, zone, flash: false,
+          points: data.event.zone_points[zone],
           created_at: new Date().toISOString(),
         };
         const next = [...probeResults.filter((item) => item.route_id !== route.id), accepted];
@@ -203,11 +198,11 @@ export default function CompetitionDay() {
         setQrToken(null);
         return;
       }
-      const accepted = await submitCompetitionResult({ season, routeId: route.id, zone, flash, qrToken });
-      const expectedPoints = data.event.zone_points[zone] + (flash ? data.event.flash_bonus : 0);
+      const accepted = await submitCompetitionResult({ season, routeId: route.id, zone, qrToken });
+      const expectedPoints = data.event.zone_points[zone];
       const pointsMatch = Number.isFinite(accepted.points) && Math.abs(accepted.points - expectedPoints) <= 1e-8;
       const validAcknowledgement = Boolean(accepted.id && accepted.created_at && Number.isFinite(Date.parse(accepted.created_at)));
-      if (!validAcknowledgement || accepted.route_id !== route.id || accepted.profile_id !== profile.id || accepted.zone !== zone || accepted.flash !== flash || !pointsMatch) {
+      if (!validAcknowledgement || accepted.route_id !== route.id || accepted.profile_id !== profile.id || accepted.zone !== zone || accepted.flash !== false || !pointsMatch) {
         throw new Error("The accepted result did not match the submitted result.");
       }
       setData((current) => current ? { ...current, results: [...current.results.filter((item) => item.route_id !== route.id), accepted] } : current);
@@ -233,7 +228,7 @@ export default function CompetitionDay() {
   if (data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routenzuordnung prüfen" description="Dein Routenset konnte nicht vollständig geladen werden." /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>Bitte lade die Zuordnung erneut oder wende dich an die Organisation. Es werden keine Ergebnisseingaben angezeigt.</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
 
   const readOnly = !probeMode && data.event.phase !== "open";
-  const saveDraft = () => { persistDraft(zone, flash); };
+  const saveDraft = () => { persistDraft(zone); };
   const clearProbe = () => {
     if (probeResultsKey) {
       try {
@@ -246,7 +241,6 @@ export default function CompetitionDay() {
     }
     setProbeResults([]);
     setZone(null);
-    setFlash(false);
     setQrToken(null);
     setSubmitError(null);
   };
@@ -258,7 +252,7 @@ export default function CompetitionDay() {
     {localProbeAvailable && (probeMode
       ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Lokaler Probelauf</strong><p className="mt-1 text-sm">Wähle Zonen und bestätige den Test-QR oder scanne einen passenden Routencode. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton><StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton></div></StitchCard>
       : <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]"><p className="max-w-xl text-sm">Du kannst die Ergebniseingabe lokal ausprobieren. Die Testwerte ändern keine echten Ergebnisse.</p><StitchButton asChild variant="navy" size="sm"><Link to="?probelauf=1">Probelauf starten</Link></StitchButton></StitchCard>)}
-    {!readOnly && <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]/75">Wähle die letzte sicher gehaltene Zone. {data.event.zone_points.every((points, index) => points === index) && "Zone 1–10 bringt 1–10 Punkte. "}Ein Flash lässt sich bei Zone 10 markieren. {data.event.flash_bonus === 0 && "Der Flashbonus ist derzeit mit 0 Punkten konfiguriert. "}{probeMode ? "Im Probelauf kannst du anschließend den Test-QR bestätigen oder einen passenden Routencode scannen." : "Danach scannst du hier den QR-Code beim Schiedsrichter."}</p>}
+    {!readOnly && <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]/75">Wähle die letzte sicher gehaltene Zone. {data.event.zone_points.every((points, index) => points === index) && "Zone 1–10 bringt 1–10 Punkte. "}{probeMode ? "Im Probelauf kannst du anschließend den Test-QR bestätigen oder einen passenden Routencode scannen." : "Danach scannst du hier den QR-Code beim Schiedsrichter."}</p>}
     <section aria-label="Deine Wettkampfrouten" className="space-y-3">
       {data.routes.map((item, index) => {
         const itemResult = savedResult(item);
@@ -277,15 +271,14 @@ export default function CompetitionDay() {
           </button>
           {active && route && <div id={`competition-route-entry-${item.id}`} className="space-y-5 border-t border-[#003d55]/15 bg-[#f2dcab] p-5 text-[#002637] sm:p-7" aria-labelledby="competition-route-title">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="stitch-kicker text-[#a15523]">{probeMode ? "TESTWERTUNG" : "DEINE WERTUNG"}</p><h2 id="competition-route-title" className="stitch-headline mt-2 text-2xl text-[#002637]">{result ? "Dein Ergebnis" : "Wertung eintragen"}</h2></div>{result && <StitchBadge tone="terracotta"><Check size={14} /> {probeMode ? "TESTWERT GESPEICHERT" : "ERGEBNIS EINGETRAGEN"}</StitchBadge>}</div>
-      {result ? <div className="grid grid-cols-3 gap-2 sm:gap-3" aria-label="Eingetragenes Ergebnis"><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Letzter Griff</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.zone}</strong></div><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Flash</span><strong className="stitch-headline mt-1 block text-xl text-[#002637]">{result.flash ? "Ja" : "Nein"}</strong></div><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Punkte</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.points}</strong></div></div> : readOnly ? <p className="text-[#36515b]">{data.event.phase === "draft" ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet." : "Für diese Route wurde kein Ergebnis eingetragen. Die Eingabe ist geschlossen."}</p> : <>
-        <fieldset disabled={submitting} className="space-y-3 disabled:opacity-70"><legend className="mb-3 text-sm font-semibold text-[#002637]">Letzte sicher gehaltene Zone</legend><div className="grid grid-cols-5 gap-2 sm:grid-cols-10">{Array.from({ length: 10 }, (_, index) => index + 1).map((value) => <button type="button" key={value} aria-pressed={zone === value} onClick={() => { const nextFlash = value === 10 ? flash : false; persistDraft(value, nextFlash); setZone(value); setFlash(nextFlash); setQrToken(null); }} className={`min-h-12 rounded-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === value ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/75 text-[#002637] hover:bg-white"}`}>{value}</button>)}</div><button type="button" aria-pressed={zone === 0} onClick={() => { persistDraft(0, false); setZone(0); setFlash(false); setQrToken(null); }} className={`min-h-11 rounded-lg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === 0 ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/60 text-[#002637]"}`}>Keine Zone erreicht · 0 Punkte</button></fieldset>
-        <label className={`flex min-h-14 items-center gap-3 rounded-xl bg-white/70 px-4 ${zone !== 10 || submitting ? "opacity-55" : ""}`}><input type="checkbox" className="h-5 w-5 accent-[#a15523] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]" checked={flash} disabled={zone !== 10 || submitting} onChange={(event) => { persistDraft(zone, event.target.checked); setFlash(event.target.checked); setQrToken(null); }} /><span className="text-sm font-semibold text-[#002637]">Flash bei Zone 10</span></label>
+      {result ? <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Eingetragenes Ergebnis"><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Letzter Griff</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.zone}</strong></div><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Punkte</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.points}</strong></div></div> : readOnly ? <p className="text-[#36515b]">{data.event.phase === "draft" ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet." : "Für diese Route wurde kein Ergebnis eingetragen. Die Eingabe ist geschlossen."}</p> : <>
+        <fieldset disabled={submitting} className="space-y-3 disabled:opacity-70"><legend className="mb-3 text-sm font-semibold text-[#002637]">Letzte sicher gehaltene Zone</legend><div className="grid grid-cols-5 gap-2 sm:grid-cols-10">{Array.from({ length: 10 }, (_, index) => index + 1).map((value) => <button type="button" key={value} aria-pressed={zone === value} onClick={() => { persistDraft(value); setZone(value); setQrToken(null); }} className={`min-h-12 rounded-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === value ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/75 text-[#002637] hover:bg-white"}`}>{value}</button>)}</div><button type="button" aria-pressed={zone === 0} onClick={() => { persistDraft(0); setZone(0); setQrToken(null); }} className={`min-h-11 rounded-lg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === 0 ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/60 text-[#002637]"}`}>Keine Zone erreicht · 0 Punkte</button></fieldset>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#003d55] p-4 text-[#f2dcab]"><span className="text-sm">Vorschau deiner Wertung</span><strong className="stitch-headline text-3xl">{points ?? "—"} <span className="text-sm font-medium">Punkte</span></strong></div>
         {draftSaved && <p role="status" className="text-sm font-semibold text-[#245d47]">Entwurf auf diesem Gerät gespeichert.</p>}
         {draftError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{draftError}</p>}
         {qrError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{qrError}</p>}
         {submitError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{submitError}</p>}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"><StitchButton variant="outline" disabled={zone === null || submitting} onClick={saveDraft}>Entwurf speichern</StitchButton><StitchButton className="whitespace-normal text-center tracking-[0.1em]" variant={qrToken ? "navy" : "outline"} disabled={zone === null || submitting} onClick={() => { if (submitLockRef.current) return; persistDraft(zone, flash); setScannerOpen(true); setQrError(null); }}><QrCode aria-hidden="true" size={17} />{qrToken ? "QR-Code erneut scannen" : "QR-Code am Routenposten scannen"}</StitchButton>{probeMode && <StitchButton variant="outline" className="whitespace-normal text-center tracking-[0.1em]" disabled={zone === null || submitting} onClick={() => { setQrToken("lokaler-probelauf"); setScannerOpen(false); setQrError(null); }}>Test-QR bestätigen</StitchButton>}<StitchButton className="whitespace-normal text-center tracking-[0.1em]" disabled={!qrToken || zone === null || submitting || (!probeMode && data.event.phase !== "open")} onClick={() => void submit()}>{submitting ? "Wird eingetragen …" : probeMode ? "Testwert speichern" : "Ergebnis absenden"}</StitchButton></div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"><StitchButton variant="outline" disabled={zone === null || submitting} onClick={saveDraft}>Entwurf speichern</StitchButton><StitchButton className="whitespace-normal text-center tracking-[0.1em]" variant={qrToken ? "navy" : "outline"} disabled={zone === null || submitting} onClick={() => { if (submitLockRef.current) return; persistDraft(zone); setScannerOpen(true); setQrError(null); }}><QrCode aria-hidden="true" size={17} />{qrToken ? "QR-Code erneut scannen" : "QR-Code am Routenposten scannen"}</StitchButton>{probeMode && <StitchButton variant="outline" className="whitespace-normal text-center tracking-[0.1em]" disabled={zone === null || submitting} onClick={() => { setQrToken("lokaler-probelauf"); setScannerOpen(false); setQrError(null); }}>Test-QR bestätigen</StitchButton>}<StitchButton className="whitespace-normal text-center tracking-[0.1em]" disabled={!qrToken || zone === null || submitting || (!probeMode && data.event.phase !== "open")} onClick={() => void submit()}>{submitting ? "Wird eingetragen …" : probeMode ? "Testwert speichern" : "Ergebnis absenden"}</StitchButton></div>
         {qrToken && <p className="flex items-start gap-2 text-xs leading-5 text-[#36515b]"><ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0" size={16} />{probeMode ? "Test-QR bestätigt. Prüfe den Wert und speichere ihn im Probelauf." : "QR-Code erkannt. Prüfe deine Wertung und sende sie ausdrücklich ab. Der Scan allein trägt noch kein Ergebnis ein."}</p>}
       </>}
       {scannerOpen && !submitting && <div className="space-y-3 rounded-xl bg-white/70 p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-[#002637]">Stationscode scannen</h3><button type="button" className="min-h-11 px-3 text-sm underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]" onClick={() => setScannerOpen(false)}>Schließen</button></div><p className="text-sm leading-5 text-[#36515b]">Öffne den Scanner hier in der App und zeige dem Routenposten deinen Bildschirm. Bitte prüfe, dass der Code zur ausgewählten Route gehört.</p><CodeQrScanner onScan={acceptQr} onError={(message) => setQrError(`${message} Bitte erlaube den Kamerazugriff oder versuche es erneut.`)} /></div>}

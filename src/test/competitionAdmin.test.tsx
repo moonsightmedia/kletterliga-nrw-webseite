@@ -8,7 +8,7 @@ vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCom
 vi.mock("@/services/semifinalAdminApi", () => ({ listAdminSemifinalRegistrations: api.roster }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/supabase", () => ({ supabase: { from: vi.fn() } }));
-const config = { routes: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, name: `Route ${i + 1}`, grade: "6a", color: "rot" })), assignments: [{ league: "lead", class_label: "Ü15-m", route_numbers: [1, 2, 3, 4, 5] }], zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 1 };
+const config = { routes: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, name: `Route ${i + 1}`, grade: "6a", color: "rot" })), assignments: [{ league: "lead", class_label: "Ü15-m", route_numbers: [1, 2, 3, 4, 5] }], zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 0 };
 const view = () => render(<MemoryRouter><LeagueCompetition /></MemoryRouter>);
 describe("competition admin", () => {
   beforeEach(() => {

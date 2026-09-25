@@ -41,7 +41,6 @@ export default function LeagueCompetition() {
   const [judgeCodeDialog, setJudgeCodeDialog] = useState(false);
   const [correction, setCorrection] = useState<CompetitionAdminResult | null>(null);
   const [correctZone, setCorrectZone] = useState(0);
-  const [correctFlash, setCorrectFlash] = useState(false);
   const [reason, setReason] = useState("");
   const [resultSearch, setResultSearch] = useState("");
   const [selectedRouteNumber, setSelectedRouteNumber] = useState<number | null>(null);
@@ -56,7 +55,7 @@ export default function LeagueCompetition() {
       setDay(current); setAdmin(administration); setRegistrations(roster);
       setJudgeCodeConfigured(codeConfigured);
       const loaded = administration.config?.routes?.length ? administration.config : emptyConfig();
-      setConfig(current.event?.opened_at ? loaded : { ...loaded, zone_points: [...competitionZonePoints] });
+      setConfig(current.event?.opened_at ? loaded : { ...loaded, zone_points: [...competitionZonePoints], flash_bonus: 0 });
       setSelectedRouteNumber((currentNumber) => administration.config.routes.some((route) => route.number === currentNumber)
         ? currentNumber : administration.config.routes[0]?.number ?? null);
       setDirty(false); setError("");
@@ -73,7 +72,8 @@ export default function LeagueCompetition() {
   }, [classes, config.assignments]);
   const locked = Boolean(day?.event?.opened_at);
   const canConfigure = !locked && !busy;
-  const scoringNeedsSave = !locked && Boolean(admin && JSON.stringify(admin.config.zone_points) !== JSON.stringify(competitionZonePoints));
+  const scoringNeedsSave = !locked && Boolean(admin &&
+    (JSON.stringify(admin.config.zone_points) !== JSON.stringify(competitionZonePoints) || admin.config.flash_bonus !== 0));
   const validation = validateCompetitionConfig(config, classes);
   const routeValidation = validateCompetitionRouteDraft(config.routes);
   const otherUnsavedChanges = Boolean(admin && JSON.stringify(config.assignments) !== JSON.stringify(admin.config.assignments));
@@ -189,7 +189,7 @@ export default function LeagueCompetition() {
         <AccordionItem value="entry" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
           <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ToggleRight size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebniseingabe</span><span className="block text-xs font-normal text-[#526b72]">{day.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</span></span></AccordionTrigger>
           <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
-          <p className="text-sm">Zone 1–10 = 1–10 Punkte. Keine Zone erreicht = 0.{config.flash_bonus > 0 ? " Flash: +" + config.flash_bonus + (config.flash_bonus === 1 ? " Punkt." : " Punkte.") : ""}</p>
+          <p className="text-sm">Zone 1–10 = 1–10 Punkte. Keine Zone erreicht = 0.</p>
           <StitchButton disabled={busy || !day.event || dirty || (day.event.phase !== "open" && (Boolean(validation) || scoringNeedsSave))} onClick={() => setPhaseDialog(day.event?.phase === "open" ? "closed" : "open")}>{day.event?.phase === "open" ? "Eingabe schließen" : "Eingabe öffnen"}</StitchButton>
           <p className="text-xs leading-5 text-[#526b72]">Nach der ersten Öffnung ist die Routenzuordnung gesperrt.</p>
           </AccordionContent>
@@ -211,7 +211,7 @@ export default function LeagueCompetition() {
             <Link className="inline-block min-h-11 py-3 text-sm font-bold underline underline-offset-4" to="/app/wettkampf/rangliste">Live-Wertung öffnen</Link>
         {admin.results.length > 0 && <StitchTextField label="Ergebnisse nach Namen filtern" value={resultSearch} onChange={(e) => setResultSearch(e.target.value)} />}
         {!admin.results.length && <p className="text-sm text-[#526b72]">Noch keine Ergebnisse eingetragen.</p>}
-        {admin.results.filter((r) => r.name.toLocaleLowerCase("de").includes(resultSearch.toLocaleLowerCase("de"))).map((result) => <StitchCard key={result.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><h3 className="font-bold">{result.name}</h3><p className="text-sm">{leagueLabel(result.league)} · {result.class_label} · Route {day.routes.find((r) => r.id === result.route_id)?.number ?? "–"}</p><p className="mt-1">Zone {result.zone}{result.flash ? " · Flash" : ""} · <strong>{result.points} Punkte</strong></p></div><StitchButton size="sm" variant="outline" disabled={busy || dirty} onClick={() => { setCorrection(result); setCorrectZone(result.zone); setCorrectFlash(result.flash); setReason(""); }}>Korrigieren</StitchButton></StitchCard>)}
+        {admin.results.filter((r) => r.name.toLocaleLowerCase("de").includes(resultSearch.toLocaleLowerCase("de"))).map((result) => <StitchCard key={result.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><h3 className="font-bold">{result.name}</h3><p className="text-sm">{leagueLabel(result.league)} · {result.class_label} · Route {day.routes.find((r) => r.id === result.route_id)?.number ?? "–"}</p><p className="mt-1">Zone {result.zone} · <strong>{result.points} Punkte</strong></p></div><StitchButton size="sm" variant="outline" disabled={busy || dirty} onClick={() => { setCorrection(result); setCorrectZone(result.zone); setReason(""); }}>Korrigieren</StitchButton></StitchCard>)}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -256,14 +256,13 @@ export default function LeagueCompetition() {
     <AlertDialog open={Boolean(correction)} onOpenChange={(open) => !open && !busy && setCorrection(null)}>
       <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">
         <AlertDialogHeader><AlertDialogTitle>Ergebnis korrigieren</AlertDialogTitle><AlertDialogDescription className="text-[#003d55]">{correction?.name}. Die Änderung wird mit altem Wert, neuem Wert und Begründung protokolliert.</AlertDialogDescription></AlertDialogHeader>
-        <label className="space-y-2"><span>Letzte gehaltene Zone</span><Select disabled={busy} value={String(correctZone)} onValueChange={(v) => { setCorrectZone(Number(v)); if (v !== "10") setCorrectFlash(false); }}><SelectTrigger aria-label="Korrigierte Zone"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: 11 }, (_, zone) => <SelectItem key={zone} value={String(zone)}>Zone {zone}{zone === 10 ? " / TOP" : ""}</SelectItem>)}</SelectContent></Select></label>
-        <label className="flex min-h-12 items-center gap-3"><input type="checkbox" checked={correctFlash} disabled={busy || correctZone !== 10} onChange={(e) => setCorrectFlash(e.target.checked)} /> Flash bei TOP im ersten Versuch</label>
+        <label className="space-y-2"><span>Letzte gehaltene Zone</span><Select disabled={busy} value={String(correctZone)} onValueChange={(v) => setCorrectZone(Number(v))}><SelectTrigger aria-label="Korrigierte Zone"><SelectValue /></SelectTrigger><SelectContent>{Array.from({ length: 11 }, (_, zone) => <SelectItem key={zone} value={String(zone)}>Zone {zone}{zone === 10 ? " / TOP" : ""}</SelectItem>)}</SelectContent></Select></label>
         <StitchTextField label="Begründung (Pflicht)" disabled={busy} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} />
         {error && <p role="alert" className="text-red-700">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
           <StitchButton className="whitespace-normal tracking-[0.1em]" disabled={busy || reason.trim().length < 5} onClick={async () => {
-            if (correction && await action(() => correctCompetitionResult({ resultId: correction.id, zone: correctZone, flash: correctFlash, reason: reason.trim() }), "Korrektur gespeichert und protokolliert.")) setCorrection(null);
+            if (correction && await action(() => correctCompetitionResult({ resultId: correction.id, zone: correctZone, reason: reason.trim() }), "Korrektur gespeichert und protokolliert.")) setCorrection(null);
           }}>Korrektur speichern</StitchButton>
         </AlertDialogFooter>
       </AlertDialogContent>
