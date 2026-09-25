@@ -77,6 +77,13 @@ describe("competition participant day page", () => {
     expect(firstRoute).toHaveAttribute("aria-expanded", "true");
     expect(firstRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-1");
     expect(within(firstRoute.closest("article")!).getByRole("heading", { name: /Route 1: Linie 1/ })).toBeInTheDocument();
+    clickZone(8);
+    fireEvent.click(firstRoute);
+    expect(firstRoute).toHaveAttribute("aria-expanded", "false");
+    expect(firstRoute.nextElementSibling).toBeNull();
+    fireEvent.click(firstRoute);
+    expect(firstRoute).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "8" })).toHaveAttribute("aria-pressed", "true");
     const secondRoute = screen.getByRole("button", { name: /Route 2 Linie 2/ });
     fireEvent.click(secondRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "false");
@@ -139,6 +146,8 @@ describe("competition participant day page", () => {
     await waitFor(() => expect(api.submit).toHaveBeenCalledWith({ season: "2026", routeId: "route-1", zone: 8, flash: false, qrToken: "secret-token" }));
     await waitFor(() => expect(screen.getByText(/Ergebnis eingetragen · 8 Punkte/)).toBeInTheDocument());
     expect(api.load).toHaveBeenCalledTimes(1);
+    await chooseRoute();
+    expect(screen.queryByText("ERGEBNIS EINGETRAGEN")).not.toBeInTheDocument();
     await chooseRoute();
     expect(screen.getByText("ERGEBNIS EINGETRAGEN")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
