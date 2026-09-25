@@ -76,7 +76,7 @@ describe("competition participant day page", () => {
     fireEvent.click(firstRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "true");
     expect(firstRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-1");
-    expect(within(firstRoute.closest("article")!).getByRole("heading", { name: /Route 1: Linie 1/ })).toBeInTheDocument();
+    expect(within(firstRoute.closest("article")!).getByRole("heading", { name: "Wertung eintragen" })).toBeInTheDocument();
     clickZone(8);
     fireEvent.click(firstRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "false");
@@ -90,6 +90,19 @@ describe("competition participant day page", () => {
     expect(firstRoute.nextElementSibling).toBeNull();
     expect(secondRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-2");
     expect(screen.queryByText(/im ersten Versuch/i)).not.toBeInTheDocument();
+  });
+
+  it("numbers each participant's five routes independently of the physical station numbers", async () => {
+    api.load.mockResolvedValueOnce(makeData({ routes: routeSet.map((route, index) => ({
+      ...route, number: index + 10, name: `Test · Route ${index + 10}`,
+    })) }));
+    mountPage("/app/wettkampf?probelauf=1");
+    const firstRoute = await screen.findByRole("button", { name: /Route 1 Vor Ort: Route 10/ });
+    expect(screen.getByRole("button", { name: /Route 5 Vor Ort: Route 14/ })).toBeInTheDocument();
+    expect(within(firstRoute).queryByText("Test · Route 10")).not.toBeInTheDocument();
+    fireEvent.click(firstRoute);
+    expect(within(firstRoute.closest("article")!).getByRole("heading", { name: "Wertung eintragen" })).toBeInTheDocument();
+    expect(within(firstRoute.closest("article")!).getAllByText(/Route 10/)).toHaveLength(1);
   });
 
   it("shows named route colors and lets a zero-zone attempt be submitted separately", async () => {
