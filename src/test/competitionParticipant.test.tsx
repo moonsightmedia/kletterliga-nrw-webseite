@@ -5,8 +5,8 @@ import CompetitionDay from "@/app/pages/participant/CompetitionDay";
 import { parseCompetitionParticipantQr, readCompetitionParticipantDraft } from "@/app/pages/participant/CompetitionDay";
 import type { CompetitionDay as CompetitionDayData } from "@/services/competitionDay";
 
-const api = vi.hoisted(() => ({ load: vi.fn(), submit: vi.fn(), scan: undefined as undefined | ((value: string) => void) }));
-vi.mock("@/app/auth/AuthProvider", () => ({ useAuth: () => ({ profile: { id: "participant-1" } }) }));
+const api = vi.hoisted(() => ({ load: vi.fn(), submit: vi.fn(), scan: undefined as undefined | ((value: string) => void), profileId: "participant-1" }));
+vi.mock("@/app/auth/AuthProvider", () => ({ useAuth: () => ({ profile: { id: api.profileId } }) }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.load, submitCompetitionResult: api.submit }));
 vi.mock("@/components/CodeQrScanner", () => ({ CodeQrScanner: ({ onScan }: { onScan: (value: string) => void }) => { api.scan = onScan; return <div>Scanner-Vorschau</div>; } }));
@@ -41,6 +41,7 @@ describe("competition participant day page", () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     api.scan = undefined;
+    api.profileId = "participant-1";
     api.load.mockResolvedValue(makeData());
     api.submit.mockImplementation((input: { routeId: string; zone: number }) => Promise.resolve(makeAcceptedResult(input)));
   });
@@ -225,6 +226,21 @@ describe("competition participant day page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Testwerte löschen" }));
     expect(screen.queryByText(/Testwert · 10 Punkte/)).not.toBeInTheDocument();
     expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toBeNull();
+  });
+
+  it("shows Janosch's draft probe without a special URL after login", async () => {
+    api.profileId = "2e0f2267-a72c-4ece-8ca5-a3ce94520ab8";
+    api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.getByText("PROBELAUF")).toBeInTheDocument();
+    expect(screen.queryByText("NOCH NICHT GEÖFFNET")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Probelauf beenden" })).not.toBeInTheDocument();
+    clickZone(6);
+    fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
+    expect(await screen.findByText(/Testwert · 6 Punkte/)).toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
   });
 
   it("keeps local probe values separate from the real read-only view", async () => {
