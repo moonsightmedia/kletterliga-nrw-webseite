@@ -470,7 +470,7 @@ const Modus = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle size={16} className="text-accent mt-0.5 flex-shrink-0" />
-                        <span>Verbindliche Anmeldung bis <strong className="text-accent">27.09.2026</strong></span>
+                        <span>Verbindliche Anmeldung bis <strong className="text-accent">{formatDate(registrationDeadline)}, 23:59 Uhr</strong></span>
                       </li>
                     </ul>
                   </div>
