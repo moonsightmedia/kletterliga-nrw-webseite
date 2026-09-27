@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 
 const EVENT_DATE_ISO = "2026-10-03";
 const QUALIFICATION_END_ISO = "2026-09-13";
-const REGISTRATION_DEADLINE_ISO = "2026-09-27T23:59:00+02:00";
+const REGISTRATION_DEADLINE_ISO = "2026-09-29T23:59:00+02:00";
 const VENUE_ADDRESS = "Rosmarter Allee 12, 58762 Altena";
 
 const eventSchema = [
@@ -104,14 +104,14 @@ const milestones = [
       "Bis einschließlich 13. September zählen deine Ergebnisse für die finalrelevanten Ranglisten.",
   },
   {
-    date: "27. September",
+    date: "29. September",
     dateTime: REGISTRATION_DEADLINE_ISO,
     title: "Anmeldung schließt",
     description:
       "Qualifizierte Teilnehmende müssen ihren Startplatz bis 23:59 Uhr verbindlich bestätigen.",
   },
   {
-    date: "28.–30. September",
+    date: "30. September",
     title: "Nachrückerfenster",
     description:
       "Nicht bestätigte Startplätze können in diesem Zeitraum an Nachrücker:innen vergeben werden.",
@@ -160,7 +160,7 @@ const faqs = [
   {
     question: "Wie bestätige ich meinen Startplatz?",
     answer:
-      "Nach der finalen Auswertung erhalten qualifizierte Teilnehmende die Informationen zur verbindlichen Anmeldung im Teilnehmerbereich. Anmeldeschluss ist der 27. September 2026 um 23:59 Uhr.",
+      "Eingeladene Teilnehmende bestätigen ihren Startplatz verbindlich im Teilnehmerbereich. Die Anmeldefrist wurde bis Dienstag, 29. September 2026, 23:59 Uhr verlängert. So bleibt mehr Zeit, die Teilnahme zu planen.",
   },
   {
     question: "Kann ich als Zuschauer:in dabei sein?",

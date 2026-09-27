@@ -17,6 +17,10 @@ describe("public finale page", () => {
     expect(screen.getByText("Rosmarter Allee 12")).toBeInTheDocument();
     expect(screen.getByText("58762 Altena")).toBeInTheDocument();
     expect(screen.getByText("Zeitplan wird finalisiert")).toBeInTheDocument();
+    expect(screen.getByText("29. September")).toBeInTheDocument();
+    expect(screen.getByText("30. September")).toBeInTheDocument();
+    expect(screen.queryByText("27. September")).not.toBeInTheDocument();
+    expect(screen.queryByText("28.–30. September")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "FOODTRUCK VOR ORT" })).toBeInTheDocument();
     expect(
       screen.getByRole("img", {

@@ -32,6 +32,25 @@ describe("semifinal registration confirmation", () => {
   });
   afterEach(() => { cleanup(); client?.clear(); vi.restoreAllMocks(); });
 
+  it("keeps registration available after the old deadline and displays the extended deadline", async () => {
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-09-28T10:00:00Z"));
+    api.state.mockResolvedValue({ ...eligible, registration_deadline: "2026-09-29T22:00:00Z" });
+    mount();
+    const { dialog } = await open();
+    expect(within(dialog).getByText("29.09.2026, 23:59 Uhr")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Jetzt verbindlich anmelden" })).toBeEnabled();
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("closes registration at the new exclusive Berlin midnight boundary", async () => {
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-09-29T22:00:00Z"));
+    api.state.mockResolvedValue({ ...eligible, registration_deadline: "2026-09-29T22:00:00Z", registration_open: false });
+    mount();
+    expect(await screen.findByRole("button", { name: "Verbindlich zum Halbfinale anmelden" })).toBeDisabled();
+    expect(screen.getByText("Die Anmeldefrist ist abgelaufen.")).toBeInTheDocument();
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
   it("shows current event and approved class without writing; cancel restores focus", async () => {
     mount();
     const { trigger, dialog } = await open();

@@ -26,6 +26,8 @@ describe("Berlin qualification window", () => {
   });
   it("presents the exclusive registration boundary as the final permitted minute", () => {
     expect(formatRegistrationDeadline("2026-09-27T22:00:00Z", null)).toBe("27.09.2026, 23:59 Uhr");
+    expect(formatRegistrationDeadline("2026-09-29T22:00:00Z", null)).toBe("29.09.2026, 23:59 Uhr");
+    expect(formatRegistrationDeadline(null, "2026-09-29")).toBe("29.09.2026, 23:59 Uhr");
     expect(formatRegistrationDeadline("2026-10-25T23:00:00Z", null)).toBe("25.10.2026, 23:59 Uhr");
     expect(formatRegistrationDeadline(null, "2026-09-27")).toBe("27.09.2026, 23:59 Uhr");
     expect(formatRegistrationDeadline("invalid", "invalid")).toBe("Termin folgt");

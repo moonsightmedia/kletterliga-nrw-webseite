@@ -152,7 +152,7 @@ const publicRoutes = [
       {
         title: "Qualifikation und Anmeldung",
         body:
-          "Die Qualifikation endet am 13. September. Qualifizierte Teilnehmende bestätigen ihren Startplatz bis 27. September um 23:59 Uhr; vom 28. bis 30. September können Startplätze nachbesetzt werden.",
+          "Die Qualifikation endete am 13. September. Die Anmeldefrist für eingeladene Teilnehmende wurde bis 29. September 2026 um 23:59 Uhr verlängert. Nicht bestätigte Startplätze können am 30. September nachbesetzt werden.",
       },
       {
         title: "Halbfinale, Finals und Publikum",
