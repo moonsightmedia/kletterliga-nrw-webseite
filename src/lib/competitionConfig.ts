@@ -1,7 +1,7 @@
 import type { CompetitionConfig, CompetitionAssignment, CompetitionRouteInput } from "@/services/competitionDay";
 import type { AdminSemifinalRegistration } from "@/services/semifinalAdminApi";
 
-export const competitionZonePoints = Array.from({ length: 11 }, (_, zone) => zone);
+export const competitionZonePoints = Array.from({ length: 11 }, (_, zone) => zone * 10);
 export const competitionGripNumber = (zone: number) => zone * 10;
 export const competitionGripLabel = (zone: number) => zone === 0 ? "Kein Griff" : `Griff ${competitionGripNumber(zone)}`;
 

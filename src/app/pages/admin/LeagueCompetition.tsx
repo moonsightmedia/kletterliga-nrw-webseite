@@ -189,7 +189,7 @@ export default function LeagueCompetition() {
         <AccordionItem value="entry" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
           <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ToggleRight size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebniseingabe</span><span className="block text-xs font-normal text-[#526b72]">{day.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</span></span></AccordionTrigger>
           <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
-          <p className="text-sm">Griff 10–100 in Zehnerschritten = 1–10 Punkte. Kein nummerierter Griff = 0.</p>
+          <p className="text-sm">Griff 10–100 in Zehnerschritten = 10–100 Punkte. Kein nummerierter Griff = 0. Über fünf Routen sind maximal 500 Punkte möglich.</p>
           <StitchButton disabled={busy || !day.event || dirty || (day.event.phase !== "open" && (Boolean(validation) || scoringNeedsSave))} onClick={() => setPhaseDialog(day.event?.phase === "open" ? "closed" : "open")}>{day.event?.phase === "open" ? "Eingabe schließen" : "Eingabe öffnen"}</StitchButton>
           <p className="text-xs leading-5 text-[#526b72]">Nach der ersten Öffnung ist die Routenzuordnung gesperrt.</p>
           </AccordionContent>

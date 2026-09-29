@@ -29,7 +29,7 @@ export default function CompetitionStandings() {
     groups.set(label, [...(groups.get(label) ?? []), row]);
   }
   return <div className="mx-auto max-w-4xl space-y-6 text-[#003d55]">
-    <StitchCard tone="navy" className="space-y-3 p-6"><StitchBadge tone="cream">Halbfinale</StitchBadge><h1 className="stitch-headline text-3xl text-[#f2dcab]">Offene Wertung</h1><p className="text-sm leading-6 text-[#f2dcab]">Summe der eingetragenen Routen. Während des Wettkampfs ist dies ein Zwischenstand, keine bestätigte Finalstartliste. Bei Gleichstand am Einzugsplatz ziehen alle Punktgleichen ins Finale ein.</p></StitchCard>
+    <StitchCard tone="navy" className="space-y-3 p-6"><StitchBadge tone="cream">Halbfinale</StitchBadge><h1 className="stitch-headline text-3xl text-[#f2dcab]">Offene Wertung</h1><p className="text-sm leading-6 text-[#f2dcab]">Summe der fünf Halbfinalrouten mit jeweils 0–100 Punkten (maximal 500). Während des Wettkampfs ist dies ein Zwischenstand, keine bestätigte Finalstartliste. Bei Gleichstand am Einzugsplatz ziehen alle Punktgleichen ins Finale ein.</p></StitchCard>
     <div className="flex flex-wrap gap-3"><StitchButton variant="outline" asChild><Link to="/app/wettkampf">Meine Routen</Link></StitchButton><StitchButton disabled={loading || settingsLoading} onClick={() => setRevision((v) => v + 1)}>Aktualisieren</StitchButton></div>
     {loading && <p role="status">Wertung wird geladen …</p>}
     {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}

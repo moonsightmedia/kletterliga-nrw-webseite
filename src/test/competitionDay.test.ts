@@ -13,7 +13,7 @@ import {
 const config = {
   routes: Array.from({ length: 12 }, (_, index) => ({ number: index + 1, name: `Route ${index + 1}`, grade: "6a", color: "blau" })),
   assignments: [{ league: "lead" as const, class_label: "U15", route_numbers: [1, 2, 3, 4, 5] }],
-  zone_points: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], flash_bonus: 0,
+  zone_points: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], flash_bonus: 0,
 };
 
 describe("competition-day RPC contract", () => {
@@ -63,11 +63,11 @@ describe("competition-day RPC contract", () => {
     expect(rpc).toHaveBeenCalledWith("save_competition_route_draft", { p_season: "2026", p_routes: config.routes });
   });
 
-  it("always saves one point per zone and removes a legacy flash bonus", async () => {
+  it("always saves ten points per zone and removes a legacy flash bonus", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
     await saveCompetitionConfig("2026", { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone * 5), flash_bonus: 2 });
     expect(rpc).toHaveBeenCalledWith("save_competition_config", {
-      p_season: "2026", p_config: { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone) },
+      p_season: "2026", p_config: { ...config, zone_points: Array.from({ length: 11 }, (_, zone) => zone * 10) },
     });
   });
 
