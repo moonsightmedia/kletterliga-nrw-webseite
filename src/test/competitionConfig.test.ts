@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exactCompetitionEmailPattern, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
+import { competitionGripLabel, competitionGripNumber, competitionZonePoints, exactCompetitionEmailPattern, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
 import type { CompetitionConfig } from "@/services/competitionDay";
 
 const config = (): CompetitionConfig => ({
@@ -8,6 +8,14 @@ const config = (): CompetitionConfig => ({
   zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 0,
 });
 describe("competition configuration", () => {
+  it("maps physical grip numbers 10–100 to stored zone values and fixed 1–10 points", () => {
+    expect(competitionGripLabel(0)).toBe("Kein Griff");
+    for (let zone = 1; zone <= 10; zone += 1) {
+      expect(competitionGripNumber(zone)).toBe(zone * 10);
+      expect(competitionGripLabel(zone)).toBe(`Griff ${zone * 10}`);
+      expect(competitionZonePoints[zone]).toBe(zone);
+    }
+  });
   it("treats underscores and percent in email lookup literally", () => expect(exactCompetitionEmailPattern(" staff_one%two@example.invalid ")).toBe("staff\\_one\\%two@example.invalid"));
   it("accepts five physical routes from a pool", () => expect(validateCompetitionConfig(config(), config().assignments)).toBeNull());
   it("allows a route-only draft without invented scoring or class assignments", () => {
