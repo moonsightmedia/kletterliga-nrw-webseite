@@ -28,9 +28,7 @@ const chooseRoute = async () => {
   fireEvent.click(button);
 };
 const clickZone = (value: number) => {
-  const button = screen.getAllByRole("button").find((candidate) => candidate.textContent === String(value));
-  if (!button) throw new Error(`Zone ${value} button missing`);
-  fireEvent.click(button);
+  fireEvent.click(screen.getByRole("button", { name: `Griff ${value * 10}` }));
 };
 const validQr = (routeId = "route-1") => `${window.location.origin}/app/wettkampf#route=${routeId}&token=secret-token`;
 const mountPage = (initialEntry = "/app/wettkampf") => render(<MemoryRouter initialEntries={[initialEntry]}><CompetitionDay /></MemoryRouter>);
@@ -84,7 +82,7 @@ describe("competition participant day page", () => {
     expect(firstRoute.nextElementSibling).toBeNull();
     fireEvent.click(firstRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: "8" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
     const secondRoute = screen.getByRole("button", { name: /Route 2 Linie 2/ });
     fireEvent.click(secondRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "false");
@@ -119,7 +117,7 @@ describe("competition participant day page", () => {
     expect(api.submit).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "Scanner schließen" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "8" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
     expect(api.submit).not.toHaveBeenCalled();
   });
 
@@ -128,20 +126,21 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     expect(screen.getAllByText("Farbe: Blau")).toHaveLength(5);
-    expect(screen.getByText(/Zone 1–10 bringt 1–10 Punkte/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Keine Zone erreicht · 0 Punkte" }));
+    expect(screen.getByText(/Griff 10 entspricht 1 Punkt, Griff 100 entspricht 10 Punkten/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keinen nummerierten Griff erreicht · 0 Punkte" }));
     fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
     act(() => api.scan?.(validQr()));
     fireEvent.click(screen.getByRole("button", { name: "Ergebnis absenden" }));
     await waitFor(() => expect(api.submit).toHaveBeenCalledWith(expect.objectContaining({ zone: 0 })));
     expect(screen.queryByText(/Flash/)).not.toBeInTheDocument();
-    expect(await screen.findByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte0");
+    expect(await screen.findByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Letzter GriffKeiner");
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte0");
   });
 
   it("automatically saves a scoped draft on input, restores it, and rejects invalid saved values", async () => {
     const view = mountPage();
     await chooseRoute();
-    fireEvent.click(screen.getByRole("button", { name: "10" }));
+    clickZone(10);
     expect(await screen.findByText("Auswahl automatisch als Entwurf gespeichert. Noch kein Ergebnis eingetragen.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Entwurf speichern" })).not.toBeInTheDocument();
     expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 10 }));
@@ -149,7 +148,7 @@ describe("competition participant day page", () => {
     view.unmount();
     mountPage();
     await chooseRoute();
-    expect(screen.getByRole("button", { name: "10" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Griff 100" })).toHaveAttribute("aria-pressed", "true");
     window.localStorage.setItem("competition-day:draft:participant-1:2026:route-2", JSON.stringify({ zone: 10, flash: true }));
     expect(readCompetitionParticipantDraft("competition-day:draft:participant-1:2026:route-2")).toEqual({ zone: 10 });
     window.localStorage.setItem("bad-draft", JSON.stringify({ zone: 4, flash: true }));
@@ -178,12 +177,22 @@ describe("competition participant day page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ergebnis absenden" }));
     await waitFor(() => expect(api.submit).toHaveBeenCalledWith({ season: "2026", routeId: "route-1", zone: 8, qrToken: "secret-token" }));
     await waitFor(() => expect(screen.getByText(/Ergebnis eingetragen · 8 Punkte/)).toBeInTheDocument());
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Letzter Griff80");
     expect(api.load).toHaveBeenCalledTimes(1);
     await chooseRoute();
     expect(screen.queryByText("ERGEBNIS EINGETRAGEN")).not.toBeInTheDocument();
     await chooseRoute();
     expect(screen.getByText("ERGEBNIS EINGETRAGEN")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
+  });
+
+  it("shows an already saved zone 7 as physical grip 70 without changing its seven points", async () => {
+    api.load.mockResolvedValueOnce(makeData({ results: [makeAcceptedResult({ routeId: "route-1", zone: 7 })] }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Letzter Griff70");
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte7");
+    expect(api.submit).not.toHaveBeenCalled();
   });
 
   it("keeps the draft and scanned credential private when submission fails and allows retry", async () => {

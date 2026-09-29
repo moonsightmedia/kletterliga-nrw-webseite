@@ -137,6 +137,18 @@ describe("competition admin", () => {
     expect(entry).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByText("Noch keine Ergebnisse eingetragen.")).toBeVisible();
   });
+  it("labels existing results and correction choices with physical grip numbers", async () => {
+    api.admin.mockResolvedValue({ config, staff: [], results: [{ id: "result-1", route_id: "1", profile_id: "participant-1", zone: 7, flash: false, points: 7, created_at: "2026-10-03T12:00:00Z", name: "Testperson", league: "lead", class_label: "Ü15-m" }] });
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: /^Ergebnisse/ }));
+    expect(screen.getByText(/Griff 70 ·/)).toHaveTextContent("Griff 70 · 7 Punkte");
+    fireEvent.click(screen.getByRole("button", { name: "Korrigieren" }));
+    expect(screen.getByText("Letzter gehaltener Griff")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("combobox", { name: "Korrigierter Griff" }));
+    expect(screen.getByRole("option", { name: "Griff 10" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Griff 70" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Griff 100 / TOP" })).toBeInTheDocument();
+  });
   it("validates and saves a custom color with the route configuration", async () => {
     view();
     fireEvent.click(await screen.findByRole("button", { name: "Eigene Farbe" }));
