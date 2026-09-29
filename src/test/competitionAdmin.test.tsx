@@ -8,7 +8,7 @@ vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCom
 vi.mock("@/services/semifinalAdminApi", () => ({ listAdminSemifinalRegistrations: api.roster }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/supabase", () => ({ supabase: { from: vi.fn() } }));
-const config = { routes: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, name: `Route ${i + 1}`, grade: "6a", color: "rot" })), assignments: [{ league: "lead", class_label: "Ü15-m", route_numbers: [1, 2, 3, 4, 5] }], zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 0 };
+const config = { routes: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, name: `Route ${i + 1}`, grade: "6a", color: "rot" })), assignments: [{ league: "lead", class_label: "Ü15-m", route_numbers: [1, 2, 3, 4, 5] }], zone_points: Array.from({ length: 11 }, (_, i) => i * 10), flash_bonus: 0 };
 const view = () => render(<MemoryRouter><LeagueCompetition /></MemoryRouter>);
 describe("competition admin", () => {
   beforeEach(() => {
@@ -25,6 +25,7 @@ describe("competition admin", () => {
   });
   it("requires explicit confirmation to open", async () => {
     view(); fireEvent.click(await screen.findByRole("button", { name: /^Ergebniseingabe/ }));
+    expect(screen.getByText(/Griff 10–100 in Zehnerschritten = 10–100 Punkte/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Eingabe öffnen" }));
     expect(await screen.findByRole("alertdialog")).toHaveTextContent("Nach der ersten Öffnung sind diese Einstellungen gesperrt");
     expect(api.phase).not.toHaveBeenCalled();
@@ -91,7 +92,7 @@ describe("competition admin", () => {
     expect(api.save).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
     await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({
-      zone_points: Array.from({ length: 11 }, (_, i) => i),
+      zone_points: Array.from({ length: 11 }, (_, i) => i * 10),
       routes: expect.arrayContaining([expect.objectContaining({ number: 2, color: "#327bc1", grade: "6a" })]),
     })));
   });
@@ -113,7 +114,7 @@ describe("competition admin", () => {
     expect(await screen.findByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
-    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({ zone_points: Array.from({ length: 11 }, (_, i) => i) })));
+    await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({ zone_points: Array.from({ length: 11 }, (_, i) => i * 10) })));
   });
   it("confirms route removal and does not save or remove assignments automatically", async () => {
     view();
@@ -138,10 +139,10 @@ describe("competition admin", () => {
     expect(screen.getByText("Noch keine Ergebnisse eingetragen.")).toBeVisible();
   });
   it("labels existing results and correction choices with physical grip numbers", async () => {
-    api.admin.mockResolvedValue({ config, staff: [], results: [{ id: "result-1", route_id: "1", profile_id: "participant-1", zone: 7, flash: false, points: 7, created_at: "2026-10-03T12:00:00Z", name: "Testperson", league: "lead", class_label: "Ü15-m" }] });
+    api.admin.mockResolvedValue({ config, staff: [], results: [{ id: "result-1", route_id: "1", profile_id: "participant-1", zone: 7, flash: false, points: 70, created_at: "2026-10-03T12:00:00Z", name: "Testperson", league: "lead", class_label: "Ü15-m" }] });
     view();
     fireEvent.click(await screen.findByRole("button", { name: /^Ergebnisse/ }));
-    expect(screen.getByText(/Griff 70 ·/)).toHaveTextContent("Griff 70 · 7 Punkte");
+    expect(screen.getByText(/Griff 70 ·/)).toHaveTextContent("Griff 70 · 70 Punkte");
     fireEvent.click(screen.getByRole("button", { name: "Korrigieren" }));
     expect(screen.getByText("Letzter gehaltener Griff")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("combobox", { name: "Korrigierter Griff" }));

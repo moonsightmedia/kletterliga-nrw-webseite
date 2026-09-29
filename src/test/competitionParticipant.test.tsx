@@ -13,12 +13,12 @@ vi.mock("@/components/CodeQrScanner", () => ({ CodeQrScanner: ({ onScan }: { onS
 
 const routeSet = [1, 2, 3, 4, 5].map((number) => ({ id: `route-${number}`, number, name: `Linie ${number}`, grade: "6a", color: "#a15523" }));
 const makeData = (overrides: Partial<CompetitionDayData> = {}): CompetitionDayData => ({
-  event: { id: "event-1", season_year: "2026", phase: "open", zone_points: Array.from({ length: 11 }, (_, i) => i), flash_bonus: 0, opened_at: "2026-10-03T08:00:00Z" },
+  event: { id: "event-1", season_year: "2026", phase: "open", zone_points: Array.from({ length: 11 }, (_, i) => i * 10), flash_bonus: 0, opened_at: "2026-10-03T08:00:00Z" },
   eligible: true, league: "lead", class_label: "U15-w", routes: routeSet, results: [], is_staff: false, is_admin: false, ...overrides,
 });
 const makeAcceptedResult = (input: { routeId: string; zone: number }) => ({
   id: "result-1", route_id: input.routeId, profile_id: "participant-1", zone: input.zone,
-  flash: false, points: input.zone, created_at: "2026-10-03T12:00:00Z",
+  flash: false, points: input.zone * 10, created_at: "2026-10-03T12:00:00Z",
 });
 
 const chooseRoute = async () => {
@@ -126,7 +126,7 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     expect(screen.getAllByText("Farbe: Blau")).toHaveLength(5);
-    expect(screen.getByText(/Griff 10 entspricht 1 Punkt, Griff 100 entspricht 10 Punkten/)).toBeInTheDocument();
+    expect(screen.getByText(/Griff 80 bringt 80 Punkte/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Keinen nummerierten Griff erreicht · 0 Punkte" }));
     fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
     act(() => api.scan?.(validQr()));
@@ -162,7 +162,7 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     clickZone(8);
-    expect(screen.getByText("Punkte").parentElement).toHaveTextContent("8");
+    expect(screen.getByText("Punkte").parentElement).toHaveTextContent("80");
     const submit = screen.getByRole("button", { name: "Ergebnis absenden" });
     expect(submit).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /QR-Code am Routenposten scannen/ }));
@@ -176,7 +176,7 @@ describe("competition participant day page", () => {
     expect(api.submit).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Ergebnis absenden" }));
     await waitFor(() => expect(api.submit).toHaveBeenCalledWith({ season: "2026", routeId: "route-1", zone: 8, qrToken: "secret-token" }));
-    await waitFor(() => expect(screen.getByText(/Ergebnis eingetragen · 8 Punkte/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Ergebnis eingetragen · 80 Punkte/)).toBeInTheDocument());
     expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Letzter Griff80");
     expect(api.load).toHaveBeenCalledTimes(1);
     await chooseRoute();
@@ -186,12 +186,12 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
   });
 
-  it("shows an already saved zone 7 as physical grip 70 without changing its seven points", async () => {
+  it("shows an already saved zone 7 as physical grip 70 with 70 points", async () => {
     api.load.mockResolvedValueOnce(makeData({ results: [makeAcceptedResult({ routeId: "route-1", zone: 7 })] }));
     mountPage();
     await chooseRoute();
     expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Letzter Griff70");
-    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte7");
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte70");
     expect(api.submit).not.toHaveBeenCalled();
   });
 
@@ -241,16 +241,16 @@ describe("competition participant day page", () => {
     expect(screen.getByRole("button", { name: "Testwert speichern" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
     fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
-    expect(await screen.findByText(/Testwert · 10 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Testwert · 100 Punkte/)).toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
     expect(window.localStorage.length).toBe(0);
-    expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toContain('"points":10');
+    expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toContain('"points":100');
     view.unmount();
     api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
     mountPage("/app/wettkampf?probelauf=1");
-    expect(await screen.findByText(/Testwert · 10 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Testwert · 100 Punkte/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Testwerte löschen" }));
-    expect(screen.queryByText(/Testwert · 10 Punkte/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Testwert · 100 Punkte/)).not.toBeInTheDocument();
     expect(window.sessionStorage.getItem("competition-day:probe:results:participant-1:2026:event-1")).toBeNull();
   });
 
@@ -265,7 +265,7 @@ describe("competition participant day page", () => {
     clickZone(6);
     fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
     fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
-    expect(await screen.findByText(/Testwert · 6 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Testwert · 60 Punkte/)).toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
   });
 
@@ -277,11 +277,11 @@ describe("competition participant day page", () => {
     clickZone(7);
     fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
     fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
-    expect(await screen.findByText(/Testwert · 7 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Testwert · 70 Punkte/)).toBeInTheDocument();
     view.unmount();
     mountPage();
     await chooseRoute();
-    expect(screen.queryByText(/Testwert · 7 Punkte/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Testwert · 70 Punkte/)).not.toBeInTheDocument();
     expect(screen.getByText("Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet.")).toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
   });
@@ -295,7 +295,7 @@ describe("competition participant day page", () => {
     expect(await screen.findByText(/QR-Code erkannt/)).toBeInTheDocument();
     vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("storage unavailable"); });
     fireEvent.click(screen.getByRole("button", { name: "Ergebnis absenden" }));
-    expect(await screen.findByText(/Ergebnis eingetragen · 7 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ergebnis eingetragen · 70 Punkte/)).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
   });
@@ -318,7 +318,7 @@ describe("competition participant day page", () => {
     expect(api.submit).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Wird eingetragen …" })).toBeDisabled();
     await act(async () => { resolveSubmit?.(makeAcceptedResult({ routeId: "route-1", zone: 6 })); });
-    expect(await screen.findByText(/Ergebnis eingetragen · 6 Punkte/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ergebnis eingetragen · 60 Punkte/)).toBeInTheDocument();
   });
 
   it("accepts decimal server points with floating point precision and validates the acknowledgement", async () => {
