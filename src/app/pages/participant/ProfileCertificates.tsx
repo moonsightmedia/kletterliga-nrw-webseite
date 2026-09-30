@@ -5,8 +5,10 @@ import { canvasToPng, certificatePdf, downloadCertificate, renderCertificate } f
 import { getMyCertificates, type Certificate, type MyCertificates } from "@/services/certificates";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
-const fileName = (certificate: Certificate, extension: string) =>
-  `Kletterliga-NRW-${certificate.season_year}-${certificate.phase}.${extension}`;
+type ShareFormat = "post" | "story";
+
+const fileName = (certificate: Certificate, extension: string, format?: ShareFormat) =>
+  `Kletterliga-NRW-${certificate.season_year}-${certificate.phase}${format ? `-${format}` : ""}.${extension}`;
 
 const className = (label: string) => {
   const match = /^(U15|Ü15|Ü40)-([mw])$/i.exec(label);
@@ -23,6 +25,7 @@ const supportsFileShare = () => {
 };
 
 export function CertificateCard({ certificate, title }: { certificate: Certificate; title: string }) {
+  const [shareFormat, setShareFormat] = useState<ShareFormat>("post");
   const [busy, setBusy] = useState<"pdf" | "share" | null>(null);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
@@ -36,7 +39,7 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
     setPreview(null);
     setPreviewBlob(null);
     setPreviewError(false);
-    renderCertificate(certificate, "social").then(canvasToPng).then((blob) => {
+    renderCertificate(certificate, shareFormat).then(canvasToPng).then((blob) => {
       previewUrl = URL.createObjectURL(blob);
       if (active) {
         setPreview(previewUrl);
@@ -45,7 +48,7 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
       else URL.revokeObjectURL(previewUrl);
     }).catch(() => { if (active) setPreviewError(true); });
     return () => { active = false; if (previewUrl) URL.revokeObjectURL(previewUrl); };
-  }, [certificate]);
+  }, [certificate, shareFormat]);
 
   const run = async (action: "pdf" | "share") => {
     if (action === "share" && !previewBlob) return;
@@ -56,19 +59,19 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
         downloadCertificate(await certificatePdf(certificate), fileName(certificate, "pdf"));
         setMessage("PDF wurde heruntergeladen.");
       } else {
-        const file = new File([previewBlob!], fileName(certificate, "png"), { type: "image/png" });
+        const file = new File([previewBlob!], fileName(certificate, "png", shareFormat), { type: "image/png" });
         if (canShare) {
           try {
             await navigator.share({ files: [file], title: `Meine Kletterliga-Urkunde ${certificate.season_year}` });
-            setMessage("Bild an die Teilenfunktion übergeben.");
+            setMessage("Bild an die Teilenfunktion übergeben. Wähle in Instagram die gewünschte Veröffentlichungsart.");
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") return;
             downloadCertificate(previewBlob!, file.name);
-            setMessage("Teilen war nicht verfügbar. Bild gespeichert – öffne es in deiner Social-Media-App.");
+            setMessage(`Teilen war nicht verfügbar. ${shareFormat === "story" ? "Story" : "Beitrag"}-Bild gespeichert – öffne es in Instagram.`);
           }
         } else {
           downloadCertificate(previewBlob!, file.name);
-          setMessage("Bild gespeichert. Öffne es in deiner Social-Media-App, um es zu posten.");
+          setMessage(`${shareFormat === "story" ? "Story" : "Beitrag"}-Bild gespeichert. Öffne es in Instagram.`);
         }
       }
     } catch {
@@ -81,10 +84,10 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
   return <StitchCard tone="surface" className="overflow-hidden rounded-2xl border border-[#003d55]/10 shadow-[0_10px_28px_rgba(0,61,85,0.08)]">
     <div className="flex min-w-0 items-center gap-4 p-4 sm:gap-5 sm:p-5">
       <div className="w-[6.75rem] shrink-0 sm:w-32">
-        {preview ? <a href={preview} target="_blank" rel="noopener noreferrer" aria-label={`${title}-Urkunde in voller Größe ansehen`} className="group relative block overflow-hidden rounded-md shadow-[0_7px_18px_rgba(0,38,55,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] focus-visible:ring-offset-2">
-          <img src={preview} alt={`Vorschau der ${title}-Urkunde für ${certificate.display_name}`} className="aspect-[4/5] w-full object-cover" />
+        {preview ? <a href={preview} target="_blank" rel="noopener noreferrer" aria-label={`${title}-Urkunde als ${shareFormat === "story" ? "Story" : "Beitrag"} in voller Größe ansehen`} className="group relative block overflow-hidden rounded-md shadow-[0_7px_18px_rgba(0,38,55,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] focus-visible:ring-offset-2">
+          <img src={preview} alt={`Vorschau der ${title}-Urkunde als ${shareFormat === "story" ? "Story" : "Beitrag"} für ${certificate.display_name}`} className={`${shareFormat === "story" ? "aspect-[9/16]" : "aspect-[4/5]"} w-full object-cover`} />
           <span className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-tl-md bg-[#003d55]/90 text-[#f4e1b3] transition-colors group-hover:bg-[#a15523]"><ZoomIn size={16} aria-hidden="true" /></span>
-        </a> : <div className="flex aspect-[4/5] items-center justify-center rounded-md bg-[#f4e1b3] px-2 text-center text-[0.65rem] font-semibold text-[#003d55]" role="status">
+        </a> : <div className={`flex ${shareFormat === "story" ? "aspect-[9/16]" : "aspect-[4/5]"} items-center justify-center rounded-md bg-[#f4e1b3] px-2 text-center text-[0.65rem] font-semibold text-[#003d55]`} role="status">
           {previewError ? "Vorschau nicht verfügbar" : "Urkunde wird geladen …"}
         </div>}
       </div>
@@ -96,13 +99,20 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
       </div>
     </div>
     <div className="space-y-2 border-t border-[#003d55]/10 bg-[#fbfcfa] px-4 pb-3 pt-4 sm:px-5">
+      <div role="group" aria-label="Bildformat für Instagram" className="grid grid-cols-2 gap-1 rounded-xl bg-[#e9efee] p-1">
+        {(["post", "story"] as const).map((format) => <button key={format} type="button" aria-pressed={shareFormat === format} disabled={busy !== null}
+          onClick={() => { if (format !== shareFormat) { setPreview(null); setPreviewBlob(null); setShareFormat(format); } setMessage(""); }}
+          className={`min-h-11 rounded-lg px-2 text-center font-['Manrope'] text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] focus-visible:ring-offset-2 ${shareFormat === format ? "bg-white text-[#003d55] shadow-sm" : "text-[#526b72] hover:text-[#003d55]"}`}>
+          {format === "post" ? "Beitrag · 4:5" : "Story · 9:16"}
+        </button>)}
+      </div>
       <StitchButton type="button" className="min-h-12 w-full rounded-xl font-['Manrope'] text-sm font-bold normal-case tracking-normal" disabled={busy !== null || !previewBlob} onClick={() => void run("share")}>
-        {canShare ? <Share2 size={18} aria-hidden="true" /> : <Download size={18} aria-hidden="true" />}{busy === "share" ? "Bild wird vorbereitet …" : canShare ? "Urkunde teilen" : "Bild speichern"}
+        {canShare ? <Share2 size={18} aria-hidden="true" /> : <Download size={18} aria-hidden="true" />}{busy === "share" ? "Bild wird vorbereitet …" : canShare ? `${shareFormat === "story" ? "Story" : "Beitrag"} teilen` : `${shareFormat === "story" ? "Story" : "Beitrag"}-Bild speichern`}
       </StitchButton>
       <StitchButton type="button" variant="outline" className="min-h-11 w-full rounded-xl border-[#003d55]/15 bg-white font-['Manrope'] text-sm font-bold normal-case tracking-normal shadow-none" disabled={busy !== null} onClick={() => void run("pdf")}>
         <Download size={17} aria-hidden="true" />{busy === "pdf" ? "PDF wird erstellt …" : "PDF herunterladen"}
       </StitchButton>
-      <p className="min-h-5 text-center text-[0.7rem] leading-5 text-[#526b72]" role="status" aria-live="polite">{message || (canShare ? "Als Bild für Social Media · PDF zum Ausdrucken" : "Bild zum Posten · PDF zum Ausdrucken")}</p>
+      <p className="min-h-5 text-center text-[0.7rem] leading-5 text-[#526b72]" role="status" aria-live="polite">{message || (canShare ? "Wähle anschließend Instagram und dort Beitrag oder Story." : "Bild speichern und in Instagram als Beitrag oder Story auswählen.")}</p>
     </div>
   </StitchCard>;
 }

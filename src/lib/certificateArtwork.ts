@@ -1,6 +1,6 @@
 import type { Certificate } from "@/services/certificates";
 
-export type CertificateFormat = "pdf" | "social";
+export type CertificateFormat = "pdf" | "post" | "story";
 
 const navy = "#003d50";
 const cream = "#f4e1b3";
@@ -71,6 +71,27 @@ export async function renderCertificate(certificate: Certificate, format: Certif
     document.fonts.load('700 180px "Space Grotesk"'),
     document.fonts.load('600 30px "Manrope"'),
   ]).catch(() => undefined);
+
+  if (format === "story") {
+    const post = await renderCertificate(certificate, "post");
+    const story = document.createElement("canvas");
+    story.width = 1080;
+    story.height = 1920;
+    const storyContext = story.getContext("2d");
+    if (!storyContext) throw new Error("Die Story konnte auf diesem Gerät nicht gezeichnet werden.");
+    storyContext.fillStyle = navy;
+    storyContext.fillRect(0, 0, story.width, story.height);
+    storyContext.fillStyle = cream;
+    storyContext.fillRect(64, 318, 952, 1194);
+    storyContext.drawImage(post, 72, 326, 936, 1170);
+    storyContext.textAlign = "center";
+    storyContext.fillStyle = cream;
+    storyContext.font = '700 52px "Space Grotesk", Arial, sans-serif';
+    storyContext.fillText("MEINE KLETTERLIGA-URKUNDE", 540, 248);
+    storyContext.font = '600 27px "Manrope", Arial, sans-serif';
+    storyContext.fillText(`KLETTERLIGA NRW · ${certificate.season_year}`, 540, 1600);
+    return story;
+  }
 
   const isPdf = format === "pdf";
   const height = isPdf ? 1414 : 1250;
