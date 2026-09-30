@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
-  Clock3,
   ExternalLink,
   Info,
   MapPin,
@@ -24,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { FinaleDaySchedule } from "@/components/home/FinaleDaySchedule";
 
 const EVENT_DATE_ISO = "2026-10-03";
 const QUALIFICATION_END_ISO = "2026-09-13";
@@ -136,7 +136,7 @@ const finaleHighlights = [
     icon: Trophy,
     title: "Halbfinale und Finals",
     description:
-      "Das Halbfinale läuft von 09:00 bis 16:00 Uhr. Die Finalrunden beginnen ab 16:30 Uhr; weitere Ablaufdetails folgen.",
+      "Das Halbfinale läuft von 09:00 bis 16:00 Uhr. Die Finalrunden beginnen ab 16:30 Uhr; der geplante Ablauf steht weiter unten.",
   },
   {
     icon: Users,
@@ -165,7 +165,7 @@ const faqs = [
   {
     question: "Kann ich als Zuschauer:in dabei sein?",
     answer:
-      "Ein Live-Wettkampf mit Publikum und Siegerehrung ist geplant. Genaue Angaben zu Einlass, Eintritt und Zuschauerbereichen veröffentlichen wir hier, sobald die Veranstaltungsplanung abgeschlossen ist.",
+      "Ja. Du kannst auch ohne Wettkampfanmeldung zum Zuschauen vorbeikommen. Angaben zu möglichen Eintrittspreisen und Zuschauerbereichen veröffentlichen wir, sobald sie feststehen.",
   },
   {
     question: "Gibt es beim Finale Verpflegung?",
@@ -178,9 +178,9 @@ const faqs = [
       "Ja. Unser Hauptsponsor kletterladen.nrw ist mit einem Sale- und Präsentationsstand auf der Empore dabei: 50 % auf alle Wanderschuhe, bis zu 60 % auf ausgewählte Kletterschuhe, ein GRIGRI für 60 € sowie Kletterhosen und Hardware.",
   },
   {
-    question: "Wann wird der genaue Zeitplan veröffentlicht?",
+    question: "Wie sieht der geplante Ablauf am Finaltag aus?",
     answer:
-      "Das Halbfinale ist von 09:00 bis 16:00 Uhr geplant; die Finalrunden beginnen ab 16:30 Uhr. Der minutengenaue Ablauf mit Check-in, Startzeiten und Siegerehrung wird derzeit finalisiert und rechtzeitig vor dem Event auf dieser Seite ergänzt.",
+      "Die Halle öffnet um 08:00 Uhr, der Check-in für angemeldete Starter:innen beginnt um 08:45 Uhr. Das Halbfinale läuft von 09:00 bis 16:00 Uhr, die Finals beginnen um 16:30 Uhr. Siegerehrung und Verlosung sind für 19:30 und 20:00 Uhr geplant. Individuelle Finalstarts können sich noch ändern.",
   },
 ];
 
@@ -328,19 +328,10 @@ export default function Finale() {
               </article>
             ))}
           </StaggeredAnimation>
-          <AnimatedSection animation="fade-up" delay={220} className="mt-8">
-            <div className="mx-auto flex max-w-4xl flex-col gap-4 rounded-lg border border-secondary/25 bg-secondary/10 p-5 sm:flex-row sm:items-start sm:p-6">
-              <Clock3 className="h-6 w-6 flex-none text-secondary" />
-              <div>
-                <h3 className="font-headline text-xl text-primary">Zeitplan wird finalisiert</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground md:text-base">
-                  Check-in, Startzeiten, Reihenfolge der Wertungsklassen und Siegerehrung werden aktuell abgestimmt. Wir veröffentlichen hier nur den bestätigten Ablauf – rechtzeitig vor dem Event.
-                </p>
-              </div>
-            </div>
-          </AnimatedSection>
         </div>
       </section>
+
+      <FinaleDaySchedule />
 
       <section className="section-padding bg-muted/50" aria-labelledby="finale-foodtruck">
         <div className="container-kl">
