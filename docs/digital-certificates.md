@@ -12,4 +12,4 @@
 
 `get_my_certificates` liefert nur den eigenen Urkundenstand. Die Finalevent-Freigabe speichert Name, Disziplin, Klasse und Platz als Version in `finale_certificates`. Nur die Liga-Administration darf den Stand veröffentlichen. Die Quali-Platzierung wird aus dem abgeschlossenen Quali-Zeitraum berechnet; punktgleiche Personen teilen sich einen Platz.
 
-Das A4-PDF und das Social-Bild werden im Browser aus denselben Daten erstellt. Das Social-Bild wird als Datei an die Geräte-Teilenfunktion übergeben; falls dies nicht möglich ist, lädt die App die PNG-Datei herunter. Es gibt keinen öffentlichen Urkundenlink.
+Das A4-PDF und die Social-Bilder werden im Browser aus denselben Daten erstellt. Teilnehmende wählen ein Beitragsbild im Format 4:5 oder ein Story-Bild im Format 9:16. Die gewählte PNG-Datei wird an die Geräte-Teilenfunktion übergeben; falls dies nicht möglich ist, lädt die App sie herunter. Der Browser kann Instagram nicht direkt auf Beitrag oder Story festlegen. Diese Auswahl erfolgt nach dem Teilen in Instagram. Es gibt keinen öffentlichen Urkundenlink.
