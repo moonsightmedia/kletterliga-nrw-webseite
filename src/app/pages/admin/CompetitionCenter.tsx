@@ -684,6 +684,13 @@ export default function CompetitionCenter() {
                         : "Noch nicht freigegeben"}
                     </StitchBadge>
                   </div>
+                  {c?.phase === "published" && (
+                    <p className="rounded-lg bg-amber-100 p-3 text-sm font-bold text-[#653414]">
+                      Neu drucken · aktueller Listenstand v{c.version}. Nach
+                      jeder Änderung der Finalstarter oder Startreihenfolge
+                      ersetzt die neue Liste den bisherigen Ausdruck.
+                    </p>
+                  )}
                   {c?.stale && (
                     <p
                       role="alert"
