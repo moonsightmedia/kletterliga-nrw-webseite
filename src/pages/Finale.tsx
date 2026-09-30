@@ -180,7 +180,7 @@ const faqs = [
   {
     question: "Wie sieht der geplante Ablauf am Finaltag aus?",
     answer:
-      "Die Halle öffnet um 08:00 Uhr, der Check-in für angemeldete Starter:innen beginnt um 08:45 Uhr. Das Halbfinale läuft von 09:00 bis 16:00 Uhr, die Finals beginnen um 16:30 Uhr. Siegerehrung und Verlosung sind für 19:30 und 20:00 Uhr geplant. Individuelle Finalstarts können sich noch ändern.",
+      "Die Halle öffnet um 08:00 Uhr, der Check-in für angemeldete Starter:innen beginnt um 08:45 Uhr. Das Halbfinale läuft von 09:00 bis 16:00 Uhr; bis 16:00 Uhr müssen alle Halbfinal-Ergebnisse in der App eingetragen sein. Die Finals beginnen um 16:30 Uhr. Siegerehrung und Verlosung sind für 19:30 und 20:00 Uhr geplant. Individuelle Finalstarts können sich noch ändern.",
   },
 ];
 

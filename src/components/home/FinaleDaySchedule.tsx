@@ -8,6 +8,7 @@ const schedule = [
   { time: "09:00", title: "Halbfinale startet", detail: "Die Halbfinalrunden laufen bis 16:00 Uhr." },
   { time: "10:00", title: "Offizielle Begrüßung", detail: "Wir heißen Teilnehmende und Publikum willkommen." },
   { time: "12:00", title: "Foodtruck öffnet", detail: "Marla & Mathilda’s Genusswerkstatt versorgt euch vor Ort." },
+  { time: "16:00", title: "Halbfinale endet", detail: "Bis 16:00 Uhr müssen alle Halbfinal-Ergebnisse in der App eingetragen sein." },
   { time: "16:30", title: "Finals starten", detail: "Die Finalrunden werden live vor Publikum geklettert." },
   { time: "19:30", title: "Siegerehrung", detail: "Wir ehren die Wertungsklassen und die Acht-Hallen-Teilnehmenden." },
   { time: "20:00", title: "Verlosung", detail: "Gemeinsamer Ausklang des Finaltags." },
@@ -49,7 +50,7 @@ export const FinaleDaySchedule = ({ onHomePage = false }: { onHomePage?: boolean
             ))}
           </ol>
           <p className="mt-4 text-sm leading-6 text-primary-foreground/70">
-            Zeiten sind der aktuelle Planungsstand. Einzelne Finalstarts und organisatorische Details können sich noch ändern.
+            Einzelne Finalstarts und organisatorische Details können sich noch ändern. Die Ergebnisfrist für das Halbfinale ist 16:00 Uhr.
           </p>
         </div>
       </AnimatedSection>
