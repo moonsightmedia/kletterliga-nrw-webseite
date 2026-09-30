@@ -56,14 +56,11 @@ function CertificateCard({ certificate, title }: { certificate: Certificate; tit
   };
 
   return <StitchCard tone="surface" className="overflow-hidden rounded-xl border border-[#003d55]/10">
-    {preview ? <img src={preview} alt={`Vorschau der ${title}-Urkunde für ${certificate.display_name}`} className="aspect-[4/5] w-full object-cover" /> : <div className="relative aspect-[4/5] overflow-hidden border-b-4 border-l-[10px] border-b-[#003d50] border-l-[#a45524] bg-[#fbf5e7]" role="status" aria-label="Urkundenvorschau wird erstellt">
-      <div className="absolute -right-8 top-0 h-[33%] w-[27%] -skew-x-[17deg] bg-[#003d50]" aria-hidden="true" />
-      <div className="relative flex flex-col items-center pt-[8%] text-[#003d50]">
-        <img src="/logo.png" alt="" className="w-[15%]" />
-        <span className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.12em]">Kletterliga NRW</span>
-        <span className="mt-1 text-[0.55rem] font-bold uppercase tracking-[0.2em] text-[#a45524]">{title} {certificate.season_year}</span>
-        <span className="mt-4 font-['Space_Grotesk'] text-[clamp(1.5rem,6vw,3.5rem)] font-bold uppercase">Urkunde</span>
-      </div>
+    {preview ? <img src={preview} alt={`Vorschau der ${title}-Urkunde für ${certificate.display_name}`} className="aspect-[4/5] w-full object-cover" /> : <div className="relative aspect-[4/5] overflow-hidden bg-[#f4e1b3]" role="status" aria-label="Urkundenvorschau wird erstellt">
+      <img src="/certificates/background.png" alt="" className="absolute inset-0 h-full w-full" />
+      <img src="/certificates/logo.png" alt="" className="absolute left-[38.6%] top-[2%] w-[22.8%]" />
+      <img src="/certificates/wordmark.png" alt="" className="absolute left-[34.4%] top-[20.8%] w-[31.2%]" />
+      <img src="/certificates/title.png" alt="" className="absolute left-[11.3%] top-[29.2%] w-[77.4%]" />
     </div>}
     <div className="space-y-3 p-4">
       <div>

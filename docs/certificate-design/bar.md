@@ -1,10 +1,12 @@
-# Digitale Urkunden: Druckserie als Vorlage
+# Urkunden: finale Druckvorlage als Quelle
 
-Die digitalen Urkunden folgen auf Wunsch der bestehenden Kletterliga-Druckserie 2026. [Druckreferenz](reference-print.png) und [digitale Social-Vorschau](preview-social.png) liegen zur direkten Gegenüberstellung bei.
+Maßgeblich ist die tatsächlich verwendete 97-seitige Druckdatei `output/pdf/Kletterliga-NRW-Urkunden-Finale-2026-korrigiert-97-Seiten.pdf` vom 28.09.2026. [Seite 1](reference-print.png) und [digitale Social-Vorschau](preview-social.png) liegen zur Gegenüberstellung bei. Die zuvor herangezogene Serie aus `output/urkunden-redesign-2026-09-25/` war eine andere Entwurfsfassung.
 
-1. Cremefarbener Grund, rostbrauner linker Rand, dunkelpetrolfarbener unterer Rand und die schräg angeschnittene rechte obere Ecke entsprechen der Druckserie.
-2. Rundes Logo, „KLETTERLIGA NRW“, Phasenzeile und „URKUNDE“ stehen zentriert im oberen Drittel.
-3. Der persönliche Name füllt den vorgesehenen Namensbereich; lange Namen können auf zwei Zeilen umbrechen.
-4. Die Platzierung steht groß in Rostbraun neben „PLATZ“ in Petrol. Disziplin und Wertungsklasse folgen zentriert.
-5. Die Finalevent-Version übernimmt Datum, Ort und Namenszeilen der Druckurkunde. Die Quali-Version nennt ihre Phase ohne erfundenes Veranstaltungsdatum.
-6. Das A4-PDF und das 4:5-Bild behalten diese Bildsprache bei, mit angepassten vertikalen Abständen.
+Die digitalen Urkunden verwenden die Hintergrundgrafik, das Logo, die festen Schriftgrafiken, die Disziplingrafiken und die beiden Unterschriften direkt aus der finalen PDF. Platz 1 bis 6 verwendet auch die entsprechenden Platzierungsbilder. Weitere Plätze und persönliche Namen werden im Browser gesetzt. Die Qualifikation erhält dieselbe Bildsprache, aber eine eigene Phasenzeile und keinen erfundenen Finalevent-Termin.
+
+## Sichtbare Prüfpunkte
+
+1. Polygonale Hintergrundgrafik oben links, diagonal geteilte dunkelblaue Fläche und Kristallformen unten rechts stimmen mit der finalen PDF überein.
+2. Logo, Wortmarke, „URKUNDE“, „PLATZ“, Disziplin und Unterschriften verwenden die Originalgrafiken.
+3. Name, Platz und Wertungsklasse sind vollständig und ohne Überlagerung lesbar.
+4. A4 und 4:5 verwenden dieselben Grafiken; nur vertikale Abstände werden für Social angepasst.
