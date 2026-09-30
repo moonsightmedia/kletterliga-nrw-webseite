@@ -2,6 +2,7 @@ import { Suspense, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, Share2, User } from "lucide-react";
 import { BottomNav } from "@/app/components/BottomNav";
+import { CompetitionLiveBanner } from "@/app/components/CompetitionLiveBanner";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { useMarkAppStartupSplashSeen } from "@/app/startup/appStartupSplash";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -368,6 +369,7 @@ export const ParticipantLayout = () => {
             />
           }
         >
+          <CompetitionLiveBanner />
           <Outlet />
         </Suspense>
       </main>

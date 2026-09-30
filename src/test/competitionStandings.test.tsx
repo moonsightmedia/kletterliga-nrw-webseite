@@ -3,14 +3,16 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CompetitionStandings from "@/app/pages/competition/CompetitionStandings";
 
-const api = vi.hoisted(() => ({ day: vi.fn(), standings: vi.fn() }));
+const api = vi.hoisted(() => ({ day: vi.fn(), standings: vi.fn(), final: vi.fn() }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, listCompetitionStandings: api.standings }));
+vi.mock("@/services/competitionFinal", () => ({ getPublicFinal: api.final }));
 
 describe("competition standings", () => {
   afterEach(cleanup);
 
   it("shows the full 10–100-point scoring and totals up to 500", async () => {
+    api.final.mockResolvedValueOnce([]);
     api.day.mockResolvedValueOnce({ event: { phase: "open" } });
     api.standings.mockResolvedValueOnce([
       { profile_id: "first", name: "Erster Teilnehmer", league: "lead", class_label: "Ü15-m", points: 500, completed_routes: 5, rank: 1 },
