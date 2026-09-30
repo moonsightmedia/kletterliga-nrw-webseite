@@ -26,3 +26,4 @@ dist-ssr
 .qa-post-qualification/
 
 .vercel
+.codex-tmp/
