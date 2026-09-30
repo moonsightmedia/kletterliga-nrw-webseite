@@ -19,9 +19,9 @@ Function `submit-season-feedback` schreibt mit der serverseitigen Service Role.
 Sie prüft erlaubte Antwortwerte, Mehrfachauswahl, Freitextlängen, einen Honeypot und
 die Mindest-Ausfüllzeit. Während des Rollouts akzeptiert sie auch die alte Fassung,
 damit bereits geöffnete Formulare nicht scheitern.
-Das instanzlokale IP-Limit von drei Anfragen pro Stunde ist nur ein Basisschutz, keine
-garantierte Deduplizierung und keine dauerhafte Sperre. IP-Adressen werden nicht mit
-den Antworten gespeichert.
+Das instanzlokale IP-Limit von 300 Anfragen pro Stunde berücksichtigt gemeinsam
+genutztes Hallen-WLAN. Es ist nur ein Basisschutz, keine garantierte Deduplizierung
+und keine dauerhafte Sperre. IP-Adressen werden nicht mit den Antworten gespeichert.
 
 Auswertung und Export nur mit berechtigtem Server-/Adminzugriff. Freitext vor Weitergabe
 auf freiwillig eingegebene personenbezogene Angaben prüfen. Nach Abschluss der

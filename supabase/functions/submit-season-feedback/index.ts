@@ -68,6 +68,8 @@ const textLimits = {
 } as const;
 const requests = new Map<string, number[]>();
 const windowMs = 60 * 60 * 1000;
+// A venue Wi-Fi can put many legitimate respondents behind one public IP.
+const maxRequestsPerIpPerHour = 300;
 
 function headers(req: Request) {
   const origin = req.headers.get("origin") ?? "";
@@ -96,7 +98,7 @@ function rateLimited(req: Request) {
   const recent = (requests.get(key) ?? []).filter((time) => now - time < windowMs);
   recent.push(now);
   requests.set(key, recent);
-  return recent.length > 3;
+  return recent.length > maxRequestsPerIpPerHour;
 }
 
 function validFeedback(value: unknown): value is Feedback {
