@@ -17,6 +17,8 @@ const certificate = {
 describe("ProfileCertificates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => "blob:certificate-preview") });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
     vi.mocked(renderCertificate).mockResolvedValue(document.createElement("canvas"));
     vi.mocked(canvasToPng).mockResolvedValue(new Blob(["png"], { type: "image/png" }));
   });
@@ -32,8 +34,26 @@ describe("ProfileCertificates", () => {
   it("downloads the social image when file sharing is unavailable", async () => {
     vi.mocked(getMyCertificates).mockResolvedValue({ qualification: certificate, finale: null, finale_published_at: null });
     render(<ProfileCertificates profileId="athlete-1" />);
-    fireEvent.click(await screen.findByRole("button", { name: "Bild teilen" }));
+    const saveButton = await screen.findByRole("button", { name: "Bild speichern" });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    fireEvent.click(saveButton);
     await waitFor(() => expect(downloadCertificate).toHaveBeenCalledWith(expect.any(Blob), "Kletterliga-NRW-2026-qualification.png"));
     expect(screen.getByText(/Öffne es in deiner Social-Media-App/)).toBeInTheDocument();
+  });
+
+  it("opens native file sharing directly after tapping the prepared image", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "canShare", { configurable: true, value: vi.fn(() => true) });
+    Object.defineProperty(navigator, "share", { configurable: true, value: share });
+    vi.mocked(getMyCertificates).mockResolvedValue({ qualification: certificate, finale: null, finale_published_at: null });
+
+    render(<ProfileCertificates profileId="athlete-1" />);
+    const shareButton = await screen.findByRole("button", { name: "Urkunde teilen" });
+    await waitFor(() => expect(shareButton).toBeEnabled());
+    fireEvent.click(shareButton);
+
+    expect(share).toHaveBeenCalledWith(expect.objectContaining({ files: [expect.any(File)] }));
+    expect(downloadCertificate).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText("Bild an die Teilenfunktion übergeben.")).toBeInTheDocument());
   });
 });
