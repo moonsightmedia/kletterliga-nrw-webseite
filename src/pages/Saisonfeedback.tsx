@@ -43,6 +43,7 @@ const reasonOptions = [
   { value: "time", label: "Zu wenig Zeit" }, { value: "travel", label: "Wege oder Hallen zu weit" },
   { value: "format", label: "Ablauf oder Regeln passten nicht" }, { value: "routes", label: "Routen passten nicht zu mir" },
   { value: "cost", label: "Kosten waren eine Hürde" }, { value: "awareness", label: "Zu spät davon erfahren" },
+  { value: "final_date", label: "Der Finaltermin passte nicht" }, { value: "registration", label: "Anmeldung oder App haben nicht funktioniert" },
   { value: "motivation", label: "Andere Interessen oder Prioritäten" }, { value: "other", label: "Ein anderer Grund" },
 ];
 const routeOptions = [

@@ -48,7 +48,7 @@ const choices = {
 };
 const v2Choices = {
   participation: choices.participation,
-  non_participation_reasons: new Set(["time", "travel", "format", "routes", "cost", "awareness", "motivation", "other"]),
+  non_participation_reasons: new Set(["time", "travel", "format", "routes", "cost", "awareness", "final_date", "registration", "motivation", "other"]),
   route_quantity: new Set(["", "more", "same", "fewer", "unsure"]),
   hall_quantity: new Set(["", "more", "same", "fewer", "unsure"]),
   hall_choice: new Set(["", "more_choice", "same", "fixed_halls", "unsure"]),
