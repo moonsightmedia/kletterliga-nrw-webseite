@@ -3,15 +3,22 @@
 Öffentliches, freiwilliges Formular: `https://www.kletterliga-nrw.de/feedback-2026`.
 Es ist auch für den QR-Code auf den Fragebögen am Finaltag geeignet.
 
-Die fünf Auswahlfragen erfassen Teilnahmeart, Gesamteindruck (1–5), größte Stärke,
-wichtigsten Verbesserungsbereich und Interesse an 2027. Ein Kommentar bis 1000 Zeichen
-ist optional. Das Formular fragt keinen Namen, keine E-Mail-Adresse und keine Profil-ID
+Die erste Fassung erfasste fünf Auswahlfragen und einen optionalen Kommentar.
+Die zweite Fassung verzweigt nach Teilnahme: Nichtteilnehmende können mehrere Gründe
+und ihre konkrete Hürde beschreiben; aktiv Teilnehmende benennen Stärken und Probleme.
+Alle können ausführliche Vorschläge zu Anzahl und Art der Routen, Anzahl und Auswahl
+der Hallen, Saisonverteilung, Streichstationen und ihrem wichtigsten Wunsch für 2027
+einreichen. Nur die Perspektive, bei Nichtteilnahme ein Grund und der wichtigste Wunsch
+sind Pflicht. Das Formular fragt keinen Namen, keine E-Mail-Adresse und keine Profil-ID
 ab. Die Antworten liegen in `public.season_feedback_2026` und werden nicht mit
-Teilnehmerprofilen verbunden.
+Teilnehmerprofilen verbunden. Bestehende Antworten bleiben mit `survey_version = 1`
+erhalten; die neuen Angaben liegen versioniert als `details`-Objekt vor.
 
 Direkter Tabellenzugriff für `anon` und `authenticated` ist entzogen. Nur die Edge
 Function `submit-season-feedback` schreibt mit der serverseitigen Service Role.
-Sie prüft erlaubte Antwortwerte, Länge, einen Honeypot und die Mindest-Ausfüllzeit.
+Sie prüft erlaubte Antwortwerte, Mehrfachauswahl, Freitextlängen, einen Honeypot und
+die Mindest-Ausfüllzeit. Während des Rollouts akzeptiert sie auch die alte Fassung,
+damit bereits geöffnete Formulare nicht scheitern.
 Das instanzlokale IP-Limit von drei Anfragen pro Stunde ist nur ein Basisschutz, keine
 garantierte Deduplizierung und keine dauerhafte Sperre. IP-Adressen werden nicht mit
 den Antworten gespeichert.
