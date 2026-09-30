@@ -115,7 +115,24 @@ const Datenschutz = () => {
               </div>
 
               <div className="rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="font-headline text-2xl text-primary">7. Kontaktaufnahme</h2>
+                <h2 className="font-headline text-2xl text-primary">7. Freiwilliges Saisonfeedback 2026</h2>
+                <p className="mt-4 text-muted-foreground">
+                  Im freiwilligen Feedbackformular fragen wir nach deinem Saisonerlebnis, einer Bewertung,
+                  Stärken, Verbesserungsmöglichkeiten und deinem Interesse an einer weiteren Saison. Ein freier
+                  Kommentar ist optional. Wir fragen weder Name noch E-Mail-Adresse ab und verknüpfen die Antworten
+                  nicht mit deinem Teilnehmerkonto. Bitte trage im Freitext keine personenbezogenen Angaben ein.
+                </p>
+                <p className="mt-4 text-muted-foreground">
+                  Wir nutzen die Antworten ausschließlich zur Auswertung der Saison und Planung des nächsten
+                  Wettbewerbs. Rechtsgrundlage ist unser berechtigtes Interesse an der Verbesserung der Liga
+                  (Art. 6 Abs. 1 lit. f DSGVO). Zur Abwehr von Spam wird die IP-Adresse während der Anfrage
+                  kurzzeitig im Arbeitsspeicher verarbeitet, aber nicht mit der Antwort gespeichert. Die Antworten
+                  löschen wir nach Abschluss der Auswertung, spätestens am 31. März 2027.
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-white p-6 shadow-sm">
+                <h2 className="font-headline text-2xl text-primary">8. Kontaktaufnahme</h2>
                 <p className="mt-4 text-muted-foreground">
                   Wenn du uns per Kontaktformular oder E-Mail kontaktierst, verarbeiten wir deine Angaben zur Bearbeitung
                   der Anfrage und für mögliche Rückfragen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit es um
@@ -124,7 +141,7 @@ const Datenschutz = () => {
               </div>
 
               <div className="rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="font-headline text-2xl text-primary">8. Speicherdauer</h2>
+                <h2 className="font-headline text-2xl text-primary">9. Speicherdauer</h2>
                 <p className="mt-4 text-muted-foreground">
                   Wir speichern personenbezogene Daten nur so lange, wie sie für den jeweiligen Zweck erforderlich sind
                   oder gesetzliche Aufbewahrungspflichten bestehen. Pflichtbezogene Kontodaten und sportbezogene
@@ -134,7 +151,7 @@ const Datenschutz = () => {
               </div>
 
               <div className="rounded-lg bg-white p-6 shadow-sm">
-                <h2 className="font-headline text-2xl text-primary">9. Deine Rechte</h2>
+                <h2 className="font-headline text-2xl text-primary">10. Deine Rechte</h2>
                 <ul className="mt-4 list-disc space-y-2 pl-6 text-muted-foreground">
                   <li>Recht auf Auskunft nach Art. 15 DSGVO</li>
                   <li>Recht auf Berichtigung nach Art. 16 DSGVO</li>
