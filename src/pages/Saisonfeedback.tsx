@@ -183,7 +183,7 @@ const Saisonfeedback = () => {
         <p className="mt-5 max-w-2xl text-base leading-7 text-accent/90 sm:text-lg">Was hat gefehlt? Was sollte bleiben? Sag uns, wie Routen, Hallen und Saisonablauf für dich besser funktionieren würden.</p>
       </div>
     </section>
-    <main className="relative -mt-12 bg-[#F7F0E2] pb-20">
+    <section className="relative -mt-12 bg-[#F7F0E2] pb-20">
       <div className="container-kl max-w-5xl">
         <div className="mb-6 flex flex-col gap-3 border-l-4 border-secondary bg-accent px-5 py-4 text-primary sm:flex-row sm:items-start sm:gap-4">
           <ClipboardList className="size-6 shrink-0" aria-hidden="true" />
@@ -234,7 +234,7 @@ const Saisonfeedback = () => {
           </div>
         </form>}
       </div>
-    </main>
+    </section>
   </PageLayout>;
 };
 

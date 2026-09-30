@@ -52,7 +52,8 @@ describe("season feedback v2", () => {
   });
 
   it("shows active participants a different reflection instead of nonparticipation reasons", () => {
-    render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
+    expect(container.querySelectorAll("main")).toHaveLength(1);
     fireEvent.click(screen.getByRole("radio", { name: "Ich war 2026 nicht dabei" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Zu wenig Zeit" }));
     fireEvent.click(screen.getByRole("radio", { name: "Ich habe mitgeklettert" }));
