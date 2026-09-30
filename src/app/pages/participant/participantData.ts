@@ -447,6 +447,7 @@ const buildRankingRowsBase = ({
     return acc;
   }, {});
 
+  const firstRankByPoints = new Map<number, number>();
   return profiles
     .filter(includeProfile)
     .map((item) => {
@@ -475,10 +476,10 @@ const buildRankingRowsBase = ({
       if (b.points !== a.points) return b.points - a.points;
       return a.name.localeCompare(b.name, "de");
     })
-    .map((row, index) => ({
-      ...row,
-      rank: index + 1,
-    }));
+    .map((row, index) => {
+      if (!firstRankByPoints.has(row.points)) firstRankByPoints.set(row.points, index + 1);
+      return { ...row, rank: firstRankByPoints.get(row.points)! };
+    });
 };
 
 type BuildRankingRowsInput = {
@@ -504,7 +505,8 @@ export const buildRankingRows = ({
   seasonRange = null,
   getClassName,
 }: BuildRankingRowsInput): RankingRowData[] => {
-  const scopedRoutes = routes.filter((route) => normalizeDiscipline(route.discipline) === league);
+  const activeGymIds = new Set(gyms.map((gym) => gym.id));
+  const scopedRoutes = routes.filter((route) => normalizeDiscipline(route.discipline) === league && activeGymIds.has(route.gym_id));
   const routeMap = new Map(scopedRoutes.map((route) => [route.id, route]));
   const gymMap = new Map(gyms.map((gym) => [gym.id, gym]));
 
@@ -549,7 +551,8 @@ export const buildRankingRowsForScope = ({
   seasonRange = null,
   getClassName,
 }: BuildRankingRowsForScopeInput): RankingRowData[] => {
-  const scopedRoutes = getScopedRoutes(routes, leagueScope);
+  const activeGymIds = new Set(gyms.map((gym) => gym.id));
+  const scopedRoutes = getScopedRoutes(routes, leagueScope).filter((route) => activeGymIds.has(route.gym_id));
   const routeMap = new Map(scopedRoutes.map((route) => [route.id, route]));
   const gymMap = new Map(gyms.map((gym) => [gym.id, gym]));
 
