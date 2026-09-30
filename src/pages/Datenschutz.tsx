@@ -117,10 +117,13 @@ const Datenschutz = () => {
               <div className="rounded-lg bg-white p-6 shadow-sm">
                 <h2 className="font-headline text-2xl text-primary">7. Freiwilliges Saisonfeedback 2026</h2>
                 <p className="mt-4 text-muted-foreground">
-                  Im freiwilligen Feedbackformular fragen wir nach deinem Saisonerlebnis, einer Bewertung,
-                  Stärken, Verbesserungsmöglichkeiten und deinem Interesse an einer weiteren Saison. Ein freier
-                  Kommentar ist optional. Wir fragen weder Name noch E-Mail-Adresse ab und verknüpfen die Antworten
-                  nicht mit deinem Teilnehmerkonto. Bitte trage im Freitext keine personenbezogenen Angaben ein.
+                  Im freiwilligen Feedbackformular fragen wir, ob du 2026 mitgeklettert bist. Je nach Antwort
+                  kannst du Gründe für eine Nichtteilnahme oder gute und schwierige Aspekte der Saison nennen.
+                  Außerdem fragen wir nach deinen Wünschen zu Routen, Hallen, ihrer Auswahl und zeitlichen
+                  Verteilung, möglichen Streichstationen und der Saison 2027. Die meisten Fragen sind optional;
+                  für konkrete Hinweise gibt es Freitextfelder. Wir fragen weder Name noch E-Mail-Adresse ab und
+                  verknüpfen die Antworten nicht mit deinem Teilnehmerkonto. Bitte trage im Freitext keine
+                  personenbezogenen Angaben ein.
                 </p>
                 <p className="mt-4 text-muted-foreground">
                   Wir nutzen die Antworten ausschließlich zur Auswertung der Saison und Planung des nächsten
