@@ -3,8 +3,9 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 
-const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), draft: vi.fn(), phase: vi.fn(), judgeStatus: vi.fn(), setJudgeCode: vi.fn(), correct: vi.fn() }));
+const api = vi.hoisted(() => ({ day: vi.fn(), admin: vi.fn(), roster: vi.fn(), save: vi.fn(), draft: vi.fn(), phase: vi.fn(), judgeStatus: vi.fn(), setJudgeCode: vi.fn(), correct: vi.fn(), publication: vi.fn(), publish: vi.fn() }));
 vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.day, getCompetitionAdmin: api.admin, getCompetitionJudgeAccessStatus: api.judgeStatus, saveCompetitionConfig: api.save, saveCompetitionRouteDraft: api.draft, setCompetitionPhase: api.phase, setCompetitionJudgePassword: api.setJudgeCode, correctCompetitionResult: api.correct }));
+vi.mock("@/services/certificates", () => ({ getCertificatePublication: api.publication, publishFinaleCertificates: api.publish }));
 vi.mock("@/services/semifinalAdminApi", () => ({ listAdminSemifinalRegistrations: api.roster }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/supabase", () => ({ supabase: { from: vi.fn() } }));
@@ -17,6 +18,7 @@ describe("competition admin", () => {
     api.admin.mockResolvedValue({ config, staff: [], results: [] });
     api.roster.mockResolvedValue([{ eligibility_status: "eligible", approved_league: "lead", approved_class_label: "Ü15-m" }]);
     api.judgeStatus.mockResolvedValue(false);
+    api.publication.mockResolvedValue({ published_at: null, revision: null, certificate_count: 0, needs_refresh: false });
   });
   afterEach(cleanup);
   it("shows required classes and has no automatic writes", async () => {
@@ -164,5 +166,20 @@ describe("competition admin", () => {
     await waitFor(() => expect(api.save).toHaveBeenCalledWith("2026", expect.objectContaining({
       routes: expect.arrayContaining([expect.objectContaining({ number: 1, color: "#aabbcc" })]),
     })));
+  });
+  it("requires closed scoring and explicit confirmation before publishing certificates", async () => {
+    const result = { id: "result-1", route_id: "1", profile_id: "participant-1", zone: 7, flash: false, points: 70, created_at: "2026-10-03T12:00:00Z", name: "Testperson", league: "lead", class_label: "Ü15-m" };
+    api.admin.mockResolvedValue({ config, staff: [], results: [result] });
+    view();
+    expect(await screen.findByRole("button", { name: "Urkunden freigeben" })).toBeDisabled();
+    cleanup();
+    api.day.mockResolvedValue({ event: { phase: "closed", opened_at: "2026-10-03" }, routes: config.routes.map((r) => ({ ...r, id: String(r.number) })) });
+    api.publish.mockResolvedValue({ published_at: "2026-10-04T12:00:00Z", revision: 1, certificate_count: 1, needs_refresh: false });
+    view();
+    fireEvent.click(await screen.findByRole("button", { name: "Urkunden freigeben" }));
+    expect(api.publish).not.toHaveBeenCalled();
+    expect(await screen.findByRole("alertdialog")).toHaveTextContent("Nur angemeldete Teilnehmende mit mindestens einem Routenergebnis");
+    fireEvent.click(screen.getByRole("button", { name: "Freigeben" }));
+    await waitFor(() => expect(api.publish).toHaveBeenCalledWith("2026"));
   });
 });

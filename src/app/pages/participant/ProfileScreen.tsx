@@ -9,6 +9,7 @@ import { getMyPartnerVoucherRedemption } from "@/services/appApi";
 import { supabase } from "@/services/supabase";
 import { useParticipantProfileEditor } from "./useParticipantProfileEditor";
 import { getClassLabel } from "./participantData";
+import ProfileCertificates from "./ProfileCertificates";
 
 const SettingsRow = ({
   icon,
@@ -571,6 +572,8 @@ const ProfileScreen = () => {
           />
         </button>
       </section>
+
+      {profile?.id && <ProfileCertificates profileId={profile.id} />}
 
       <section className="space-y-3">
         <h3 className="px-1 font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.08em] text-[#003d55]">

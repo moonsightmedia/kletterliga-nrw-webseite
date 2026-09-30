@@ -11,6 +11,7 @@ import { listAdminSemifinalRegistrations, type AdminSemifinalRegistration } from
 import { competitionClassKey, competitionGripLabel, competitionZonePoints, registeredCompetitionClasses, validateCompetitionConfig, validateCompetitionRouteDraft } from "@/lib/competitionConfig";
 import { competitionRouteColor, competitionRouteColors } from "@/lib/competitionRouteColors";
 import { correctCompetitionResult, getCompetitionAdmin, getCompetitionDay, getCompetitionJudgeAccessStatus, saveCompetitionConfig, saveCompetitionRouteDraft, setCompetitionJudgePassword, setCompetitionPhase, type CompetitionAdminData, type CompetitionAdminResult, type CompetitionConfig, type CompetitionDay } from "@/services/competitionDay";
+import { getCertificatePublication, publishFinaleCertificates, type CertificatePublication } from "@/services/certificates";
 
 const emptyConfig = (): CompetitionConfig => ({ routes: [], assignments: [], zone_points: [...competitionZonePoints], flash_bonus: 0 });
 const leagueLabel = (league: string) => league === "lead" ? "Vorstieg" : "Toprope";
@@ -27,6 +28,8 @@ export default function LeagueCompetition() {
   const season = settings?.season_year?.trim();
   const [day, setDay] = useState<CompetitionDay | null>(null);
   const [admin, setAdmin] = useState<CompetitionAdminData | null>(null);
+  const [certificatePublication, setCertificatePublication] = useState<CertificatePublication | null>(null);
+  const [certificateDialog, setCertificateDialog] = useState(false);
   const [registrations, setRegistrations] = useState<AdminSemifinalRegistration[]>([]);
   const [config, setConfig] = useState<CompetitionConfig>(emptyConfig);
   const [loading, setLoading] = useState(true);
@@ -51,8 +54,9 @@ export default function LeagueCompetition() {
     if (!season) return;
     setLoading(true);
     try {
-      const [current, administration, roster, codeConfigured] = await Promise.all([getCompetitionDay(season), getCompetitionAdmin(season), listAdminSemifinalRegistrations(season), getCompetitionJudgeAccessStatus(season)]);
+      const [current, administration, roster, codeConfigured, publication] = await Promise.all([getCompetitionDay(season), getCompetitionAdmin(season), listAdminSemifinalRegistrations(season), getCompetitionJudgeAccessStatus(season), getCertificatePublication(season)]);
       setDay(current); setAdmin(administration); setRegistrations(roster);
+      setCertificatePublication(publication);
       setJudgeCodeConfigured(codeConfigured);
       const loaded = administration.config?.routes?.length ? administration.config : emptyConfig();
       setConfig(current.event?.opened_at ? loaded : { ...loaded, zone_points: [...competitionZonePoints], flash_bonus: 0 });
@@ -215,7 +219,25 @@ export default function LeagueCompetition() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      <section className="rounded-xl border border-[#003d55]/15 bg-[#f2dcab] p-5" aria-labelledby="certificate-release-heading">
+        <h2 id="certificate-release-heading" className="stitch-headline text-xl">Finalevent-Urkunden</h2>
+        <p className="mt-2 text-sm leading-6">{certificatePublication?.published_at
+          ? `Freigegeben: ${new Date(certificatePublication.published_at).toLocaleString("de-DE")} · Version ${certificatePublication.revision} · ${certificatePublication.certificate_count} Urkunden.`
+          : "Noch nicht freigegeben. Erst nach Prüfung der finalen Platzierungen veröffentlichen."}</p>
+        <p className="mt-1 text-xs leading-5 text-[#526b72]">Die Freigabe speichert den aktuellen Ergebnisstand. Korrigierte Ergebnisse erscheinen auf Urkunden erst nach erneuter Freigabe.</p>
+        {certificatePublication?.needs_refresh && <p role="alert" className="mt-2 rounded-lg bg-amber-100 p-3 text-sm font-bold text-amber-900">Seit der letzten Freigabe wurden Ergebnisse geändert. Bitte Platzierungen prüfen und den Urkundenstand aktualisieren.</p>}
+        <StitchButton type="button" className="mt-4" disabled={busy || dirty || day.event?.phase !== "closed" || !admin.results.length}
+          onClick={() => setCertificateDialog(true)}>{certificatePublication?.published_at ? "Urkundenstand aktualisieren" : "Urkunden freigeben"}</StitchButton>
+      </section>
     </>}
+    <AlertDialog open={certificateDialog} onOpenChange={(open) => !open && !busy && setCertificateDialog(false)}>
+      <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">
+        <AlertDialogHeader><AlertDialogTitle>{certificatePublication?.published_at ? "Urkundenstand aktualisieren?" : "Finalevent-Urkunden freigeben?"}</AlertDialogTitle>
+          <AlertDialogDescription className="text-[#003d55]">Prüfe vorher alle Platzierungen. Nur angemeldete Teilnehmende mit mindestens einem Routenergebnis erhalten eine Urkunde. Die freigegebenen Urkunden sind danach sofort im Profil verfügbar.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
+          <StitchButton disabled={busy} onClick={async () => { if (season && await action(() => publishFinaleCertificates(season), "Finalevent-Urkunden freigegeben.")) setCertificateDialog(false); }}>Freigeben</StitchButton></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <AlertDialog open={routeToRemove !== null} onOpenChange={(open) => !open && setRouteToRemove(null)}>
       <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">
         <AlertDialogHeader><AlertDialogTitle>Route {routeToRemove} aus der Planung entfernen?</AlertDialogTitle><AlertDialogDescription className="text-[#003d55]">Die Route wird auch aus allen Klassenzuordnungen entfernt. Die Änderung bleibt zunächst ungespeichert und kann durch Neuladen verworfen werden.</AlertDialogDescription></AlertDialogHeader>

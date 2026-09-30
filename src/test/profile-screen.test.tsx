@@ -19,6 +19,10 @@ vi.mock("@/app/pages/participant/useParticipantProfileEditor", () => ({
   useParticipantProfileEditor: vi.fn(),
 }));
 
+vi.mock("@/app/pages/participant/ProfileCertificates", () => ({
+  default: () => <div>Meine Urkunden</div>,
+}));
+
 vi.mock("@/services/appApi", () => ({
   getMyPartnerVoucherRedemption: vi.fn(),
 }));
