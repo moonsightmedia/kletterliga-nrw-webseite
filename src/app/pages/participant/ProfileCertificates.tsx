@@ -8,6 +8,11 @@ import { useSeasonSettings } from "@/services/seasonSettings";
 const fileName = (certificate: Certificate, extension: string) =>
   `Kletterliga-NRW-${certificate.season_year}-${certificate.phase}.${extension}`;
 
+const className = (label: string) => {
+  const match = /^(U15|Ü15|Ü40)-([mw])$/i.exec(label);
+  return match ? `${match[1]} · ${match[2].toLowerCase() === "w" ? "weiblich" : "männlich"}` : label;
+};
+
 const supportsFileShare = () => {
   if (typeof navigator === "undefined" || !navigator.share || !navigator.canShare) return false;
   try {
@@ -87,12 +92,12 @@ export function CertificateCard({ certificate, title }: { certificate: Certifica
         <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.13em] text-[#a15523]">{title} · {certificate.season_year}</p>
         <p className="mt-2 font-['Space_Grotesk'] text-[1.8rem] font-bold leading-none text-[#003d55] sm:text-[2rem]">{certificate.rank}. Platz</p>
         <p className="mt-3 break-words text-sm font-bold leading-5 text-[#003d55]">{certificate.display_name}</p>
-        <p className="mt-1 text-xs leading-5 text-[#526b72]">{certificate.league === "lead" ? "Vorstieg" : "Toprope"} · {certificate.class_label}</p>
+        <p className="mt-1 text-xs leading-5 text-[#526b72]">{certificate.league === "lead" ? "Vorstieg" : "Toprope"} · {className(certificate.class_label)}</p>
       </div>
     </div>
     <div className="space-y-2 border-t border-[#003d55]/10 bg-[#fbfcfa] px-4 pb-3 pt-4 sm:px-5">
       <StitchButton type="button" className="min-h-12 w-full rounded-xl font-['Manrope'] text-sm font-bold normal-case tracking-normal" disabled={busy !== null || !previewBlob} onClick={() => void run("share")}>
-        <Share2 size={18} aria-hidden="true" />{busy === "share" ? "Teilen wird geöffnet …" : canShare ? "Urkunde teilen" : "Bild speichern"}
+        {canShare ? <Share2 size={18} aria-hidden="true" /> : <Download size={18} aria-hidden="true" />}{busy === "share" ? "Bild wird vorbereitet …" : canShare ? "Urkunde teilen" : "Bild speichern"}
       </StitchButton>
       <StitchButton type="button" variant="outline" className="min-h-11 w-full rounded-xl border-[#003d55]/15 bg-white font-['Manrope'] text-sm font-bold normal-case tracking-normal shadow-none" disabled={busy !== null} onClick={() => void run("pdf")}>
         <Download size={17} aria-hidden="true" />{busy === "pdf" ? "PDF wird erstellt …" : "PDF herunterladen"}
