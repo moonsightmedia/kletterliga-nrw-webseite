@@ -1,17 +1,10 @@
-# Urkunden: visuelle Messlatte
+# Digitale Urkunden: Druckserie als Vorlage
 
-Referenzen: Kletterliga-Finalevent-Plakat 2026 für die Markenformen und die bestehende Druckurkunde für den Informationsumfang. Das digitale Motiv bleibt eigenständig.
+Die digitalen Urkunden folgen auf Wunsch der bestehenden Kletterliga-Druckserie 2026. [Druckreferenz](reference-print.png) und [digitale Social-Vorschau](preview-social.png) liegen zur direkten Gegenüberstellung bei.
 
-1. Das Kletterliga-Logo steht im oberen Bereich und bleibt in einer 430-Pixel-Vorschau erkennbar.
-2. Name und Platz sind die beiden stärksten personalisierten Elemente; auch ein langer Name bleibt ohne Abschneiden lesbar.
-3. Disziplin und Wertungsklasse sind in der 430-Pixel-Vorschau ohne Vergrößerung lesbar.
-4. Eine gezeichnete Kletterroute mit Griffen prägt die Hauptfläche, ohne Text zu überlagern.
-5. Petrol, Rostbraun und Creme verbinden das Motiv mit der bestehenden Kletterliga-Marke; schräge Flächen greifen das Event-Plakat auf.
-6. A4-PDF und 4:5-Social-Bild verwenden dieselbe Bildsprache und dieselben Angaben.
-
-## Prüfrunden
-
-| Runde | Brief | Markensystem | Gestaltung | Korrektur |
-| --- | --- | --- | --- | --- |
-| 1 | FAIL | PASS | PASS | Disziplin und Wertungsklasse vergrößert |
-| 2 | PASS | PASS | PASS | Abschluss |
+1. Cremefarbener Grund, rostbrauner linker Rand, dunkelpetrolfarbener unterer Rand und die schräg angeschnittene rechte obere Ecke entsprechen der Druckserie.
+2. Rundes Logo, „KLETTERLIGA NRW“, Phasenzeile und „URKUNDE“ stehen zentriert im oberen Drittel.
+3. Der persönliche Name füllt den vorgesehenen Namensbereich; lange Namen können auf zwei Zeilen umbrechen.
+4. Die Platzierung steht groß in Rostbraun neben „PLATZ“ in Petrol. Disziplin und Wertungsklasse folgen zentriert.
+5. Die Finalevent-Version übernimmt Datum, Ort und Namenszeilen der Druckurkunde. Die Quali-Version nennt ihre Phase ohne erfundenes Veranstaltungsdatum.
+6. Das A4-PDF und das 4:5-Bild behalten diese Bildsprache bei, mit angepassten vertikalen Abständen.

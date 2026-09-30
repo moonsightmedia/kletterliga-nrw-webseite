@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { Download, Share2, Trophy } from "lucide-react";
+import { Download, Share2 } from "lucide-react";
 import { StitchButton, StitchCard } from "@/app/components/StitchPrimitives";
 import { canvasToPng, certificatePdf, downloadCertificate, renderCertificate } from "@/lib/certificateArtwork";
 import { getMyCertificates, type Certificate, type MyCertificates } from "@/services/certificates";
 import { useSeasonSettings } from "@/services/seasonSettings";
 
-const phaseName = (phase: Certificate["phase"]) => phase === "qualification" ? "Qualifikation" : "Finalevent";
 const fileName = (certificate: Certificate, extension: string) =>
   `Kletterliga-NRW-${certificate.season_year}-${certificate.phase}.${extension}`;
 
@@ -57,14 +56,21 @@ function CertificateCard({ certificate, title }: { certificate: Certificate; tit
   };
 
   return <StitchCard tone="surface" className="overflow-hidden rounded-xl border border-[#003d55]/10">
-    {preview ? <img src={preview} alt={`Vorschau der ${title}-Urkunde für ${certificate.display_name}`} className="aspect-[4/5] w-full object-cover" /> : <div className="relative bg-[#003d55] px-5 pb-6 pt-5 text-[#f2dcab]">
-      <div className="absolute right-0 top-0 h-full w-24 skew-x-[-20deg] bg-[#a15523]/45" aria-hidden="true" />
-      <div className="relative flex items-center gap-3"><Trophy size={22} aria-hidden="true" /><span className="text-xs font-bold uppercase tracking-[0.16em]">{title}</span></div>
-      <p className="relative mt-5 font-['Space_Grotesk'] text-2xl font-bold leading-tight">{certificate.rank}. Platz</p>
-      <p className="relative mt-1 text-xs font-semibold">{certificate.league === "lead" ? "Vorstieg" : "Toprope"} · {certificate.class_label}</p>
+    {preview ? <img src={preview} alt={`Vorschau der ${title}-Urkunde für ${certificate.display_name}`} className="aspect-[4/5] w-full object-cover" /> : <div className="relative aspect-[4/5] overflow-hidden border-b-4 border-l-[10px] border-b-[#003d50] border-l-[#a45524] bg-[#fbf5e7]" role="status" aria-label="Urkundenvorschau wird erstellt">
+      <div className="absolute -right-8 top-0 h-[33%] w-[27%] -skew-x-[17deg] bg-[#003d50]" aria-hidden="true" />
+      <div className="relative flex flex-col items-center pt-[8%] text-[#003d50]">
+        <img src="/logo.png" alt="" className="w-[15%]" />
+        <span className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.12em]">Kletterliga NRW</span>
+        <span className="mt-1 text-[0.55rem] font-bold uppercase tracking-[0.2em] text-[#a45524]">{title} {certificate.season_year}</span>
+        <span className="mt-4 font-['Space_Grotesk'] text-[clamp(1.5rem,6vw,3.5rem)] font-bold uppercase">Urkunde</span>
+      </div>
     </div>}
     <div className="space-y-3 p-4">
-      <p className="text-sm text-[#003d55]">Für {certificate.display_name} · {phaseName(certificate.phase)} {certificate.season_year}</p>
+      <div>
+        <p className="font-['Space_Grotesk'] text-base font-bold text-[#003d55]">{title} {certificate.season_year}</p>
+        <p className="text-sm font-semibold text-[#a15523]">{certificate.rank}. Platz</p>
+        <p className="mt-1 text-sm text-[#526b72]">Für {certificate.display_name} · {certificate.league === "lead" ? "Vorstieg" : "Toprope"} · {certificate.class_label}</p>
+      </div>
       <div className="flex flex-wrap gap-2">
         <StitchButton type="button" size="sm" disabled={busy !== null} onClick={() => void run("pdf")}><Download size={16} />{busy === "pdf" ? "Erstelle PDF …" : "PDF herunterladen"}</StitchButton>
         <StitchButton type="button" size="sm" variant="outline" disabled={busy !== null} onClick={() => void run("share")}><Share2 size={16} />{busy === "share" ? "Bereite Bild vor …" : "Bild teilen"}</StitchButton>

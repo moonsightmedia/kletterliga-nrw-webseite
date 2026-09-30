@@ -2,23 +2,19 @@ import type { Certificate } from "@/services/certificates";
 
 export type CertificateFormat = "pdf" | "social";
 
-const navy = "#003d55";
-const cream = "#f8f0de";
-const sand = "#efd8aa";
-const rust = "#a55322";
-const ink = "#002e41";
+// Colors and composition follow the existing Kletterliga print certificates.
+const navy = "#003d50";
+const cream = "#fbf5e7";
+const rust = "#a45524";
+const sand = "#cdbd99";
+const signature = "#83918d";
 
-const phaseTitle = (phase: Certificate["phase"]) => phase === "qualification" ? "QUALIFIKATION" : "FINALEVENT";
+const phaseTitle = (phase: Certificate["phase"]) => phase === "qualification" ? "QUALIFIKATION" : "FINALE";
 const leagueTitle = (league: Certificate["league"]) => league === "lead" ? "VORSTIEG" : "TOPROPE";
-
-const fitText = (context: CanvasRenderingContext2D, value: string, maxWidth: number, startSize: number, minimum = 32) => {
-  let size = startSize;
-  do {
-    context.font = `700 ${size}px "Space Grotesk", Arial, sans-serif`;
-    if (context.measureText(value).width <= maxWidth) break;
-    size -= 2;
-  } while (size > minimum);
-  return size;
+const classTitle = (label: string) => {
+  const match = /^(U15|Ü15|Ü40)-([mw])$/i.exec(label);
+  if (!match) return label;
+  return `${match[1]} · ${match[2].toLowerCase() === "w" ? "weiblich" : "männlich"}`;
 };
 
 const getLogo = async (): Promise<HTMLImageElement> => {
@@ -28,77 +24,63 @@ const getLogo = async (): Promise<HTMLImageElement> => {
   return logo;
 };
 
-function polygon(context: CanvasRenderingContext2D, fill: string, points: number[][]) {
-  context.fillStyle = fill;
+function polygon(context: CanvasRenderingContext2D, color: string, points: number[][]) {
+  context.fillStyle = color;
   context.beginPath();
   points.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y));
   context.closePath();
   context.fill();
 }
 
-function drawRoute(context: CanvasRenderingContext2D, heroTop: number, heroBottom: number) {
-  // A route drawn from holds and a rope gives the certificate its climbing identity.
-  context.save();
-  context.beginPath();
-  context.rect(0, heroTop, 1000, heroBottom - heroTop + 55);
-  context.clip();
-  context.strokeStyle = "#e9c789";
-  context.lineWidth = 6;
-  context.lineCap = "round";
-  context.beginPath();
-  context.moveTo(755, heroBottom + 30);
-  context.bezierCurveTo(838, heroBottom - 84, 677, heroBottom - 148, 759, heroBottom - 231);
-  context.bezierCurveTo(857, heroBottom - 330, 715, heroTop + 36, 850, heroTop - 15);
-  context.stroke();
-
-  polygon(context, rust, [[730, heroBottom - 54], [790, heroBottom - 93], [831, heroBottom - 70], [806, heroBottom - 12], [754, heroBottom + 6]]);
-  polygon(context, sand, [[666, heroBottom - 178], [722, heroBottom - 215], [770, heroBottom - 182], [749, heroBottom - 132], [698, heroBottom - 125]]);
-  polygon(context, rust, [[808, heroTop + 83], [867, heroTop + 48], [913, heroTop + 82], [892, heroTop + 136], [836, heroTop + 142]]);
-  context.strokeStyle = "#f8f0de";
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(827, heroTop + 100);
-  context.lineTo(875, heroTop + 69);
-  context.moveTo(690, heroBottom - 166);
-  context.lineTo(745, heroBottom - 174);
-  context.moveTo(752, heroBottom - 52);
-  context.lineTo(807, heroBottom - 63);
-  context.stroke();
-  context.restore();
+function centeredText(context: CanvasRenderingContext2D, value: string, y: number, size: number, color: string, font = "Space Grotesk", weight = 700) {
+  context.fillStyle = color;
+  context.textAlign = "center";
+  context.font = `${weight} ${size}px "${font}", Arial, sans-serif`;
+  context.fillText(value, 500, y);
 }
 
-function drawName(context: CanvasRenderingContext2D, name: string, top: number) {
-  context.fillStyle = rust;
-  context.font = '700 18px "Manrope", Arial, sans-serif';
-  context.fillText("DIESE URKUNDE GEHT AN", 74, top);
+function line(context: CanvasRenderingContext2D, x: number, y: number, width: number, color: string, height = 2) {
+  context.fillStyle = color;
+  context.fillRect(x, y, width, height);
+}
 
-  const words = name.trim().split(/\s+/);
-  const singleLineSize = fitText(context, name, 850, 69, 47);
-  if (singleLineSize >= 58 || words.length < 3) {
-    context.fillStyle = ink;
-    context.fillText(name, 70, top + 91);
+function fitCenteredText(context: CanvasRenderingContext2D, value: string, maxWidth: number, start: number, minimum: number, font = "Space Grotesk") {
+  let size = start;
+  while (size > minimum) {
+    context.font = `700 ${size}px "${font}", Arial, sans-serif`;
+    if (context.measureText(value).width <= maxWidth) break;
+    size -= 2;
+  }
+  return size;
+}
+
+function drawName(context: CanvasRenderingContext2D, name: string, baseline: number) {
+  const cleanName = name.trim();
+  const singleSize = fitCenteredText(context, cleanName, 860, 59, 40);
+  if (singleSize >= 46 || !cleanName.includes(" ")) {
+    centeredText(context, cleanName, baseline, singleSize, navy);
     return;
   }
+
+  const words = cleanName.split(/\s+/);
   let split = 1;
-  let balance = Infinity;
+  let bestBalance = Infinity;
   for (let index = 1; index < words.length; index++) {
-    const left = words.slice(0, index).join(" ");
-    const right = words.slice(index).join(" ");
-    const difference = Math.abs(context.measureText(left).width - context.measureText(right).width);
-    if (difference < balance) { balance = difference; split = index; }
+    const first = words.slice(0, index).join(" ");
+    const second = words.slice(index).join(" ");
+    const difference = Math.abs(context.measureText(first).width - context.measureText(second).width);
+    if (difference < bestBalance) { bestBalance = difference; split = index; }
   }
-  const lines = [words.slice(0, split).join(" "), words.slice(split).join(" ")];
-  const size = Math.min(...lines.map((line) => fitText(context, line, 850, 65, 38)));
-  context.font = `700 ${size}px "Space Grotesk", Arial, sans-serif`;
-  context.fillStyle = ink;
-  context.fillText(lines[0], 70, top + 74);
-  context.fillText(lines[1], 70, top + 74 + size * 1.15);
+  const rows = [words.slice(0, split).join(" "), words.slice(split).join(" ")];
+  const size = Math.min(...rows.map((row) => fitCenteredText(context, row, 860, 58, 38)));
+  centeredText(context, rows[0], baseline - size * 0.42, size, navy);
+  centeredText(context, rows[1], baseline + size * 0.68, size, navy);
 }
 
 export async function renderCertificate(certificate: Certificate, format: CertificateFormat): Promise<HTMLCanvasElement> {
   await Promise.all([
-    document.fonts.load('700 100px "Space Grotesk"'),
-    document.fonts.load('700 20px "Manrope"'),
+    document.fonts.load('700 92px "Space Grotesk"'),
+    document.fonts.load('700 25px "Manrope"'),
   ]).catch(() => undefined);
   const logo = await getLogo();
   const canvas = document.createElement("canvas");
@@ -106,76 +88,67 @@ export async function renderCertificate(certificate: Certificate, format: Certif
   canvas.height = format === "pdf" ? 3508 : 1350;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Die Urkunde konnte auf diesem Gerät nicht gezeichnet werden.");
-
   const isPdf = format === "pdf";
   const height = isPdf ? 1414 : 1250;
-  const heroTop = isPdf ? 255 : 230;
-  const heroBottom = isPdf ? 645 : 575;
-  const nameTop = isPdf ? 745 : 657;
-  const rankTop = isPdf ? 1030 : 917;
   context.scale(canvas.width / 1000, canvas.height / height);
 
   context.fillStyle = cream;
   context.fillRect(0, 0, 1000, height);
-  context.fillStyle = rust;
-  context.fillRect(0, 0, 16, height);
-  context.drawImage(logo, 72, 54, isPdf ? 158 : 140, isPdf ? 158 : 140);
-  context.fillStyle = navy;
-  context.font = '700 36px "Space Grotesk", Arial, sans-serif';
-  context.fillText("KLETTERLIGA", 254, 116);
-  context.fillText("NRW", 254, 154);
-  context.fillStyle = rust;
-  context.font = '700 23px "Manrope", Arial, sans-serif';
-  context.fillText(`SAISON ${certificate.season_year}`, 257, 193);
-  context.textAlign = "right";
-  context.fillStyle = sand;
-  context.font = '700 134px "Space Grotesk", Arial, sans-serif';
-  context.fillText(certificate.season_year.slice(-2), 940, 176);
-  context.textAlign = "left";
+  line(context, 0, 0, 26, rust, height);
+  polygon(context, navy, [[830, 0], [1000, 0], [1000, isPdf ? 379 : 325], [936, isPdf ? 410 : 356]]);
+  polygon(context, rust, [[936, isPdf ? 410 : 356], [1000, isPdf ? 379 : 325], [1000, isPdf ? 407 : 353], [945, isPdf ? 438 : 384]]);
 
-  polygon(context, navy, [[16, heroTop + 28], [1000, heroTop - 10], [1000, heroBottom - 5], [16, heroBottom + 48]]);
-  polygon(context, rust, [[16, heroTop + 28], [1000, heroTop - 10], [1000, heroTop + 20], [16, heroTop + 58]]);
-  drawRoute(context, heroTop, heroBottom);
-  context.fillStyle = cream;
-  context.font = '700 91px "Space Grotesk", Arial, sans-serif';
-  context.fillText("URKUNDE", 68, heroTop + 168);
-  context.fillStyle = sand;
-  context.font = '700 34px "Space Grotesk", Arial, sans-serif';
-  context.fillText(phaseTitle(certificate.phase), 73, heroTop + 227);
-  context.strokeStyle = sand;
-  context.lineWidth = 4;
-  context.beginPath();
-  context.moveTo(73, heroTop + 256);
-  context.lineTo(425, heroTop + 256);
-  context.stroke();
-  context.fillStyle = cream;
-  context.font = '600 19px "Manrope", Arial, sans-serif';
-  context.fillText(`KLETTERLIGA NRW · ${certificate.season_year}`, 74, heroBottom - 9);
-
-  drawName(context, certificate.display_name, nameTop);
+  const logoY = isPdf ? 72 : 47;
+  const logoSize = isPdf ? 156 : 146;
+  context.drawImage(logo, 500 - logoSize / 2, logoY, logoSize, logoSize);
+  centeredText(context, "KLETTERLIGA NRW", isPdf ? 271 : 219, 27, navy, "Manrope");
   context.fillStyle = rust;
-  context.fillRect(73, isPdf ? 910 : 816, 122, 7);
+  context.textAlign = "center";
+  context.font = '700 20px "Manrope", Arial, sans-serif';
+  context.fillText(`${phaseTitle(certificate.phase)} ${certificate.season_year}`, 500, isPdf ? 306 : 253);
+  centeredText(context, "URKUNDE", isPdf ? 430 : 367, 89, navy, "Space Grotesk", 700);
 
-  context.fillStyle = navy;
-  context.font = '700 31px "Manrope", Arial, sans-serif';
-  context.fillText(`${leagueTitle(certificate.league)}  ·  ${certificate.class_label.toUpperCase()}`, 75, rankTop - 43);
-  context.fillStyle = rust;
+  const nameLineY = isPdf ? 590 : 510;
+  line(context, 129, nameLineY, 742, navy);
+  centeredText(context, "NAME", nameLineY + 30, 18, rust, "Manrope");
+  drawName(context, certificate.display_name, isPdf ? 708 : 624);
+
+  const rankBaseline = isPdf ? 900 : 824;
   const rank = `${certificate.rank}.`;
-  fitText(context, rank, 435, 220, 136);
-  context.fillText(rank, 65, rankTop + 170);
+  const rankSize = fitCenteredText(context, rank, 400, 202, 126);
+  context.font = `700 ${rankSize}px "Space Grotesk", Arial, sans-serif`;
   const rankWidth = context.measureText(rank).width;
-  context.fillStyle = navy;
-  context.font = '700 66px "Space Grotesk", Arial, sans-serif';
-  context.fillText("PLATZ", Math.max(280, 105 + rankWidth), rankTop + 158);
-  context.fillStyle = rust;
-  context.fillRect(74, rankTop + 208, 850, 3);
-
-  context.fillStyle = navy;
-  context.font = '600 18px "Manrope", Arial, sans-serif';
-  context.fillText("KLETTERLIGA-NRW.DE", 75, height - 53);
-  context.textAlign = "right";
-  context.fillText("NRW · KLETTERN VERBINDET", 924, height - 53);
+  context.font = '700 86px "Space Grotesk", Arial, sans-serif';
+  const placeWidth = context.measureText("PLATZ").width;
+  const gap = 25;
+  const startX = (1000 - rankWidth - placeWidth - gap) / 2;
   context.textAlign = "left";
+  context.fillStyle = rust;
+  context.font = `700 ${rankSize}px "Space Grotesk", Arial, sans-serif`;
+  context.fillText(rank, startX, rankBaseline);
+  context.fillStyle = navy;
+  context.font = '700 86px "Space Grotesk", Arial, sans-serif';
+  context.fillText("PLATZ", startX + rankWidth + gap, rankBaseline - 5);
+
+  line(context, 348, isPdf ? 951 : 864, 304, sand);
+  centeredText(context, leagueTitle(certificate.league), isPdf ? 1026 : 933, 47, navy);
+  centeredText(context, classTitle(certificate.class_label), isPdf ? 1084 : 988, 31, navy, "Manrope", 600);
+
+  const detail = certificate.phase === "finale"
+    ? `03. Oktober ${certificate.season_year} · Kletterwelt Sauerland, Altena`
+    : `Kletterliga NRW · Qualifikation ${certificate.season_year}`;
+  centeredText(context, detail, isPdf ? 1179 : 1059, 23, navy, "Manrope", 400);
+
+  const signatureY = isPdf ? 1264 : 1133;
+  line(context, 118, signatureY, 315, signature);
+  line(context, 567, signatureY, 315, signature);
+  context.fillStyle = navy;
+  context.font = '400 20px "Manrope", Arial, sans-serif';
+  context.textAlign = "center";
+  context.fillText("René Brehm", 275, signatureY + 32);
+  context.fillText("Janosch Althoff", 725, signatureY + 32);
+  context.textAlign = "left";
+  line(context, 0, height - 32, 1000, navy, 32);
   return canvas;
 }
 
