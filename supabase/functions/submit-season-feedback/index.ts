@@ -34,6 +34,14 @@ type FeedbackV2 = {
   fill_time_ms: number;
 };
 
+type FeedbackV3 = Omit<FeedbackV2, "survey_version"> & {
+  survey_version: 3;
+  registration_detail: string;
+  finale_attendance: string;
+  finale_reasons: string[];
+  finale_detail: string;
+};
+
 const allowedOrigins = new Set([
   "https://www.kletterliga-nrw.de",
   "https://kletterliga-nrw.de",
@@ -55,6 +63,11 @@ const v2Choices = {
   season_distribution: new Set(["", "spread", "same", "compact", "unsure"]),
   drop_stations: new Set(["", "yes", "no", "unsure"]),
   next_year: new Set(["", "yes", "maybe", "no"]),
+};
+const v3Choices = {
+  non_participation_reasons: new Set([...v2Choices.non_participation_reasons, "unaware"]),
+  finale_attendance: new Set(["", "yes", "no", "unsure"]),
+  finale_reasons: new Set(["date", "travel", "cost", "format", "registration", "cancelled", "other"]),
 };
 const textLimits = {
   non_participation_detail: 800,
@@ -134,6 +147,33 @@ function validFeedbackV2(value: unknown): value is FeedbackV2 {
     typeof data.fill_time_ms === "number" && data.fill_time_ms >= 3000;
 }
 
+function validFeedbackV3(value: unknown): value is FeedbackV3 {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const data = value as Record<string, unknown>;
+  if (data.survey_version !== 3 || typeof data.participation !== "string" || !v2Choices.participation.has(data.participation)) return false;
+  if (!Array.isArray(data.non_participation_reasons) || data.non_participation_reasons.length > v3Choices.non_participation_reasons.size ||
+    new Set(data.non_participation_reasons).size !== data.non_participation_reasons.length ||
+    !data.non_participation_reasons.every((reason) => typeof reason === "string" && v3Choices.non_participation_reasons.has(reason))) return false;
+  if (!Array.isArray(data.finale_reasons) || data.finale_reasons.length > v3Choices.finale_reasons.size ||
+    new Set(data.finale_reasons).size !== data.finale_reasons.length ||
+    !data.finale_reasons.every((reason) => typeof reason === "string" && v3Choices.finale_reasons.has(reason))) return false;
+  for (const [field, limit] of Object.entries({ ...textLimits, registration_detail: 800, finale_detail: 800 })) {
+    if (typeof data[field] !== "string" || data[field].length > limit) return false;
+  }
+  for (const field of ["route_quantity", "hall_quantity", "hall_choice", "season_distribution", "drop_stations", "next_year"] as const) {
+    if (typeof data[field] !== "string" || !v2Choices[field].has(data[field])) return false;
+  }
+  if (typeof data.finale_attendance !== "string" || !v3Choices.finale_attendance.has(data.finale_attendance)) return false;
+  if (data.participation !== "active" && !data.non_participation_reasons.length && !(data.non_participation_detail as string).trim()) return false;
+  if (data.participation === "active" && (data.non_participation_reasons.length || (data.non_participation_detail as string).trim() || (data.registration_detail as string).trim())) return false;
+  if (!data.non_participation_reasons.includes("registration") && (data.registration_detail as string).trim()) return false;
+  if (data.participation !== "active" && (data.finale_attendance || data.finale_reasons.length || (data.finale_detail as string).trim())) return false;
+  if (data.finale_attendance !== "no" && data.finale_attendance !== "unsure" && (data.finale_reasons.length || (data.finale_detail as string).trim())) return false;
+  if (data.participation !== "not_participated" && !(data.top_wish as string).trim()) return false;
+  return (data.website === undefined || typeof data.website === "string") &&
+    typeof data.fill_time_ms === "number" && data.fill_time_ms >= 3000;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: headers(req) });
   if (req.method !== "POST") return respond(req, 405, { error: "Methode nicht erlaubt." });
@@ -150,16 +190,17 @@ serve(async (req) => {
   } catch {
     return respond(req, 400, { error: "Die Rückmeldung konnte nicht gelesen werden." });
   }
-  const isV2 = validFeedbackV2(payload);
-  if (!isV2 && !validFeedback(payload)) return respond(req, 400, { error: "Bitte prüfe deine Antworten." });
+  const isV3 = validFeedbackV3(payload);
+  const isV2 = !isV3 && validFeedbackV2(payload);
+  if (!isV3 && !isV2 && !validFeedback(payload)) return respond(req, 400, { error: "Bitte prüfe deine Antworten." });
   if (payload.website?.trim()) return respond(req, 200, { ok: true });
 
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return respond(req, 503, { error: "Das Formular ist vorübergehend nicht verfügbar." });
   const supabase = createClient(url, key, { auth: { persistSession: false } });
-  const record = isV2 ? {
-    survey_version: 2,
+  const record = isV3 || isV2 ? {
+    survey_version: isV3 ? 3 : 2,
     participation: payload.participation,
     next_year: payload.next_year || null,
     details: {
@@ -177,6 +218,12 @@ serve(async (req) => {
       drop_stations: payload.drop_stations,
       drop_stations_ideas: payload.drop_stations_ideas.trim(),
       top_wish: payload.top_wish.trim(),
+      ...(isV3 ? {
+        registration_detail: payload.registration_detail.trim(),
+        finale_attendance: payload.finale_attendance,
+        finale_reasons: payload.finale_reasons,
+        finale_detail: payload.finale_detail.trim(),
+      } : {}),
     },
   } : {
     survey_version: 1,
