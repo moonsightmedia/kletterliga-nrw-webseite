@@ -27,6 +27,7 @@ import Sponsoren from "./pages/Sponsoren";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Kontakt from "./pages/Kontakt";
+import Saisonfeedback from "./pages/Saisonfeedback";
 import MailBestaetigen from "./pages/MailBestaetigen";
 import MailAbbestellen from "./pages/MailAbbestellen";
 import NotFound from "./pages/NotFound";
@@ -78,6 +79,7 @@ const AppShell = () => {
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/kontakt" element={<Kontakt />} />
+              <Route path="/feedback-2026" element={<Saisonfeedback />} />
               <Route path="/mail/bestaetigen" element={<MailBestaetigen />} />
               <Route path="/mail/abbestellen" element={<MailAbbestellen />} />
               {appRoutes}
