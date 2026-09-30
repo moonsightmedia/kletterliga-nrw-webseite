@@ -22,6 +22,7 @@ describe("season feedback v2", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: "Ich war 2026 nicht dabei" }));
     expect(screen.getByText("Was hat dich 2026 von einer Teilnahme abgehalten?")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Anmeldung oder App haben nicht funktioniert" })).toBeInTheDocument();
     expect(screen.queryByText("Was hat 2026 gut funktioniert?")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Feedback absenden/i }));
     expect(screen.getByRole("alert")).toHaveTextContent("mindestens einen Grund");
@@ -52,7 +53,8 @@ describe("season feedback v2", () => {
   });
 
   it("shows active participants a different reflection instead of nonparticipation reasons", () => {
-    render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
+    expect(container.querySelectorAll("main")).toHaveLength(1);
     fireEvent.click(screen.getByRole("radio", { name: "Ich war 2026 nicht dabei" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Zu wenig Zeit" }));
     fireEvent.click(screen.getByRole("radio", { name: "Ich habe mitgeklettert" }));
