@@ -67,80 +67,88 @@ export default function CompetitionDemo() {
   return (
     <div className="stitch-app min-h-screen bg-[#f5f1e7] p-4 text-[#003d55] sm:p-6">
       <div className="mx-auto max-w-7xl space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#003d55]/15 pb-4">
-          <p className="text-xs leading-5">
-            <strong className="text-[#a15523]">Testbetrieb</strong> · Erfundene
-            Teilnehmer · dieselben Ansichten wie in der App · Speicherung nur in
-            diesem Browser
-          </p>
-          <button
-            className="flex min-h-10 items-center gap-2 text-xs font-bold underline underline-offset-4"
-            onClick={() => {
-              resetCompetitionDemo();
-              setResetVersion((version) => version + 1);
-              navigate(root);
-            }}
-          >
-            <RotateCcw size={14} />
-            Testdaten zurücksetzen
-          </button>
-          <StitchButton
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              startSemifinalDemo();
-              setResetVersion((version) => version + 1);
-              navigate(`${root}?ansicht=halbfinale`);
-            }}
-          >
-            Halbfinale ausprobieren
-          </StitchButton>
-          {view === "halbfinale" && (
+        <details className="border-b border-[#003d55]/15 pb-2">
+          <summary className="cursor-pointer py-2 text-xs text-[#003d55]/70">
+            Demo · erfundene Teilnehmer{" "}
+            <span className="ml-2 underline underline-offset-4">
+              Demo-Optionen
+            </span>
+          </summary>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 pt-2">
+            <p className="text-xs leading-5">
+              <strong className="text-[#a15523]">Testbetrieb</strong> ·
+              Erfundene Teilnehmer · dieselben Ansichten wie in der App ·
+              Speicherung nur in diesem Browser
+            </p>
+            <button
+              className="flex min-h-10 items-center gap-2 text-xs font-bold underline underline-offset-4"
+              onClick={() => {
+                resetCompetitionDemo();
+                setResetVersion((version) => version + 1);
+                navigate(root);
+              }}
+            >
+              <RotateCcw size={14} />
+              Testdaten zurücksetzen
+            </button>
             <StitchButton
               size="sm"
               variant="outline"
-              disabled={value.admin.phase !== "open"}
               onClick={() => {
-                closeSemifinalDemoDeadline();
+                startSemifinalDemo();
                 setResetVersion((version) => version + 1);
+                navigate(`${root}?ansicht=halbfinale`);
               }}
             >
-              16-Uhr-Sperre testen
+              Halbfinale ausprobieren
             </StitchButton>
-          )}
-        </div>
-        <nav aria-label="Testansichten" className="flex flex-wrap gap-2">
-          {view && (
+            {view === "halbfinale" && (
+              <StitchButton
+                size="sm"
+                variant="outline"
+                disabled={value.admin.phase !== "open"}
+                onClick={() => {
+                  closeSemifinalDemoDeadline();
+                  setResetVersion((version) => version + 1);
+                }}
+              >
+                16-Uhr-Sperre testen
+              </StitchButton>
+            )}
+          </div>
+          <nav aria-label="Testansichten" className="flex flex-wrap gap-2">
+            {view && (
+              <StitchButton asChild variant="outline" size="sm">
+                <Link to={root}>
+                  <ArrowLeft size={14} />
+                  Renés Zentrale
+                </Link>
+              </StitchButton>
+            )}
+            {view !== "station" && view !== "halbfinale" && (
+              <StitchButton asChild variant="outline" size="sm">
+                <Link to={`${root}/station`}>
+                  <ClipboardList size={14} />
+                  Finaleingabe öffnen
+                </Link>
+              </StitchButton>
+            )}
+            {view !== "rangliste" && (
+              <StitchButton asChild variant="outline" size="sm">
+                <Link to={`${root}/rangliste`}>
+                  <Medal size={14} />
+                  Teilnehmer-Rangliste
+                </Link>
+              </StitchButton>
+            )}
             <StitchButton asChild variant="outline" size="sm">
-              <Link to={root}>
-                <ArrowLeft size={14} />
-                Renés Zentrale
+              <Link target="_blank" to={`${root}/tv`}>
+                <Monitor size={14} />
+                TV in neuem Tab
               </Link>
             </StitchButton>
-          )}
-          {view !== "station" && view !== "halbfinale" && (
-            <StitchButton asChild variant="outline" size="sm">
-              <Link to={`${root}/station`}>
-                <ClipboardList size={14} />
-                Finaleingabe öffnen
-              </Link>
-            </StitchButton>
-          )}
-          {view !== "rangliste" && (
-            <StitchButton asChild variant="outline" size="sm">
-              <Link to={`${root}/rangliste`}>
-                <Medal size={14} />
-                Teilnehmer-Rangliste
-              </Link>
-            </StitchButton>
-          )}
-          <StitchButton asChild variant="outline" size="sm">
-            <Link target="_blank" to={`${root}/tv`}>
-              <Monitor size={14} />
-              TV in neuem Tab
-            </Link>
-          </StitchButton>
-        </nav>
+          </nav>
+        </details>
         {view === "station" ? (
           <>
             <div className="rounded-xl border border-[#003d55]/15 bg-white p-4 text-sm leading-6">
@@ -149,7 +157,8 @@ export default function CompetitionDemo() {
               Demo-Finalpasswort{" "}
               <span className="break-all font-mono font-bold">
                 {demoStationCode}
-              </span>. Nach einer Passwortänderung gilt das neue Passwort aus der
+              </span>
+              . Nach einer Passwortänderung gilt das neue Passwort aus der
               Zentrale.
             </div>
             <FinalStationContent

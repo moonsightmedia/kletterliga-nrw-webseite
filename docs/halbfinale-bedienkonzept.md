@@ -14,11 +14,11 @@ Die bestehende QR-Funktion prüft die Route und den gültigen Routencode. Die Ko
 
 ## Renés Übersicht
 
-Unter **Übersicht** und **Halbfinale** steht die Rangliste der gewählten Klasse. Der Name klappt die fünf Routenergebnisse auf: Punkte, Griff, Erstabgabe und gegebenenfalls letzte Korrektur. Die Vollständigkeit steht pro Person und Klasse dabei. Dies ist eine Leseansicht ohne zusätzliche Ergebnisfreigabe.
+Unter **Halbfinale** stehen Suche, Klassenfilter und **Offene Ergebnisse** direkt über der Rangliste. Die Suche funktioniert über alle Klassen. Der Name öffnet einen Dialog mit den fünf Routen: **Ändern** bei eingetragenen Werten, **Eintragen** bei fehlenden. Griff auswählen, Begründung eintragen und **Speichern**. Erstabgabe, letzte Korrektur und Änderungsverlauf bleiben erreichbar. René bestätigt keine reguläre Abgabe erneut.
 
 Im Reiter **Halbfinale** bleiben Einleitung und Klassenführung bei dieser Runde. Dort erscheint kein automatischer Verweis auf Finalergebnisse oder Finalfeldfreigabe, auch wenn die gewählte Klasse bereits ein laufendes Finale hat. Der Wechsel zum Finale erfolgt bewusst über die Navigation.
 
-Die Daten werden alle fünf Sekunden aktualisiert. Fehlende Einträge und die administrativen Grundeinstellungen liegen in gesonderten aufklappbaren Bereichen. Erst nach Ende der normalen Eingabe werden fehlende Werte begründet nachgetragen oder ausdrücklich als nicht geklettert dokumentiert. Die Bestätigung des Finalfeldes bleibt ein eigener späterer Schritt.
+Die Daten werden alle fünf Sekunden aktualisiert. René kann schon während der offenen Eingabe und nach deren Ende fehlende Werte begründet nachtragen oder ausdrücklich als nicht geklettert dokumentieren. Die globale Eingabe muss dafür nicht geschlossen werden. Grundeinstellungen und globale Protokolle sind zugeklappt. Die Bestätigung des Finalfeldes bleibt ein eigener späterer Schritt.
 
 ## Automatische Sperre um 16 Uhr
 
@@ -36,8 +36,8 @@ Die öffentliche Anzeige enthält keine Zugangscodes oder internen Korrekturbegr
 
 ## Lokal ausprobieren und Freigabestand
 
-Unter `/demo/finaltag` startet **Halbfinale ausprobieren** einen ausschließlich lokalen Test mit erfundenen Personen, offenen Halbfinalklassen und TV-Klassenrotation. In **Toprope · Ü18 offen** hat Robin zwei gespeicherte Nullwerte und eine fehlende fünfte Route. Ein Klick auf seinen Namen zeigt den Unterschied.
+Unter `/demo/finaltag` startet **Halbfinale ausprobieren** einen ausschließlich lokalen Test mit erfundenen Personen, offenen Halbfinalklassen und TV-Klassenrotation. In **Toprope · Ü18 offen** hat Robin zwei gespeicherte Nullwerte und eine fehlende fünfte Route. Suche nach Robin und öffne seinen Namen: Seine fünf Routen zeigen den Unterschied. Unter **Demo-Optionen** liegen die Werkzeuge für Testdaten und Fristsimulation.
 
-**16-Uhr-Sperre testen** verschiebt nur in diesen lokalen Testdaten die Frist in die Vergangenheit. Anschließend kann René die fehlende Route mit Begründung und Griff nachtragen. Die Teilnehmer-Rangliste zeigt denselben neuen Punktestand. **Halbfinale ausprobieren** setzt diesen Test wieder auf den Anfang zurück.
+**16-Uhr-Sperre testen** verschiebt nur in diesen lokalen Testdaten die Frist in die Vergangenheit. Anschließend kann René bei Robin **Route 5 → Eintragen** wählen und den Wert mit Begründung speichern. Derselbe Ablauf funktioniert vor der Sperre. Die Teilnehmer-Rangliste zeigt denselben neuen Punktestand. **Halbfinale ausprobieren** setzt diesen Test wieder auf den Anfang zurück.
 
-Die Migration `20261001120000_semifinal_deadline.sql` ist vorbereitet. `supabase/tests/semifinal_deadline.sql` prüft in einer rückgerollten Testtransaktion Nullwerte, die Zeitgrenze, verspätete Teilnehmerabgabe, Admin-Nachtrag, Protokoll und öffentliche Punkte. Mangels funktionierendem isoliertem Datenbankzugang wurde dieser SQL-Test lokal noch nicht ausgeführt. Die produktive Sperre darf erst nach Migration und Datenbankprüfung als eingerichtet gelten.
+Die Migrationen `20261001120000_semifinal_deadline.sql` und `20261001163000_semifinal_admin_workflow.sql` sind vorbereitet. Die zweite erlaubt die bestehenden Admin-Nachträge auch während der offenen Eingabe. `supabase/tests/semifinal_admin_workflow.sql` prüft Vorbereitung, offene und geschlossene Admin-Eingabe, Korrektur, Nullwerte, Protokoll und Rechte. `supabase/tests/semifinal_deadline.sql` prüft in einer rückgerollten Testtransaktion Nullwerte, die Zeitgrenze, verspätete Teilnehmerabgabe, Admin-Nachtrag, Protokoll und öffentliche Punkte. Mangels funktionierendem isoliertem Datenbankzugang wurde dieser SQL-Test lokal noch nicht ausgeführt. Die produktive Sperre darf erst nach Migration und Datenbankprüfung als eingerichtet gelten.

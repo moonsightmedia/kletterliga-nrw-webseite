@@ -18,11 +18,9 @@ import {
 } from "lucide-react";
 import { classNextStep } from "@/lib/competitionPresentation";
 import { validFinalPassword } from "@/lib/finalPassword";
-import {
-  competitionDeadlineReached,
-  formatCompetitionDeadline,
-} from "@/lib/competitionDeadline";
+import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import SemifinalRanking from "@/app/components/SemifinalRanking";
+import SemifinalAdminRanking from "@/app/components/SemifinalAdminRanking";
 import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -41,6 +39,7 @@ import {
 import { useSeasonSettings } from "@/services/seasonSettings";
 import {
   getCompetitionAdmin,
+  correctCompetitionResult,
   setCompetitionPhase,
   type CompetitionAdminData,
 } from "@/services/competitionDay";
@@ -108,11 +107,13 @@ export type CompetitionCenterSource = Pick<
 > & {
   getCompetitionAdmin: typeof getCompetitionAdmin;
   setCompetitionPhase: typeof setCompetitionPhase;
+  correctCompetitionResult: typeof correctCompetitionResult;
 };
 const defaultSource: CompetitionCenterSource = {
   ...finalSource,
   getCompetitionAdmin,
   setCompetitionPhase,
+  correctCompetitionResult,
 };
 export default function CompetitionCenter() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
@@ -149,6 +150,7 @@ export function CompetitionCenterContent({
     getFinalAdmin,
     getCompetitionAdmin,
     setCompetitionPhase,
+    correctCompetitionResult,
     checkFinalEntry,
     enterSemifinalResult,
     moveFinalEntry,
@@ -174,9 +176,6 @@ export function CompetitionCenterContent({
   const loadPending = useRef(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [reason, setReason] = useState("");
-  const [semifinalZones, setSemifinalZones] = useState<Record<string, string>>(
-    {},
-  );
   const [routeNumber, setRouteNumber] = useState("1");
   const [routeName, setRouteName] = useState("");
   const [maxGrip, setMaxGrip] = useState("30");
@@ -225,7 +224,7 @@ export function CompetitionCenterContent({
               interval_seconds: 15,
             },
           );
-        setError("");
+        if (!quiet) setError("");
       } catch (err) {
         setError(
           err instanceof Error
@@ -343,33 +342,69 @@ export function CompetitionCenterContent({
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-16 text-[#003d55]">
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#003d55] p-5 text-[#f2dcab] sm:p-7">
+      <header
+        className={
+          tab === "semifinal"
+            ? "flex flex-wrap items-center justify-between gap-3 border-b border-[#003d55]/15 pb-4"
+            : "flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#003d55] p-5 text-[#f2dcab] sm:p-7"
+        }
+      >
         <div>
-          <p className="stitch-kicker text-[#d58a4c]">
+          <p
+            className={
+              tab === "semifinal"
+                ? "text-xs text-[#003d55]/65"
+                : "stitch-kicker text-[#d58a4c]"
+            }
+          >
             Wettkampftag · {season ?? "–"}
           </p>
-          <h1 className="stitch-headline text-3xl">Wettkampfzentrale</h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[#f2dcab]/85">
-            {tab === "semifinal"
-              ? "Halbfinalranglisten nach Klasse verfolgen und einzelne Routenergebnisse ansehen. Bestätigte Abgaben zählen automatisch."
-              : "Ergebnisse klären, Startlisten freigeben und das Finale sicher abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt."}
-          </p>
-          <p className="mt-3 flex items-center gap-2 text-xs font-bold">
-            <ShieldCheck size={15} />
-            {demo
-              ? "Testbetrieb · erfundene Daten"
-              : "Geschützter Bereich · Liga-Administration"}
-          </p>
+          <h1
+            className={
+              tab === "semifinal"
+                ? "text-2xl font-bold"
+                : "stitch-headline text-3xl"
+            }
+          >
+            Wettkampfzentrale
+          </h1>
+          {tab !== "semifinal" && (
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#f2dcab]/85">
+              Ergebnisse klären, Startlisten freigeben und das Finale sicher
+              abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt.
+            </p>
+          )}
+          {tab !== "semifinal" && (
+            <p className="mt-3 flex items-center gap-2 text-xs font-bold">
+              <ShieldCheck size={15} />
+              {demo
+                ? "Testbetrieb · erfundene Daten"
+                : "Geschützter Bereich · Liga-Administration"}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <StitchButton asChild variant="cream">
+          <StitchButton
+            asChild
+            variant={tab === "semifinal" ? "outline" : "cream"}
+            className={
+              tab === "semifinal"
+                ? "normal-case tracking-normal shadow-none"
+                : undefined
+            }
+          >
             <Link target="_blank" to={activeTvHref}>
               <ExternalLink size={16} />
               TV öffnen
             </Link>
           </StitchButton>
           <StitchButton
-            variant="cream"
+            variant={tab === "semifinal" ? "ghost" : "cream"}
+            className={
+              tab === "semifinal"
+                ? "normal-case tracking-normal shadow-none"
+                : undefined
+            }
             disabled={busy || loading}
             onClick={() => void reload()}
           >
@@ -386,7 +421,11 @@ export function CompetitionCenterContent({
       {notice && (
         <p
           role="status"
-          className="rounded-xl bg-emerald-50 p-4 text-emerald-900"
+          className={
+            tab === "semifinal"
+              ? "text-sm text-emerald-800"
+              : "rounded-xl bg-emerald-50 p-4 text-emerald-900"
+          }
         >
           {notice}
         </p>
@@ -397,7 +436,13 @@ export function CompetitionCenterContent({
         <p>Die Daten sind nicht verfügbar.</p>
       ) : (
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5">
+          <TabsList
+            className={
+              tab === "semifinal"
+                ? "flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-[#003d55]/15 bg-transparent p-0"
+                : "grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5"
+            }
+          >
             {[
               ["overview", "Übersicht"],
               ["semifinal", "Halbfinale"],
@@ -408,16 +453,22 @@ export function CompetitionCenterContent({
               <TabsTrigger
                 key={value}
                 value={value}
-                className="min-h-14 justify-start gap-2 whitespace-normal rounded-xl border border-[#003d55]/20 bg-white px-3 text-left data-[state=active]:bg-[#003d55] data-[state=active]:text-[#f2dcab]"
+                className={
+                  tab === "semifinal"
+                    ? "min-h-12 shrink-0 rounded-none border-b-2 border-transparent px-3 font-medium shadow-none data-[state=active]:border-[#a15523] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                    : "min-h-14 justify-start gap-2 whitespace-normal rounded-xl border border-[#003d55]/20 bg-white px-3 text-left data-[state=active]:bg-[#003d55] data-[state=active]:text-[#f2dcab]"
+                }
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#a15523]/15 text-xs font-black">
-                  <span aria-hidden="true">{index + 1}</span>
-                </span>
+                {tab !== "semifinal" && (
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#a15523]/15 text-xs font-black">
+                    <span aria-hidden="true">{index + 1}</span>
+                  </span>
+                )}
                 {label}
               </TabsTrigger>
             ))}
           </TabsList>
-          {["semifinal", "roster", "final"].includes(tab) && activePair && (
+          {["roster", "final"].includes(tab) && activePair && (
             <div className="mt-5 rounded-xl border border-[#003d55]/15 bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -638,320 +689,64 @@ export function CompetitionCenterContent({
           </TabsContent>
 
           <TabsContent value="semifinal" className="space-y-5 pt-4">
-            <StitchCard className="space-y-3 p-5">
-              <h2 className="stitch-headline text-xl">
-                Halbfinale live verfolgen
-              </h2>
-              <p className="text-sm leading-6">
-                Teilnehmer tragen ihr Ergebnis ein, der Schiedsrichter
-                kontrolliert es und lässt den Routen-QR scannen. Nach dem
-                Absenden erscheint der Wert automatisch in der Rangliste für
-                René, Teilnehmer und TV. René muss diese Einträge nicht noch
-                einmal bestätigen.
-              </p>
-              <p className="text-sm">
-                0 Punkte sind ein eingetragenes Ergebnis. Ein fehlender Eintrag
-                bleibt offen. Teilnehmer prüfen ihre eigenen Einträge unter
-                „Meine Routen“.
-              </p>
-              {data.submission_deadline_at && (
-                <p className="rounded-lg bg-[#f2dcab]/50 p-3 text-sm font-bold">
-                  {deadlinePassed
-                    ? "Automatische Abgabefrist erreicht"
-                    : "Automatische Sperre"}
-                  : {formatCompetitionDeadline(data.submission_deadline_at)} Uhr
-                  · René kann anschließend begründet nachtragen.
-                </p>
-              )}
-              <p className="text-xs text-[#003d55]/70">
-                {semifinalPhase === "open"
-                  ? "Eingabe offen"
-                  : semifinalPhase === "closed"
-                    ? "Normale Eingabe geschlossen"
-                    : "Vorbereitung"}{" "}
-                · Aktualisierung alle 5 Sekunden
-                {updated &&
-                  ` · Datenstand ${updated.toLocaleTimeString("de-DE")}`}
-                . Namen anklicken für Routenergebnisse und Eingabezeiten.
-              </p>
-            </StitchCard>
-            {activePair && (
-              <SemifinalRanking
-                rows={activePair[1].rows}
-                results={data.semifinal_results ?? []}
-                assignments={semiAdmin?.config.assignments ?? []}
-                audit={data.semifinal_audit}
-              />
-            )}
-            <details className="rounded-xl border border-[#003d55]/15 bg-white p-4">
-              <summary className="min-h-11 cursor-pointer py-3 font-bold">
-                Fehlende Einträge nachtragen · {activeMissing} offen in dieser
-                Klasse
+            <SemifinalAdminRanking
+              data={data}
+              admin={semiAdmin}
+              phase={semifinalPhase ?? "draft"}
+              busy={busy}
+              updated={updated}
+              errorMessage={error}
+              onSave={(edit) =>
+                run(
+                  () =>
+                    edit.kind === "not-climbed"
+                      ? settleSemifinal(
+                          season,
+                          edit.profileId,
+                          edit.routeId,
+                          edit.reason,
+                        )
+                      : edit.resultId
+                        ? correctCompetitionResult({
+                            resultId: edit.resultId,
+                            expected: edit.expected,
+                            zone: edit.zone,
+                            reason: edit.reason,
+                          })
+                        : enterSemifinalResult(
+                            season,
+                            edit.profileId,
+                            edit.routeId,
+                            edit.zone,
+                            edit.reason,
+                          ),
+                  edit.kind === "not-climbed"
+                    ? "Nicht geklettert dokumentiert."
+                    : edit.resultId
+                      ? "Halbfinalergebnis geändert."
+                      : "Halbfinalergebnis eingetragen.",
+                )
+              }
+            />
+            <details className="rounded-lg border border-[#003d55]/15 bg-white p-4">
+              <summary className="cursor-pointer py-2 text-sm font-semibold">
+                Einstellungen & Eingabestatus
               </summary>
-              <StitchCard className="space-y-3 p-5">
-                <h2 className="stitch-headline text-xl">
-                  Offene Halbfinalrouten klären
-                </h2>
-                <p className="text-sm">
-                  Nach Schließen der Eingabe jeden fehlenden Eintrag anhand der
-                  Papierliste nachtragen oder begründet als nicht geklettert mit
-                  null Punkten markieren. {unresolved} offen.
-                </p>
-                <StitchTextField
-                  label="Begründung für die nächste Änderung"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-                {semifinalPhase !== "closed" && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-bold text-[#a15523]">
-                      {semifinalPhase === "open"
-                        ? "Erst die Eingabe für alle Halbfinalklassen schließen. Anschließend lassen sich offene Werte klären."
-                        : "Zuerst die Halbfinalkonfiguration unten vorbereiten und die Eingabe öffnen."}
-                    </p>
-                    {semifinalPhase === "open" && (
-                      <StitchButton
-                        disabled={busy}
-                        onClick={() =>
-                          void run(
-                            () => setCompetitionPhase(season, "closed"),
-                            "Halbfinaleingabe für alle Klassen geschlossen.",
-                          )
-                        }
-                      >
-                        Halbfinaleingabe schließen
-                      </StitchButton>
-                    )}
-                  </div>
-                )}
-              </StitchCard>
-              {filteredPairs.map(([key, group]) => (
-                <StitchCard key={key} className="p-5">
-                  <h3 className="stitch-headline mb-3 text-xl">
-                    {className(group.league, group.label)}
-                  </h3>
-                  <div className="space-y-2">
-                    {group.rows
-                      .filter((row) => row.missing.some((m) => !m.settled))
-                      .map((row) => (
-                        <div
-                          key={row.profile_id}
-                          className="rounded-xl bg-white p-3"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <strong>
-                                {row.rank}. {row.name}
-                              </strong>
-                              <p className="text-sm">
-                                {row.points} Punkte · {row.completed}/5
-                                Ergebnisse{" "}
-                                {row.excluded &&
-                                  `· ${row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen"}`}
-                              </p>
-                            </div>
-                          </div>
-                          {semiAdmin && (
-                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                              {(
-                                semiAdmin.config.assignments.find(
-                                  (assignment) =>
-                                    assignment.league === row.league &&
-                                    assignment.class_label === row.class_label,
-                                )?.route_numbers ?? []
-                              ).map((routeNumber) => {
-                                const result = data.semifinal_results.find(
-                                  (item) =>
-                                    item.profile_id === row.profile_id &&
-                                    item.route_number === routeNumber,
-                                );
-                                const lastCorrection =
-                                  data.semifinal_audit.find(
-                                    (item) => item.result_id === result?.id,
-                                  );
-                                return (
-                                  <span
-                                    key={routeNumber}
-                                    className="rounded-lg bg-[#f2dcab]/60 px-2 py-1"
-                                  >
-                                    R{routeNumber}:{" "}
-                                    {result
-                                      ? `${result.points} P. · Griff ${result.zone * 10}`
-                                      : row.missing.some(
-                                            (m) =>
-                                              m.number === routeNumber &&
-                                              m.settled,
-                                          )
-                                        ? "Nicht geklettert · 0 P."
-                                        : "offen"}
-                                    {result &&
-                                      ` · Erst ${formatWhen(result.created_at)}`}
-                                    {lastCorrection &&
-                                      ` · Korr. ${formatWhen(lastCorrection.created_at)}`}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                          {row.missing.length > 0 && (
-                            <div className="mt-2 space-y-2">
-                              {row.missing.map((m) => (
-                                <div
-                                  key={m.route_id}
-                                  className="flex flex-wrap items-center gap-2 text-sm"
-                                >
-                                  <span>
-                                    Route {m.number}:{" "}
-                                    {m.settled
-                                      ? "Nicht geklettert · 0 P."
-                                      : "Offen"}
-                                  </span>
-                                  {!m.settled && (
-                                    <>
-                                      <Select
-                                        value={
-                                          semifinalZones[
-                                            `${row.profile_id}|${m.route_id}`
-                                          ] ?? ""
-                                        }
-                                        onValueChange={(value) =>
-                                          setSemifinalZones((current) => ({
-                                            ...current,
-                                            [`${row.profile_id}|${m.route_id}`]:
-                                              value,
-                                          }))
-                                        }
-                                      >
-                                        <SelectTrigger
-                                          aria-label={`${row.name}, Route ${m.number}: Griff`}
-                                          className="min-h-11 w-36 bg-white"
-                                        >
-                                          <SelectValue placeholder="Griff wählen" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {Array.from(
-                                            { length: 11 },
-                                            (_, i) => (
-                                              <SelectItem
-                                                key={i}
-                                                value={String(i)}
-                                              >
-                                                {i === 0
-                                                  ? "Kein Griff"
-                                                  : `Griff ${i * 10}`}
-                                              </SelectItem>
-                                            ),
-                                          )}
-                                        </SelectContent>
-                                      </Select>
-                                      <StitchButton
-                                        size="sm"
-                                        disabled={
-                                          busy ||
-                                          semifinalPhase !== "closed" ||
-                                          !reasonReady ||
-                                          semifinalZones[
-                                            `${row.profile_id}|${m.route_id}`
-                                          ] === undefined
-                                        }
-                                        onClick={() => {
-                                          const value =
-                                            semifinalZones[
-                                              `${row.profile_id}|${m.route_id}`
-                                            ];
-                                          const zone = Number(value);
-                                          if (
-                                            !Number.isInteger(zone) ||
-                                            zone < 0 ||
-                                            zone > 10 ||
-                                            value === undefined
-                                          ) {
-                                            setError(
-                                              "Bitte zuerst einen Griff wählen.",
-                                            );
-                                            return;
-                                          }
-                                          void run(
-                                            () =>
-                                              enterSemifinalResult(
-                                                season,
-                                                row.profile_id,
-                                                m.route_id,
-                                                zone,
-                                                reason,
-                                              ),
-                                            "Halbfinalergebnis nachgetragen.",
-                                          );
-                                        }}
-                                      >
-                                        Nachtragen
-                                      </StitchButton>
-                                      <StitchButton
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={
-                                          busy ||
-                                          semifinalPhase !== "closed" ||
-                                          !reasonReady
-                                        }
-                                        onClick={() =>
-                                          void run(
-                                            () =>
-                                              settleSemifinal(
-                                                season,
-                                                row.profile_id,
-                                                m.route_id,
-                                                reason,
-                                              ),
-                                            "Nicht geklettert dokumentiert.",
-                                          )
-                                        }
-                                      >
-                                        Nicht geklettert
-                                      </StitchButton>
-                                    </>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </StitchCard>
-              ))}
-            </details>
-            {semiAdmin && (
-              <StitchCard className="p-5">
-                <h3 className="stitch-headline text-xl">Eingabezeiten</h3>
-                <div className="mt-3 max-h-96 overflow-auto text-sm">
-                  {semiAdmin.results
-                    .filter(
-                      (r) => classKey(r.league, r.class_label) === activeKey,
+              {semifinalPhase === "open" && (
+                <StitchButton
+                  className="mt-3 normal-case tracking-normal shadow-none"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(
+                      () => setCompetitionPhase(season, "closed"),
+                      "Halbfinaleingabe geschlossen.",
                     )
-                    .sort((a, b) => b.created_at.localeCompare(a.created_at))
-                    .map((r) => (
-                      <p
-                        key={r.id}
-                        className="border-b border-[#003d55]/10 py-2"
-                      >
-                        {formatWhen(r.created_at)} · {r.name} · Route{" "}
-                        {data.semifinal_results.find(
-                          (result) => result.id === r.id,
-                        )?.route_number ?? "–"}{" "}
-                        · {r.points} P.
-                      </p>
-                    ))}
-                </div>
-              </StitchCard>
-            )}
-            <details
-              open={data.phase === "draft"}
-              className="rounded-xl border border-[#003d55]/15 bg-white p-4"
-            >
-              <summary className="cursor-pointer py-2 font-bold">
-                Halbfinaleingabe & Grundeinstellungen
-              </summary>
+                  }
+                >
+                  Eingabe vorzeitig schließen
+                </StitchButton>
+              )}
               <div className="mt-4">{semifinalConfiguration}</div>
             </details>
           </TabsContent>

@@ -4,17 +4,19 @@ Die Bilder zeigen die überarbeiteten **App-Oberflächen mit erfundenen Testdate
 
 ## 1. Über die Übersicht einsteigen
 
-Unter **So geht es weiter** steht für jede Klasse der aktuelle Status, die nächste Aufgabe und deren Erklärung. **Klasse öffnen** führt direkt zur passenden Ansicht. In Halbfinale, Finalstartlisten und Finale lässt sich oben die **Klasse bearbeiten** wechseln. Der Fernseher läuft unabhängig davon.
+Unter **So geht es weiter** steht für jede Klasse der aktuelle Status, die nächste Aufgabe und deren Erklärung. **Klasse öffnen** führt direkt zur passenden Ansicht. Im Halbfinale stehen Suche und Klassenfilter direkt über der Liste. In Finalstartlisten und Finale lässt sich oben die **Klasse bearbeiten** wechseln. Der Fernseher läuft unabhängig davon.
 
 ![Übersicht mit konkretem nächsten Schritt je Klasse](screenshots/zentrale-demo.jpg)
 
 ## 2. Halbfinale verfolgen und Startliste drucken
 
-Schiedsrichter kontrollieren das Ergebnis und zeigen den Routen-QR. Nach Scan und **Ergebnis absenden** zählt der bestätigte Eintrag sofort. René sieht die Klassenrangliste unter **Übersicht** oder **Halbfinale**; ein Klick auf den Namen zeigt alle fünf Routenergebnisse und ihre Eingabezeiten. Er bestätigt diese Ergebnisse nicht erneut. **0 Punkte** ist ein eingetragenes Ergebnis, **Noch nicht eingetragen** bleibt offen. Teilnehmer prüfen ihre eigenen Einträge.
+Schiedsrichter kontrollieren das Ergebnis und zeigen den Routen-QR. Nach Scan und **Ergebnis absenden** zählt der bestätigte Eintrag sofort. René sieht unter **Halbfinale** eine Rangliste mit Suche, Klassenfilter und **Offene Ergebnisse**. Ein Klick auf den Namen öffnet die fünf Routen. Für eine Korrektur **Ändern**, für einen fehlenden Wert **Eintragen** wählen; Griff und Begründung eingeben, dann **Speichern**. Das funktioniert während der offenen Eingabe und nach 16 Uhr. Er bestätigt diese Ergebnisse nicht erneut. **0 Punkte** ist ein eingetragenes Ergebnis, **Noch nicht eingetragen** bleibt offen. Teilnehmer prüfen ihre eigenen Einträge.
 
-![Halbfinalrangliste mit aufgeklappten Routenergebnissen: null und fehlend sind unterscheidbar](screenshots/halbfinale-rangliste-details.jpg)
+![Halbfinalverwaltung mit Suche, Klassenfilter und direktem Teilnehmerzugriff](screenshots/halbfinale-verwaltung.jpg)
 
-Am **3. Oktober 2026 um 16:00 Uhr** sperrt die normale Abgabe automatisch. René kann anschließend im aufklappbaren Bereich **Fehlende Einträge nachtragen** mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. In der lokalen Probe startet **Halbfinale ausprobieren** diesen Ablauf neu. **16-Uhr-Sperre testen** simuliert das Fristende; Robins fünfte Toprope-Route ist offen.
+![Teilnehmerdialog und Korrektur einer einzelnen Route auf dem Handy](screenshots/halbfinale-korrektur-mobil.jpg)
+
+Am **3. Oktober 2026 um 16:00 Uhr** sperrt die normale Abgabe automatisch. René kann anschließend weiterhin im Teilnehmerdialog mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. Unter **Demo-Optionen** startet **Halbfinale ausprobieren** diesen Ablauf neu. **16-Uhr-Sperre testen** simuliert das Fristende; Robins fünfte Toprope-Route ist offen.
 
 Wenn die fehlenden Einträge geklärt sind: **Finalfeld bestätigen**, Route und digitale Station auswählen, Vorschlag prüfen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
 
@@ -61,4 +63,4 @@ Hinweise erhalten Titel, Text, Ziel App/TV/beide und eine Anzeigedauer. Ein Voll
 
 Bei Netzausfall auf Papier weiterarbeiten. Nach Wiederverbindung aktuellen Stand prüfen und den lokal erhaltenen Entwurf bewusst erneut senden. Eine unbestätigte Übertragung ist kein veröffentlichtes Ergebnis.
 
-**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, alle vier Wettkampfmigrationen einschließlich gemeinsamer Passwortanmeldung, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto, Einrichtung des echten Finalpassworts durch René und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md); vereinbarte Halbfinalregeln: [Halbfinale](halbfinale-bedienkonzept.md).
+**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, alle fünf Wettkampfmigrationen einschließlich gemeinsamer Passwortanmeldung und vereinfachter Admin-Nachträge, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto, Einrichtung des echten Finalpassworts durch René und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md); vereinbarte Halbfinalregeln: [Halbfinale](halbfinale-bedienkonzept.md).

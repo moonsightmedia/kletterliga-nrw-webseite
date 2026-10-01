@@ -8,7 +8,10 @@ import type {
   LiveData,
   StationClass,
 } from "@/services/competitionFinal";
-import type { CompetitionStanding } from "@/services/competitionDay";
+import type {
+  CompetitionResult,
+  CompetitionStanding,
+} from "@/services/competitionDay";
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import { validFinalPassword } from "@/lib/finalPassword";
 
@@ -396,29 +399,58 @@ export const demoSource: CompetitionCenterSource & {
   settleSemifinal: async (_season, profile, route, reason) =>
     mutate((value) => {
       if (!reason.trim()) throw new Error("Begründung erforderlich.");
+      if (value.admin.phase === "draft")
+        throw new Error("Halbfinale zuerst öffnen.");
       const row = value.admin.semifinal.find(
         (row) => row.profile_id === profile,
       )!;
       row.missing.find((item) => item.route_id === route)!.settled = true;
       audit(value, "Nicht geklettert · 0 Punkte", reason);
+      value.admin.audit[0].after_data = {
+        profile_id: profile,
+        route_id: route,
+        points: 0,
+      };
     }),
   enterSemifinalResult: async (_season, profile, route, zone, reason) =>
     mutate((value) => {
       if (!reason.trim()) throw new Error("Begründung erforderlich.");
+      if (value.admin.phase === "draft")
+        throw new Error("Halbfinale zuerst öffnen.");
+      if (!Number.isInteger(zone) || zone < 0 || zone > 10)
+        throw new Error("Bitte einen gültigen Griff wählen.");
       const row = value.admin.semifinal.find(
         (row) => row.profile_id === profile,
       )!;
       const missing = row.missing.find((item) => item.route_id === route)!;
+      if (
+        value.admin.semifinal_results.some(
+          (result) =>
+            result.profile_id === profile &&
+            result.route_number === missing.number,
+        )
+      )
+        throw new Error("Für diese Route ist bereits ein Ergebnis vorhanden.");
       missing.settled = true;
       row.completed++;
       row.points += zone * 10;
-      value.admin.semifinal_results.push({
+      const result = {
         id: crypto.randomUUID(),
         profile_id: profile,
         route_number: missing.number,
         zone,
         points: zone * 10,
         created_at: now(),
+      };
+      value.admin.semifinal_results.push(result);
+      value.admin.semifinal_audit.unshift({
+        result_id: result.id,
+        action: "Halbfinalergebnis eingetragen",
+        reason,
+        actor: "René · Demokonto",
+        created_at: now(),
+        before_data: {},
+        after_data: { zone, points: result.points },
       });
       for (const item of value.admin.classes) {
         if (item.league === row.league && item.class_label === row.class_label)
@@ -426,6 +458,56 @@ export const demoSource: CompetitionCenterSource & {
       }
       audit(value, "Halbfinalergebnis nachgetragen", reason);
     }),
+  correctCompetitionResult: async ({ resultId, zone, reason, expected }) => {
+    let saved: CompetitionResult | undefined;
+    mutate((value) => {
+      if (!reason.trim() || reason.length > 500)
+        throw new Error("Begründung erforderlich.");
+      if (!Number.isInteger(zone) || zone < 0 || zone > 10)
+        throw new Error("Bitte einen gültigen Griff wählen.");
+      const result = value.admin.semifinal_results.find(
+        (result) => result.id === resultId,
+      );
+      if (!result) throw new Error("Das Ergebnis wurde nicht gefunden.");
+      if (
+        expected &&
+        (expected.zone !== result.zone ||
+          expected.points !== result.points ||
+          expected.changedAt !==
+            (value.admin.semifinal_audit.find(
+              (item) => item.result_id === resultId,
+            )?.created_at ?? null))
+      )
+        throw new Error(
+          "Dieses Ergebnis wurde inzwischen geändert. Bitte den aktuellen Wert laden und die Korrektur erneut prüfen.",
+        );
+      const row = value.admin.semifinal.find(
+        (row) => row.profile_id === result.profile_id,
+      )!;
+      const before = { zone: result.zone, points: result.points };
+      row.points += zone * 10 - result.points;
+      result.zone = zone;
+      result.points = zone * 10;
+      value.admin.semifinal_audit.unshift({
+        result_id: resultId,
+        action: "Halbfinalergebnis geändert",
+        reason,
+        actor: "René · Demokonto",
+        created_at: now(),
+        before_data: before,
+        after_data: { zone, points: result.points },
+      });
+      for (const item of value.admin.classes)
+        if (item.league === row.league && item.class_label === row.class_label)
+          item.stale = true;
+      saved = {
+        ...result,
+        route_id: `semi${result.route_number}`,
+        flash: false,
+      };
+    });
+    return saved!;
+  },
   setFinalExclusion: async (_season, profile, status, reason) =>
     mutate((value) => {
       const row = value.admin.semifinal.find(

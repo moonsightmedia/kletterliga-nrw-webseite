@@ -48,6 +48,7 @@ function readableError(error: unknown): string {
   const messages: Record<string, string> = {
     AUTHENTICATION_REQUIRED: "Bitte melde dich erneut an.",
     LEAGUE_ADMIN_REQUIRED: "Diese Aktion ist nur für die Liga-Administration verfügbar.",
+    COMPETITION_VERSION_CONFLICT: "Dieses Ergebnis wurde inzwischen geändert. Bitte den aktuellen Wert laden und die Korrektur erneut prüfen.",
     COMPETITION_STAFF_REQUIRED: "Du bist für diesen Wettkampftag nicht als Staff eingetragen.",
     COMPETITION_NOT_OPEN: "Die Ergebniseingabe ist derzeit geschlossen.",
     COMPETITION_DEADLINE_REACHED: "Die Halbfinaleingabe ist seit 16:00 Uhr geschlossen. Bitte wende dich für einen Nachtrag an René.",
@@ -84,8 +85,12 @@ export const submitCompetitionResult = (input: { season: string; routeId: string
     p_season: input.season, p_route_id: input.routeId, p_zone: input.zone,
     p_flash: false, p_qr_token: input.qrToken,
   });
-export const correctCompetitionResult = (input: { resultId: string; zone: number; reason: string }) =>
-  rpc<CompetitionResult>("correct_competition_result", {
+export const correctCompetitionResult = (input: { resultId: string; zone: number; reason: string; expected?: { zone: number; points: number; changedAt: string | null } }) =>
+  input.expected ? rpc<CompetitionResult>("correct_competition_semifinal_result", {
+    p_result_id: input.resultId, p_zone: input.zone, p_reason: input.reason,
+    p_expected_zone: input.expected.zone, p_expected_points: input.expected.points,
+    p_expected_changed_at: input.expected.changedAt,
+  }) : rpc<CompetitionResult>("correct_competition_result", {
     p_result_id: input.resultId, p_zone: input.zone, p_flash: false, p_reason: input.reason,
   });
 export const listCompetitionStandings = (season: string) =>

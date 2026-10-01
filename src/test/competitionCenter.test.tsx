@@ -19,6 +19,7 @@ vi.mock("@/services/competitionFinal", async (importOriginal) => ({
 vi.mock("@/services/competitionDay", () => ({
   getCompetitionAdmin: api.semifinal,
   setCompetitionPhase: vi.fn(),
+  correctCompetitionResult: vi.fn(),
 }));
 vi.mock("@/app/pages/admin/LeagueCompetition", () => ({
   default: () => <p>Halbfinalkonfiguration</p>,
@@ -72,11 +73,11 @@ describe("competition center", () => {
       </MemoryRouter>,
     );
     expect(
-      await screen.findByText("Halbfinalrangliste ansehen"),
+      await screen.findByRole("heading", { name: "Halbfinale" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("region", {
-        name: "Halbfinalrangliste Vorstieg · Testklasse",
+        name: "Halbfinalrangliste",
       }),
     ).toBeInTheDocument();
     expect(

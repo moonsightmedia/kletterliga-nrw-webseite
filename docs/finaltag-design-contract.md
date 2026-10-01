@@ -45,3 +45,7 @@ Die Teilnehmerseite trennt Halbfinale und Finale in zwei Ansichten und filtert n
 ## Gemeinsames Finalpasswort · Entscheidung 01.10.2026
 
 Janosch bestätigt ein gemeinsames Passwort für beide Final-Handys. René richtet es in Finale ein; beide Handys wählen alle freigegebenen Klassen. Handy 1/2 kennzeichnet nur die Eingabequelle. Passwortwechsel widerruft das alte für beide, auch bei wiederholten Speicheranfragen. Keine Erweiterung der Halbfinal- oder Adminrechte; TV bleibt ohne Anmeldung. Der Link zur Finaleingabe erscheint nicht im Halbfinaldemo.
+
+## Vereinfachte Halbfinalverwaltung · 01.10.2026
+
+Die Halbfinalansicht verwendet eine kompakte Kopfzeile und Navigation, Suche über alle Klassen, Klassenfilter und offene Ergebnisse. Teilnehmer öffnen einen fokussierten Routendialog mit Ändern oder Eintragen. Texte, doppelte Klassenkarten und globale Eingabezeitlisten entfallen. Konfiguration und Protokolle sind zugeklappt. Der neue Bedienablauf und die zugrunde liegenden Regeln stehen in [Halbfinalverwaltung](halbfinale-admin-design.md).

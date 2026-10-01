@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Outlet, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appRoutes } from "@/app/AppRoutes";
@@ -52,6 +52,7 @@ function open(path: string) {
 describe("actual competition route access", () => {
   beforeEach(() => {
     access.auth.mockClear();
+    access.live.mockClear();
     access.user = null;
     access.role = "guest";
     access.live.mockResolvedValue({
@@ -71,7 +72,7 @@ describe("actual competition route access", () => {
     expect(
       await screen.findByRole("heading", { name: "Halbfinale 2026" }),
     ).toBeInTheDocument();
-    expect(access.live).toHaveBeenCalledWith("2026");
+    await waitFor(() => expect(access.live).toHaveBeenCalledWith("2026"));
     expect(access.auth).not.toHaveBeenCalled();
   });
   it("requires login for René's competition center", async () => {
