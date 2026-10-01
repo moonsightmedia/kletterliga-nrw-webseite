@@ -10,79 +10,99 @@ import { supabase } from "@/services/supabase";
 
 type Answers = {
   participation: string;
-  non_participation_reasons: string[];
-  non_participation_detail: string;
+  top_wish: string;
+  keep_aspect: string;
+  main_barrier: string;
+  barrier_detail: string;
   registration_detail: string;
-  season_positive: string;
-  season_difficult: string;
+  awareness_source: string;
+  spectator_note: string;
+  finale_eligibility: string;
   finale_attendance: string;
-  finale_reasons: string[];
+  finale_reason: string;
   finale_detail: string;
+  next_year: string;
+  deep_dive_topics: string[];
   route_quantity: string;
   route_ideas: string;
-  hall_quantity: string;
-  hall_choice: string;
+  hall_pool: string;
+  hall_visits: string;
   hall_ideas: string;
   season_distribution: string;
   distribution_ideas: string;
-  drop_stations: string;
-  drop_stations_ideas: string;
-  top_wish: string;
-  next_year: string;
+  dropped_score: string;
+  scoring_ideas: string;
 };
 
 const initialAnswers: Answers = {
-  participation: "", non_participation_reasons: [], non_participation_detail: "", registration_detail: "",
-  season_positive: "", season_difficult: "", finale_attendance: "", finale_reasons: [], finale_detail: "",
-  route_quantity: "", route_ideas: "",
-  hall_quantity: "", hall_choice: "", hall_ideas: "", season_distribution: "",
-  distribution_ideas: "", drop_stations: "", drop_stations_ideas: "",
-  top_wish: "", next_year: "",
+  participation: "", top_wish: "", keep_aspect: "", main_barrier: "", barrier_detail: "",
+  registration_detail: "", awareness_source: "", spectator_note: "", finale_eligibility: "",
+  finale_attendance: "", finale_reason: "", finale_detail: "", next_year: "", deep_dive_topics: [],
+  route_quantity: "", route_ideas: "", hall_pool: "", hall_visits: "", hall_ideas: "",
+  season_distribution: "", distribution_ideas: "", dropped_score: "", scoring_ideas: "",
 };
 
 const participationOptions = [
-  { value: "active", label: "Ich bin mitgeklettert" },
-  { value: "followed", label: "Ich habe die Liga verfolgt, aber nicht mitgemacht" },
-  { value: "not_participated", label: "Ich habe weder mitgemacht noch die Liga näher verfolgt" },
+  { value: "active", label: "Ich bin 2026 mitgeklettert" },
+  { value: "followed", label: "Ich kannte die Liga, habe aber nicht mitgemacht" },
+  { value: "not_participated", label: "Ich habe erst spät oder nach der Saison davon erfahren" },
+  { value: "spectator", label: "Ich war nur als Zuschauer:in oder Begleitung dabei" },
 ];
 const reasonOptions = [
-  { value: "time", label: "Zu wenig Zeit" }, { value: "travel", label: "Wege oder Hallen zu weit" },
-  { value: "format", label: "Ablauf oder Regeln passten nicht" }, { value: "routes", label: "Routen passten nicht zu mir" },
-  { value: "cost", label: "Kosten waren eine Hürde" }, { value: "awareness", label: "Zu spät von der Teilnahme erfahren" },
-  { value: "unaware", label: "Ich kannte die Liga noch nicht" }, { value: "registration", label: "Saisonanmeldung oder App haben nicht funktioniert" },
-  { value: "motivation", label: "Andere Interessen oder Prioritäten" }, { value: "other", label: "Ein anderer Grund" },
+  { value: "time", label: "Mir fehlte die Zeit" }, { value: "travel", label: "Die Wege zu den Hallen waren zu weit" },
+  { value: "format", label: "Ablauf oder Regeln passten nicht zu mir" }, { value: "routes", label: "Die Routen passten nicht zu mir" },
+  { value: "cost", label: "Die Kosten waren eine Hürde" }, { value: "registration", label: "Anmeldung oder App haben nicht funktioniert" },
+  { value: "confidence", label: "Ich war unsicher, ob mein Können ausreicht" },
+  { value: "personal", label: "Persönliche Umstände" }, { value: "other", label: "Ein anderer Grund" },
+];
+const eligibilityOptions = [
+  { value: "yes", label: "Ja, ich bin fürs Halbfinale startberechtigt" },
+  { value: "no", label: "Nein, ich bin nicht startberechtigt" },
+  { value: "unsure", label: "Das weiß ich nicht genau" },
+];
+const pastEligibilityOptions = [
+  { value: "yes", label: "Ja, ich war fürs Halbfinale startberechtigt" },
+  { value: "no", label: "Nein, ich war nicht startberechtigt" },
+  { value: "unsure", label: "Das weiß ich nicht genau" },
 ];
 const finaleOptions = [
-  { value: "yes", label: "Ja, ich nehme teil" }, { value: "no", label: "Nein, ich nehme nicht teil" },
+  { value: "yes", label: "Ja, ich nehme am Halbfinale teil" }, { value: "no", label: "Nein, ich nehme nicht teil" },
   { value: "unsure", label: "Das ist noch offen" },
 ];
 const finaleReasonOptions = [
   { value: "date", label: "Der Termin passt nicht" }, { value: "travel", label: "Anreise oder Entfernung" },
-  { value: "cost", label: "Kosten" }, { value: "format", label: "Ablauf oder Format" },
+  { value: "cost", label: "Die Kosten" }, { value: "format", label: "Ablauf oder Format" },
   { value: "registration", label: "Die Finalanmeldung hat nicht funktioniert" },
-  { value: "cancelled", label: "Ich musste meine Teilnahme wieder absagen" },
+  { value: "personal", label: "Persönliche Umstände" },
   { value: "other", label: "Ein anderer Grund" },
+];
+const deepDiveOptions = [
+  { value: "routes", label: "Routen" }, { value: "halls", label: "Hallen & Wege" },
+  { value: "timing", label: "Zeitplan" }, { value: "scoring", label: "Wertung & Streichstationen" },
 ];
 const routeOptions = [
   { value: "more", label: "Mehr Routen" }, { value: "same", label: "Die Anzahl passt" },
   { value: "fewer", label: "Weniger Routen" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
 ];
-const hallOptions = [
-  { value: "more", label: "Mehr Hallen" }, { value: "same", label: "Die Anzahl passt" },
-  { value: "fewer", label: "Weniger Hallen" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
+const hallPoolOptions = [
+  { value: "more", label: "Mehr Partnerhallen zur Auswahl" }, { value: "same", label: "Etwa gleich viele" },
+  { value: "fewer", label: "Weniger Partnerhallen" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
 ];
-const hallChoiceOptions = [
-  { value: "more_choice", label: "Mehr Auswahl der Hallen" }, { value: "same", label: "So lassen" },
-  { value: "fixed_halls", label: "Mehr feste Vorgaben" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
+const hallVisitOptions = [
+  { value: "all", label: "Alle teilnehmenden Hallen besuchen" },
+  { value: "choose", label: "Eine feste Anzahl aus einem größeren Hallenpool wählen" },
+  { value: "regions", label: "Zwischen regionalen Hallengruppen wählen" },
+  { value: "unsure", label: "Kann ich nicht beurteilen" },
 ];
 const distributionOptions = [
-  { value: "spread", label: "Mehr Zeit zwischen den Hallen" }, { value: "same", label: "Verteilung passt" },
-  { value: "compact", label: "Kompaktere Saison" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
+  { value: "more", label: "Mehr Zeit pro Hallenstation" }, { value: "same", label: "Die Zeit pro Halle passt" },
+  { value: "less", label: "Kürzere Stationen" }, { value: "unsure", label: "Kann ich nicht beurteilen" },
 ];
-const dropStationOptions = [
-  { value: "yes", label: "Ja, Streichstationen wären gut" },
-  { value: "no", label: "Nein, alle Hallen sollten zählen" },
-  { value: "unsure", label: "Ich bin noch unsicher" },
+const droppedScoreOptions = [
+  { value: "none", label: "Nein, alle Hallenwertungen sollen zählen" },
+  { value: "one", label: "Ja, die schwächste Hallenwertung streichen" },
+  { value: "multiple", label: "Ja, mehr als eine Hallenwertung streichen" },
+  { value: "unsure", label: "Kann ich nicht beurteilen" },
 ];
 const nextYearOptions = [
   { value: "yes", label: "Ja" }, { value: "maybe", label: "Vielleicht" }, { value: "no", label: "Eher nicht" },
@@ -108,13 +128,13 @@ function ChoiceField({ legend, name, options, value, onChange }: {
   </fieldset>;
 }
 
-function ReasonsField({ legend, name, options, values, onToggle }: {
-  legend: string; name: string; options: { value: string; label: string }[];
+function MultiChoiceField({ legend, hint, name, options, values, onToggle }: {
+  legend: string; hint: string; name: string; options: { value: string; label: string }[];
   values: string[]; onToggle: (value: string) => void;
 }) {
   return <fieldset className="space-y-3">
     <legend className="text-base font-bold leading-snug text-primary sm:text-lg">{legend}</legend>
-    <p className="text-sm text-muted-foreground">Du kannst mehrere Gründe auswählen und unten genauer erklären.</p>
+    <p className="text-sm text-muted-foreground">{hint}</p>
     <div className="grid gap-2 sm:grid-cols-2">{options.map((option) =>
       <label key={option.value} className="block cursor-pointer">
         <input className="peer sr-only" type="checkbox" name={name} value={option.value} checked={values.includes(option.value)} onChange={() => onToggle(option.value)} />
@@ -160,27 +180,33 @@ const Saisonfeedback = () => {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const errorClass = "border-l-4 border-destructive bg-destructive/5 p-4 text-sm text-form-error";
+  const pastFinalDay = Date.now() >= new Date("2026-10-04T00:00:00+02:00").getTime();
+  const attendanceOptions = pastFinalDay
+    ? [{ value: "yes", label: "Ja, ich war beim Halbfinale dabei" }, { value: "no", label: "Nein, ich war nicht dabei" }]
+    : finaleOptions;
 
-  const setAnswer = (name: keyof Answers, value: string) => {
+  const setAnswer = (name: Exclude<keyof Answers, "deep_dive_topics">, value: string) => {
     setAnswers((current) => {
-      if (name === "participation") return {
-        ...current, participation: value,
-        non_participation_reasons: [], non_participation_detail: "", registration_detail: "",
-        season_positive: "", season_difficult: "", finale_attendance: "", finale_reasons: [], finale_detail: "",
-      };
-      if (name === "finale_attendance") return { ...current, finale_attendance: value, finale_reasons: [], finale_detail: "" };
+      if (name === "participation") return { ...initialAnswers, participation: value };
+      if (name === "main_barrier") return { ...current, main_barrier: value, registration_detail: "" };
+      if (name === "finale_eligibility") return { ...current, finale_eligibility: value, finale_attendance: "", finale_reason: "", finale_detail: "" };
+      if (name === "finale_attendance") return { ...current, finale_attendance: value, finale_reason: "", finale_detail: "" };
       return { ...current, [name]: value };
     });
     setError("");
   };
-  const toggleReason = (field: "non_participation_reasons" | "finale_reasons", value: string) => {
+  const toggleTopic = (value: string) => {
     setAnswers((current) => {
-      const selected = current[field].includes(value)
-        ? current[field].filter((reason) => reason !== value)
-        : [...current[field], value];
-      return { ...current, [field]: selected,
-        ...(field === "non_participation_reasons" && value === "registration" && !selected.includes("registration")
-          ? { registration_detail: "" } : {}) };
+      const selected = current.deep_dive_topics.includes(value)
+        ? current.deep_dive_topics.filter((topic) => topic !== value)
+        : [...current.deep_dive_topics, value];
+      const next = { ...current, deep_dive_topics: selected };
+      if (selected.includes(value)) return next;
+      if (value === "routes") return { ...next, route_quantity: "", route_ideas: "" };
+      if (value === "halls") return { ...next, hall_pool: "", hall_visits: "", hall_ideas: "" };
+      if (value === "timing") return { ...next, season_distribution: "", distribution_ideas: "" };
+      if (value === "scoring") return { ...next, dropped_score: "", scoring_ideas: "" };
+      return next;
     });
     setError("");
   };
@@ -192,19 +218,14 @@ const Saisonfeedback = () => {
       document.getElementById("feedback-participation")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       return;
     }
-    if (answers.participation !== "active" && !answers.non_participation_reasons.length && !answers.non_participation_detail.trim()) {
-      setError("Bitte nenne mindestens einen Grund, warum du 2026 nicht mitgeklettert bist.");
-      document.getElementById("feedback-reasons")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (answers.participation !== "not_participated" && !answers.top_wish.trim()) {
-      setError("Bitte schreibe uns deinen wichtigsten Wunsch für 2027.");
-      document.getElementById("feedback-top-wish")?.focus();
+    if (answers.participation === "followed" && !answers.main_barrier) {
+      setError("Bitte wähle den wichtigsten Grund aus, warum du 2026 nicht mitgemacht hast.");
+      document.getElementById("feedback-main-barrier")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       return;
     }
     setSending(true);
     try {
-      const { data, error: requestError } = await supabase.functions.invoke("submit-season-feedback", { body: { survey_version: 3, ...answers, website, fill_time_ms: Date.now() - openedAt } });
+      const { data, error: requestError } = await supabase.functions.invoke("submit-season-feedback", { body: { survey_version: 4, ...answers, website, fill_time_ms: Date.now() - openedAt } });
       if (requestError || !data?.ok) { setError("Das Speichern hat gerade nicht geklappt. Bitte versuche es später erneut."); return; }
       setSent(true);
     } catch { setError("Das Speichern hat gerade nicht geklappt. Bitte versuche es später erneut."); }
@@ -215,7 +236,7 @@ const Saisonfeedback = () => {
     <PageHeader title="SAISONFEEDBACK 2026" subtitle="Was lief gut – und was sollten wir für 2027 ändern? Wir freuen uns auf deine ehrliche Sicht." />
     <section className="bg-background py-10 pb-20 sm:py-14 sm:pb-24">
       <div className="container-kl max-w-5xl">
-        <p className="mb-6 max-w-3xl text-sm leading-6 text-muted-foreground sm:mb-8 sm:text-base">Das Formular ist ohne Namen oder E-Mail-Adresse. Wähle zunächst aus, wie du die Saison erlebt hast. Danach zeigen wir dir die passenden Fragen.</p>
+        <p className="mb-6 max-w-3xl text-sm leading-6 text-muted-foreground sm:mb-8 sm:text-base">Ohne Namen oder E-Mail-Adresse: Erzähl uns zuerst, wie du die Liga erlebt hast. Danach kannst du nur die Themen vertiefen, zu denen du etwas sagen möchtest.</p>
         {sent ? <div className="rounded-xl border border-border/50 bg-card p-8 text-center shadow-lg sm:p-12" role="status">
           <Check className="mx-auto mb-5 size-10 text-secondary" aria-hidden="true" />
           <h2 className="font-headline text-2xl text-primary sm:text-3xl">DANKE FÜR DEIN FEEDBACK!</h2>
@@ -223,47 +244,55 @@ const Saisonfeedback = () => {
           <Link to="/finale" className="mt-7 inline-flex items-center gap-2 font-bold text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary">Zum Finaltag <ArrowRight className="size-4" aria-hidden="true" /></Link>
         </div> : <form onSubmit={submit} className="space-y-5" noValidate>
           <div className="sr-only" aria-hidden="true"><label htmlFor="feedback-website">Website</label><input id="feedback-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} /></div>
-          <FormSection number="01" title="DEINE PERSPEKTIVE" description="Die folgenden Fragen passen sich daran an, ob du mitgemacht hast oder nicht.">
-            <div id="feedback-participation"><ChoiceField legend="Wie hast du die Kletterliga 2026 erlebt?" name="participation" options={participationOptions} value={answers.participation} onChange={(value) => setAnswer("participation", value)} /></div>
+          <FormSection number="01" title="DEINE PERSPEKTIVE" description="Ein paar Fragen zum Einstieg – ohne vorgegebene Themen für deinen wichtigsten Gedanken.">
+            <div id="feedback-participation"><ChoiceField legend="Welche Beschreibung trifft am besten auf dich zu?" name="participation" options={participationOptions} value={answers.participation} onChange={(value) => setAnswer("participation", value)} /></div>
             {error.startsWith("Bitte wähle zuerst") && <p role="alert" className={errorClass}>{error}</p>}
-            {answers.participation && answers.participation !== "active" && <div id="feedback-reasons" className="space-y-7 rounded-xl border border-secondary/20 bg-accent/20 p-4 sm:p-6">
-              <ReasonsField legend="Wie kam es dazu, dass du 2026 nicht mitgeklettert bist?" name="non_participation_reasons" options={reasonOptions} values={answers.non_participation_reasons} onToggle={(value) => toggleReason("non_participation_reasons", value)} />
-              {error.startsWith("Bitte nenne mindestens") && <p role="alert" className={errorClass}>{error}</p>}
-              <WrittenField id="feedback-non-participation-detail" label="Was war für dich der entscheidende Punkt?" hint="Zum Beispiel eine konkrete Hürde, ein Moment im Saisonablauf oder etwas, das wir bislang nicht bedacht haben." value={answers.non_participation_detail} onChange={(value) => setAnswer("non_participation_detail", value)} placeholder="Erzähl uns, was bei dir den Ausschlag gegeben hat …" />
-              {answers.non_participation_reasons.includes("registration") && <WrittenField id="feedback-registration-detail" label="Was genau hat technisch nicht funktioniert?" hint="Zum Beispiel Saisonanmeldung, Login oder Ergebniseingabe in der App. Bitte keine persönlichen Daten oder Fehlermeldungen mit Zugangsdaten einfügen." value={answers.registration_detail} onChange={(value) => setAnswer("registration_detail", value)} placeholder="An welcher Stelle bist du nicht weitergekommen? …" />}
+            {answers.participation && <WrittenField id="feedback-top-wish" label={answers.participation === "active" || answers.participation === "followed" ? "Wenn du eine Sache für 2027 ändern könntest: Welche wäre das – und warum?" : "Was wäre dir bei einer Kletterliga 2027 wichtig?"} hint="Ein Gedanke reicht. Du musst nicht zu jedem Thema etwas schreiben." value={answers.top_wish} onChange={(value) => setAnswer("top_wish", value)} maxLength={1200} placeholder="Mir wäre besonders wichtig, dass …" />}
+            {(answers.participation === "active" || answers.participation === "followed") && <WrittenField id="feedback-keep-aspect" label="Was sollte auf jeden Fall bleiben?" value={answers.keep_aspect} onChange={(value) => setAnswer("keep_aspect", value)} placeholder="Das hat für mich gut funktioniert …" />}
+          </FormSection>
+          {answers.participation === "followed" && <FormSection number="02" title="WARUM NICHT DABEI?" description="Uns hilft vor allem zu verstehen, was für dich ausschlaggebend war.">
+            <div id="feedback-main-barrier"><ChoiceField legend="Was war dein wichtigster Grund, 2026 nicht mitzuklettern?" name="main_barrier" options={reasonOptions} value={answers.main_barrier} onChange={(value) => setAnswer("main_barrier", value)} /></div>
+            {error.startsWith("Bitte wähle den wichtigsten") && <p role="alert" className={errorClass}>{error}</p>}
+            <WrittenField id="feedback-barrier-detail" label="Gab es weitere Gründe oder einen konkreten Moment, der den Ausschlag gab?" hint="Freiwillig – hier ist Platz für alles, was die Auswahl nicht trifft." value={answers.barrier_detail} onChange={(value) => setAnswer("barrier_detail", value)} placeholder="Bei mir war besonders wichtig, dass …" />
+            {answers.main_barrier === "registration" && <WrittenField id="feedback-registration-detail" label="Was hat bei Anmeldung oder App nicht funktioniert?" hint="Bitte keine Zugangsdaten oder persönlichen Angaben eintragen." value={answers.registration_detail} onChange={(value) => setAnswer("registration_detail", value)} placeholder="An dieser Stelle kam ich nicht weiter …" />}
+          </FormSection>}
+          {answers.participation === "not_participated" && <FormSection number="02" title="SPÄT ENTDECKT" description="Du musst die Saison nicht beurteilen, wenn du sie kaum kanntest.">
+            <WrittenField id="feedback-awareness-source" label="Wo oder wann bist du auf die Kletterliga aufmerksam geworden?" hint="Freiwillig – damit wir 2027 besser sichtbar werden." value={answers.awareness_source} onChange={(value) => setAnswer("awareness_source", value)} placeholder="Zum Beispiel durch eine Halle, Freunde oder Social Media …" />
+          </FormSection>}
+          {answers.participation === "spectator" && <FormSection number="02" title="DEIN BLICK VON AUSSEN" description="Auch als Zuschauer:in oder Begleitung kannst du uns etwas Wichtiges mitgeben.">
+            <WrittenField id="feedback-spectator-note" label="Was ist dir aus deiner Perspektive aufgefallen?" value={answers.spectator_note} onChange={(value) => setAnswer("spectator_note", value)} placeholder="Das fand ich gut oder würde ich ändern …" />
+          </FormSection>}
+          {answers.participation === "active" && <FormSection number="02" title="HALBFINALE AM 3. OKTOBER" description={pastFinalDay ? "Nur wenn du dazu etwas sagen möchtest. Halbfinale und Finale fanden am selben Tag statt." : "Nur wenn du dazu etwas sagen möchtest. Halbfinale und Finale finden am selben Tag statt."}>
+            <ChoiceField legend={pastFinalDay ? "Warst du für das Halbfinale startberechtigt?" : "Bist du für das Halbfinale startberechtigt?"} name="finale_eligibility" options={pastFinalDay ? pastEligibilityOptions : eligibilityOptions} value={answers.finale_eligibility} onChange={(value) => setAnswer("finale_eligibility", value)} />
+            {answers.finale_eligibility === "yes" && <div className="space-y-6 rounded-xl border border-secondary/20 bg-accent/20 p-4 sm:p-6">
+              <ChoiceField legend={pastFinalDay ? "Hast du am Halbfinale am 3. Oktober teilgenommen?" : "Wirst du am Halbfinale am 3. Oktober teilnehmen?"} name="finale_attendance" options={attendanceOptions} value={answers.finale_attendance} onChange={(value) => setAnswer("finale_attendance", value)} />
+              {(answers.finale_attendance === "no" || answers.finale_attendance === "unsure") && <>
+                <ChoiceField legend={pastFinalDay ? "Was war der wichtigste Grund dafür?" : "Was ist der wichtigste Grund dafür?"} name="finale_reason" options={finaleReasonOptions} value={answers.finale_reason} onChange={(value) => setAnswer("finale_reason", value)} />
+                <WrittenField id="feedback-finale-detail" label="Möchtest du dazu noch etwas erklären?" hint="Freiwillig – auch technische Probleme kannst du hier beschreiben, aber bitte ohne persönliche Daten." value={answers.finale_detail} onChange={(value) => setAnswer("finale_detail", value)} placeholder={pastFinalDay ? "Das hat für mich den Ausschlag gegeben …" : "Das ist für mich ausschlaggebend …"} />
+              </>}
             </div>}
-            {answers.participation === "active" && <div className="space-y-7">
-              <div className="grid gap-6 sm:grid-cols-2">
-                <WrittenField id="feedback-season-positive" label="Was hat 2026 gut funktioniert?" value={answers.season_positive} onChange={(value) => setAnswer("season_positive", value)} placeholder="Das sollten wir beibehalten …" />
-                <WrittenField id="feedback-season-difficult" label="Was hat dich ausgebremst?" value={answers.season_difficult} onChange={(value) => setAnswer("season_difficult", value)} placeholder="Hier wurde es für mich schwierig …" />
-              </div>
-              <div className="space-y-6 border-t border-primary/15 pt-6">
-                <ChoiceField legend="Wie sieht es mit deiner Teilnahme am Finale am 3. Oktober aus?" name="finale_attendance" options={finaleOptions} value={answers.finale_attendance} onChange={(value) => setAnswer("finale_attendance", value)} />
-                {(answers.finale_attendance === "no" || answers.finale_attendance === "unsure") && <div className="space-y-6 rounded-xl border border-secondary/20 bg-accent/20 p-4 sm:p-6">
-                  <ReasonsField legend="Was spricht für dich gegen eine Teilnahme am Finale?" name="finale_reasons" options={finaleReasonOptions} values={answers.finale_reasons} onToggle={(value) => toggleReason("finale_reasons", value)} />
-                  <WrittenField id="feedback-finale-detail" label="Möchtest du uns den Grund genauer erklären?" hint="Auch Probleme mit der Finalanmeldung kannst du hier beschreiben. Bitte keine persönlichen Daten eintragen." value={answers.finale_detail} onChange={(value) => setAnswer("finale_detail", value)} placeholder="Das war für mich ausschlaggebend …" />
-                </div>}
-              </div>
-            </div>}
-          </FormSection>
-          <FormSection number="02" title="ROUTEN & HALLEN" description="Mehr oder weniger ist nicht alles: Uns interessieren deine Gründe und konkreten Vorschläge.">
-            <ChoiceField legend="Wie viele Routen wären für dich richtig?" name="route_quantity" options={routeOptions} value={answers.route_quantity} onChange={(value) => setAnswer("route_quantity", value)} />
-            <WrittenField id="feedback-route-ideas" label="Was würdest du an den Routen ändern?" hint="Anzahl, Schwierigkeitsgrade, Stil, Auswahl oder etwas ganz anderes." value={answers.route_ideas} onChange={(value) => setAnswer("route_ideas", value)} placeholder="Zum Beispiel: lieber …, weil …" />
-            <div className="border-t border-primary/15 pt-7"><ChoiceField legend="Wie viele Hallen sollten Teil der Liga sein?" name="hall_quantity" options={hallOptions} value={answers.hall_quantity} onChange={(value) => setAnswer("hall_quantity", value)} /></div>
-            <ChoiceField legend="Wie frei möchtest du die Hallen wählen können?" name="hall_choice" options={hallChoiceOptions} value={answers.hall_choice} onChange={(value) => setAnswer("hall_choice", value)} />
-            <WrittenField id="feedback-hall-ideas" label="Welche Hallen, Regionen oder Auswahlregeln wünschst du dir?" value={answers.hall_ideas} onChange={(value) => setAnswer("hall_ideas", value)} placeholder="Andere Hallen, Wege, Kombinationen oder Wahlmöglichkeiten …" />
-          </FormSection>
-          <FormSection number="03" title="SAISONMODUS" description="Hier geht es um die Verteilung der Stationen und darum, ob wirklich jede Halle zählen sollte.">
-            <ChoiceField legend="Wie sollte die Saison zeitlich verteilt sein?" name="season_distribution" options={distributionOptions} value={answers.season_distribution} onChange={(value) => setAnswer("season_distribution", value)} />
-            <WrittenField id="feedback-distribution-ideas" label="Wie würde eine gute Verteilung für dich aussehen?" value={answers.distribution_ideas} onChange={(value) => setAnswer("distribution_ideas", value)} placeholder="Zum Beispiel mehr Zeit pro Halle, andere Reihenfolge oder flexible Termine …" />
-            <div className="border-t border-primary/15 pt-7"><ChoiceField legend="Sollte man einzelne Hallen als Streichstation auslassen können?" name="drop_stations" options={dropStationOptions} value={answers.drop_stations} onChange={(value) => setAnswer("drop_stations", value)} /></div>
-            <WrittenField id="feedback-drop-stations-ideas" label="Warum – und wie könnte das fair funktionieren?" value={answers.drop_stations_ideas} onChange={(value) => setAnswer("drop_stations_ideas", value)} placeholder="Wie viele Stationen dürften entfallen? Was wäre fair? …" />
-          </FormSection>
-          <FormSection number="04" title="DEIN WICHTIGSTER WUNSCH" description="Wenn wir für 2027 nur eine Sache ändern oder unbedingt behalten: Welche wäre das für dich?">
-            <WrittenField id="feedback-top-wish" label={answers.participation === "not_participated" ? "Was müsste die Kletterliga bieten, damit du 2027 mitmachen würdest? (freiwillig)" : "Was wünschst du dir für die nächste Saison?"} value={answers.top_wish} onChange={(value) => setAnswer("top_wish", value)} maxLength={1200} placeholder="Mir wäre besonders wichtig, dass …" />
-            {error.startsWith("Bitte schreibe uns") && <p role="alert" className={errorClass}>{error}</p>}
-            <ChoiceField legend="Könntest du dir vorstellen, 2027 dabei zu sein?" name="next_year" options={nextYearOptions} value={answers.next_year} onChange={(value) => setAnswer("next_year", value)} />
-          </FormSection>
+          </FormSection>}
+          {answers.participation && <FormSection number="03" title="DEIN BLICK AUF 2027" description="Die Vertiefung ist freiwillig. Wähle nur Themen aus, bei denen du mitreden möchtest.">
+            <ChoiceField legend={answers.participation === "active" ? "Könntest du dir vorstellen, 2027 wieder mitzuklettern?" : "Könntest du dir vorstellen, 2027 selbst mitzuklettern?"} name="next_year" options={nextYearOptions} value={answers.next_year} onChange={(value) => setAnswer("next_year", value)} />
+            <MultiChoiceField legend="Zu welchen Themen möchtest du genauer Feedback geben?" hint="Du kannst mehrere Themen wählen – oder direkt absenden." name="deep_dive_topics" options={deepDiveOptions} values={answers.deep_dive_topics} onToggle={toggleTopic} />
+          </FormSection>}
+          {answers.deep_dive_topics.includes("routes") && <FormSection number="R" title="ROUTEN" description="Hier geht es um die Ligaarouten während der Saison, nicht um die fünf Halbfinalrouten.">
+            <ChoiceField legend="Wie viele Ligaarouten pro Halle wünschst du dir im Vergleich zu 2026?" name="route_quantity" options={routeOptions} value={answers.route_quantity} onChange={(value) => setAnswer("route_quantity", value)} />
+            <WrittenField id="feedback-route-ideas" label="Was sollte sich bei Schwierigkeit, Stil oder Auswahl der Routen ändern?" value={answers.route_ideas} onChange={(value) => setAnswer("route_ideas", value)} placeholder="Für mich wäre besser, wenn …" />
+          </FormSection>}
+          {answers.deep_dive_topics.includes("halls") && <FormSection number="H" title="HALLEN & WEGE" description="Mehr Partnerhallen bedeuten nicht automatisch mehr verpflichtende Besuche.">
+            <ChoiceField legend="Wie groß sollte der Pool an Partnerhallen sein?" name="hall_pool" options={hallPoolOptions} value={answers.hall_pool} onChange={(value) => setAnswer("hall_pool", value)} />
+            <ChoiceField legend="Wie sollte festgelegt werden, welche Hallen man für die Wertung besuchen muss?" name="hall_visits" options={hallVisitOptions} value={answers.hall_visits} onChange={(value) => setAnswer("hall_visits", value)} />
+            <WrittenField id="feedback-hall-ideas" label="Welche Hallen, Regionen oder Auswahlregeln würden dir helfen – und warum?" value={answers.hall_ideas} onChange={(value) => setAnswer("hall_ideas", value)} placeholder="Eine bessere Verteilung wäre für mich …" />
+          </FormSection>}
+          {answers.deep_dive_topics.includes("timing") && <FormSection number="Z" title="ZEITPLAN" description="Denke an die Zeit pro Hallenstation und den Rhythmus der Saison.">
+            <ChoiceField legend="Wie viel Zeit pro Hallenstation wäre für dich richtig?" name="season_distribution" options={distributionOptions} value={answers.season_distribution} onChange={(value) => setAnswer("season_distribution", value)} />
+            <WrittenField id="feedback-distribution-ideas" label="Wie sähe ein guter Saisonablauf für dich konkret aus?" hint="Zum Beispiel andere Reihenfolge, flexiblere Zeitfenster oder Pausen." value={answers.distribution_ideas} onChange={(value) => setAnswer("distribution_ideas", value)} placeholder="Für mich würde gut funktionieren …" />
+          </FormSection>}
+          {answers.deep_dive_topics.includes("scoring") && <FormSection number="W" title="WERTUNG" description="Hallen auslassen und Hallenergebnisse streichen sind unterschiedliche Regeln. Die Besuchspflicht steht im Themenblock „Hallen & Wege“.">
+            <ChoiceField legend="Wenn alle Pflicht-Hallen besucht wurden: Soll eine schwache Hallenwertung aus der Rangliste herausfallen?" name="dropped_score" options={droppedScoreOptions} value={answers.dropped_score} onChange={(value) => setAnswer("dropped_score", value)} />
+            <WrittenField id="feedback-scoring-ideas" label="Warum wäre das fair oder unfair? Hast du eine andere Idee?" value={answers.scoring_ideas} onChange={(value) => setAnswer("scoring_ideas", value)} placeholder="Für die Wertung wäre mir wichtig …" />
+          </FormSection>}
           <div className="rounded-xl border border-border/50 bg-card px-5 py-7 shadow-lg sm:px-9">
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">Bitte trage keine Namen oder andere personenbezogene Daten in die Freitextfelder ein. Deine Antworten werden ohne Konto-Zuordnung gespeichert und für die Planung der nächsten Saison ausgewertet. Mehr dazu in unserer <Link className="font-semibold text-primary underline underline-offset-2" to="/datenschutz">Datenschutzerklärung</Link>.</p>
             {error.startsWith("Das Speichern") && <p role="alert" className={`mt-5 ${errorClass}`}>{error}</p>}
