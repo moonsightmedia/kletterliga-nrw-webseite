@@ -5,7 +5,22 @@ export type CertificateFormat = "pdf" | "post" | "story";
 const navy = "#003d50";
 const cream = "#f4e1b3";
 const rust = "#a45525";
+const socialScale = 2;
 const imageCache = new Map<string, Promise<HTMLImageElement>>();
+
+// The approved Canva background has a 1055 px wide raster. Repaint its long,
+// high-contrast diagonal as a path so the edge stays clean in A4 exports.
+function drawBackgroundDivider(context: CanvasRenderingContext2D, height: number) {
+  const sourceHeight = 1491;
+  context.fillStyle = "#a64d21";
+  context.beginPath();
+  context.moveTo(0, height * 891 / sourceHeight);
+  context.lineTo(1000, height * 726 / sourceHeight);
+  context.lineTo(1000, height * 747 / sourceHeight);
+  context.lineTo(0, height * 912 / sourceHeight);
+  context.closePath();
+  context.fill();
+}
 
 const phaseTitle = (phase: Certificate["phase"]) => phase === "qualification" ? "QUALIFIKATION" : "FINALE";
 const classTitle = (label: string) => {
@@ -18,7 +33,7 @@ function getArtwork(name: string): Promise<HTMLImageElement> {
   const cached = imageCache.get(name);
   if (cached) return cached;
   const image = new Image();
-  image.src = `/certificates/${name}.png`;
+  image.src = `/certificates/${name}.${name === "logo" ? "svg" : "png"}`;
   const pending = image.decode().then(() => image).catch((error) => {
     imageCache.delete(name);
     throw error;
@@ -75,12 +90,15 @@ export async function renderCertificate(certificate: Certificate, format: Certif
   if (format === "story") {
     const post = await renderCertificate(certificate, "post");
     const story = document.createElement("canvas");
-    story.width = 1080;
-    story.height = 1920;
+    story.width = 1080 * socialScale;
+    story.height = 1920 * socialScale;
     const storyContext = story.getContext("2d");
     if (!storyContext) throw new Error("Die Story konnte auf diesem Gerät nicht gezeichnet werden.");
+    storyContext.imageSmoothingEnabled = true;
+    storyContext.imageSmoothingQuality = "high";
+    storyContext.scale(socialScale, socialScale);
     storyContext.fillStyle = navy;
-    storyContext.fillRect(0, 0, story.width, story.height);
+    storyContext.fillRect(0, 0, 1080, 1920);
     storyContext.fillStyle = cream;
     storyContext.fillRect(64, 318, 952, 1194);
     storyContext.drawImage(post, 72, 326, 936, 1170);
@@ -106,10 +124,12 @@ export async function renderCertificate(certificate: Certificate, format: Certif
   const artwork = new Map(await Promise.all(artworkNames.map(async (name) => [name, await getArtwork(name)] as const)));
 
   const canvas = document.createElement("canvas");
-  canvas.width = isPdf ? 2480 : 1080;
-  canvas.height = isPdf ? 3508 : 1350;
+  canvas.width = isPdf ? 2480 : 1080 * socialScale;
+  canvas.height = isPdf ? 3508 : 1350 * socialScale;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Die Urkunde konnte auf diesem Gerät nicht gezeichnet werden.");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   context.scale(canvas.width / 1000, canvas.height / height);
   const draw = (name: string, x: number, y: number, width: number, height: number) => {
     const source = artwork.get(name);
@@ -119,6 +139,7 @@ export async function renderCertificate(certificate: Certificate, format: Certif
 
   // These are the original image layers from the approved 97-page print PDF.
   draw("background", 0, 0, 1000, height);
+  drawBackgroundDivider(context, height);
   draw("logo", 386, isPdf ? 41 : 22, 228, 228);
   draw("wordmark", 344, isPdf ? 292 : 260, 312, 25);
   const phaseImage = certificate.phase === "finale" ? "phase-finale" : "phase-qualification";
