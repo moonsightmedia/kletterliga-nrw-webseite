@@ -30,9 +30,19 @@ In **Finalstartlisten** stehen die Starts vom schlechtesten qualifizierten Halbf
 
 In **Finale** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Im aufklappbaren Bereich **Finalpasswort** legt René einmal ein gemeinsames Passwort für beide Handys fest (mindestens zwölf Zeichen). Ein neues Passwort ersetzt das alte auf beiden Handys.
 
-Die Zeitnehmenden öffnen die **Finaleingabe**, wählen einmal **Handy 1** beziehungsweise **Handy 2** und geben dasselbe Finalpasswort ein. Beide sehen alle freigegebenen Klassen. Die Handynummer dient nur dem Protokoll. Im lokalen Probedurchlauf: **Finaleingabe öffnen**, das dort angezeigte Demo-Finalpasswort verwenden. Dieser Link erscheint nicht in der Halbfinalansicht. Vorstieg U18 auswählen, Nora Muster wählen und beispielsweise **Griff 24 · 3 Minuten · 12 Sekunden** eintragen. **Eintrag prüfen**, Zusammenfassung mit dem Papier vergleichen, **Jetzt speichern**. Ein Entwurf ist noch nicht übertragen; nur die bestätigte Speicherung erscheint online. Es gibt keine automatische Übernahme einer Browser-Stoppuhr.
+Die Zeitnehmenden öffnen die **Finaleingabe**, wählen einmal **Handy 1** beziehungsweise **Handy 2** und geben dasselbe Finalpasswort ein. Beide sehen alle freigegebenen Klassen. Die Handynummer dient nur dem Protokoll. **Klasse antippen → Teilnehmer antippen → Griff oder TOP und Minuten/Sekunden eintragen → Eintrag prüfen → Ergebnis speichern.** Die Prüfung zeigt Name, Klasse, Route, Startposition und Werte. Nach dem Speichern bleibt die Teilnehmerliste derselben Klasse offen; das Ergebnis steht direkt beim Namen.
+
+Im lokalen Probedurchlauf **Finaleingabe öffnen**; das synthetische Demo-Finalpasswort steht unter **Demo-Optionen**. Dieser Link erscheint nicht in der Halbfinalansicht. Eine laufende Klasse wählen und beispielsweise **Griff 24 · 3 Minuten · 12 Sekunden** eintragen. **Eintrag prüfen**, Werte mit dem Papier vergleichen, **Ergebnis speichern**. Es gibt keine automatische Übernahme einer Browser-Stoppuhr.
 
 ![Anmeldung beider Handys mit gemeinsamem Finalpasswort](screenshots/finalpasswort-anmeldung.jpg)
+
+![Teilnehmerliste in Startreihenfolge mit offenen und gespeicherten Ergebnissen](screenshots/finaleingabe-teilnehmer-mobil.jpg)
+
+![Mobile Eingabe für Griff/TOP und gestoppte Zeit](screenshots/finaleingabe-mobil.jpg)
+
+![Getrennte Prüfung vor dem Speichern](screenshots/finaleingabe-pruefen-mobil.jpg)
+
+Eine bereits gespeicherte Person antippen, um den Wert zu korrigieren. Die vorhandenen Werte sind ausgefüllt; zusätzlich ist ein **Grund für die Korrektur** erforderlich. Zurückgehen erhält den Entwurf. Beim Wechsel zu einer anderen Person fragt die App vor dem Verwerfen bearbeiteter Werte. Bei einem inzwischen geänderten Klassenstand aktuellen Wert und Entwurf vergleichen, **Aktuellen Stand übernehmen** und erneut prüfen. Offline oder ohne Speicherbestätigung bleibt der Entwurf lokal; nach Wiederverbindung bewusst erneut senden. Ein bestätigtes Speichern bleibt erfolgreich, wenn lediglich der anschließende Listenabruf ausfällt.
 
 ## 4. Papierabgleich und Ergebnisfreigabe
 

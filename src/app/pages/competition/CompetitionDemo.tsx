@@ -66,7 +66,9 @@ export default function CompetitionDemo() {
     );
   return (
     <div className="stitch-app min-h-screen bg-[#f5f1e7] p-4 text-[#003d55] sm:p-6">
-      <div className="mx-auto max-w-7xl space-y-5">
+      <div
+        className={`mx-auto space-y-5 ${view === "station" ? "max-w-md" : "max-w-7xl"}`}
+      >
         <details className="border-b border-[#003d55]/15 pb-2">
           <summary className="cursor-pointer py-2 text-xs text-[#003d55]/70">
             Demo · erfundene Teilnehmer{" "}
@@ -148,26 +150,22 @@ export default function CompetitionDemo() {
               </Link>
             </StitchButton>
           </nav>
+          {view === "station" && (
+            <p className="mt-3 break-words text-sm leading-6">
+              Demo-Finalpasswort:{" "}
+              <span className="break-all font-mono">{demoStationCode}</span>.
+              Beide Handys verwenden denselben Zugang. Eine laufende Klasse ist
+              direkt bedienbar; weitere Klassen startet René in der Zentrale.
+            </p>
+          )}
         </details>
         {view === "station" ? (
-          <>
-            <div className="rounded-xl border border-[#003d55]/15 bg-white p-4 text-sm leading-6">
-              <strong>Probedurchlauf:</strong> In Renés Zentrale zuerst die
-              Vorstieg-Klasse U18 starten. Beide Handys nutzen das
-              Demo-Finalpasswort{" "}
-              <span className="break-all font-mono font-bold">
-                {demoStationCode}
-              </span>
-              . Nach einer Passwortänderung gilt das neue Passwort aus der
-              Zentrale.
-            </div>
-            <FinalStationContent
-              season="2026"
-              source={demoSource}
-              storagePrefix="kletterliga:demo"
-              backHref={root}
-            />
-          </>
+          <FinalStationContent
+            season="2026"
+            source={demoSource}
+            storagePrefix="kletterliga:demo"
+            backHref={root}
+          />
         ) : view === "rangliste" ? (
           <div className="mx-auto max-w-4xl">
             <div className="mb-5">

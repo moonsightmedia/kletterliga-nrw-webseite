@@ -1,19 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
 import {
-  StitchButton,
-  StitchCard,
-  StitchTextField,
-} from "@/app/components/StitchPrimitives";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { validFinalPassword } from "@/lib/finalPassword";
+import { cn } from "@/lib/utils";
 import {
   className,
   getFinalStation,
@@ -31,27 +35,65 @@ interface Draft {
   seconds: string;
   reason: string;
   request: string;
+  version: number | null;
+  baseline: string;
 }
-const empty = (): Draft => ({
-  classId: "",
-  entryId: "",
-  grip: "",
-  top: false,
-  minutes: "",
-  seconds: "",
-  reason: "",
-  request: crypto.randomUUID(),
-});
-const inputClass =
-  "min-h-12 w-full rounded-xl border border-[#003d55]/25 bg-white px-3 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523]";
+type View = "classes" | "participants" | "edit" | "review";
+type Choice = { classId: string; entryId: string };
+const values = (
+  draft: Pick<Draft, "grip" | "top" | "minutes" | "seconds" | "reason">,
+) =>
+  JSON.stringify([
+    draft.grip,
+    draft.top,
+    draft.minutes,
+    draft.seconds,
+    draft.reason,
+  ]);
+const empty = (): Draft => {
+  const draft = {
+    classId: "",
+    entryId: "",
+    grip: "",
+    top: false,
+    minutes: "",
+    seconds: "",
+    reason: "",
+    request: crypto.randomUUID(),
+    version: null,
+    baseline: "",
+  };
+  return { ...draft, baseline: values(draft) };
+};
+const digits = (value: string) => /^\d+$/.test(value);
+const timeLabel = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+const phaseLabel = (phase: StationClass["phase"]) =>
+  phase === "running"
+    ? "Eingabe offen"
+    : phase === "published"
+      ? "Noch nicht gestartet"
+      : "Eingabe geschlossen";
+const errorText = (err: unknown) =>
+  err instanceof Error ? err.message : "Verbindung unterbrochen.";
+const invalidAccess = (message: string) =>
+  /ungültig|FINAL_PASSWORD_INVALID|FINAL_STATION_INVALID/.test(message);
+const focus =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] focus-visible:ring-offset-2";
+const secondary = `min-h-12 rounded-xl border border-[#003d55]/20 bg-white px-4 py-3 text-sm font-semibold text-[#003d55] disabled:opacity-50 ${focus}`;
+const primary = `min-h-12 w-full rounded-xl bg-[#a15523] px-4 py-3 text-base font-semibold text-white hover:bg-[#88451a] disabled:cursor-not-allowed disabled:opacity-40 ${focus}`;
+const input = `min-h-14 w-full min-w-0 rounded-xl border border-[#003d55]/25 bg-white px-4 py-3 text-2xl font-semibold tabular-nums disabled:opacity-60 ${focus}`;
 
 export default function FinalStation() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
-  const season = settings?.season_year?.trim();
   return (
-    <FinalStationContent season={season} settingsLoading={settingsLoading} />
+    <FinalStationContent
+      season={settings?.season_year?.trim()}
+      settingsLoading={settingsLoading}
+    />
   );
 }
+
 export function FinalStationContent({
   season,
   settingsLoading = false,
@@ -68,10 +110,11 @@ export function FinalStationContent({
   storagePrefix?: string;
   backHref?: string;
 }) {
-  const { getFinalStation, submitFinalAttempt } = source;
+  const { getFinalStation: loadClasses, submitFinalAttempt: saveAttempt } =
+    source;
   const draftKey = useCallback(
-    (year: string, station: number) =>
-      `${storagePrefix}:final-draft:${year}:${station}`,
+    (year: string, handset: number) =>
+      `${storagePrefix}:final-draft:${year}:${handset}`,
     [storagePrefix],
   );
   const accessKey = useCallback(
@@ -83,63 +126,120 @@ export function FinalStationContent({
   const [activeCode, setActiveCode] = useState("");
   const [classes, setClasses] = useState<StationClass[]>([]);
   const [draft, setDraft] = useState<Draft>(empty);
-  const [confirming, setConfirming] = useState(false);
+  const [draftReadyKey, setDraftReadyKey] = useState<string | null>(null);
+  const [view, setView] = useState<View>("classes");
+  const [browsingClass, setBrowsingClass] = useState("");
+  const [pendingChoice, setPendingChoice] = useState<Choice | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [connectionError, setConnectionError] = useState("");
+  const [storageError, setStorageError] = useState("");
   const [notice, setNotice] = useState("");
-  const [draftReadyKey, setDraftReadyKey] = useState<string | null>(null);
-  const updateDraft = (change: Partial<Draft>) =>
-    setDraft((prev) => ({ ...prev, ...change, request: crypto.randomUUID() }));
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const writing = useRef(false);
+  const loadSequence = useRef(0);
+  const heading = useRef<HTMLHeadingElement>(null);
 
+  const clearAccess = useCallback(() => {
+    loadSequence.current++;
+    setActiveCode("");
+    setCode("");
+    setClasses([]);
+    setNotice("");
+    if (season) {
+      try {
+        sessionStorage.removeItem(accessKey(season));
+      } catch {
+        /* access remains cleared */
+      }
+    }
+  }, [season, accessKey]);
   const reload = useCallback(
-    async (credential: string, targetStation: 1 | 2) => {
+    async (credential: string, handset: 1 | 2) => {
       if (!season || !credential) return;
-      const data = await getFinalStation(season, targetStation, credential);
+      const sequence = ++loadSequence.current;
+      let data: Awaited<ReturnType<typeof getFinalStation>>;
+      try {
+        data = await loadClasses(season, handset, credential);
+      } catch (err) {
+        if (sequence !== loadSequence.current) return;
+        throw err;
+      }
+      if (sequence !== loadSequence.current) return;
       setClasses(data.classes);
       setActiveCode(credential);
+      setConnectionError("");
       try {
         sessionStorage.setItem(
           accessKey(season),
-          JSON.stringify({ station: targetStation, code: credential }),
+          JSON.stringify({ station: handset, code: credential }),
         );
       } catch {
-        /* session only */
+        /* access only in memory */
       }
     },
-    [season, getFinalStation, accessKey],
+    [season, loadClasses, accessKey],
   );
+
   useEffect(() => {
     if (!season) return;
+    let cancelled = false;
+    const sequences = loadSequence;
     try {
       const saved = JSON.parse(
         sessionStorage.getItem(accessKey(season)) ?? "null",
       ) as { station?: number; code?: string } | null;
       if (saved?.code && (saved.station === 1 || saved.station === 2)) {
         setStation(saved.station);
-        setCode(saved.code);
-        void reload(saved.code, saved.station).catch(() => {
-          sessionStorage.removeItem(accessKey(season));
-          setActiveCode("");
-        });
+        setBusy(true);
+        void reload(saved.code, saved.station)
+          .catch((err) => {
+            if (cancelled) return;
+            clearAccess();
+            setError(errorText(err));
+          })
+          .finally(() => {
+            if (!cancelled) setBusy(false);
+          });
       }
     } catch {
-      /* no persisted access */
+      /* no saved session */
     }
-  }, [season, reload, accessKey]);
+    return () => {
+      cancelled = true;
+      sequences.current++;
+    };
+  }, [season, reload, accessKey, clearAccess]);
   useEffect(() => {
     if (!season) return;
     const key = draftKey(season, station);
     try {
       const saved = JSON.parse(
         localStorage.getItem(key) ?? "null",
-      ) as Draft | null;
-      setDraft(
-        saved?.request && typeof saved.entryId === "string" ? saved : empty(),
+      ) as Partial<Draft> | null;
+      const valid =
+        saved &&
+        typeof saved.classId === "string" &&
+        typeof saved.entryId === "string" &&
+        typeof saved.grip === "string" &&
+        typeof saved.top === "boolean" &&
+        typeof saved.minutes === "string" &&
+        typeof saved.seconds === "string" &&
+        typeof saved.reason === "string" &&
+        typeof saved.request === "string";
+      const restored = valid
+        ? ({
+            ...empty(),
+            ...saved,
+            version: Number.isInteger(saved.version) ? saved.version! : null,
+          } as Draft)
+        : empty();
+      setDraft(restored);
+      setBrowsingClass(restored.classId);
+      setView(restored.entryId ? "edit" : "classes");
+      setNotice(
+        restored.entryId ? "Entwurf wiederhergestellt · nicht übertragen" : "",
       );
-      if (saved?.entryId)
-        setNotice(
-          "Nicht übertragener Entwurf wiederhergestellt. Vor dem Senden mit der Papierliste prüfen.",
-        );
     } catch {
       setDraft(empty());
     }
@@ -148,72 +248,138 @@ export function FinalStationContent({
   useEffect(() => {
     if (!season || draftReadyKey !== draftKey(season, station)) return;
     try {
-      localStorage.setItem(draftReadyKey, JSON.stringify(draft));
+      if (draft.entryId)
+        localStorage.setItem(draftReadyKey, JSON.stringify(draft));
+      else localStorage.removeItem(draftReadyKey);
+      setStorageError("");
     } catch {
-      /* input remains in memory */
+      setStorageError(
+        "Entwurf nur auf dieser Seite verfügbar. Bei Ausfall auf Papier weiterarbeiten.",
+      );
     }
   }, [draft, draftReadyKey, season, station, draftKey]);
   useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  const refresh = useCallback(async () => {
+    if (!activeCode || writing.current) return;
+    try {
+      await reload(activeCode, station);
+    } catch (err) {
+      const message = errorText(err);
+      if (invalidAccess(message)) {
+        clearAccess();
+        setError(message);
+      } else
+        setConnectionError(
+          "Liste konnte nicht aktualisiert werden. Letzter Stand bleibt sichtbar.",
+        );
+    }
+  }, [activeCode, reload, station, clearAccess]);
+  useEffect(() => {
     if (!activeCode) return;
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        void reload(activeCode, station).catch((err) => {
-          const message =
-            err instanceof Error ? err.message : "Verbindung unterbrochen.";
-          if (message.includes("ungültig")) {
-            if (season) sessionStorage.removeItem(accessKey(season));
-            setActiveCode("");
-            setClasses([]);
-          }
-          setError(message);
-        });
+      if (document.visibilityState === "visible") void refresh();
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [activeCode, reload, season, station, accessKey]);
+  }, [activeCode, refresh]);
+  useEffect(() => {
+    if (activeCode) heading.current?.focus();
+  }, [view, draft.entryId, activeCode]);
+
   const selectedClass = classes.find((c) => c.id === draft.classId);
   const selectedEntry = selectedClass?.entries.find(
     (e) => e.entry_id === draft.entryId,
   );
+  const listedClass = classes.find((c) => c.id === browsingClass);
+  const dirty = !!draft.entryId && values(draft) !== draft.baseline;
+  const stale = !!selectedClass && selectedClass.version !== draft.version;
   const totalSeconds = Number(draft.minutes) * 60 + Number(draft.seconds);
   const grip = draft.top
     ? (selectedClass?.route.max_grip ?? 0)
     : Number(draft.grip);
-  const validTime =
-    draft.minutes !== "" &&
-    draft.seconds !== "" &&
-    Number.isInteger(Number(draft.minutes)) &&
-    Number.isInteger(Number(draft.seconds)) &&
-    Number(draft.seconds) >= 0 &&
-    Number(draft.seconds) < 60 &&
-    totalSeconds >= 0 &&
-    totalSeconds <= 300;
-  const canSubmit =
+  const validGrip =
     !!selectedClass &&
-    selectedClass.phase === "running" &&
-    !!selectedEntry &&
-    selectedEntry.status === "ready" &&
-    (draft.top || draft.grip !== "") &&
-    Number.isInteger(grip) &&
+    (draft.top || digits(draft.grip)) &&
+    Number.isSafeInteger(grip) &&
     grip >= 0 &&
-    grip <= selectedClass.route.max_grip &&
+    grip <= selectedClass.route.max_grip;
+  const validTime =
+    digits(draft.minutes) &&
+    digits(draft.seconds) &&
+    Number(draft.seconds) < 60 &&
+    totalSeconds <= 300;
+  const validReason =
+    !selectedEntry?.attempt_id ||
+    (draft.reason.trim().length > 0 && draft.reason.length <= 500);
+  const editable =
+    selectedClass?.phase === "running" && selectedEntry?.status === "ready";
+  const canSubmit =
+    editable &&
+    validGrip &&
     validTime &&
-    (!selectedEntry.attempt_id || draft.reason.trim().length > 0);
-  const output = useMemo(
-    () => (selectedEntry ? resultLabel(selectedEntry) : ""),
-    [selectedEntry],
-  );
+    validReason &&
+    !stale &&
+    online &&
+    !connectionError &&
+    !busy;
+  const draftResult = `${draft.top ? "TOP" : `Griff ${draft.grip || "–"}`} · ${validTime ? timeLabel(totalSeconds) : "Zeit offen"}`;
+  const updateDraft = (change: Partial<Draft>) => {
+    setDraft((prev) => ({ ...prev, ...change, request: crypto.randomUUID() }));
+    setError("");
+    setNotice("");
+  };
+  function chooseEntry(choice: Choice) {
+    const targetClass = classes.find((c) => c.id === choice.classId);
+    const entry = targetClass?.entries.find(
+      (e) => e.entry_id === choice.entryId,
+    );
+    if (
+      !targetClass ||
+      !entry ||
+      targetClass.phase !== "running" ||
+      entry.status !== "ready"
+    )
+      return;
+    if (draft.classId === choice.classId && draft.entryId === choice.entryId) {
+      setView("edit");
+      return;
+    }
+    const next: Draft = {
+      ...empty(),
+      ...choice,
+      version: targetClass.version,
+      grip: entry.attempt_id ? String(entry.grip ?? 0) : "",
+      top: entry.attempt_id ? !!entry.is_top : false,
+      minutes: entry.attempt_id
+        ? String(Math.floor((entry.seconds ?? 0) / 60))
+        : "",
+      seconds: entry.attempt_id ? String((entry.seconds ?? 0) % 60) : "",
+    };
+    next.baseline = values(next);
+    setDraft(next);
+    setView("edit");
+    setError("");
+    setNotice("");
+  }
   async function login() {
-    if (!season || busy) return;
+    if (!season || writing.current || busy || !validFinalPassword(code)) return;
+    writing.current = true;
     setBusy(true);
     setError("");
     try {
-      await reload(code.trim(), station);
-      setNotice("Für die Finaleingabe angemeldet.");
+      await reload(code, station);
+      setCode("");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Anmeldung fehlgeschlagen.",
-      );
+      setError(errorText(err));
     } finally {
+      writing.current = false;
       setBusy(false);
     }
   }
@@ -224,14 +390,16 @@ export function FinalStationContent({
       !selectedClass ||
       !selectedEntry ||
       !canSubmit ||
-      busy
+      writing.current
     )
       return;
+    writing.current = true;
+    loadSequence.current++;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await submitFinalAttempt({
+      await saveAttempt({
         season,
         station,
         code: activeCode,
@@ -240,321 +408,702 @@ export function FinalStationContent({
         grip,
         top: draft.top,
         seconds: totalSeconds,
-        version: selectedClass.version,
-        reason: draft.reason,
+        version: draft.version!,
+        reason: draft.reason.trim(),
       });
-      await reload(activeCode, station);
-      setDraft(empty());
-      setConfirming(false);
-      try {
-        localStorage.removeItem(draftKey(season, station));
-      } catch {
-        /* memory cleared */
-      }
-      setNotice("Ergebnis gespeichert und im vorläufigen Live-Stand sichtbar.");
     } catch (err) {
+      const message = errorText(err);
       setError(
-        `${err instanceof Error ? err.message : "Übertragung fehlgeschlagen."} Entwurf nicht übertragen oder Bestätigung unklar: aktuellen Stand prüfen, dann bewusst erneut senden.`,
+        invalidAccess(message)
+          ? message
+          : `${message} Speicherung nicht bestätigt. Entwurf bleibt erhalten.`,
       );
-      setConfirming(false);
+      if (invalidAccess(message)) clearAccess();
+      setView("edit");
+      writing.current = false;
+      setBusy(false);
+      return;
+    }
+    // A confirmed write is successful even if the subsequent list fetch fails.
+    const confirmedClass = selectedClass.id;
+    const confirmedEntry = selectedEntry.entry_id;
+    setClasses((current) =>
+      current.map((c) =>
+        c.id === confirmedClass
+          ? {
+              ...c,
+              version: c.version + 1,
+              entries: c.entries.map((e) =>
+                e.entry_id === confirmedEntry
+                  ? {
+                      ...e,
+                      attempt_id: draft.request,
+                      is_top: draft.top,
+                      grip,
+                      seconds: totalSeconds,
+                      checked_at: null,
+                    }
+                  : e,
+              ),
+            }
+          : c,
+      ),
+    );
+    setDraft(empty());
+    setBrowsingClass(confirmedClass);
+    setView("participants");
+    setNotice(
+      `${selectedEntry.name}: ${draft.top ? "TOP" : `Griff ${grip}`} · ${timeLabel(totalSeconds)} gespeichert`,
+    );
+    try {
+      localStorage.removeItem(draftKey(season, station));
+    } catch {
+      setStorageError(
+        "Gespeichert. Lokaler Entwurf konnte nicht entfernt werden.",
+      );
+    }
+    try {
+      await reload(activeCode, station);
+    } catch (err) {
+      if (invalidAccess(errorText(err))) {
+        clearAccess();
+        setError(errorText(err));
+      } else
+        setConnectionError(
+          "Ergebnis gespeichert. Liste konnte nicht aktualisiert werden.",
+        );
     } finally {
+      writing.current = false;
       setBusy(false);
     }
   }
+
+  const goBack = () => {
+    setError("");
+    if (view === "review") setView("edit");
+    else if (view === "edit") {
+      setBrowsingClass(draft.classId);
+      setView("participants");
+    } else setView("classes");
+  };
+  const title = !activeCode
+    ? "Finaleingabe"
+    : view === "classes"
+      ? "Klasse wählen"
+      : view === "participants"
+        ? listedClass
+          ? className(listedClass.league, listedClass.class_label)
+          : "Teilnehmer"
+        : (selectedEntry?.name ?? "Entwurf");
+
   return (
-    <div className="space-y-5 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="stitch-kicker text-[#a15523]">
-            Finale · {season ?? "–"}
-          </p>
-          <h1 className="stitch-headline text-3xl">Digitale Ergebniseingabe</h1>
+    <section
+      aria-label="Mobile Finaleingabe"
+      className="mx-auto flex min-h-[calc(100dvh-9rem)] max-w-md flex-col gap-5 pb-4 text-[#003d55]"
+    >
+      <header>
+        <div className="mb-3 flex min-h-11 items-center justify-between gap-3">
+          {activeCode && view !== "classes" ? (
+            <button
+              aria-label={
+                view === "review"
+                  ? "Zur Eingabe"
+                  : view === "edit"
+                    ? "Zur Teilnehmerliste"
+                    : "Zur Klassenliste"
+              }
+              disabled={busy}
+              onClick={goBack}
+              className={`flex min-h-11 items-center gap-2 text-sm font-semibold ${focus}`}
+            >
+              <ArrowLeft size={18} />
+              {view === "review"
+                ? "Eingabe"
+                : view === "edit"
+                  ? "Teilnehmer"
+                  : "Klassen"}
+            </button>
+          ) : (
+            <span className="text-sm text-[#003d55]/65">
+              Finale · {season ?? "–"}
+            </span>
+          )}
+          {activeCode ? (
+            <div className="flex items-center gap-1">
+              <span className="mr-1 text-xs text-[#003d55]/65">
+                Handy {station}
+              </span>
+              <button
+                aria-label="Liste aktualisieren"
+                disabled={busy || !online}
+                onClick={() => void refresh()}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl hover:bg-[#003d55]/5 disabled:opacity-40 ${focus}`}
+              >
+                <RefreshCw size={18} />
+              </button>
+              <button
+                aria-label="Abmelden"
+                disabled={busy}
+                onClick={clearAccess}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl hover:bg-[#003d55]/5 disabled:opacity-40 ${focus}`}
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              aria-label="Zur Schiedsrichterübersicht"
+              to={backHref}
+              className={`flex h-11 w-11 items-center justify-center rounded-xl ${focus}`}
+            >
+              <ArrowLeft size={18} />
+            </Link>
+          )}
         </div>
-        <StitchButton asChild variant="outline">
-          <Link to={backHref}>Zur Wettkampfübersicht</Link>
-        </StitchButton>
-      </div>
-      {settingsLoading && <p role="status">Saison wird geladen …</p>}
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="break-words [font-family:inherit] text-2xl font-semibold tracking-normal leading-tight outline-none"
+        >
+          {title}
+        </h1>
+        {activeCode &&
+          (view === "edit" || view === "review") &&
+          selectedClass &&
+          selectedEntry && (
+            <p className="mt-2 text-sm text-[#003d55]/70">
+              {className(selectedClass.league, selectedClass.class_label)} ·
+              Route {selectedClass.route.number} · Start{" "}
+              {selectedEntry.start_position}
+            </p>
+          )}
+        {activeCode && view === "participants" && listedClass && (
+          <p className="mt-2 text-sm text-[#003d55]/70">
+            Route {listedClass.route.number} · {listedClass.route.name}
+          </p>
+        )}
+      </header>
+      {settingsLoading && (
+        <p role="status" className="text-sm">
+          Saison wird geladen …
+        </p>
+      )}
+      {!settingsLoading && !season && (
+        <p role="alert" className="text-sm text-red-800">
+          Die Saison ist nicht verfügbar.
+        </p>
+      )}
       {error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
+        <p
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+        >
           {error}
         </p>
       )}
-      {notice && (
+      {!online && (
         <p
-          role="status"
-          className="rounded-xl bg-emerald-50 p-4 text-emerald-900"
+          role="alert"
+          className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950"
         >
+          Offline · Entwurf nicht übertragen. Auf Papier weiterarbeiten.
+        </p>
+      )}
+      {connectionError && online && (
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"
+        >
+          <p>{connectionError}</p>
+          <button
+            disabled={busy}
+            onClick={() => void refresh()}
+            className={`mt-1 min-h-11 font-semibold underline underline-offset-4 ${focus}`}
+          >
+            Aktualisieren
+          </button>
+        </div>
+      )}
+      {storageError && (
+        <p role="alert" className="text-sm text-amber-950">
+          {storageError}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="flex gap-2 text-sm text-[#245543]">
+          {view === "participants" && (
+            <Check className="mt-0.5 shrink-0" size={16} />
+          )}
           {notice}
         </p>
       )}
+
       {!activeCode ? (
-        <StitchCard className="space-y-4 p-5">
-          <p>
-            Beide Handys verwenden dasselbe Finalpasswort von René. Nach der
-            Anmeldung Klasse und Teilnehmer auswählen, Griff/TOP und Zeit
-            eintragen.
-          </p>
-          <Select
-            value={String(station)}
-            onValueChange={(v) => {
-              setStation(Number(v) as 1 | 2);
-            }}
-          >
-            <SelectTrigger
-              aria-label="Eingabehandy"
-              className="min-h-12 bg-white"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Handy 1</SelectItem>
-              <SelectItem value="2">Handy 2</SelectItem>
-            </SelectContent>
-          </Select>
-          <StitchTextField
-            label="Finalpasswort"
-            type="password"
-            autoComplete="off"
-            maxLength={72}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          <StitchButton
-            disabled={busy || !validFinalPassword(code)}
-            onClick={() => void login()}
-          >
-            Anmelden
-          </StitchButton>
-        </StitchCard>
-      ) : (
-        <>
-          <StitchCard
-            tone="navy"
-            className="flex flex-wrap items-center justify-between gap-3 p-5 text-[#f2dcab]"
-          >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void login();
+          }}
+          className="flex flex-1 flex-col gap-6"
+        >
+          <fieldset disabled={busy} className="space-y-5">
             <div>
-              <h2 className="stitch-headline text-xl">
-                Finaleingabe · Handy {station}
-              </h2>
-              <p className="text-sm">
-                Manuelle Übernahme der gestoppten Zeit in ganzen Sekunden ·
-                maximal 5:00
-              </p>
+              <span className="mb-2 block text-sm font-semibold">
+                Dieses Handy
+              </span>
+              <div
+                className="grid grid-cols-2 gap-2"
+                role="group"
+                aria-label="Eingabehandy"
+              >
+                {([1, 2] as const).map((number) => (
+                  <button
+                    key={number}
+                    type="button"
+                    aria-pressed={station === number}
+                    onClick={() => setStation(number)}
+                    className={cn(
+                      secondary,
+                      station === number &&
+                        "border-[#003d55] bg-[#003d55] text-[#f2dcab]",
+                    )}
+                  >
+                    Handy {number}
+                  </button>
+                ))}
+              </div>
             </div>
-            <StitchButton
-              variant="outline"
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">
+                Finalpasswort
+              </span>
+              <input
+                className={cn(input, "text-base font-normal")}
+                aria-label="Finalpasswort"
+                type="password"
+                autoComplete="off"
+                maxLength={72}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+              <span className="mt-2 block text-xs text-[#003d55]/65">
+                Das gemeinsame Passwort von René.
+              </span>
+            </label>
+          </fieldset>
+          <div className="mt-auto pt-4">
+            <button
+              type="submit"
+              disabled={
+                busy ||
+                !season ||
+                settingsLoading ||
+                !online ||
+                !validFinalPassword(code)
+              }
+              className={primary}
+            >
+              {busy ? "Wird angemeldet …" : "Anmelden"}
+            </button>
+          </div>
+        </form>
+      ) : view === "classes" ? (
+        <div className="space-y-2">
+          {classes.length === 0 && (
+            <div className="space-y-3 py-4">
+              <p className="text-sm">Noch keine Finalklasse freigegeben.</p>
+              <button
+                className={secondary}
+                disabled={busy}
+                onClick={() => void refresh()}
+              >
+                Aktualisieren
+              </button>
+            </div>
+          )}
+          {classes.map((c) => (
+            <button
+              key={c.id}
+              disabled={busy}
               onClick={() => {
-                if (season) sessionStorage.removeItem(accessKey(season));
-                setActiveCode("");
-                setClasses([]);
-                setCode("");
+                setBrowsingClass(c.id);
+                setView("participants");
+                setNotice("");
+              }}
+              className={`flex min-h-20 w-full items-center gap-3 rounded-xl border border-[#003d55]/15 bg-white p-4 text-left disabled:opacity-50 ${focus}`}
+            >
+              <div className="min-w-0 flex-1">
+                <span className="block text-base font-semibold">
+                  {className(c.league, c.class_label)}
+                </span>
+                <span className="mt-1 block text-xs text-[#003d55]/65">
+                  Route {c.route.number} ·{" "}
+                  {c.entries.filter((e) => e.attempt_id).length}/
+                  {c.entries.length} erfasst
+                </span>
+                <span
+                  className={`mt-1 block text-xs ${c.phase === "running" ? "text-[#245543]" : "text-[#003d55]/65"}`}
+                >
+                  {phaseLabel(c.phase)}
+                </span>
+              </div>
+              <ChevronRight size={20} className="shrink-0" />
+            </button>
+          ))}
+        </div>
+      ) : view === "participants" && listedClass ? (
+        <div className="space-y-3">
+          <div className="flex justify-between gap-3 text-xs text-[#003d55]/65">
+            <span>
+              {listedClass.entries.filter((e) => e.attempt_id).length}/
+              {listedClass.entries.length} erfasst
+            </span>
+            <span>{phaseLabel(listedClass.phase)}</span>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
+            {[...listedClass.entries]
+              .sort((a, b) => a.start_position - b.start_position)
+              .map((entry) => (
+                <button
+                  key={entry.entry_id}
+                  disabled={
+                    busy ||
+                    listedClass.phase !== "running" ||
+                    entry.status !== "ready"
+                  }
+                  onClick={() => {
+                    const choice = {
+                      classId: listedClass.id,
+                      entryId: entry.entry_id,
+                    };
+                    if (dirty && entry.entry_id !== draft.entryId)
+                      setPendingChoice(choice);
+                    else chooseEntry(choice);
+                  }}
+                  aria-label={`${entry.start_position}. ${entry.name}, ${resultLabel(entry)}`}
+                  className={`flex min-h-20 w-full items-center gap-3 border-b border-[#003d55]/10 p-4 text-left last:border-b-0 disabled:cursor-default ${focus}`}
+                >
+                  <span className="w-7 shrink-0 text-lg font-semibold tabular-nums text-[#003d55]/55">
+                    {entry.start_position}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block break-words text-base font-semibold">
+                      {entry.name}
+                    </span>
+                    <span
+                      className={`mt-1 block text-sm ${entry.attempt_id ? "text-[#245543]" : "text-[#003d55]/65"}`}
+                    >
+                      {dirty && draft.entryId === entry.entry_id
+                        ? "Entwurf · nicht übertragen"
+                        : resultLabel(entry)}
+                    </span>
+                  </div>
+                  {entry.attempt_id ? (
+                    <Check size={18} className="shrink-0 text-[#245543]" />
+                  ) : (
+                    <ChevronRight
+                      size={18}
+                      className="shrink-0 text-[#003d55]/55"
+                    />
+                  )}
+                </button>
+              ))}
+          </div>
+          {!listedClass.entries.length && (
+            <p className="py-3 text-sm">Die Startliste ist noch leer.</p>
+          )}
+        </div>
+      ) : (view === "edit" || view === "review") &&
+        selectedClass &&
+        selectedEntry ? (
+        <>
+          {!editable && (
+            <p
+              role="alert"
+              className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950"
+            >
+              {selectedEntry.status === "ready"
+                ? "Eingabe für diese Klasse geschlossen."
+                : "Startstatus ungeklärt. Bitte René informieren."}
+            </p>
+          )}
+          {stale && (
+            <div
+              role="alert"
+              className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"
+            >
+              <p className="font-semibold">
+                Stand geändert · bitte vergleichen
+              </p>
+              <p>Aktuell: {resultLabel(selectedEntry)}</p>
+              <p>Dein Entwurf: {draftResult}</p>
+              <button
+                disabled={busy || !editable}
+                onClick={() => {
+                  setDraft((prev) => ({
+                    ...prev,
+                    version: selectedClass.version,
+                    request: crypto.randomUUID(),
+                  }));
+                  setView("edit");
+                  setError("");
+                }}
+                className={`${secondary} w-full`}
+              >
+                Aktuellen Stand übernehmen
+              </button>
+            </div>
+          )}
+          {view === "edit" ? (
+            <form
+              className="flex flex-1 flex-col gap-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (canSubmit) setView("review");
               }}
             >
-              Abmelden
-            </StitchButton>
-          </StitchCard>
-          <StitchCard className="space-y-5 p-5">
-            <div>
-              <label className="mb-2 block font-bold">1. Klasse wählen</label>
-              <Select
-                value={draft.classId}
-                onValueChange={(v) => {
-                  setConfirming(false);
-                  updateDraft({
-                    classId: v,
-                    entryId: "",
-                    grip: "",
-                    top: false,
-                    minutes: "",
-                    seconds: "",
-                    reason: "",
-                  });
-                }}
-              >
-                <SelectTrigger
-                  aria-label="Finalklasse"
-                  className="min-h-12 bg-white"
-                >
-                  <SelectValue placeholder="Klasse wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {className(c.league, c.class_label)} · Route{" "}
-                      {c.route.number} ·{" "}
-                      {c.phase === "running" ? "Eingabe offen" : "Geschlossen"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {selectedClass && (
-              <>
-                <p className="rounded-lg bg-[#f2dcab] p-3 text-sm">
-                  Route {selectedClass.route.number}: {selectedClass.route.name}{" "}
-                  · letzter Griff {selectedClass.route.max_grip}. Klasse:{" "}
-                  {selectedClass.phase === "running"
-                    ? "Eingabe offen"
-                    : "Eingabe geschlossen"}
-                  .
-                </p>
+              <fieldset disabled={busy || !editable} className="space-y-5">
                 <div>
-                  <label className="mb-2 block font-bold">
-                    2. Person aus Startliste wählen
-                  </label>
-                  <Select
-                    value={draft.entryId}
-                    onValueChange={(v) => {
-                      setConfirming(false);
-                      updateDraft({
-                        entryId: v,
-                        grip: "",
-                        top: false,
-                        minutes: "",
-                        seconds: "",
-                        reason: "",
-                      });
-                    }}
+                  <span className="mb-2 block text-sm font-semibold">
+                    Ergebnis
+                  </span>
+                  <div
+                    className="grid grid-cols-2 gap-2"
+                    role="group"
+                    aria-label="Griff oder TOP"
                   >
-                    <SelectTrigger
-                      aria-label="Person aus Startliste"
-                      className="min-h-12 bg-white"
+                    <button
+                      type="button"
+                      aria-pressed={!draft.top}
+                      onClick={() => updateDraft({ top: false })}
+                      className={cn(
+                        secondary,
+                        !draft.top &&
+                          "border-[#003d55] bg-[#003d55] text-[#f2dcab]",
+                      )}
                     >
-                      <SelectValue placeholder="Person wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...selectedClass.entries]
-                        .sort((a, b) => a.start_position - b.start_position)
-                        .map((e) => (
-                          <SelectItem key={e.entry_id} value={e.entry_id}>
-                            {e.start_position}. {e.name} · {resultLabel(e)}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                      Griff
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={draft.top}
+                      onClick={() => updateDraft({ top: true })}
+                      className={cn(
+                        secondary,
+                        draft.top &&
+                          "border-[#003d55] bg-[#003d55] text-[#f2dcab]",
+                      )}
+                    >
+                      TOP
+                    </button>
+                  </div>
                 </div>
-              </>
-            )}
-            {selectedEntry && (
-              <>
-                <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-950">
-                  Entwurf · noch nicht übertragen. Erst das bestätigte Speichern
-                  veröffentlicht das Ergebnis.
-                </p>
-                <p className="text-sm">
-                  Aktuell gespeichert: <strong>{output}</strong>.{" "}
-                  {selectedEntry.attempt_id &&
-                    "Eine Änderung benötigt eine Begründung."}
-                </p>
-                <div className="flex flex-wrap items-end gap-3">
-                  <label className="flex items-center gap-2 rounded-xl bg-white p-3 font-bold">
+                {!draft.top && (
+                  <label className="block">
+                    <span className="mb-2 flex justify-between text-sm font-semibold">
+                      <span>Erreichter Griff</span>
+                      <span className="font-normal text-[#003d55]/65">
+                        0–{selectedClass.route.max_grip}
+                      </span>
+                    </span>
                     <input
-                      type="checkbox"
-                      className="h-5 w-5 accent-[#003d55]"
-                      checked={draft.top}
-                      onChange={(e) => updateDraft({ top: e.target.checked })}
-                    />
-                    TOP erreicht
-                  </label>
-                  <label className="grid gap-1 font-bold">
-                    3. Erreichter Griff
-                    <input
-                      className={inputClass}
-                      type="number"
-                      min="0"
-                      max={selectedClass?.route.max_grip}
-                      disabled={draft.top}
-                      value={
-                        draft.top ? selectedClass?.route.max_grip : draft.grip
-                      }
+                      className={input}
+                      aria-label="Erreichter Griff"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="off"
+                      value={draft.grip}
                       onChange={(e) => updateDraft({ grip: e.target.value })}
+                      aria-invalid={draft.grip !== "" && !validGrip}
                     />
+                    {draft.grip !== "" && !validGrip && (
+                      <span className="mt-2 block text-xs text-red-800">
+                        Ganze Griffnummer von 0 bis{" "}
+                        {selectedClass.route.max_grip} eingeben.
+                      </span>
+                    )}
                   </label>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="grid gap-1 font-bold">
-                    4. Minuten
-                    <input
-                      className={inputClass}
-                      type="number"
-                      min="0"
-                      max="5"
-                      value={draft.minutes}
-                      onChange={(e) => updateDraft({ minutes: e.target.value })}
-                    />
-                  </label>
-                  <label className="grid gap-1 font-bold">
-                    Sekunden
-                    <input
-                      className={inputClass}
-                      type="number"
-                      min="0"
-                      max="59"
-                      value={draft.seconds}
-                      onChange={(e) => updateDraft({ seconds: e.target.value })}
-                    />
-                  </label>
+                )}
+                <div>
+                  <div className="mb-2 flex justify-between text-sm font-semibold">
+                    <span>Zeit</span>
+                    <span className="font-normal text-[#003d55]/65">
+                      Bis 5:00
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label>
+                      <span className="mb-1 block text-xs text-[#003d55]/65">
+                        Minuten
+                      </span>
+                      <input
+                        className={input}
+                        aria-label="Minuten"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="off"
+                        placeholder="0"
+                        value={draft.minutes}
+                        onChange={(e) =>
+                          updateDraft({ minutes: e.target.value })
+                        }
+                        aria-invalid={
+                          draft.minutes !== "" &&
+                          (!digits(draft.minutes) || Number(draft.minutes) > 5)
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span className="mb-1 block text-xs text-[#003d55]/65">
+                        Sekunden
+                      </span>
+                      <input
+                        className={input}
+                        aria-label="Sekunden"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="off"
+                        placeholder="00"
+                        value={draft.seconds}
+                        onChange={(e) =>
+                          updateDraft({ seconds: e.target.value })
+                        }
+                        aria-invalid={
+                          draft.seconds !== "" &&
+                          (!digits(draft.seconds) ||
+                            Number(draft.seconds) >= 60)
+                        }
+                      />
+                    </label>
+                  </div>
+                  {draft.minutes !== "" &&
+                    draft.seconds !== "" &&
+                    !validTime && (
+                      <p className="mt-2 text-xs text-red-800">
+                        Ganze Minuten und Sekunden eingeben. Höchstens 5:00,
+                        Sekunden 0–59.
+                      </p>
+                    )}
                 </div>
                 {selectedEntry.attempt_id && (
-                  <StitchTextField
-                    label="Grund für die Korrektur"
-                    value={draft.reason}
-                    onChange={(e) => updateDraft({ reason: e.target.value })}
-                  />
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold">
+                      Grund für die Korrektur
+                    </span>
+                    <textarea
+                      className={cn(input, "min-h-20 text-base font-normal")}
+                      aria-label="Grund für die Korrektur"
+                      rows={2}
+                      maxLength={500}
+                      value={draft.reason}
+                      onChange={(e) => updateDraft({ reason: e.target.value })}
+                    />
+                    <span className="mt-2 block text-xs text-[#003d55]/65">
+                      Aktuell: {resultLabel(selectedEntry)}
+                    </span>
+                  </label>
                 )}
-                {!confirming ? (
-                  <StitchButton
-                    disabled={!canSubmit || busy}
-                    onClick={() => setConfirming(true)}
-                  >
-                    5. Eintrag prüfen
-                  </StitchButton>
-                ) : (
-                  <div className="rounded-xl border-2 border-[#a15523] bg-white p-4">
-                    <h3 className="stitch-headline text-xl">
-                      Vor dem Speichern vergleichen
-                    </h3>
-                    <p className="mt-3 text-sm font-bold">
-                      {selectedClass &&
-                        className(
-                          selectedClass.league,
-                          selectedClass.class_label,
-                        )}{" "}
-                      · Route {selectedClass?.route.number} · Start{" "}
-                      {selectedEntry.start_position}
-                    </p>
-                    <p className="my-3 text-lg font-bold">
-                      {selectedEntry.name} ·{" "}
-                      {draft.top ? "TOP" : `Griff ${grip}`} · {draft.minutes}:
-                      {String(draft.seconds).padStart(2, "0")}
-                    </p>
-                    <p className="mb-3 text-sm">
-                      Bitte mit der Papierliste abgleichen. Erst „Jetzt
-                      speichern“ veröffentlicht den vorläufigen Wert.
-                    </p>
-                    <div className="flex gap-2">
-                      <StitchButton
-                        disabled={busy}
-                        onClick={() => void submit()}
-                      >
-                        {busy ? "Wird gespeichert …" : "Jetzt speichern"}
-                      </StitchButton>
-                      <StitchButton
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => setConfirming(false)}
-                      >
-                        Zurück
-                      </StitchButton>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </StitchCard>
+              </fieldset>
+              <footer className="sticky bottom-0 mt-auto space-y-2 bg-[#f8f4ee] py-3">
+                <p className="text-center text-xs text-[#003d55]/65">
+                  Entwurf · nicht übertragen
+                </p>
+                <button type="submit" disabled={!canSubmit} className={primary}>
+                  Eintrag prüfen
+                </button>
+              </footer>
+            </form>
+          ) : (
+            <div className="flex flex-1 flex-col gap-5">
+              <h2 className="[font-family:inherit] text-base font-semibold tracking-normal">
+                Eintrag prüfen
+              </h2>
+              <div className="divide-y divide-[#003d55]/15 rounded-xl border border-[#003d55]/15 bg-white px-4">
+                <div className="flex items-center justify-between py-5">
+                  <span className="text-sm text-[#003d55]/65">Ergebnis</span>
+                  <strong className="text-2xl font-semibold">
+                    {draft.top ? "TOP" : `Griff ${grip}`}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between py-5">
+                  <span className="text-sm text-[#003d55]/65">Zeit</span>
+                  <strong className="text-2xl font-semibold tabular-nums">
+                    {timeLabel(totalSeconds)}
+                  </strong>
+                </div>
+              </div>
+              {selectedEntry.attempt_id && (
+                <p className="text-sm">
+                  <span className="font-semibold">Korrekturgrund: </span>
+                  {draft.reason}
+                </p>
+              )}
+              <p className="text-sm text-[#003d55]/70">
+                Mit Papierliste vergleichen.
+              </p>
+              <footer className="sticky bottom-0 mt-auto space-y-2 bg-[#f8f4ee] py-3">
+                <p className="text-center text-xs text-[#003d55]/65">
+                  Wird als vorläufiges Ergebnis veröffentlicht
+                </p>
+                <button
+                  disabled={!canSubmit}
+                  onClick={() => void submit()}
+                  className={primary}
+                >
+                  {busy ? "Wird gespeichert …" : "Ergebnis speichern"}
+                </button>
+              </footer>
+            </div>
+          )}
         </>
+      ) : (
+        <div className="space-y-3">
+          <p role="alert" className="text-sm">
+            Die Klasse oder Person ist nicht mehr für die Eingabe verfügbar. Der
+            Entwurf bleibt erhalten.
+          </p>
+          <button onClick={() => setView("classes")} className={secondary}>
+            Klassen anzeigen
+          </button>
+        </div>
       )}
-    </div>
+
+      <AlertDialog
+        open={!!pendingChoice}
+        onOpenChange={(open) => {
+          if (!open) setPendingChoice(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[calc(100%-2rem)] rounded-xl bg-[#f8f4ee] text-[#003d55] sm:max-w-sm">
+          <AlertDialogTitle className="[font-family:inherit] tracking-normal">
+            Entwurf verwerfen?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-[#003d55]/70">
+            Das Ergebnis wurde noch nicht gespeichert. Beim Wechsel werden die
+            eingegebenen Werte verworfen.
+          </AlertDialogDescription>
+          <AlertDialogCancel
+            className={cn(
+              secondary,
+              "h-auto skew-x-0 normal-case tracking-normal hover:bg-[#003d55]/5 hover:text-[#003d55]",
+            )}
+          >
+            Entwurf behalten
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className={cn(
+              primary,
+              "h-auto skew-x-0 normal-case tracking-normal hover:translate-y-0",
+            )}
+            onClick={() => {
+              if (pendingChoice) chooseEntry(pendingChoice);
+              setPendingChoice(null);
+            }}
+          >
+            Verwerfen und wechseln
+          </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }

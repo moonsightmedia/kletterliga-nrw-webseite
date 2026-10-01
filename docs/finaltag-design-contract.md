@@ -49,3 +49,7 @@ Janosch bestätigt ein gemeinsames Passwort für beide Final-Handys. René richt
 ## Vereinfachte Halbfinalverwaltung · 01.10.2026
 
 Die Halbfinalansicht verwendet eine kompakte Kopfzeile und Navigation, Suche über alle Klassen, Klassenfilter und offene Ergebnisse. Teilnehmer öffnen einen fokussierten Routendialog mit Ändern oder Eintragen. Texte, doppelte Klassenkarten und globale Eingabezeitlisten entfallen. Konfiguration und Protokolle sind zugeklappt. Der neue Bedienablauf und die zugrunde liegenden Regeln stehen in [Halbfinalverwaltung](halbfinale-admin-design.md).
+
+## Finaleingabe auf dem Handy · 01.10.2026
+
+Die digitale Zeitnahme verwendet getrennte Klassen-, Teilnehmer-, Eingabe- und Prüfungsansichten. Große Tippzeilen ersetzen Dropdowns; Ergebnis und gestoppte Zeit werden über Griff/TOP und Zahlenfelder erfasst. Name, Route und Startposition bleiben sichtbar. Speichern führt zurück zur gleichen Klasse; bestehende Werte öffnen eine begründete Korrektur. Lokale Entwürfe bleiben beim Zurückgehen, Netzausfall und Versionskonflikt erhalten. Bestätigte Speicherung wird vom folgenden Listenabruf getrennt. Details: [Mobile Finaleingabe](finaleingabe-mobile-design.md).

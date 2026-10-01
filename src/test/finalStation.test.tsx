@@ -29,7 +29,7 @@ describe("final phone password login", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Anmelden" }));
     expect(
-      await screen.findByRole("combobox", { name: "Finalklasse" }),
+      await screen.findByRole("heading", { name: "Klasse wählen" }),
     ).toBeInTheDocument();
     expect(getFinalStation).toHaveBeenCalledWith(
       "2026",
