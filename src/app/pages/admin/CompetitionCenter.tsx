@@ -334,11 +334,15 @@ export function CompetitionCenterContent({
         total + row.missing.filter((entry) => !entry.settled).length,
       0,
     ) ?? 0;
-  const nextStep = classNextStep(
-    activeFinal,
-    activeMissing,
-    semifinalPhase ?? "draft",
-  );
+  const nextStep =
+    tab === "semifinal"
+      ? {
+          tab: "semifinal",
+          title: "Halbfinalrangliste ansehen",
+          detail:
+            "Namen anklicken für die fünf Routenergebnisse und Eingabezeiten. Fehlende Einträge bleiben sichtbar offen.",
+        }
+      : classNextStep(activeFinal, activeMissing, semifinalPhase ?? "draft");
   const filteredPairs = classPairs.filter(([key]) => key === activeKey);
   const activeTvHref = tvHref ?? `/live/${season}`;
 
@@ -351,8 +355,9 @@ export function CompetitionCenterContent({
           </p>
           <h1 className="stitch-headline text-3xl">Wettkampfzentrale</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-[#f2dcab]/85">
-            Ergebnisse klären, Startlisten freigeben und das Finale sicher
-            abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt.
+            {tab === "semifinal"
+              ? "Halbfinalranglisten nach Klasse verfolgen und einzelne Routenergebnisse ansehen. Bestätigte Abgaben zählen automatisch."
+              : "Ergebnisse klären, Startlisten freigeben und das Finale sicher abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt."}
           </p>
           <p className="mt-3 flex items-center gap-2 text-xs font-bold">
             <ShieldCheck size={15} />

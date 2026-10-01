@@ -16,6 +16,8 @@ Die bestehende QR-Funktion prüft die Route und den gültigen Routencode. Die Ko
 
 Unter **Übersicht** und **Halbfinale** steht die Rangliste der gewählten Klasse. Der Name klappt die fünf Routenergebnisse auf: Punkte, Griff, Erstabgabe und gegebenenfalls letzte Korrektur. Die Vollständigkeit steht pro Person und Klasse dabei. Dies ist eine Leseansicht ohne zusätzliche Ergebnisfreigabe.
 
+Im Reiter **Halbfinale** bleiben Einleitung und Klassenführung bei dieser Runde. Dort erscheint kein automatischer Verweis auf Finalergebnisse oder Finalfeldfreigabe, auch wenn die gewählte Klasse bereits ein laufendes Finale hat. Der Wechsel zum Finale erfolgt bewusst über die Navigation.
+
 Die Daten werden alle fünf Sekunden aktualisiert. Fehlende Einträge und die administrativen Grundeinstellungen liegen in gesonderten aufklappbaren Bereichen. Erst nach Ende der normalen Eingabe werden fehlende Werte begründet nachgetragen oder ausdrücklich als nicht geklettert dokumentiert. Die Bestätigung des Finalfeldes bleibt ein eigener späterer Schritt.
 
 ## Automatische Sperre um 16 Uhr
