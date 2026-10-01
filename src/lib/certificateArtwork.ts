@@ -18,7 +18,7 @@ function getArtwork(name: string): Promise<HTMLImageElement> {
   const cached = imageCache.get(name);
   if (cached) return cached;
   const image = new Image();
-  image.src = `/certificates/${name}.png`;
+  image.src = `/certificates/${name}.${name === "logo" ? "svg" : "png"}`;
   const pending = image.decode().then(() => image).catch((error) => {
     imageCache.delete(name);
     throw error;
@@ -110,6 +110,8 @@ export async function renderCertificate(certificate: Certificate, format: Certif
   canvas.height = isPdf ? 3508 : 1350;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Die Urkunde konnte auf diesem Gerät nicht gezeichnet werden.");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   context.scale(canvas.width / 1000, canvas.height / height);
   const draw = (name: string, x: number, y: number, width: number, height: number) => {
     const source = artwork.get(name);
