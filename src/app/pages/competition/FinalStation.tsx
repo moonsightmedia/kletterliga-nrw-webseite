@@ -13,6 +13,7 @@ import {
   StitchTextField,
 } from "@/app/components/StitchPrimitives";
 import { useSeasonSettings } from "@/services/seasonSettings";
+import { validFinalPassword } from "@/lib/finalPassword";
 import {
   className,
   getFinalStation,
@@ -207,10 +208,10 @@ export function FinalStationContent({
     setError("");
     try {
       await reload(code.trim(), station);
-      setNotice("Station verbunden.");
+      setNotice("Für die Finaleingabe angemeldet.");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Stationszugang fehlgeschlagen.",
+        err instanceof Error ? err.message : "Anmeldung fehlgeschlagen.",
       );
     } finally {
       setBusy(false);
@@ -290,8 +291,9 @@ export function FinalStationContent({
       {!activeCode ? (
         <StitchCard className="space-y-4 p-5">
           <p>
-            Gib den eigenen Code deiner Zeitnahmestation ein. Die Papierliste
-            bleibt für den Abgleich maßgeblich.
+            Beide Handys verwenden dasselbe Finalpasswort von René. Nach der
+            Anmeldung Klasse und Teilnehmer auswählen, Griff/TOP und Zeit
+            eintragen.
           </p>
           <Select
             value={String(station)}
@@ -300,29 +302,29 @@ export function FinalStationContent({
             }}
           >
             <SelectTrigger
-              aria-label="Eingabestation"
+              aria-label="Eingabehandy"
               className="min-h-12 bg-white"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Station 1</SelectItem>
-              <SelectItem value="2">Station 2</SelectItem>
+              <SelectItem value="1">Handy 1</SelectItem>
+              <SelectItem value="2">Handy 2</SelectItem>
             </SelectContent>
           </Select>
           <StitchTextField
-            label="Stationscode"
+            label="Finalpasswort"
             type="password"
             autoComplete="off"
-            maxLength={24}
+            maxLength={72}
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />
           <StitchButton
-            disabled={busy || code.trim().length !== 24}
+            disabled={busy || !validFinalPassword(code)}
             onClick={() => void login()}
           >
-            Station öffnen
+            Anmelden
           </StitchButton>
         </StitchCard>
       ) : (
@@ -332,7 +334,9 @@ export function FinalStationContent({
             className="flex flex-wrap items-center justify-between gap-3 p-5 text-[#f2dcab]"
           >
             <div>
-              <h2 className="stitch-headline text-xl">Station {station}</h2>
+              <h2 className="stitch-headline text-xl">
+                Finaleingabe · Handy {station}
+              </h2>
               <p className="text-sm">
                 Manuelle Übernahme der gestoppten Zeit in ganzen Sekunden ·
                 maximal 5:00
@@ -347,7 +351,7 @@ export function FinalStationContent({
                 setCode("");
               }}
             >
-              Station verlassen
+              Abmelden
             </StitchButton>
           </StitchCard>
           <StitchCard className="space-y-5 p-5">

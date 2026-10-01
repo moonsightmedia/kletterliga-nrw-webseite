@@ -1,4 +1,4 @@
--- Run after all competition migrations, including 20261001090000, in an isolated test database.
+-- Run after all competition migrations, including 20261001140000, in an isolated test database.
 begin;
 create function pg_temp.ok(value boolean,label text) returns void language plpgsql as $$
 begin if value is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -56,7 +56,7 @@ select pg_temp.ok((select min(start_position)=1 and max(start_position)=7 from p
 select pg_temp.ok((select semifinal_rank=6 from public.competition_final_entries where profile_id='99999999-7000-4000-8000-000000000008'),'tie keeps semifinal rank');
 set local role authenticated;
 select pg_temp.denied('select public.move_competition_final_entry((public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,2,0)','FINAL_VERSION_CONFLICT');
-select public.set_competition_final_station('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX');
+select public.set_competition_final_password('FINAL-TEST','ABCDEFGHIJKLMNOPQRSTUVWX');
 select pg_temp.denied('select public.move_competition_final_entry((public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,2,null)','FINAL_VERSION_CONFLICT');
 select public.set_competition_final_phase((public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid,'running',1);
 reset role;
@@ -67,18 +67,21 @@ select set_config('request.jwt.claim.sub','',true);
 select set_config('request.jwt.claims','{"role":"anon"}',true);
 set local role anon;
 select pg_temp.denied('select public.get_competition_final_admin(''FINAL-TEST'')','permission denied');
-select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1,''WRONGCODEWRONGCODEWRONGCODE'')','FINAL_STATION_INVALID');
-select pg_temp.ok(jsonb_array_length(public.get_competition_final_station('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX')->'classes')=1,'station sees only assigned classes');
-select public.submit_competition_final_attempt('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry1')::uuid,'99999999-7000-4000-8000-000000000101',20,false,200,2,'');
-select public.submit_competition_final_attempt('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry1')::uuid,'99999999-7000-4000-8000-000000000101',20,false,200,2,'');
+select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1::smallint,''WRONGCODEWRONGCODEWRONGCODE'')','FINAL_PASSWORD_INVALID');
+select pg_temp.denied('select * from public.competition_final_access','permission denied');
+select pg_temp.denied('select public.verify_competition_final_password(''FINAL-TEST'',''ABCDEFGHIJKLMNOPQRSTUVWX'')','permission denied');
+select pg_temp.denied('select public.set_competition_final_password(''FINAL-TEST'',''Changed-Password-Demo'')','permission denied');
+select pg_temp.ok(public.get_competition_final_station('FINAL-TEST',1::smallint,'ABCDEFGHIJKLMNOPQRSTUVWX')->'classes'=public.get_competition_final_station('FINAL-TEST',2::smallint,'ABCDEFGHIJKLMNOPQRSTUVWX')->'classes','both phones see the same classes with one password');
+select public.submit_competition_final_attempt('FINAL-TEST',1::smallint,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry1')::uuid,'99999999-7000-4000-8000-000000000101',20,false,200,2,'');
+select public.submit_competition_final_attempt('FINAL-TEST',1::smallint,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry1')::uuid,'99999999-7000-4000-8000-000000000101',20,false,200,2,'');
 reset role;
 select pg_temp.ok((select count(*)=1 from public.competition_final_attempts where entry_id=current_setting('test.entry1')::uuid),'retry is idempotent');
 set local role anon;
-select public.submit_competition_final_attempt('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry2')::uuid,'99999999-7000-4000-8000-000000000102',20,false,100,3,'');
+select public.submit_competition_final_attempt('FINAL-TEST',2::smallint,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry2')::uuid,'99999999-7000-4000-8000-000000000102',20,false,100,3,'');
 select pg_temp.ok((public.get_competition_final_public('FINAL-TEST')->0->'entries'->0->>'name')='Final Person 2','better semifinal rank beats faster time at equal grip');
 select pg_temp.ok(position('profile_id' in public.get_competition_live('FINAL-TEST')::text)=0,'public payload contains no internal IDs');
 select pg_temp.ok(position('code_hash' in public.get_competition_live('FINAL-TEST')::text)=0 and position('reason' in public.get_competition_live('FINAL-TEST')::text)=0,'public TV excludes codes and internal reasons');
-select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1,null)','FINAL_STATION_INVALID');
+select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1::smallint,null)','FINAL_PASSWORD_INVALID');
 reset role;
 select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000001',true);
 select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000001","role":"authenticated"}',true);
@@ -95,5 +98,20 @@ select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-00000000
 set local role authenticated;
 select pg_temp.denied('select public.get_competition_final_admin(''FINAL-TEST'')','LEAGUE_ADMIN_REQUIRED');
 select pg_temp.denied('select public.set_competition_live_display(''FINAL-TEST'',''final'',''[]''::jsonb,null,15)','LEAGUE_ADMIN_REQUIRED');
+select pg_temp.denied('select public.set_competition_final_password(''FINAL-TEST'',''Changed-Password-Demo'')','LEAGUE_ADMIN_REQUIRED');
+reset role;
+select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000001',true);
+select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+select public.set_competition_final_password('FINAL-TEST','Changed-Password-Demo');
+reset role;
+select pg_temp.ok((select password_hash<>'Changed-Password-Demo' and password_hash like '$2a$%' from public.competition_final_access where event_id=(select id from public.competition_day_events where season_year='FINAL-TEST')),'password stored as bcrypt hash');
+select pg_temp.ok((select station_no=2 from public.competition_final_attempts where request_id='99999999-7000-4000-8000-000000000102'),'second phone is preserved in audit source');
+set local role anon;
+select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1::smallint,''ABCDEFGHIJKLMNOPQRSTUVWX'')','FINAL_PASSWORD_INVALID');
+select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',2::smallint,''ABCDEFGHIJKLMNOPQRSTUVWX'')','FINAL_PASSWORD_INVALID');
+select pg_temp.denied('select public.submit_competition_final_attempt(''FINAL-TEST'',2::smallint,''ABCDEFGHIJKLMNOPQRSTUVWX'',current_setting(''test.entry2'')::uuid,''99999999-7000-4000-8000-000000000102'',20,false,100,3,'''')','FINAL_PASSWORD_INVALID');
+select pg_temp.ok(public.get_competition_final_station('FINAL-TEST',1::smallint,'Changed-Password-Demo')->'classes'=public.get_competition_final_station('FINAL-TEST',2::smallint,'Changed-Password-Demo')->'classes','new password works on both phones');
+select pg_temp.ok(position('password_hash' in public.get_competition_live('FINAL-TEST')::text)=0,'public endpoint excludes password hashes');
 reset role;
 rollback;

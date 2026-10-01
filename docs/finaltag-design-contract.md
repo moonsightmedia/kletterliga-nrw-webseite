@@ -12,7 +12,7 @@ René entscheidet je Klasse, was als Nächstes passiert. Die Übersicht kombinie
 4. Klasse starten; die Zeitnahme erfasst manuell und bestätigt die Zusammenfassung.
 5. Eingabe schließen, Papierabgleich vollständig durchführen, offiziell freigeben.
 
-Routenpflege, Stationszugänge und Halbfinal-Grundkonfiguration sind aufklappbar. Sie sind bei fehlender Vorbereitung geöffnet. Alltägliche Ergebnisse und Entscheidungen werden dadurch nicht von Einrichtungsschritten verdrängt. Fehlende Gründe, fehlende Ergebnisse und bereits gestartete Personen deaktivieren die betroffenen Aktionen. Die Datenbank prüft erneut innerhalb der Transaktion.
+Routenpflege, Finalpasswort und Halbfinal-Grundkonfiguration sind aufklappbar. Sie sind bei fehlender Vorbereitung geöffnet. Alltägliche Ergebnisse und Entscheidungen werden dadurch nicht von Einrichtungsschritten verdrängt. Fehlende Gründe, fehlende Ergebnisse und bereits gestartete Personen deaktivieren die betroffenen Aktionen. Die Datenbank prüft erneut innerhalb der Transaktion.
 
 ## Design
 
@@ -41,3 +41,7 @@ Die Teilnehmerseite trennt Halbfinale und Finale in zwei Ansichten und filtert n
 - Nach der Halbfinalkonkretisierung: 46 gezielte Tests in acht Dateien bestanden, einschließlich des Fristwechsels bei bereits offener Teilnehmer-Eingabe, QR-Abgabe, Nullwerten, Ranglisten und TV. Erneuter ESLint-Lauf ohne Fehler (drei bestehende Fast-Refresh-Warnungen) und Produktionsbuild bestanden. Der App-Typecheck zeigt weiterhin dieselben 15 bestehenden Fehler. Lokale Browserprobe: 16-Uhr-Sperre simulieren, Robins fehlende Route begründet nachtragen und identische 280 Punkte in Admin- und Teilnehmeransicht; TV zeigt automatisch wechselnde Halbfinalklassen und Seiten ohne Login.
 - Browserdruck: zwei freigegebene Klassen mit jeweils sieben Startern ergeben zwei nicht leere A4-Seiten. Lange Namen, Schreibfelder und Unterschriftsfelder wurden in der gerenderten PDF geprüft. Eine leere erste Seite wurde behoben.
 - Lokal fehlen Supabase-Umgebungsvariablen und ein funktionierender isolierter Datenbankzugang. SQL-Rechte-/Transaktionstests und Renés tatsächliches Konto bleiben offen. Browserdaten sind kein Nachweis produktiver Datenbankrechte. Vor Produktivfreigabe Migrationen und SQL-Test in isolierter Umgebung ausführen, danach zwei Stationsgeräte, TV und echte Ausdrucke prüfen.
+
+## Gemeinsames Finalpasswort · Entscheidung 01.10.2026
+
+Janosch bestätigt ein gemeinsames Passwort für beide Final-Handys. René richtet es in Finale ein; beide Handys wählen alle freigegebenen Klassen. Handy 1/2 kennzeichnet nur die Eingabequelle. Passwortwechsel widerruft das alte für beide, auch bei wiederholten Speicheranfragen. Keine Erweiterung der Halbfinal- oder Adminrechte; TV bleibt ohne Anmeldung. Der Link zur Finaleingabe erscheint nicht im Halbfinaldemo.

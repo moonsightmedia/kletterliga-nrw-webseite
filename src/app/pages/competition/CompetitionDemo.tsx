@@ -118,11 +118,11 @@ export default function CompetitionDemo() {
               </Link>
             </StitchButton>
           )}
-          {view !== "station" && (
+          {view !== "station" && view !== "halbfinale" && (
             <StitchButton asChild variant="outline" size="sm">
               <Link to={`${root}/station`}>
                 <ClipboardList size={14} />
-                Zeitnahme testen
+                Finaleingabe öffnen
               </Link>
             </StitchButton>
           )}
@@ -145,12 +145,12 @@ export default function CompetitionDemo() {
           <>
             <div className="rounded-xl border border-[#003d55]/15 bg-white p-4 text-sm leading-6">
               <strong>Probedurchlauf:</strong> In Renés Zentrale zuerst die
-              Vorstieg-Klasse U18 starten. Hier Station 1 und den Testcode{" "}
+              Vorstieg-Klasse U18 starten. Beide Handys nutzen das
+              Demo-Finalpasswort{" "}
               <span className="break-all font-mono font-bold">
                 {demoStationCode}
-              </span>{" "}
-              verwenden. Nach dem Ersetzen eines Stationscodes gilt der neu
-              erzeugte Code aus der Zentrale.
+              </span>. Nach einer Passwortänderung gilt das neue Passwort aus der
+              Zentrale.
             </div>
             <FinalStationContent
               season="2026"

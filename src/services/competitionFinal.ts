@@ -93,6 +93,7 @@ export interface LiveNotice {
 }
 export interface FinalAdmin {
   phase: "draft" | "open" | "closed";
+  final_password_set?: boolean;
   submission_deadline_at?: string | null;
   classes: FinalClass[];
   routes: FinalRoute[];
@@ -146,8 +147,11 @@ function errorText(error: unknown): string {
       : "";
   if (raw.includes("FINAL_VERSION_CONFLICT"))
     return "Die Klasse wurde inzwischen geändert. Bitte neu laden und den aktuellen Stand prüfen.";
-  if (raw.includes("FINAL_STATION_INVALID"))
-    return "Der Stationszugang ist ungültig oder wurde ersetzt.";
+  if (
+    raw.includes("FINAL_STATION_INVALID") ||
+    raw.includes("FINAL_PASSWORD_INVALID")
+  )
+    return "Das Finalpasswort ist ungültig oder wurde geändert. Bitte erneut anmelden.";
   if (raw.includes("LEAGUE_ADMIN_REQUIRED"))
     return "Diese Aktion erfordert ein persönliches Liga-Admin-Konto. Bitte melde dich erneut an.";
   return raw || "Die Aktion konnte nicht abgeschlossen werden.";
@@ -268,15 +272,10 @@ export const checkFinalEntry = (entry: string, version: number) =>
     p_entry: entry,
     p_expected_version: version,
   });
-export const setFinalStation = (
-  season: string,
-  station: number,
-  code: string,
-) =>
-  rpc<void>("set_competition_final_station", {
+export const setFinalPassword = (season: string, password: string) =>
+  rpc<void>("set_competition_final_password", {
     p_season: season,
-    p_station: station,
-    p_code: code,
+    p_password: password,
   });
 export const getFinalStation = (
   season: string,

@@ -10,16 +10,27 @@ import type {
 } from "@/services/competitionFinal";
 import type { CompetitionStanding } from "@/services/competitionDay";
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
+import { validFinalPassword } from "@/lib/finalPassword";
 
 const key = "kletterliga:guided-final-demo:v2";
 export const demoStationCode = "DEMO12345678901234567890";
 type Store = {
   admin: FinalAdmin;
   codes: Record<number, string>;
+  passwordHash?: string;
   requests: string[];
   changed: string;
 };
 const now = () => new Date().toISOString();
+async function demoPasswordHash(password: string) {
+  const hash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(password),
+  );
+  return Array.from(new Uint8Array(hash), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
 function seed(): Store {
   const definitions = [
     {
@@ -75,6 +86,7 @@ function seed(): Store {
   ];
   const admin: FinalAdmin = {
     phase: "closed",
+    final_password_set: true,
     submission_deadline_at: "2026-10-03T16:00:00+02:00",
     classes: [],
     routes: [
@@ -182,7 +194,7 @@ function seed(): Store {
   }
   return {
     admin,
-    codes: { 1: demoStationCode, 2: "DEMO22345678901234567890" },
+    codes: { 1: demoStationCode, 2: demoStationCode },
     requests: [],
     changed: now(),
   };
@@ -225,6 +237,7 @@ function read(): Store {
     const value = JSON.parse(localStorage.getItem(key) ?? "null") as Store;
     if (value?.admin?.semifinal?.length) {
       value.admin = rank(value.admin);
+      value.admin.final_password_set ??= true;
       if (
         value.admin.phase === "open" &&
         competitionDeadlineReached(value.admin.submission_deadline_at)
@@ -312,13 +325,20 @@ function entryClass(value: Store, id: string, version: number) {
     entry: item.entries.find((row) => row.entry_id === id)!,
   };
 }
-function audit(value: Store, action: string, reason = "", entry_id?: string) {
+function audit(
+  value: Store,
+  action: string,
+  reason = "",
+  entry_id?: string,
+  station_no?: number,
+) {
   value.admin.audit.unshift({
     action,
     reason,
     entry_id,
     created_at: now(),
-    actor: "René · Demokonto",
+    actor: station_no ? undefined : "René · Demokonto",
+    station_no,
   });
 }
 
@@ -539,11 +559,17 @@ export const demoSource: CompetitionCenterSource & {
       item.version++;
       audit(value, "Papierabgleich", "", id);
     }),
-  setFinalStation: async (_season, station, code) =>
+  setFinalPassword: async (_season, password) => {
+    if (!validFinalPassword(password))
+      throw new Error("Bitte ein gültiges Finalpasswort wählen.");
+    const hash = await demoPasswordHash(password);
     mutate((value) => {
-      value.codes[station] = code;
-      audit(value, `Zugang Station ${station} ersetzt`);
-    }),
+      value.passwordHash = hash;
+      value.codes = {};
+      value.admin.final_password_set = true;
+      audit(value, "Gemeinsames Finalpasswort geändert");
+    });
+  },
   setLiveDisplay: async (_season, display) =>
     mutate((value) => {
       value.admin.display = display;
@@ -569,14 +595,15 @@ export const demoSource: CompetitionCenterSource & {
   },
   getFinalStation: async (_season, station, code) => {
     const value = read();
-    if (code !== value.codes[station])
-      throw new Error("Der Stationszugang ist ungültig oder wurde ersetzt.");
+    const accepted = value.passwordHash
+      ? (await demoPasswordHash(code)) === value.passwordHash
+      : code === value.codes[1];
+    if (![1, 2].includes(station) || !accepted)
+      throw new Error("Das Finalpasswort ist ungültig oder wurde geändert.");
     return {
       classes: value.admin.classes
-        .filter(
-          (item) =>
-            item.station_no === station &&
-            ["published", "running", "review"].includes(item.phase),
+        .filter((item) =>
+          ["published", "running", "review"].includes(item.phase),
         )
         .map((item) => ({
           ...item,
@@ -586,13 +613,17 @@ export const demoSource: CompetitionCenterSource & {
         })) as StationClass[],
     };
   },
-  submitFinalAttempt: async (input) =>
-    mutate((value) => {
+  submitFinalAttempt: async (input) => {
+    const hash = await demoPasswordHash(input.code);
+    return mutate((value) => {
+      const accepted = value.passwordHash
+        ? hash === value.passwordHash
+        : input.code === value.codes[1];
+      if (![1, 2].includes(input.station) || !accepted)
+        throw new Error("Finalpasswort ungültig.");
       if (value.requests.includes(input.request)) return;
-      if (value.codes[input.station] !== input.code)
-        throw new Error("Stationszugang ungültig.");
       const { item, entry } = entryClass(value, input.entry, input.version);
-      if (item.phase !== "running" || item.station_no !== input.station)
+      if (item.phase !== "running")
         throw new Error("Eingabe für diese Klasse geschlossen.");
       if (entry.attempt_id && !input.reason.trim())
         throw new Error("Begründung für die Korrektur fehlt.");
@@ -606,8 +637,15 @@ export const demoSource: CompetitionCenterSource & {
       });
       item.version++;
       value.requests.push(input.request);
-      audit(value, "Finalergebnis eingetragen", input.reason, input.entry);
-    }),
+      audit(
+        value,
+        "Finalergebnis eingetragen",
+        input.reason,
+        input.entry,
+        input.station,
+      );
+    });
+  },
 };
 
 export function demoFinalClasses(admin: FinalAdmin): LiveData["classes"] {

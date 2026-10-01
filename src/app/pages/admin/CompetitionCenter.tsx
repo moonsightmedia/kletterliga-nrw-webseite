@@ -17,6 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { classNextStep } from "@/lib/competitionPresentation";
+import { validFinalPassword } from "@/lib/finalPassword";
 import {
   competitionDeadlineReached,
   formatCompetitionDeadline,
@@ -63,11 +64,6 @@ const phaseName: Record<string, string> = {
   review: "Papierprüfung",
   final: "Endgültig",
 };
-const randomCode = () => {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return [...bytes].map((byte) => alphabet[byte % alphabet.length]).join("");
-};
 const formatWhen = (date: string | null | undefined) =>
   date
     ? new Date(date).toLocaleString("de-DE", {
@@ -106,7 +102,7 @@ export type CompetitionCenterSource = Pick<
   | "setFinalEntryStatus"
   | "setFinalExclusion"
   | "setFinalPhase"
-  | "setFinalStation"
+  | "setFinalPassword"
   | "setLiveDisplay"
   | "settleSemifinal"
 > & {
@@ -162,7 +158,7 @@ export function CompetitionCenterContent({
     setFinalEntryStatus,
     setFinalExclusion,
     setFinalPhase,
-    setFinalStation,
+    setFinalPassword,
     setLiveDisplay,
     settleSemifinal,
   } = source;
@@ -190,9 +186,8 @@ export function CompetitionCenterContent({
   const [stationSelections, setStationSelections] = useState<
     Record<string, string>
   >({});
-  const [generatedCodes, setGeneratedCodes] = useState<Record<number, string>>(
-    {},
-  );
+  const [finalPassword, setFinalPasswordInput] = useState("");
+  const [finalPasswordRepeat, setFinalPasswordRepeat] = useState("");
   const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeBody, setNoticeBody] = useState("");
   const [noticeApp, setNoticeApp] = useState(true);
@@ -1381,59 +1376,67 @@ export function CompetitionCenterContent({
           <TabsContent value="final" className="space-y-5 pt-4">
             <details
               className="rounded-xl border border-[#003d55]/15 bg-white p-4"
-              open={!data.stations.length}
+              open={!data.final_password_set}
             >
               <summary className="cursor-pointer py-2 font-bold">
-                Zugänge der Zeitnahme · {data.stations.length}/2 eingerichtet
+                Finalpasswort ·{" "}
+                {data.final_password_set
+                  ? "eingerichtet"
+                  : "noch nicht eingerichtet"}
               </summary>
               <StitchCard className="space-y-3 p-5">
                 <h2 className="stitch-headline text-xl">
-                  Digitale Eingabestationen
+                  Gemeinsames Passwort für beide Handys
                 </h2>
                 <p className="text-sm">
-                  Je ein eigener Code für die beiden Zeitnehmenden. Ein neuer
-                  Code widerruft den alten Zugang dieser Station.
+                  Beide Zeitnehmenden melden sich mit diesem Passwort an und
+                  können alle freigegebenen Finalklassen auswählen. Ein neues
+                  Passwort ersetzt das bisherige für beide Handys. Bereits
+                  angemeldete Handys müssen sich danach mit dem neuen Passwort
+                  anmelden.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  {([1, 2] as const).map((station) => (
-                    <StitchButton
-                      key={station}
-                      disabled={busy}
-                      variant="outline"
-                      onClick={() => {
-                        const code = randomCode();
-                        void run(
-                          () => setFinalStation(season, station, code),
-                          `Code für Station ${station} erzeugt.`,
-                        ).then((ok) => {
-                          if (ok)
-                            setGeneratedCodes((prev) => ({
-                              ...prev,
-                              [station]: code,
-                            }));
-                        });
-                      }}
-                    >
-                      Code Station {station}{" "}
-                      {data.stations.some((s) => s.station_no === station)
-                        ? "ersetzen"
-                        : "erzeugen"}
-                    </StitchButton>
-                  ))}
-                </div>
-                {Object.entries(generatedCodes).map(([station, code]) => (
-                  <p
-                    key={station}
-                    className="break-all rounded-lg bg-white p-3 text-sm"
-                  >
-                    <strong>
-                      Station {station}: {code}
-                    </strong>
-                    <br />
-                    Nur jetzt sichtbar. Sicher an die zuständige Person
-                    weitergeben.
-                  </p>
-                ))}
+                <StitchTextField
+                  label="Neues Finalpasswort"
+                  type="password"
+                  autoComplete="new-password"
+                  maxLength={72}
+                  value={finalPassword}
+                  onChange={(e) => setFinalPasswordInput(e.target.value)}
+                />
+                <StitchTextField
+                  label="Finalpasswort wiederholen"
+                  type="password"
+                  autoComplete="new-password"
+                  maxLength={72}
+                  value={finalPasswordRepeat}
+                  onChange={(e) => setFinalPasswordRepeat(e.target.value)}
+                />
+                <p className="text-xs">
+                  Mindestens 12 Zeichen. Keine Leerzeichen am Anfang oder Ende.
+                  Das gespeicherte Passwort wird nicht angezeigt.
+                </p>
+                <StitchButton
+                  disabled={
+                    busy ||
+                    !validFinalPassword(finalPassword) ||
+                    finalPassword !== finalPasswordRepeat
+                  }
+                  onClick={() => {
+                    void run(
+                      () => setFinalPassword(season, finalPassword),
+                      "Finalpasswort für beide Handys gespeichert.",
+                    ).then((ok) => {
+                      if (ok) {
+                        setFinalPasswordInput("");
+                        setFinalPasswordRepeat("");
+                      }
+                    });
+                  }}
+                >
+                  {data.final_password_set
+                    ? "Finalpasswort ändern"
+                    : "Finalpasswort speichern"}
+                </StitchButton>
                 <StitchButton asChild variant="outline">
                   <Link to={stationHref}>
                     <ExternalLink size={16} className="mr-2" />

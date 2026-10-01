@@ -26,11 +26,11 @@ In **Finalstartlisten** stehen die Starts vom schlechtesten qualifizierten Halbf
 
 ## 3. Klasse starten und digital erfassen
 
-In **Finale** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Für jede der beiden Zeitnahmestationen im aufklappbaren Bereich **Zugänge der Zeitnahme** einen eigenen Zugang einrichten. Ein neuer Code widerruft den vorherigen Zugang dieser Station.
+In **Finale** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Im aufklappbaren Bereich **Finalpasswort** legt René einmal ein gemeinsames Passwort für beide Handys fest (mindestens zwölf Zeichen). Ein neues Passwort ersetzt das alte auf beiden Handys.
 
-Im lokalen Probedurchlauf: **Zeitnahme testen**, Station 1, Testcode `DEMO12345678901234567890`. Vorstieg U18 auswählen, Nora Muster wählen und beispielsweise **Griff 24 · 3 Minuten · 12 Sekunden** eintragen. **Eintrag prüfen**, Zusammenfassung mit dem Papier vergleichen, **Jetzt speichern**. Ein Entwurf ist noch nicht übertragen; nur die bestätigte Speicherung erscheint online. Es gibt keine automatische Übernahme einer Browser-Stoppuhr.
+Die Zeitnehmenden öffnen die **Finaleingabe**, wählen einmal **Handy 1** beziehungsweise **Handy 2** und geben dasselbe Finalpasswort ein. Beide sehen alle freigegebenen Klassen. Die Handynummer dient nur dem Protokoll. Im lokalen Probedurchlauf: **Finaleingabe öffnen**, das dort angezeigte Demo-Finalpasswort verwenden. Dieser Link erscheint nicht in der Halbfinalansicht. Vorstieg U18 auswählen, Nora Muster wählen und beispielsweise **Griff 24 · 3 Minuten · 12 Sekunden** eintragen. **Eintrag prüfen**, Zusammenfassung mit dem Papier vergleichen, **Jetzt speichern**. Ein Entwurf ist noch nicht übertragen; nur die bestätigte Speicherung erscheint online. Es gibt keine automatische Übernahme einer Browser-Stoppuhr.
 
-![Manuelle Eingabe mit Person, Route und kontrollierter Zusammenfassung](screenshots/station-demo.jpg)
+![Anmeldung beider Handys mit gemeinsamem Finalpasswort](screenshots/finalpasswort-anmeldung.jpg)
 
 ## 4. Papierabgleich und Ergebnisfreigabe
 
@@ -52,13 +52,13 @@ Hinweise erhalten Titel, Text, Ziel App/TV/beide und eine Anzeigedauer. Ein Voll
 
 ## Zugänge und Ausfallverfahren
 
-| Person/Gerät | Echte Adresse | Zugang |
-|---|---|---|
-| René | `/app/admin/league/wettkampf` | Persönliches Liga-Admin-Konto |
-| Zeitnahme | `/app/schiedsrichter/finale` | Eigener Stationscode, nur zugewiesene Klassen |
-| Teilnehmer | `/app/wettkampf/rangliste` | Bestehender App-Zugang |
-| Fernseher | `/live/2026` | Öffentlich, keine Anmeldung |
+| Person/Gerät       | Echte Adresse                 | Zugang                                                     |
+| ------------------ | ----------------------------- | ---------------------------------------------------------- |
+| René               | `/app/admin/league/wettkampf` | Persönliches Liga-Admin-Konto                              |
+| Beide Final-Handys | `/app/schiedsrichter/finale`  | Gemeinsames Finalpasswort, alle freigegebenen Finalklassen |
+| Teilnehmer         | `/app/wettkampf/rangliste`    | Bestehender App-Zugang                                     |
+| Fernseher          | `/live/2026`                  | Öffentlich, keine Anmeldung                                |
 
 Bei Netzausfall auf Papier weiterarbeiten. Nach Wiederverbindung aktuellen Stand prüfen und den lokal erhaltenen Entwurf bewusst erneut senden. Eine unbestätigte Übertragung ist kein veröffentlichtes Ergebnis.
 
-**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, die beiden Finalmigrationen und die neue Migration zur 16-Uhr-Sperre, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md); vereinbarte Halbfinalregeln: [Halbfinale](halbfinale-bedienkonzept.md).
+**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, alle vier Wettkampfmigrationen einschließlich gemeinsamer Passwortanmeldung, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto, Einrichtung des echten Finalpassworts durch René und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md); vereinbarte Halbfinalregeln: [Halbfinale](halbfinale-bedienkonzept.md).
