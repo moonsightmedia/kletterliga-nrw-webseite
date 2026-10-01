@@ -1,37 +1,60 @@
-# Finaltag 2026 · Kurzanleitung mit Testdaten
+# Finaltag · Kurzanleitung für René und die Zeitnahme
 
-**Für René und die Zeitnahme.** Diese Bilder zeigen eine **interaktive lokale Demo mit erfundenen Personen**. Sie ist unter [http://127.0.0.1:5337/demo/finaltag](http://127.0.0.1:5337/demo/finaltag) erreichbar, solange der lokale Vite-Server läuft. Änderungen bleiben in diesem Browser; **Zurücksetzen** stellt den Ausgangsstand wieder her. Die Demo verbindet sich nicht mit Supabase und ist keine offizielle Wettkampfoberfläche.
+Die Bilder zeigen die überarbeiteten **App-Oberflächen mit erfundenen Testdaten**. [Lokal ausprobieren](http://127.0.0.1:5337/demo/finaltag), solange der Entwicklungsserver läuft. Die Testdaten bleiben im Browser. **Testdaten zurücksetzen** stellt drei Klassen wieder her: Vorstieg U18 hat eine freigegebene Startliste, Vorstieg Ü18 läuft bereits und Toprope hat eine offene Halbfinalroute.
 
-## 1. René kontrolliert die Übersicht
+## 1. Über die Übersicht einsteigen
 
-Die Übersicht zeigt offene Halbfinalrouten, freigegebene Klassen, Papierabgleich und die letzten Änderungen. Im Ausgangsstand läuft **Vorstieg U18 weiblich**, während **Toprope Ü18 offen** noch eine ungeklärte Halbfinalroute hat.
+Unter **So geht es weiter** steht für jede Klasse der aktuelle Status, die nächste Aufgabe und deren Erklärung. **Klasse öffnen** führt direkt zur passenden Ansicht. In Halbfinale, Finalstartlisten und Finale lässt sich oben die **Klasse bearbeiten** wechseln. Der Fernseher läuft unabhängig davon.
 
-![Gefüllte Wettkampfzentrale mit Klassenstatus](screenshots/zentrale-demo.png)
+![Übersicht mit konkretem nächsten Schritt je Klasse](screenshots/zentrale-demo.jpg)
 
-## 2. Fehlenden Halbfinalwert klären, Finalfeld freigeben
+## 2. Halbfinale klären und Startliste drucken
 
-Unter **Halbfinale** ist Robin Demos fünfte Route zunächst **offen**. Mit **Fehlende Route begründet als 0 klären** wird sie ausdrücklich als nicht geklettert dokumentiert. Erst danach lässt sich unter **Finalstartlisten** das Toprope-Finalfeld bestätigen. Die sieben Personen in Vorstieg zeigen die Regel **sechs Plätze plus Punktgleiche an der Grenze**. Die Startfolge steht vom schlechtesten qualifizierten Halbfinalplatz zum besten.
+Die Halbfinaleingabe für alle Klassen schließen. Fehlende Werte mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. In der Probe ist Robins fünfte Toprope-Route offen. Anschließend **Finalfeld bestätigen**: Route und digitale Station auswählen, Vorschlag prüfen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
 
-![Halbfinaltabelle mit offener Route](screenshots/halbfinale-demo.png)
+![Ausgewählte Klasse mit offener Halbfinalroute](screenshots/halbfinale-demo.jpg)
 
-![Finalstartliste mit sieben Qualifizierten und Versionsstand](screenshots/startlisten-demo.png)
+In **Finalstartlisten** stehen die Starts vom schlechtesten qualifizierten Halbfinalplatz zum besten. Pfeile ändern ausschließlich die Startfolge. Ausfälle vor Klassenstart begründet dokumentieren und das Feld erneut bestätigen. **Drucken** öffnet einen separaten Tab. Nach Änderungen gilt die neue Version: alten Ausdruck ersetzen.
 
-**Startliste drucken** öffnet eine eigene A4-Ansicht. Dort **Jetzt drucken / als PDF speichern** wählen. Route, Station und Version vergleichen; bei einer neuen Version den alten Ausdruck ersetzen.
+![Versionierte Startliste und Nachrücker](screenshots/startlisten-demo.jpg)
 
-![Papier-Startliste mit Feldern für Griff, Dauer und Bemerkungen](screenshots/druckliste-demo.png)
+![A4-Ansicht für handschriftliche Ergebnisse](screenshots/druckliste-demo.jpg)
 
-## 3. Zeitnahme trägt vom Papier digital ein
+## 3. Klasse starten und digital erfassen
 
-Oben **Station testen** wählen. Klasse und Person aus der Startliste auswählen, **Griff oder TOP** und **Minuten/Sekunden** vom Papier übertragen, dann **Ergebnis vorläufig speichern**. In der Demo ist Marie Test vorbereitet. Als Übungswert kann man **Griff 24 · 3:12** eintragen. Danach unter **Finale** prüfen, ob Marie im Ranking erscheint.
+In **Finale** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Für jede der beiden Zeitnahmestationen im aufklappbaren Bereich **Zugänge der Zeitnahme** einen eigenen Zugang einrichten. Ein neuer Code widerruft den vorherigen Zugang dieser Station.
 
-![Digitale Station mit ausgewählter Person und Eingabefeldern](screenshots/station-demo.png)
+Im lokalen Probedurchlauf: **Zeitnahme testen**, Station 1, Testcode `DEMO12345678901234567890`. Vorstieg U18 auswählen, Nora Muster wählen und beispielsweise **Griff 24 · 3 Minuten · 12 Sekunden** eintragen. **Eintrag prüfen**, Zusammenfassung mit dem Papier vergleichen, **Jetzt speichern**. Ein Entwurf ist noch nicht übertragen; nur die bestätigte Speicherung erscheint online. Es gibt keine automatische Übernahme einer Browser-Stoppuhr.
 
-![Vorläufiges Finalranking mit offenen und eingetragenen Ergebnissen](screenshots/finalranking-demo.png)
+![Manuelle Eingabe mit Person, Route und kontrollierter Zusammenfassung](screenshots/station-demo.jpg)
 
-## 4. Papierabgleich und TV
+## 4. Papierabgleich und Ergebnisfreigabe
 
-Unter **Finale** jeden gespeicherten Wert mit der Papierliste vergleichen und **Abgleichen** wählen. Fehlende Werte bleiben offen. **Endgültig freigeben** ist erst möglich, wenn alle Ergebnisse vorliegen und abgeglichen sind. Unter **Anzeige & Hinweise** lassen sich TV-Phase und ein Testhinweis ändern. **TV-Vorschau** zeigt den vorläufigen Stand; in der Halbfinal-Phase zeigt sie Halbfinalpunkte.
+René sieht gespeicherte Ergebnisse sofort in **Finale**. Jeden Wert mit dem Papier vergleichen und abgleichen. Nach dem letzten Start **Eingabe schließen**. **Endgültig freigeben** wird erst aktiv, wenn alle Starter ein geprüftes Ergebnis oder einen geklärten Ausfall haben. Technische Zwischenfälle müssen zuerst entschieden werden. Korrekturen brauchen eine Begründung; nach Freigabe zunächst begründet wieder öffnen und anschließend erneut prüfen.
 
-![TV-Ansicht mit vorläufigem Finalranking](screenshots/tv-demo.png)
+Die Teilnehmer-Rangliste öffnet bei bestätigten Finaldaten direkt das **Finale**. Über den Klassenwähler wechselt man zwischen den Klassen; **Halbfinale** bleibt separat erreichbar. Rang, Startposition und Halbfinalplatz sind klar getrennt.
 
-**Für den echten Eventbetrieb:** René meldet sich mit seinem Liga-Admin-Konto unter `/app/admin/league/wettkampf` an; die Zeitnahme nutzt `/app/schiedsrichter/finale`, der Fernseher `/live/2026`. Die echte App erfordert Supabase-Anbindung, Finalmigration, getrennte Stationszugänge und die Generalprobe. Bei Netzausfall gelten die Papierlisten; eine nicht bestätigte digitale Eingabe ist nicht veröffentlicht. Die ausführliche Ablaufbeschreibung steht in [finale-wettkampfzentrale-2026.md](finale-wettkampfzentrale-2026.md).
+![Finalwertung in der Teilnehmeransicht auf dem Handy](screenshots/rangliste-mobil.jpg)
+
+## 5. TV läuft automatisch
+
+Im echten Betrieb öffnet der TV-Browser **`/live/2026` ohne Anmeldung**. René steuert den Bildschirm unter **Anzeige & Hinweise**. Halbfinale oder Finale wählen, gewünschte Klassen auswählen, Wechselintervall einstellen und **Anzeige speichern**. **Alle Klassen automatisch** nimmt alle Klassen auf. Alternativ eine Klasse fixieren.
+
+Der TV zeigt acht Personen pro Seite. Er zeigt zuerst alle Seiten einer Klasse, dann die nächste Klasse. Die Klassen sind unten sichtbar. Standard: Wechsel alle 15 Sekunden, neue Werte alle fünf Sekunden. Auf dem TV stehen keine Verwaltungsbuttons. Bei Verbindungsproblemen bleibt der letzte Stand sichtbar und erhält eine Warnung.
+
+![Öffentliche TV-Darstellung mit automatischer Klassenrotation](screenshots/tv-demo.jpg)
+
+Hinweise erhalten Titel, Text, Ziel App/TV/beide und eine Anzeigedauer. Ein Vollbildhinweis pausiert die Rangliste. Nach Ablauf oder Rücknahme verschwindet er und die Rangliste läuft automatisch weiter. **Bis zur Rücknahme** bleibt dauerhaft sichtbar; für Zeitänderungen eine passende Dauer wählen. **TV öffnen** zeigt genau die Bildschirmansicht in einem separaten Tab.
+
+## Zugänge und Ausfallverfahren
+
+| Person/Gerät | Echte Adresse | Zugang |
+|---|---|---|
+| René | `/app/admin/league/wettkampf` | Persönliches Liga-Admin-Konto |
+| Zeitnahme | `/app/schiedsrichter/finale` | Eigener Stationscode, nur zugewiesene Klassen |
+| Teilnehmer | `/app/wettkampf/rangliste` | Bestehender App-Zugang |
+| Fernseher | `/live/2026` | Öffentlich, keine Anmeldung |
+
+Bei Netzausfall auf Papier weiterarbeiten. Nach Wiederverbindung aktuellen Stand prüfen und den lokal erhaltenen Entwurf bewusst erneut senden. Eine unbestätigte Übertragung ist kein veröffentlichtes Ergebnis.
+
+**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, beide Finalmigrationen, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md).

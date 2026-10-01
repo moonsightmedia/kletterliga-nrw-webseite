@@ -2,6 +2,8 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import LiveScreen from "@/app/pages/competition/LiveScreen";
+import CompetitionLiveView from "@/app/components/CompetitionLiveView";
+import type { LiveData } from "@/services/competitionFinal";
 
 const api = vi.hoisted(() => ({ live: vi.fn() }));
 vi.mock("@/services/competitionFinal", () => ({
@@ -15,6 +17,113 @@ describe("final live screen", () => {
     cleanup();
     vi.useRealTimers();
     api.live.mockReset();
+  });
+
+  const data = (): LiveData => ({
+    season: "2026",
+    phase: "semifinal",
+    pinned_key: null,
+    interval_seconds: 5,
+    class_keys: [],
+    semifinal_open: false,
+    updated_at: new Date().toISOString(),
+    notices: [],
+    classes: [
+      {
+        key: "lead|A",
+        league: "lead",
+        class_label: "A",
+        entries: Array.from({ length: 9 }, (_, i) => ({
+          name: `Person ${i + 1}`,
+          rank: i + 1,
+          points: 100,
+          completed: 5,
+        })),
+      },
+      {
+        key: "lead|B",
+        league: "lead",
+        class_label: "B",
+        entries: [
+          { name: "Nächste Klasse", rank: 1, points: 200, completed: 5 },
+        ],
+      },
+    ],
+  });
+
+  it("visits page two before rotating to the next class and has no administration controls", async () => {
+    vi.useFakeTimers();
+    render(
+      <CompetitionLiveView
+        data={data()}
+        season="2026"
+        lastSuccess={new Date()}
+      />,
+    );
+    expect(screen.getByText("Person 1")).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
+    expect(screen.queryByText("Person 1")).not.toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Nächste Klasse")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("removes an expired fullscreen notice and resumes rotation even while offline", async () => {
+    vi.useFakeTimers();
+    const value = data();
+    value.notices = [
+      {
+        id: "notice",
+        title: "Start verschoben",
+        body: "Bitte warten",
+        show_tv: true,
+        show_app: true,
+        fullscreen: true,
+        expires_at: new Date(Date.now() + 2000).toISOString(),
+      },
+    ];
+    render(
+      <CompetitionLiveView
+        data={value}
+        season="2026"
+        lastSuccess={new Date()}
+        offline
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Start verschoben" }),
+    ).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(screen.queryByText("Bitte warten")).not.toBeInTheDocument();
+    expect(screen.getByText("Person 1")).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
+    expect(
+      screen.getByText("Daten sind möglicherweise veraltet"),
+    ).toBeInTheDocument();
+  });
+
+  it("retains the last public ranking after a failed refresh without requesting a login", async () => {
+    vi.useFakeTimers();
+    api.live
+      .mockResolvedValueOnce(data())
+      .mockRejectedValue(new Error("offline"));
+    render(
+      <MemoryRouter initialEntries={["/live/2026"]}>
+        <Routes>
+          <Route path="/live/:season" element={<LiveScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("veraltet");
+    expect(screen.queryByText(/anmelden/i)).not.toBeInTheDocument();
   });
 
   it("continues rotating classes while five-second refreshes arrive", async () => {

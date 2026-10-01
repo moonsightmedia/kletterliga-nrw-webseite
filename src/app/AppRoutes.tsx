@@ -106,7 +106,7 @@ const LaunchLockedRoute = ({
 
 export const appRoutes = (
   <>
-    {CompetitionDemo && <Route path="/demo/finaltag" element={<CompetitionDemo />} />}
+    {CompetitionDemo && <Route path="/demo/finaltag/*" element={<CompetitionDemo />} />}
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />

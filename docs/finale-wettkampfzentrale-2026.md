@@ -5,7 +5,7 @@
 1. René meldet sich mit seinem eigenen Liga-Admin-Konto an und öffnet `/app/admin/league/wettkampf`.
 2. Unter **Halbfinale** werden die fünf Routen jeder Klasse geprüft und die Ergebniseingabe geöffnet. Die vorhandenen Schiedsrichter-QRs und lokalen Uhren bleiben unter `/app/schiedsrichter`.
 3. Unter **Finalstartlisten** die physischen Finalrouten mit letzter Griffnummer anlegen. Unter **Finale** für Station 1 und 2 jeweils einen eigenen 24-stelligen Code erzeugen. Der Code erscheint nur unmittelbar nach Erzeugung; bei Verlust einen neuen erzeugen und den alten dadurch widerrufen.
-4. Der TV-Browser öffnet `/live/2026`. In **Anzeige & Hinweise** Phase, Klassenrotation und optional eine fixierte Klasse wählen. Für Hinweise Titel, Text, Ziel und bei Bedarf Ablaufdatum festlegen.
+4. Der TV-Browser öffnet `/live/2026` ohne Anmeldung. In **Anzeige & Hinweise** Phase, Klassenrotation und optional eine fixierte Klasse wählen. Alle Seiten einer Klasse laufen vor der nächsten Klasse durch; eine fixierte Klasse blättert weiter durch ihre Seiten. Für Hinweise Titel, Text, Ziel und Anzeigedauer festlegen. Vollbildhinweise verschwinden nach Ablauf und die Rotation setzt fort, auch wenn inzwischen die Verbindung ausgefallen ist.
 
 ## Übergang vom Halbfinale
 
@@ -32,4 +32,4 @@
 
 ## Technische Freigabe
 
-Die Migration `20260930180000_competition_final_center.sql` muss vor dem Frontend ausgerollt werden. Danach mit zwei getrennten Stationsgeräten, Admin-Konto, TV-Browser und echten A4-Ausdrucken einen vollständigen Durchlauf auf Testdaten machen. Renés persönlicher Liga-Admin-Zugang, die tatsächliche TV-URL und der Hallendrucker müssen am Gerät vor Ort geprüft werden.
+Die Migrationen `20260930180000_competition_final_center.sql` und `20261001090000_competition_live_public_guard.sql` müssen vor dem Frontend ausgerollt werden. Die zweite Migration hält den Vorbereitungsstatus privat und erlaubt das begründete Wiederöffnen einer bereits gestarteten Klasse nach Halbfinalkorrekturen bei unverändert eingefrorenen Halbfinalplätzen. Danach den SQL-Test auf einer isolierten Datenbank ausführen und mit zwei getrennten Stationsgeräten, Admin-Konto, TV-Browser und echten A4-Ausdrucken einen vollständigen Durchlauf auf Testdaten machen. Renés persönlicher Liga-Admin-Zugang, die tatsächliche TV-URL und der Hallendrucker müssen am Gerät vor Ort geprüft werden.

@@ -13,6 +13,7 @@ vi.mock("@/services/seasonSettings", () => ({
 vi.mock("@/services/competitionFinal", () => ({ getFinalAdmin: api.final }));
 vi.mock("@/services/competitionDay", () => ({
   getCompetitionAdmin: api.semifinal,
+  setCompetitionPhase: vi.fn(),
 }));
 vi.mock("@/app/pages/admin/LeagueCompetition", () => ({
   default: () => <p>Halbfinalkonfiguration</p>,

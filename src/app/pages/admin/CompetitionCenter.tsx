@@ -1,6 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link } from "react-router-dom";
-import { Download, ExternalLink, Printer, RefreshCw } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  Printer,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
+import { classNextStep } from "@/lib/competitionPresentation";
+import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -18,27 +34,15 @@ import {
 import { useSeasonSettings } from "@/services/seasonSettings";
 import {
   getCompetitionAdmin,
+  setCompetitionPhase,
   type CompetitionAdminData,
 } from "@/services/competitionDay";
 import LeagueCompetition from "./LeagueCompetition";
 import {
-  checkFinalEntry,
   classKey,
   className,
   downloadFinalCsv,
-  enterSemifinalResult,
-  getFinalAdmin,
-  moveFinalEntry,
-  publishFinalClass,
   resultLabel,
-  saveFinalRoute,
-  saveLiveNotice,
-  setFinalEntryStatus,
-  setFinalExclusion,
-  setFinalPhase,
-  setFinalStation,
-  setLiveDisplay,
-  settleSemifinal,
   type DisplaySettings,
   type FinalAdmin,
   type FinalClass,
@@ -84,16 +88,86 @@ const auditValue = (value: unknown) => {
 const numberInput =
   "min-h-11 w-24 rounded-xl border border-[#003d55]/25 bg-white px-3 text-[#003d55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523]";
 
+export type CompetitionCenterSource = Pick<
+  typeof finalSource,
+  | "getFinalAdmin"
+  | "checkFinalEntry"
+  | "enterSemifinalResult"
+  | "moveFinalEntry"
+  | "publishFinalClass"
+  | "saveFinalRoute"
+  | "saveLiveNotice"
+  | "setFinalEntryStatus"
+  | "setFinalExclusion"
+  | "setFinalPhase"
+  | "setFinalStation"
+  | "setLiveDisplay"
+  | "settleSemifinal"
+> & {
+  getCompetitionAdmin: typeof getCompetitionAdmin;
+  setCompetitionPhase: typeof setCompetitionPhase;
+};
+const defaultSource: CompetitionCenterSource = {
+  ...finalSource,
+  getCompetitionAdmin,
+  setCompetitionPhase,
+};
 export default function CompetitionCenter() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
   const season = settings?.season_year?.trim();
+  return (
+    <CompetitionCenterContent
+      season={season}
+      settingsLoading={settingsLoading}
+    />
+  );
+}
+export function CompetitionCenterContent({
+  season,
+  settingsLoading = false,
+  source = defaultSource,
+  semifinalConfiguration = <LeagueCompetition />,
+  tvHref,
+  printHref = "/app/admin/league/wettkampf/druck",
+  stationHref = "/app/schiedsrichter/finale",
+  initialTab = "overview",
+  demo = false,
+}: {
+  season?: string;
+  settingsLoading?: boolean;
+  source?: CompetitionCenterSource;
+  semifinalConfiguration?: ReactNode;
+  tvHref?: string;
+  printHref?: string;
+  stationHref?: string;
+  initialTab?: string;
+  demo?: boolean;
+}) {
+  const {
+    getFinalAdmin,
+    getCompetitionAdmin,
+    setCompetitionPhase,
+    checkFinalEntry,
+    enterSemifinalResult,
+    moveFinalEntry,
+    publishFinalClass,
+    saveFinalRoute,
+    saveLiveNotice,
+    setFinalEntryStatus,
+    setFinalExclusion,
+    setFinalPhase,
+    setFinalStation,
+    setLiveDisplay,
+    settleSemifinal,
+  } = source;
   const [data, setData] = useState<FinalAdmin | null>(null);
   const [semiAdmin, setSemiAdmin] = useState<CompetitionAdminData | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState(initialTab);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [semifinalZones, setSemifinalZones] = useState<Record<string, string>>(
     {},
@@ -116,6 +190,7 @@ export default function CompetitionCenter() {
   const [noticeTv, setNoticeTv] = useState(true);
   const [noticeFullscreen, setNoticeFullscreen] = useState(false);
   const [noticeExpiry, setNoticeExpiry] = useState("");
+  const [noticeDuration, setNoticeDuration] = useState("10");
   const [editingNotice, setEditingNotice] = useState<string | undefined>();
   const [display, setDisplay] = useState<DisplaySettings>({
     phase: "semifinal",
@@ -155,7 +230,7 @@ export default function CompetitionCenter() {
         if (!quiet) setLoading(false);
       }
     },
-    [season],
+    [season, getFinalAdmin, getCompetitionAdmin],
   );
   useEffect(() => {
     if (settingsLoading) return;
@@ -227,24 +302,59 @@ export default function CompetitionCenter() {
     data?.phase === "closed" &&
     rows.every((row) => row.missing.every((m) => m.settled));
   const reasonReady = reason.trim().length > 0 && reason.length <= 500;
+  const activePair =
+    classPairs.find(([key]) => key === selectedKey) ?? classPairs[0];
+  const activeKey = activePair?.[0];
+  const activeFinal = activeKey ? finalClass(activeKey) : undefined;
+  const activeMissing =
+    activePair?.[1].rows.reduce(
+      (total, row) =>
+        total + row.missing.filter((entry) => !entry.settled).length,
+      0,
+    ) ?? 0;
+  const nextStep = classNextStep(
+    activeFinal,
+    activeMissing,
+    data?.phase ?? "draft",
+  );
+  const filteredPairs = classPairs.filter(([key]) => key === activeKey);
+  const activeTvHref = tvHref ?? `/live/${season}`;
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-16 text-[#003d55]">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#003d55] p-5 text-[#f2dcab] sm:p-7">
         <div>
-          <p className="stitch-kicker text-[#a15523]">
+          <p className="stitch-kicker text-[#d58a4c]">
             Wettkampftag · {season ?? "–"}
           </p>
           <h1 className="stitch-headline text-3xl">Wettkampfzentrale</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[#f2dcab]/85">
+            Ergebnisse klären, Startlisten freigeben und das Finale sicher
+            abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt.
+          </p>
+          <p className="mt-3 flex items-center gap-2 text-xs font-bold">
+            <ShieldCheck size={15} />
+            {demo
+              ? "Testbetrieb · erfundene Daten"
+              : "Geschützter Bereich · Liga-Administration"}
+          </p>
         </div>
-        <StitchButton
-          variant="outline"
-          disabled={busy || loading}
-          onClick={() => void reload()}
-        >
-          <RefreshCw size={17} className="mr-2" />
-          Aktualisieren
-        </StitchButton>
+        <div className="flex flex-wrap gap-2">
+          <StitchButton asChild variant="cream">
+            <Link target="_blank" to={activeTvHref}>
+              <ExternalLink size={16} />
+              TV öffnen
+            </Link>
+          </StitchButton>
+          <StitchButton
+            variant="cream"
+            disabled={busy || loading}
+            onClick={() => void reload()}
+          >
+            <RefreshCw size={17} className="mr-2" />
+            Aktualisieren
+          </StitchButton>
+        </div>
       </header>
       {error && (
         <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
@@ -265,25 +375,131 @@ export default function CompetitionCenter() {
         <p>Die Daten sind nicht verfügbar.</p>
       ) : (
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5">
             {[
               ["overview", "Übersicht"],
               ["semifinal", "Halbfinale"],
               ["roster", "Finalstartlisten"],
               ["final", "Finale"],
               ["display", "Anzeige & Hinweise"],
-            ].map(([value, label]) => (
+            ].map(([value, label], index) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="min-h-11 rounded-xl border border-[#003d55]/20 px-4 data-[state=active]:bg-[#003d55] data-[state=active]:text-[#f2dcab]"
+                className="min-h-14 justify-start gap-2 whitespace-normal rounded-xl border border-[#003d55]/20 bg-white px-3 text-left data-[state=active]:bg-[#003d55] data-[state=active]:text-[#f2dcab]"
               >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#a15523]/15 text-xs font-black">
+                  <span aria-hidden="true">{index + 1}</span>
+                </span>
                 {label}
               </TabsTrigger>
             ))}
           </TabsList>
+          {["semifinal", "roster", "final"].includes(tab) && activePair && (
+            <div className="mt-5 rounded-xl border border-[#003d55]/15 bg-white p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="stitch-kicker text-[#a15523]">
+                    Aktuelle Klasse
+                  </p>
+                  <h2 className="mt-2 font-bold">
+                    {className(activePair[1].league, activePair[1].label)}
+                  </h2>
+                  <p className="mt-2 text-sm">{nextStep.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-[#003d55]/70">
+                    {nextStep.detail}
+                  </p>
+                </div>
+                <div className="w-full sm:w-72">
+                  <Select value={activeKey} onValueChange={setSelectedKey}>
+                    <SelectTrigger
+                      aria-label="Klasse bearbeiten"
+                      className="min-h-12 bg-[#f7f3e9]"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classPairs.map(([key, group]) => (
+                        <SelectItem key={key} value={key}>
+                          {className(group.league, group.label)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {nextStep.tab !== tab && (
+                <StitchButton
+                  className="mt-4"
+                  onClick={() => setTab(nextStep.tab)}
+                >
+                  {nextStep.title}
+                  <ArrowRight size={16} />
+                </StitchButton>
+              )}
+            </div>
+          )}
 
           <TabsContent value="overview" className="space-y-5 pt-4">
+            <section className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
+              <div className="border-b p-5">
+                <h2 className="stitch-headline text-xl">So geht es weiter</h2>
+                <p className="mt-2 text-sm">
+                  Jede Klasse kann unabhängig ins Finale wechseln. Der Fernseher
+                  läuft parallel.
+                </p>
+              </div>
+              {classPairs.map(([key, group]) => {
+                const item = finalClass(key);
+                const missing = group.rows.reduce(
+                  (count, row) =>
+                    count + row.missing.filter((m) => !m.settled).length,
+                  0,
+                );
+                const step = classNextStep(item, missing, data.phase);
+                return (
+                  <div
+                    key={key}
+                    className="flex flex-wrap items-center justify-between gap-4 border-b p-5 last:border-0"
+                  >
+                    <div>
+                      <p className="font-bold">
+                        {className(group.league, group.label)}
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-[#003d55]/70">
+                        {item ? phaseName[item.phase] : "Vorbereitung"}
+                      </p>
+                      <p className="mt-1 text-sm text-[#a15523]">
+                        {step.title}
+                      </p>
+                      <p className="mt-1 max-w-lg text-xs leading-5 text-[#003d55]/70">
+                        {step.detail}
+                      </p>
+                    </div>
+                    <StitchButton
+                      variant={item?.phase === "final" ? "outline" : "primary"}
+                      onClick={() => {
+                        setSelectedKey(key);
+                        setTab(step.tab);
+                      }}
+                    >
+                      {item?.phase === "final" ? (
+                        <CheckCircle2 size={16} />
+                      ) : (
+                        <ArrowRight size={16} />
+                      )}
+                      Klasse öffnen
+                    </StitchButton>
+                  </div>
+                );
+              })}
+              {!classPairs.length && (
+                <p className="p-5 text-sm">
+                  Zuerst den Halbfinal-Wettkampf mit Klassen und Routen
+                  vorbereiten.
+                </p>
+              )}
+            </section>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StitchCard tone="navy" className="p-5 text-[#f2dcab]">
                 <p>Halbfinale</p>
@@ -320,27 +536,11 @@ export default function CompetitionCenter() {
                 role="alert"
                 className="rounded-xl bg-amber-100 p-4 font-bold text-[#653414]"
               >
-                Mindestens eine Finalstartliste ist nach einer Halbfinaländerung
-                prüfbedürftig. Vor Klassenstart neu bestätigen und neu drucken.
+                Halbfinaländerung: Noch nicht gestartete Finalklassen erneut
+                bestätigen und neu drucken. Bereits gestartete Klassen behalten
+                ihr Finalfeld und die eingefrorenen Halbfinalplätze.
               </p>
             )}
-            <StitchCard className="p-5">
-              <h2 className="stitch-headline text-xl">Klassenstatus</h2>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {classPairs.map(([key, group]) => {
-                  const c = finalClass(key);
-                  return (
-                    <div
-                      key={key}
-                      className="flex justify-between gap-3 rounded-lg bg-white p-3"
-                    >
-                      <span>{className(group.league, group.label)}</span>
-                      <strong>{c ? phaseName[c.phase] : "Vorbereitung"}</strong>
-                    </div>
-                  );
-                })}
-              </div>
-            </StitchCard>
             <StitchCard className="p-5">
               <h2 className="stitch-headline text-xl">Letzte Änderungen</h2>
               <div className="mt-3 space-y-2 text-sm">
@@ -391,12 +591,29 @@ export default function CompetitionCenter() {
                 onChange={(e) => setReason(e.target.value)}
               />
               {data.phase !== "closed" && (
-                <p className="text-sm font-bold text-[#a15523]">
-                  Zum Klären zuerst die Halbfinaleingabe unten schließen.
-                </p>
+                <div className="space-y-3">
+                  <p className="text-sm font-bold text-[#a15523]">
+                    {data.phase === "open"
+                      ? "Erst die Eingabe für alle Halbfinalklassen schließen. Anschließend lassen sich offene Werte klären."
+                      : "Zuerst die Halbfinalkonfiguration unten vorbereiten und die Eingabe öffnen."}
+                  </p>
+                  {data.phase === "open" && (
+                    <StitchButton
+                      disabled={busy}
+                      onClick={() =>
+                        void run(
+                          () => setCompetitionPhase(season, "closed"),
+                          "Halbfinaleingabe für alle Klassen geschlossen.",
+                        )
+                      }
+                    >
+                      Halbfinaleingabe schließen
+                    </StitchButton>
+                  )}
+                </div>
               )}
             </StitchCard>
-            {classPairs.map(([key, group]) => (
+            {filteredPairs.map(([key, group]) => (
               <StitchCard key={key} className="p-5">
                 <h3 className="stitch-headline mb-3 text-xl">
                   {className(group.league, group.label)}
@@ -444,7 +661,12 @@ export default function CompetitionCenter() {
                                 R{routeNumber}:{" "}
                                 {result
                                   ? `${result.points} P. · Griff ${result.zone * 10}`
-                                  : "offen"}
+                                  : row.missing.some(
+                                        (m) =>
+                                          m.number === routeNumber && m.settled,
+                                      )
+                                    ? "Nicht geklettert · 0 P."
+                                    : "offen"}
                                 {result &&
                                   ` · Erst ${formatWhen(result.created_at)}`}
                                 {lastCorrection &&
@@ -483,7 +705,10 @@ export default function CompetitionCenter() {
                                       }))
                                     }
                                   >
-                                    <SelectTrigger className="min-h-11 w-36 bg-white">
+                                    <SelectTrigger
+                                      aria-label={`${row.name}, Route ${m.number}: Griff`}
+                                      className="min-h-11 w-36 bg-white"
+                                    >
                                       <SelectValue placeholder="Griff wählen" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -501,7 +726,10 @@ export default function CompetitionCenter() {
                                     disabled={
                                       busy ||
                                       data.phase !== "closed" ||
-                                      !reasonReady
+                                      !reasonReady ||
+                                      semifinalZones[
+                                        `${row.profile_id}|${m.route_id}`
+                                      ] === undefined
                                     }
                                     onClick={() => {
                                       const value =
@@ -573,79 +801,106 @@ export default function CompetitionCenter() {
               <StitchCard className="p-5">
                 <h3 className="stitch-headline text-xl">Eingabezeiten</h3>
                 <div className="mt-3 max-h-96 overflow-auto text-sm">
-                  {semiAdmin.results.map((r) => (
-                    <p key={r.id} className="border-b border-[#003d55]/10 py-2">
-                      {formatWhen(r.created_at)} · {r.name} ·{" "}
-                      {className(r.league, r.class_label)} · {r.points} P.
-                    </p>
-                  ))}
+                  {semiAdmin.results
+                    .filter(
+                      (r) => classKey(r.league, r.class_label) === activeKey,
+                    )
+                    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                    .map((r) => (
+                      <p
+                        key={r.id}
+                        className="border-b border-[#003d55]/10 py-2"
+                      >
+                        {formatWhen(r.created_at)} · {r.name} · Route{" "}
+                        {data.semifinal_results.find(
+                          (result) => result.id === r.id,
+                        )?.route_number ?? "–"}{" "}
+                        · {r.points} P.
+                      </p>
+                    ))}
                 </div>
               </StitchCard>
             )}
-            <LeagueCompetition />
+            <details
+              open={data.phase === "draft"}
+              className="rounded-xl border border-[#003d55]/15 bg-white p-4"
+            >
+              <summary className="cursor-pointer py-2 font-bold">
+                Halbfinaleingabe & Grundeinstellungen
+              </summary>
+              <div className="mt-4">{semifinalConfiguration}</div>
+            </details>
           </TabsContent>
 
           <TabsContent value="roster" className="space-y-5 pt-4">
-            <StitchCard className="space-y-4 p-5">
-              <h2 className="stitch-headline text-xl">Finalrouten</h2>
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="grid gap-1 text-sm font-bold">
-                  Nummer
-                  <input
-                    className={numberInput}
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={routeNumber}
-                    onChange={(e) => setRouteNumber(e.target.value)}
-                  />
-                </label>
-                <div className="min-w-48 flex-1">
-                  <StitchTextField
-                    label="Routenname"
-                    value={routeName}
-                    onChange={(e) => setRouteName(e.target.value)}
-                  />
+            <details
+              className="rounded-xl border border-[#003d55]/15 bg-white p-4"
+              open={!data.routes.length}
+            >
+              <summary className="cursor-pointer py-2 font-bold">
+                Finalrouten verwalten · {data.routes.length} vorbereitet
+              </summary>
+              <StitchCard className="space-y-4 p-5">
+                <h2 className="stitch-headline text-xl">Finalrouten</h2>
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="grid gap-1 text-sm font-bold">
+                    Nummer
+                    <input
+                      className={numberInput}
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={routeNumber}
+                      onChange={(e) => setRouteNumber(e.target.value)}
+                    />
+                  </label>
+                  <div className="min-w-48 flex-1">
+                    <StitchTextField
+                      label="Routenname"
+                      value={routeName}
+                      onChange={(e) => setRouteName(e.target.value)}
+                    />
+                  </div>
+                  <label className="grid gap-1 text-sm font-bold">
+                    Letzter Griff
+                    <input
+                      className={numberInput}
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={maxGrip}
+                      onChange={(e) => setMaxGrip(e.target.value)}
+                    />
+                  </label>
+                  <StitchButton
+                    disabled={
+                      busy ||
+                      !routeName.trim() ||
+                      !Number.isInteger(Number(routeNumber)) ||
+                      !Number.isInteger(Number(maxGrip))
+                    }
+                    onClick={() =>
+                      void run(
+                        () =>
+                          saveFinalRoute(
+                            season,
+                            Number(routeNumber),
+                            routeName,
+                            Number(maxGrip),
+                          ),
+                        "Finalroute gespeichert.",
+                      )
+                    }
+                  >
+                    Route speichern
+                  </StitchButton>
                 </div>
-                <label className="grid gap-1 text-sm font-bold">
-                  Letzter Griff
-                  <input
-                    className={numberInput}
-                    type="number"
-                    min="1"
-                    max="999"
-                    value={maxGrip}
-                    onChange={(e) => setMaxGrip(e.target.value)}
-                  />
-                </label>
-                <StitchButton
-                  disabled={
-                    busy ||
-                    !routeName.trim() ||
-                    !Number.isInteger(Number(routeNumber)) ||
-                    !Number.isInteger(Number(maxGrip))
-                  }
-                  onClick={() =>
-                    void run(
-                      () =>
-                        saveFinalRoute(
-                          season,
-                          Number(routeNumber),
-                          routeName,
-                          Number(maxGrip),
-                        ),
-                      "Finalroute gespeichert.",
-                    )
-                  }
-                >
-                  Route speichern
-                </StitchButton>
-              </div>
-              <p className="text-sm">
-                Eine physische Route kann mehreren Klassen zugeordnet werden.
-                Nach Freigabe einer Klasse ist ihre Route gesperrt.
-              </p>
-            </StitchCard>
+                <p className="text-sm">
+                  Eine physische Route kann mehreren Klassen zugeordnet werden.
+                  Nach Freigabe einer Klasse ist ihre Route gesperrt.
+                </p>
+              </StitchCard>
+            </details>
             <StitchCard className="space-y-3 p-5">
               <h2 className="stitch-headline text-xl">
                 Nachrücken und Ausfälle
@@ -661,7 +916,7 @@ export default function CompetitionCenter() {
                 bestätigen und drucken.
               </p>
             </StitchCard>
-            {classPairs.map(([key, group]) => {
+            {filteredPairs.map(([key, group]) => {
               const c = finalClass(key);
               const selectedRoute = routeSelections[key] ?? c?.route_id ?? "";
               const selectedStation =
@@ -796,11 +1051,17 @@ export default function CompetitionCenter() {
                       </label>
                       <Select
                         value={selectedRoute}
+                        disabled={Boolean(
+                          c && !["preparation", "published"].includes(c.phase),
+                        )}
                         onValueChange={(v) =>
                           setRouteSelections((prev) => ({ ...prev, [key]: v }))
                         }
                       >
-                        <SelectTrigger className="min-h-11 bg-white">
+                        <SelectTrigger
+                          aria-label="Finalroute"
+                          className="min-h-11 bg-white"
+                        >
                           <SelectValue placeholder="Route wählen" />
                         </SelectTrigger>
                         <SelectContent>
@@ -818,6 +1079,9 @@ export default function CompetitionCenter() {
                       </label>
                       <Select
                         value={selectedStation}
+                        disabled={Boolean(
+                          c && !["preparation", "published"].includes(c.phase),
+                        )}
                         onValueChange={(v) =>
                           setStationSelections((prev) => ({
                             ...prev,
@@ -825,7 +1089,10 @@ export default function CompetitionCenter() {
                           }))
                         }
                       >
-                        <SelectTrigger className="min-h-11 w-40 bg-white">
+                        <SelectTrigger
+                          aria-label="Eingabestation der Klasse"
+                          className="min-h-11 w-40 bg-white"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -839,6 +1106,12 @@ export default function CompetitionCenter() {
                         busy ||
                         !readyForPublish(group.rows) ||
                         !selectedRoute ||
+                        Boolean(
+                          c?.phase === "published" &&
+                            !c.stale &&
+                            selectedRoute === c.route_id &&
+                            Number(selectedStation) === c.station_no,
+                        ) ||
                         Boolean(
                           c && !["preparation", "published"].includes(c.phase),
                         )
@@ -859,13 +1132,15 @@ export default function CompetitionCenter() {
                       }
                     >
                       {c?.phase === "published"
-                        ? "Neu bestätigen · v" + (c.version + 1)
+                        ? "Finalfeld aktualisieren"
                         : "Finalfeld bestätigen"}
                     </StitchButton>
                     {c && c.phase !== "preparation" && (
                       <StitchButton asChild variant="outline">
                         <Link
-                          to={`/app/admin/league/wettkampf/druck?klasse=${encodeURIComponent(key)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          to={`${printHref}?klasse=${encodeURIComponent(key)}`}
                         >
                           <Printer size={16} className="mr-2" />
                           Drucken
@@ -900,7 +1175,19 @@ export default function CompetitionCenter() {
                                 <StitchButton
                                   variant="outline"
                                   size="sm"
-                                  disabled={busy || e.start_position === 1}
+                                  aria-label={`${e.name} früher starten`}
+                                  disabled={
+                                    busy ||
+                                    e.start_position === 1 ||
+                                    Boolean(e.attempt_id) ||
+                                    Boolean(
+                                      c.entries.find(
+                                        (other) =>
+                                          other.start_position ===
+                                          e.start_position - 1,
+                                      )?.attempt_id,
+                                    )
+                                  }
                                   onClick={() =>
                                     void run(
                                       () =>
@@ -918,9 +1205,18 @@ export default function CompetitionCenter() {
                                 <StitchButton
                                   variant="outline"
                                   size="sm"
+                                  aria-label={`${e.name} später starten`}
                                   disabled={
                                     busy ||
-                                    e.start_position === c.entries.length
+                                    e.start_position === c.entries.length ||
+                                    Boolean(e.attempt_id) ||
+                                    Boolean(
+                                      c.entries.find(
+                                        (other) =>
+                                          other.start_position ===
+                                          e.start_position + 1,
+                                      )?.attempt_id,
+                                    )
                                   }
                                   onClick={() =>
                                     void run(
@@ -946,7 +1242,7 @@ export default function CompetitionCenter() {
               );
             })}
             <StitchButton asChild variant="outline">
-              <Link to="/app/admin/league/wettkampf/druck">
+              <Link to={printHref} target="_blank" rel="noreferrer">
                 <Printer size={16} className="mr-2" />
                 Alle Startlisten drucken
               </Link>
@@ -954,61 +1250,69 @@ export default function CompetitionCenter() {
           </TabsContent>
 
           <TabsContent value="final" className="space-y-5 pt-4">
-            <StitchCard className="space-y-3 p-5">
-              <h2 className="stitch-headline text-xl">
-                Digitale Eingabestationen
-              </h2>
-              <p className="text-sm">
-                Je ein eigener Code für die beiden Zeitnehmenden. Ein neuer Code
-                widerruft den alten Zugang dieser Station.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {([1, 2] as const).map((station) => (
-                  <StitchButton
-                    key={station}
-                    disabled={busy}
-                    variant="outline"
-                    onClick={() => {
-                      const code = randomCode();
-                      void run(
-                        () => setFinalStation(season, station, code),
-                        `Code für Station ${station} erzeugt.`,
-                      ).then((ok) => {
-                        if (ok)
-                          setGeneratedCodes((prev) => ({
-                            ...prev,
-                            [station]: code,
-                          }));
-                      });
-                    }}
-                  >
-                    Code Station {station}{" "}
-                    {data.stations.some((s) => s.station_no === station)
-                      ? "ersetzen"
-                      : "erzeugen"}
-                  </StitchButton>
-                ))}
-              </div>
-              {Object.entries(generatedCodes).map(([station, code]) => (
-                <p
-                  key={station}
-                  className="break-all rounded-lg bg-white p-3 text-sm"
-                >
-                  <strong>
-                    Station {station}: {code}
-                  </strong>
-                  <br />
-                  Nur jetzt sichtbar. Sicher an die zuständige Person
-                  weitergeben.
+            <details
+              className="rounded-xl border border-[#003d55]/15 bg-white p-4"
+              open={!data.stations.length}
+            >
+              <summary className="cursor-pointer py-2 font-bold">
+                Zugänge der Zeitnahme · {data.stations.length}/2 eingerichtet
+              </summary>
+              <StitchCard className="space-y-3 p-5">
+                <h2 className="stitch-headline text-xl">
+                  Digitale Eingabestationen
+                </h2>
+                <p className="text-sm">
+                  Je ein eigener Code für die beiden Zeitnehmenden. Ein neuer
+                  Code widerruft den alten Zugang dieser Station.
                 </p>
-              ))}
-              <StitchButton asChild variant="outline">
-                <Link to="/app/schiedsrichter/finale">
-                  <ExternalLink size={16} className="mr-2" />
-                  Eingabeseite öffnen
-                </Link>
-              </StitchButton>
-            </StitchCard>
+                <div className="flex flex-wrap gap-3">
+                  {([1, 2] as const).map((station) => (
+                    <StitchButton
+                      key={station}
+                      disabled={busy}
+                      variant="outline"
+                      onClick={() => {
+                        const code = randomCode();
+                        void run(
+                          () => setFinalStation(season, station, code),
+                          `Code für Station ${station} erzeugt.`,
+                        ).then((ok) => {
+                          if (ok)
+                            setGeneratedCodes((prev) => ({
+                              ...prev,
+                              [station]: code,
+                            }));
+                        });
+                      }}
+                    >
+                      Code Station {station}{" "}
+                      {data.stations.some((s) => s.station_no === station)
+                        ? "ersetzen"
+                        : "erzeugen"}
+                    </StitchButton>
+                  ))}
+                </div>
+                {Object.entries(generatedCodes).map(([station, code]) => (
+                  <p
+                    key={station}
+                    className="break-all rounded-lg bg-white p-3 text-sm"
+                  >
+                    <strong>
+                      Station {station}: {code}
+                    </strong>
+                    <br />
+                    Nur jetzt sichtbar. Sicher an die zuständige Person
+                    weitergeben.
+                  </p>
+                ))}
+                <StitchButton asChild variant="outline">
+                  <Link to={stationHref}>
+                    <ExternalLink size={16} className="mr-2" />
+                    Eingabeseite öffnen
+                  </Link>
+                </StitchButton>
+              </StitchCard>
+            </details>
             <StitchCard className="p-5">
               <StitchTextField
                 label="Begründung für Statusänderungen und Wiederöffnung"
@@ -1017,7 +1321,11 @@ export default function CompetitionCenter() {
               />
             </StitchCard>
             {data.classes
-              .filter((c) => c.phase !== "preparation")
+              .filter(
+                (c) =>
+                  c.phase !== "preparation" &&
+                  classKey(c.league, c.class_label) === activeKey,
+              )
               .map((c) => (
                 <StitchCard key={c.id} className="space-y-4 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1033,6 +1341,18 @@ export default function CompetitionCenter() {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {c.phase === "published" && (
+                        <StitchButton asChild variant="outline">
+                          <Link
+                            target="_blank"
+                            rel="noreferrer"
+                            to={`${printHref}?klasse=${encodeURIComponent(classKey(c.league, c.class_label))}`}
+                          >
+                            <Printer size={16} />
+                            Startliste drucken
+                          </Link>
+                        </StitchButton>
+                      )}
                       {c.phase === "published" && (
                         <StitchButton
                           disabled={busy || c.stale}
@@ -1080,7 +1400,15 @@ export default function CompetitionCenter() {
                             Eingabe wieder öffnen
                           </StitchButton>
                           <StitchButton
-                            disabled={busy}
+                            disabled={
+                              busy ||
+                              c.entries.some(
+                                (entry) =>
+                                  entry.status === "incident" ||
+                                  (entry.status === "ready" &&
+                                    (!entry.attempt_id || !entry.checked_at)),
+                              )
+                            }
                             onClick={() =>
                               void run(
                                 () => setFinalPhase(c.id, "final", c.version),
@@ -1121,7 +1449,9 @@ export default function CompetitionCenter() {
                       </StitchButton>
                       <StitchButton asChild variant="outline">
                         <Link
-                          to={`/app/admin/league/wettkampf/druck?klasse=${encodeURIComponent(classKey(c.league, c.class_label))}&art=ergebnis`}
+                          target="_blank"
+                          rel="noreferrer"
+                          to={`${printHref}?klasse=${encodeURIComponent(classKey(c.league, c.class_label))}&art=ergebnis`}
                         >
                           <Printer size={16} className="mr-2" />
                           Ergebnisliste
@@ -1279,6 +1609,18 @@ export default function CompetitionCenter() {
           </TabsContent>
 
           <TabsContent value="display" className="space-y-5 pt-4">
+            <div className="rounded-xl bg-[#003d55] p-5 text-sm leading-6 text-[#f2dcab]">
+              <h2 className="stitch-headline text-lg">
+                Einmal öffnen. Automatisch laufen lassen.
+              </h2>
+              <p className="mt-2">
+                Die TV-URL ist öffentlich lesbar und braucht keine Anmeldung.
+                Einstellungen und Hinweise steuerst du hier mit deinem
+                Admin-Konto. Alle Seiten einer Klasse erscheinen nacheinander,
+                anschließend die nächste Klasse. Am Fernseher gibt es keine
+                Bedienelemente.
+              </p>
+            </div>
             <StitchCard className="space-y-4 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -1286,12 +1628,13 @@ export default function CompetitionCenter() {
                   <p className="text-sm">
                     Feste URL:{" "}
                     <strong>
-                      {window.location.origin}/live/{season}
+                      {window.location.origin}
+                      {activeTvHref}
                     </strong>
                   </p>
                 </div>
                 <StitchButton asChild variant="outline">
-                  <Link target="_blank" to={`/live/${season}`}>
+                  <Link target="_blank" to={activeTvHref}>
                     <ExternalLink size={16} className="mr-2" />
                     TV-Vorschau
                   </Link>
@@ -1309,7 +1652,10 @@ export default function CompetitionCenter() {
                       })
                     }
                   >
-                    <SelectTrigger className="min-h-11 w-44 bg-white">
+                    <SelectTrigger
+                      aria-label="TV-Phase"
+                      className="min-h-11 w-44 bg-white"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1344,17 +1690,27 @@ export default function CompetitionCenter() {
                       setDisplay({
                         ...display,
                         pinned_key: v === "auto" ? null : v,
+                        class_keys:
+                          v !== "auto" && !display.class_keys.length
+                            ? allKeys
+                            : display.class_keys,
                       })
                     }
                   >
-                    <SelectTrigger className="min-h-11 w-56 bg-white">
+                    <SelectTrigger
+                      aria-label="Fixierte TV-Klasse"
+                      className="min-h-11 w-56 bg-white"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="auto">
                         Automatischer Wechsel
                       </SelectItem>
-                      {display.class_keys.map((key) => (
+                      {(display.class_keys.length
+                        ? display.class_keys
+                        : allKeys
+                      ).map((key) => (
                         <SelectItem key={key} value={key}>
                           {key
                             .replace("lead|", "Vorstieg · ")
@@ -1369,6 +1725,13 @@ export default function CompetitionCenter() {
                 <p className="mb-2 text-sm font-bold">
                   Klassen in der Rotation
                 </p>
+                <p className="mb-3 text-xs leading-5">
+                  {display.class_keys.length
+                    ? `${display.class_keys.length} Klassen ausgewählt.`
+                    : "Alle Klassen automatisch ausgewählt."}{" "}
+                  Im Finale erscheinen nur freigegebene Startlisten. Lange
+                  Klassenlisten werden seitenweise angezeigt.
+                </p>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {allKeys.map((key) => (
                     <label
@@ -1378,13 +1741,24 @@ export default function CompetitionCenter() {
                       <input
                         className="h-5 w-5 accent-[#003d55]"
                         type="checkbox"
-                        checked={display.class_keys.includes(key)}
+                        checked={
+                          !display.class_keys.length ||
+                          display.class_keys.includes(key)
+                        }
+                        disabled={
+                          allKeys.length === 1 ||
+                          (display.class_keys.length === 1 &&
+                            display.class_keys.includes(key))
+                        }
                         onChange={(e) =>
                           setDisplay((prev) => ({
                             ...prev,
                             class_keys: e.target.checked
                               ? [...prev.class_keys, key]
-                              : prev.class_keys.filter((k) => k !== key),
+                              : (prev.class_keys.length
+                                  ? prev.class_keys
+                                  : allKeys
+                                ).filter((k) => k !== key),
                             pinned_key:
                               !e.target.checked && prev.pinned_key === key
                                 ? null
@@ -1400,8 +1774,22 @@ export default function CompetitionCenter() {
                 </div>
               </div>
               <StitchButton
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setDisplay((prev) => ({
+                    ...prev,
+                    class_keys: [],
+                    pinned_key: null,
+                  }))
+                }
+              >
+                Alle Klassen automatisch
+              </StitchButton>
+              <StitchButton
                 disabled={
                   busy ||
+                  !Number.isInteger(display.interval_seconds) ||
                   display.interval_seconds < 5 ||
                   display.interval_seconds > 120
                 }
@@ -1459,15 +1847,38 @@ export default function CompetitionCenter() {
                   </label>
                 ))}
               </div>
-              <label className="grid gap-1 text-sm font-bold">
-                Ablauf (optional)
-                <input
-                  className="min-h-11 rounded-xl border border-[#003d55]/25 bg-white px-3"
-                  type="datetime-local"
-                  value={noticeExpiry}
-                  onChange={(e) => setNoticeExpiry(e.target.value)}
-                />
-              </label>
+              <div className="max-w-sm">
+                <label className="mb-2 block text-sm font-bold">
+                  Hinweis automatisch ausblenden
+                </label>
+                <Select
+                  value={noticeDuration}
+                  onValueChange={setNoticeDuration}
+                >
+                  <SelectTrigger
+                    aria-label="Hinweis automatisch ausblenden"
+                    className="min-h-12 bg-white"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editingNotice && (
+                      <SelectItem value="existing">
+                        Bisherige Ablaufzeit beibehalten
+                      </SelectItem>
+                    )}
+                    <SelectItem value="5">Nach 5 Minuten</SelectItem>
+                    <SelectItem value="10">Nach 10 Minuten</SelectItem>
+                    <SelectItem value="30">Nach 30 Minuten</SelectItem>
+                    <SelectItem value="60">Nach 60 Minuten</SelectItem>
+                    <SelectItem value="0">Bis ich ihn zurückziehe</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="mt-2 text-xs leading-5">
+                  Nach dem Ablauf läuft die Klassenanzeige automatisch weiter.
+                  Das funktioniert auch bei einem Verbindungsabbruch.
+                </p>
+              </div>
               <div className="flex gap-2">
                 <StitchButton
                   disabled={
@@ -1486,9 +1897,14 @@ export default function CompetitionCenter() {
                           show_app: noticeApp,
                           show_tv: noticeTv,
                           fullscreen: noticeFullscreen,
-                          expires_at: noticeExpiry
-                            ? new Date(noticeExpiry).toISOString()
-                            : null,
+                          expires_at:
+                            noticeDuration === "existing"
+                              ? noticeExpiry || null
+                              : Number(noticeDuration) > 0
+                                ? new Date(
+                                    Date.now() + Number(noticeDuration) * 60000,
+                                  ).toISOString()
+                                : null,
                         }),
                       editingNotice
                         ? "Hinweis aktualisiert."
@@ -1498,6 +1914,7 @@ export default function CompetitionCenter() {
                         setEditingNotice(undefined);
                         setNoticeTitle("");
                         setNoticeBody("");
+                        setNoticeDuration("10");
                       }
                     })
                   }
@@ -1513,6 +1930,7 @@ export default function CompetitionCenter() {
                       setEditingNotice(undefined);
                       setNoticeTitle("");
                       setNoticeBody("");
+                      setNoticeDuration("10");
                     }}
                   >
                     Abbrechen
@@ -1531,6 +1949,9 @@ export default function CompetitionCenter() {
                         <strong>{n.title}</strong>
                         <p className="text-sm">{n.body}</p>
                         <small>
+                          {n.expires_at &&
+                            Date.parse(n.expires_at) <= Date.now() &&
+                            "Abgelaufen · "}
                           {n.show_app && "App "}
                           {n.show_tv && "TV "}
                           {n.expires_at && `· bis ${formatWhen(n.expires_at)}`}
@@ -1547,13 +1968,8 @@ export default function CompetitionCenter() {
                             setNoticeApp(n.show_app);
                             setNoticeTv(n.show_tv);
                             setNoticeFullscreen(n.fullscreen);
-                            setNoticeExpiry(
-                              n.expires_at
-                                ? new Date(n.expires_at)
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : "",
-                            );
+                            setNoticeExpiry(n.expires_at ?? "");
+                            setNoticeDuration("existing");
                           }}
                         >
                           Bearbeiten

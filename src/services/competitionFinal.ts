@@ -147,6 +147,8 @@ function errorText(error: unknown): string {
     return "Die Klasse wurde inzwischen geändert. Bitte neu laden und den aktuellen Stand prüfen.";
   if (raw.includes("FINAL_STATION_INVALID"))
     return "Der Stationszugang ist ungültig oder wurde ersetzt.";
+  if (raw.includes("LEAGUE_ADMIN_REQUIRED"))
+    return "Diese Aktion erfordert ein persönliches Liga-Admin-Konto. Bitte melde dich erneut an.";
   return raw || "Die Aktion konnte nicht abgeschlossen werden.";
 }
 async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {

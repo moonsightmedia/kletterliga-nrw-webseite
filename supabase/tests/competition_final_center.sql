@@ -1,4 +1,4 @@
--- Run after 20260930180000_competition_final_center.sql against an isolated test database.
+-- Run after all competition migrations, including 20261001090000, in an isolated test database.
 begin;
 create function pg_temp.ok(value boolean,label text) returns void language plpgsql as $$
 begin if value is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -34,6 +34,13 @@ select pg_temp.denied('select public.publish_competition_final_class(''FINAL-TES
 reset role;
 
 -- Seven registered starters: sixth and seventh tie at the qualification boundary.
+update public.competition_day_events set phase='draft' where season_year='FINAL-TEST';
+set local role anon;
+select pg_temp.ok(jsonb_array_length(public.get_competition_live('FINAL-TEST')->'classes')=0,'preparation does not expose semifinal names');
+select pg_temp.ok(public.get_competition_live('NO-SUCH-SEASON')->'class_keys'='[]'::jsonb,'missing season has complete TV settings');
+select pg_temp.denied('select * from public.competition_final_stations','permission denied');
+reset role;
+update public.competition_day_events set phase='closed' where season_year='FINAL-TEST';
 insert into public.competition_day_results(event_id,route_id,profile_id,zone,flash,points)
   select ev.id,r.id,p.id,case when r.route_number=1 then greatest(1,8-n) else 0 end,false,
     case when r.route_number=1 then case when n>=7 then 10 else (8-n)*10 end else 0 end
@@ -50,6 +57,7 @@ select pg_temp.ok((select semifinal_rank=6 from public.competition_final_entries
 set local role authenticated;
 select pg_temp.denied('select public.move_competition_final_entry((public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,2,0)','FINAL_VERSION_CONFLICT');
 select public.set_competition_final_station('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX');
+select pg_temp.denied('select public.move_competition_final_entry((public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,2,null)','FINAL_VERSION_CONFLICT');
 select public.set_competition_final_phase((public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid,'running',1);
 reset role;
 select set_config('test.entry1',(select id::text from public.competition_final_entries where profile_id='99999999-7000-4000-8000-000000000002'),true);
@@ -69,5 +77,23 @@ set local role anon;
 select public.submit_competition_final_attempt('FINAL-TEST',1,'ABCDEFGHIJKLMNOPQRSTUVWX',current_setting('test.entry2')::uuid,'99999999-7000-4000-8000-000000000102',20,false,100,3,'');
 select pg_temp.ok((public.get_competition_final_public('FINAL-TEST')->0->'entries'->0->>'name')='Final Person 2','better semifinal rank beats faster time at equal grip');
 select pg_temp.ok(position('profile_id' in public.get_competition_live('FINAL-TEST')::text)=0,'public payload contains no internal IDs');
+select pg_temp.ok(position('code_hash' in public.get_competition_live('FINAL-TEST')::text)=0 and position('reason' in public.get_competition_live('FINAL-TEST')::text)=0,'public TV excludes codes and internal reasons');
+select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'',1,null)','FINAL_STATION_INVALID');
+reset role;
+select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000001',true);
+select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+select public.set_competition_final_phase((public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid,'review',4);
+reset role;
+update public.competition_day_results set points=points+10 where profile_id='99999999-7000-4000-8000-000000000008' and event_id=(select id from public.competition_day_events where season_year='FINAL-TEST') and route_id=(select id from public.competition_day_routes where event_id=(select id from public.competition_day_events where season_year='FINAL-TEST') and route_number=1);
+set local role authenticated;
+select public.set_competition_final_phase((public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid,'running',5,'Papierkorrektur nach Klassenstart; Finalfeld bleibt bestehen');
+select pg_temp.ok(public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'phase'='running','started class can reopen after semifinal correction without replacing frozen field');
+reset role;
+select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000003',true);
+select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000003","role":"authenticated"}',true);
+set local role authenticated;
+select pg_temp.denied('select public.get_competition_final_admin(''FINAL-TEST'')','LEAGUE_ADMIN_REQUIRED');
+select pg_temp.denied('select public.set_competition_live_display(''FINAL-TEST'',''final'',''[]''::jsonb,null,15)','LEAGUE_ADMIN_REQUIRED');
 reset role;
 rollback;

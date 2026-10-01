@@ -41,15 +41,42 @@ const empty = (): Draft => ({
   reason: "",
   request: crypto.randomUUID(),
 });
-const draftKey = (season: string, station: number) =>
-  `kletterliga:final-draft:${season}:${station}`;
-const accessKey = (season: string) => `kletterliga:final-station:${season}`;
 const inputClass =
   "min-h-12 w-full rounded-xl border border-[#003d55]/25 bg-white px-3 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523]";
 
 export default function FinalStation() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
   const season = settings?.season_year?.trim();
+  return (
+    <FinalStationContent season={season} settingsLoading={settingsLoading} />
+  );
+}
+export function FinalStationContent({
+  season,
+  settingsLoading = false,
+  source = { getFinalStation, submitFinalAttempt },
+  storagePrefix = "kletterliga",
+  backHref = "/app/schiedsrichter",
+}: {
+  season?: string;
+  settingsLoading?: boolean;
+  source?: {
+    getFinalStation: typeof getFinalStation;
+    submitFinalAttempt: typeof submitFinalAttempt;
+  };
+  storagePrefix?: string;
+  backHref?: string;
+}) {
+  const { getFinalStation, submitFinalAttempt } = source;
+  const draftKey = useCallback(
+    (year: string, station: number) =>
+      `${storagePrefix}:final-draft:${year}:${station}`,
+    [storagePrefix],
+  );
+  const accessKey = useCallback(
+    (year: string) => `${storagePrefix}:final-station:${year}`,
+    [storagePrefix],
+  );
   const [station, setStation] = useState<1 | 2>(1);
   const [code, setCode] = useState("");
   const [activeCode, setActiveCode] = useState("");
@@ -78,7 +105,7 @@ export default function FinalStation() {
         /* session only */
       }
     },
-    [season],
+    [season, getFinalStation, accessKey],
   );
   useEffect(() => {
     if (!season) return;
@@ -97,7 +124,7 @@ export default function FinalStation() {
     } catch {
       /* no persisted access */
     }
-  }, [season, reload]);
+  }, [season, reload, accessKey]);
   useEffect(() => {
     if (!season) return;
     const key = draftKey(season, station);
@@ -116,7 +143,7 @@ export default function FinalStation() {
       setDraft(empty());
     }
     setDraftReadyKey(key);
-  }, [season, station]);
+  }, [season, station, draftKey]);
   useEffect(() => {
     if (!season || draftReadyKey !== draftKey(season, station)) return;
     try {
@@ -124,7 +151,7 @@ export default function FinalStation() {
     } catch {
       /* input remains in memory */
     }
-  }, [draft, draftReadyKey, season, station]);
+  }, [draft, draftReadyKey, season, station, draftKey]);
   useEffect(() => {
     if (!activeCode) return;
     const timer = window.setInterval(() => {
@@ -141,7 +168,7 @@ export default function FinalStation() {
         });
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [activeCode, reload, season, station]);
+  }, [activeCode, reload, season, station, accessKey]);
   const selectedClass = classes.find((c) => c.id === draft.classId);
   const selectedEntry = selectedClass?.entries.find(
     (e) => e.entry_id === draft.entryId,
@@ -243,7 +270,7 @@ export default function FinalStation() {
           <h1 className="stitch-headline text-3xl">Digitale Ergebniseingabe</h1>
         </div>
         <StitchButton asChild variant="outline">
-          <Link to="/app/schiedsrichter">QR-Codes & Uhren</Link>
+          <Link to={backHref}>Zur Wettkampfübersicht</Link>
         </StitchButton>
       </div>
       {settingsLoading && <p role="status">Saison wird geladen …</p>}
@@ -272,7 +299,10 @@ export default function FinalStation() {
               setStation(Number(v) as 1 | 2);
             }}
           >
-            <SelectTrigger className="min-h-12 bg-white">
+            <SelectTrigger
+              aria-label="Eingabestation"
+              className="min-h-12 bg-white"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -338,7 +368,10 @@ export default function FinalStation() {
                   });
                 }}
               >
-                <SelectTrigger className="min-h-12 bg-white">
+                <SelectTrigger
+                  aria-label="Finalklasse"
+                  className="min-h-12 bg-white"
+                >
                   <SelectValue placeholder="Klasse wählen" />
                 </SelectTrigger>
                 <SelectContent>
@@ -380,7 +413,10 @@ export default function FinalStation() {
                       });
                     }}
                   >
-                    <SelectTrigger className="min-h-12 bg-white">
+                    <SelectTrigger
+                      aria-label="Person aus Startliste"
+                      className="min-h-12 bg-white"
+                    >
                       <SelectValue placeholder="Person wählen" />
                     </SelectTrigger>
                     <SelectContent>
@@ -398,6 +434,10 @@ export default function FinalStation() {
             )}
             {selectedEntry && (
               <>
+                <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-950">
+                  Entwurf · noch nicht übertragen. Erst das bestätigte Speichern
+                  veröffentlicht das Ergebnis.
+                </p>
                 <p className="text-sm">
                   Aktuell gespeichert: <strong>{output}</strong>.{" "}
                   {selectedEntry.attempt_id &&
@@ -471,6 +511,15 @@ export default function FinalStation() {
                     <h3 className="stitch-headline text-xl">
                       Vor dem Speichern vergleichen
                     </h3>
+                    <p className="mt-3 text-sm font-bold">
+                      {selectedClass &&
+                        className(
+                          selectedClass.league,
+                          selectedClass.class_label,
+                        )}{" "}
+                      · Route {selectedClass?.route.number} · Start{" "}
+                      {selectedEntry.start_position}
+                    </p>
                     <p className="my-3 text-lg font-bold">
                       {selectedEntry.name} ·{" "}
                       {draft.top ? "TOP" : `Griff ${grip}`} · {draft.minutes}:

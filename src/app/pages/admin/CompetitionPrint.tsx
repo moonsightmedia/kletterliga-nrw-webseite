@@ -12,8 +12,28 @@ import {
 
 export default function CompetitionPrint() {
   const { settings, loading: settingsLoading } = useSeasonSettings();
-  const [params] = useSearchParams();
   const season = settings?.season_year?.trim();
+  return (
+    <CompetitionPrintContent
+      season={season}
+      settingsLoading={settingsLoading}
+    />
+  );
+}
+export function CompetitionPrintContent({
+  season,
+  settingsLoading = false,
+  load = getFinalAdmin,
+  backHref = "/app/admin/league/wettkampf",
+  demo = false,
+}: {
+  season?: string;
+  settingsLoading?: boolean;
+  load?: typeof getFinalAdmin;
+  backHref?: string;
+  demo?: boolean;
+}) {
+  const [params] = useSearchParams();
   const [data, setData] = useState<FinalAdmin | null>(null);
   const [error, setError] = useState("");
   const selected = params.get("klasse");
@@ -21,7 +41,7 @@ export default function CompetitionPrint() {
   useEffect(() => {
     if (!season) return;
     let active = true;
-    getFinalAdmin(season)
+    load(season)
       .then((value) => {
         if (active) setData(value);
       })
@@ -32,7 +52,7 @@ export default function CompetitionPrint() {
     return () => {
       active = false;
     };
-  }, [season]);
+  }, [season, load]);
   const classes =
     data?.classes.filter(
       (c) =>
@@ -43,9 +63,7 @@ export default function CompetitionPrint() {
     <div className="min-h-screen bg-white text-[#003d55]">
       <div className="print:hidden mx-auto flex max-w-5xl flex-wrap items-center gap-3 p-5">
         <StitchButton variant="outline" asChild>
-          <Link to="/app/admin/league/wettkampf">
-            Zurück zur Wettkampfzentrale
-          </Link>
+          <Link to={backHref}>Zurück zur Wettkampfzentrale</Link>
         </StitchButton>
         <StitchButton disabled={!classes.length} onClick={() => window.print()}>
           Drucken / als PDF speichern
@@ -64,14 +82,15 @@ export default function CompetitionPrint() {
       {data && !classes.length && (
         <p className="p-5">Keine bestätigte Finalklasse für diese Auswahl.</p>
       )}
-      {classes.map((c) => (
+      {classes.map((c, index) => (
         <section
           key={c.id}
-          className="mx-auto max-w-[190mm] break-before-page px-4 py-6 first:break-before-auto print:px-0 print:py-0"
+          className={`mx-auto max-w-[190mm] px-4 py-6 print:px-0 print:py-0 ${index ? "break-before-page" : "break-before-auto"}`}
         >
           <header className="mb-6 border-b-2 border-[#003d55] pb-3">
             <p className="text-xs font-bold uppercase tracking-widest">
               Kletterliga NRW · Finale {season}
+              {demo && " · TESTDRUCK · ERFUNDENE DATEN"}
             </p>
             <div className="flex items-end justify-between gap-4">
               <h1 className="mt-2 text-2xl font-black">
