@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1055" height="1491" viewBox="0 0 1055 1491">
+  <defs>
+    <radialGradient id="cream" cx="55%" cy="39%" r="77%" gradientTransform="matrix(1 0 0 .77 0 .09)">
+      <stop stop-color="#f5e2b4"/>
+      <stop offset=".63" stop-color="#f4e1b3"/>
+      <stop offset="1" stop-color="#e8cfa6"/>
+    </radialGradient>
+    <radialGradient id="blue" cx="49%" cy="46%" r="79%">
+      <stop stop-color="#01435f"/>
+      <stop offset=".68" stop-color="#003f5e"/>
+      <stop offset="1" stop-color="#003852"/>
+    </radialGradient>
+    <linearGradient id="topRust" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#7f3219"/><stop offset=".55" stop-color="#a74d24"/><stop offset="1" stop-color="#bd6e38"/>
+    </linearGradient>
+    <linearGradient id="bottomRust" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8c381b"/><stop offset="1" stop-color="#b55c2d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- The shapes reproduce the geometry of the approved print artwork. -->
+  <path fill="url(#cream)" d="M0 0H1055V1491H0Z"/>
+  <path fill="#e8c998" d="M0 0H55L69 28 0 117Z" opacity=".63"/>
+  <path fill="#f4dbad" d="M0 117 69 28 70 144Z"/>
+  <path fill="#f8e5bd" d="M69 28 55 0 213 49 176 155Z"/>
+  <path fill="#f0d5a5" d="M55 0 69 28 128 152 176 155Z"/>
+  <path fill="#e2b886" d="M55 0 176 155 128 152Z" opacity=".72"/>
+  <path fill="#f5dcb0" d="M69 28 176 155 70 144 0 117Z"/>
+  <path fill="#edcfa0" d="M0 117 70 144 0 215Z"/>
+  <path fill="#edd2a4" d="M70 144 128 152 119 193 0 215Z"/>
+  <path fill="#dfb88a" d="M128 152 176 155 140 189 119 193Z"/>
+  <path fill="#e8c89b" d="M0 215 119 193 93 296 0 371Z"/>
+  <path fill="#f4dba9" d="M119 193 140 189 123 277 93 296Z"/>
+  <path fill="#dcae7e" d="M128 152 140 189 123 277 93 296Z" opacity=".66"/>
+  <path fill="#d59e6c" d="M140 189 176 155 216 196 123 277Z" opacity=".62"/>
+  <path fill="#f8e3b6" d="M176 155 216 196 123 277Z"/>
+  <path fill="#c78550" d="M213 49 233 92 216 196 176 155Z" opacity=".78"/>
+  <path fill="#b45b2c" d="M213 49 299 0 233 92Z"/>
+  <path fill="url(#topRust)" d="M299 0 233 92 213 49Z"/>
+  <path fill="#9b431f" d="M299 0 213 49 241 26Z" opacity=".45"/>
+  <path fill="#eccfa3" d="M213 49 55 0 299 0Z" opacity=".5"/>
+  <path fill="#e9c997" d="M0 371 93 296 123 277 106 343 0 428Z"/>
+  <path fill="#c98350" d="M0 371 93 296 106 343 0 447Z" opacity=".65"/>
+  <path fill="url(#bottomRust)" d="M0 447 106 343 123 277 93 296Z"/>
+  <path fill="#c27a45" d="M0 371 93 296 0 414Z" opacity=".72"/>
+  <path fill="#e6bc87" d="M0 370 93 296 0 329Z" opacity=".56"/>
+
+  <path fill="#a54d22" d="M0 890 1055 725V748L0 912Z"/>
+  <path fill="url(#blue)" d="M0 912 1055 748V1491H0Z"/>
+
+  <!-- Faceted blue rock in the lower right of the print artwork. -->
+  <path fill="#5b8d9f" d="M1055 1086 969 1175 1055 1191Z"/>
+  <path fill="#2f6c85" d="M969 1175 1055 1191 1030 1276Z"/>
+  <path fill="#155672" d="M1055 1191V1253L1030 1276Z"/>
+  <path fill="#80a8ae" d="M969 1175 967 1308 906 1350Z"/>
+  <path fill="#467e92" d="M969 1175 1030 1276 967 1308Z"/>
+  <path fill="#0a4868" d="M1030 1276 1055 1253V1396L969 1415Z"/>
+  <path fill="#205e78" d="M967 1308 1030 1276 969 1415Z"/>
+  <path fill="#6897a2" d="M906 1350 967 1308 969 1415Z"/>
+  <path fill="#0b4969" d="M906 1350 969 1415 928 1477Z"/>
+  <path fill="#427c91" d="M969 1415 1055 1396 1055 1491Z"/>
+  <path fill="#0b4d6e" d="M969 1415 928 1477 1055 1491Z"/>
+  <path fill="#6091a0" d="M906 1350 824 1430 928 1477Z"/>
+  <path fill="#155974" d="M824 1430 906 1350 929 1477Z" opacity=".58"/>
+  <path fill="#50879a" d="M717 1438 906 1350 824 1430Z"/>
+  <path fill="#185a77" d="M717 1438 824 1430 755 1491Z"/>
+  <path fill="#4d8498" d="M717 1438 755 1491 622 1491Z"/>
+  <path fill="#34778c" d="M824 1430 928 1477 842 1491 755 1491Z"/>
+  <path fill="#0d506d" d="M928 1477 969 1415 1055 1491H842Z"/>
+</svg>

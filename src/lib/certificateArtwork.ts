@@ -8,20 +8,6 @@ const rust = "#a45525";
 const socialScale = 2;
 const imageCache = new Map<string, Promise<HTMLImageElement>>();
 
-// The approved Canva background has a 1055 px wide raster. Repaint its long,
-// high-contrast diagonal as a path so the edge stays clean in A4 exports.
-function drawBackgroundDivider(context: CanvasRenderingContext2D, height: number) {
-  const sourceHeight = 1491;
-  context.fillStyle = "#a64d21";
-  context.beginPath();
-  context.moveTo(0, height * 891 / sourceHeight);
-  context.lineTo(1000, height * 726 / sourceHeight);
-  context.lineTo(1000, height * 747 / sourceHeight);
-  context.lineTo(0, height * 912 / sourceHeight);
-  context.closePath();
-  context.fill();
-}
-
 const phaseTitle = (phase: Certificate["phase"]) => phase === "qualification" ? "QUALIFIKATION" : "FINALE";
 const classTitle = (label: string) => {
   const match = /^(U15|Ü15|Ü40)-([mw])$/i.exec(label);
@@ -33,7 +19,7 @@ function getArtwork(name: string): Promise<HTMLImageElement> {
   const cached = imageCache.get(name);
   if (cached) return cached;
   const image = new Image();
-  image.src = `/certificates/${name}.${name === "logo" ? "svg" : "png"}`;
+  image.src = `/certificates/${name}.${name === "logo" || name === "background" ? "svg" : "png"}`;
   const pending = image.decode().then(() => image).catch((error) => {
     imageCache.delete(name);
     throw error;
@@ -137,9 +123,8 @@ export async function renderCertificate(certificate: Certificate, format: Certif
     context.drawImage(source, x, y, width, height);
   };
 
-  // These are the original image layers from the approved 97-page print PDF.
+  // The background redraws the approved print geometry as scalable paths.
   draw("background", 0, 0, 1000, height);
-  drawBackgroundDivider(context, height);
   draw("logo", 386, isPdf ? 41 : 22, 228, 228);
   draw("wordmark", 344, isPdf ? 292 : 260, 312, 25);
   const phaseImage = certificate.phase === "finale" ? "phase-finale" : "phase-qualification";
