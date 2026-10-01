@@ -20,7 +20,7 @@ describe("season feedback v3", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Bitte wähle zuerst");
     expect(invoke).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe nicht mitgeklettert und die Liga kaum verfolgt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich habe weder mitgemacht noch die Liga näher verfolgt" }));
     expect(screen.getByText("Wie kam es dazu, dass du 2026 nicht mitgeklettert bist?")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Saisonanmeldung oder App haben nicht funktioniert" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Ich kannte die Liga noch nicht" })).toBeInTheDocument();
@@ -52,20 +52,20 @@ describe("season feedback v3", () => {
   it("shows active participants a different reflection instead of nonparticipation reasons", () => {
     const { container } = render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
     expect(container.querySelectorAll("main")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe nicht mitgeklettert und die Liga kaum verfolgt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich habe weder mitgemacht noch die Liga näher verfolgt" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Zu wenig Zeit" }));
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe mitgeklettert" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich bin mitgeklettert" }));
     expect(screen.getByRole("textbox", { name: "Was hat 2026 gut funktioniert?" })).toBeInTheDocument();
     expect(screen.getByText("Wie sieht es mit deiner Teilnahme am Finale am 3. Oktober aus?")).toBeInTheDocument();
     expect(screen.queryByText("Wie kam es dazu, dass du 2026 nicht mitgeklettert bist?")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe nicht mitgeklettert und die Liga kaum verfolgt" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich habe weder mitgemacht noch die Liga näher verfolgt" }));
     expect(screen.getByRole("checkbox", { name: "Zu wenig Zeit" })).not.toBeChecked();
   });
 
   it("captures a separate finale reason from active climbers", async () => {
     invoke.mockResolvedValue({ data: { ok: true }, error: null });
     render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe mitgeklettert" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich bin mitgeklettert" }));
     fireEvent.click(screen.getByRole("radio", { name: "Nein, ich nehme nicht teil" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Die Finalanmeldung hat nicht funktioniert" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Möchtest du uns den Grund genauer erklären?" }), { target: { value: "Die Finalanmeldung lud nicht." } });
@@ -79,7 +79,7 @@ describe("season feedback v3", () => {
 
   it("asks for a specific technical hurdle and clears it when deselected", () => {
     render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe die Liga verfolgt, aber nicht mitgeklettert" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich habe die Liga verfolgt, aber nicht mitgemacht" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Saisonanmeldung oder App haben nicht funktioniert" }));
     expect(screen.getByRole("textbox", { name: "Was genau hat technisch nicht funktioniert?" })).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Was genau hat technisch nicht funktioniert?" }), { target: { value: "Login funktionierte nicht" } });
@@ -91,7 +91,7 @@ describe("season feedback v3", () => {
 
   it("still requires a concrete wish from informed nonparticipants", () => {
     render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe die Liga verfolgt, aber nicht mitgeklettert" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich habe die Liga verfolgt, aber nicht mitgemacht" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Zu wenig Zeit" }));
     fireEvent.click(screen.getByRole("button", { name: /Feedback absenden/i }));
     expect(screen.getByRole("alert")).toHaveTextContent("wichtigsten Wunsch");
@@ -100,7 +100,7 @@ describe("season feedback v3", () => {
 
   it("clears finale reasons when the answer changes to taking part", () => {
     render(<MemoryRouter><Saisonfeedback /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("radio", { name: "Ich habe mitgeklettert" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ich bin mitgeklettert" }));
     fireEvent.click(screen.getByRole("radio", { name: "Nein, ich nehme nicht teil" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Der Termin passt nicht" }));
     fireEvent.click(screen.getByRole("radio", { name: "Ja, ich nehme teil" }));

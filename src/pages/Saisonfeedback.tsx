@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, ClipboardList } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -40,9 +41,9 @@ const initialAnswers: Answers = {
 };
 
 const participationOptions = [
-  { value: "active", label: "Ich habe mitgeklettert" },
-  { value: "followed", label: "Ich habe die Liga verfolgt, aber nicht mitgeklettert" },
-  { value: "not_participated", label: "Ich habe nicht mitgeklettert und die Liga kaum verfolgt" },
+  { value: "active", label: "Ich bin mitgeklettert" },
+  { value: "followed", label: "Ich habe die Liga verfolgt, aber nicht mitgemacht" },
+  { value: "not_participated", label: "Ich habe weder mitgemacht noch die Liga näher verfolgt" },
 ];
 const reasonOptions = [
   { value: "time", label: "Zu wenig Zeit" }, { value: "travel", label: "Wege oder Hallen zu weit" },
@@ -86,7 +87,7 @@ const dropStationOptions = [
 const nextYearOptions = [
   { value: "yes", label: "Ja" }, { value: "maybe", label: "Vielleicht" }, { value: "no", label: "Eher nicht" },
 ];
-const choiceClass = "flex min-h-12 items-center border-2 border-primary/20 bg-white px-4 py-3 text-sm font-semibold leading-snug text-primary transition-colors hover:border-secondary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-secondary peer-focus-visible:ring-offset-2";
+const choiceClass = "flex min-h-14 items-center rounded-lg border-2 border-primary/10 bg-background px-4 py-3 text-sm font-semibold leading-snug text-primary transition-colors hover:border-secondary/60 hover:bg-accent/40 peer-focus-visible:ring-2 peer-focus-visible:ring-secondary peer-focus-visible:ring-offset-2";
 
 function ChoiceField({ legend, name, options, value, onChange }: {
   legend: string; name: string; options: { value: string; label: string }[];
@@ -97,7 +98,12 @@ function ChoiceField({ legend, name, options, value, onChange }: {
     <div className="grid gap-2 sm:grid-cols-2">{options.map((option) =>
       <label key={option.value} className="block cursor-pointer">
         <input className="peer sr-only" type="radio" name={name} value={option.value} checked={value === option.value} onChange={() => onChange(option.value)} />
-        <span className={choiceClass}>{option.label}</span>
+        <span className={`${choiceClass} ${value === option.value ? "border-secondary bg-accent/60 shadow-sm" : ""}`}>
+          <span aria-hidden="true" className={`mr-3 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${value === option.value ? "border-secondary" : "border-primary/35"}`}>
+            {value === option.value && <span className="size-2 rounded-full bg-secondary" />}
+          </span>
+          {option.label}
+        </span>
       </label>)}</div>
   </fieldset>;
 }
@@ -112,7 +118,12 @@ function ReasonsField({ legend, name, options, values, onToggle }: {
     <div className="grid gap-2 sm:grid-cols-2">{options.map((option) =>
       <label key={option.value} className="block cursor-pointer">
         <input className="peer sr-only" type="checkbox" name={name} value={option.value} checked={values.includes(option.value)} onChange={() => onToggle(option.value)} />
-        <span className={choiceClass}>{option.label}</span>
+        <span className={`${choiceClass} ${values.includes(option.value) ? "border-secondary bg-accent/60 shadow-sm" : ""}`}>
+          <span aria-hidden="true" className={`mr-3 flex size-5 shrink-0 items-center justify-center rounded border-2 ${values.includes(option.value) ? "border-secondary bg-secondary text-secondary-foreground" : "border-primary/35"}`}>
+            {values.includes(option.value) && <Check className="size-3.5" strokeWidth={3} />}
+          </span>
+          {option.label}
+        </span>
       </label>)}</div>
   </fieldset>;
 }
@@ -124,15 +135,15 @@ function WrittenField({ id, label, hint, value, onChange, maxLength = 800, place
   return <div>
     <label htmlFor={id} className="block text-base font-bold leading-snug text-primary sm:text-lg">{label}</label>
     {hint && <p className="mt-1 text-sm leading-6 text-muted-foreground">{hint}</p>}
-    <Textarea id={id} className="mt-3 min-h-28 resize-y rounded-none border-2 border-primary/20 bg-white text-base focus-visible:ring-secondary" maxLength={maxLength} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+    <Textarea id={id} className="mt-3 min-h-28 resize-y rounded-lg border-primary/20 bg-background text-base focus-visible:ring-secondary" maxLength={maxLength} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
     <p className="mt-1 text-right text-xs text-muted-foreground">{value.length}/{maxLength} Zeichen</p>
   </div>;
 }
 
 function FormSection({ number, title, description, children }: { number: string; title: string; description: string; children: ReactNode }) {
-  return <section className="border-t-4 border-primary bg-white px-5 py-6 shadow-[0_10px_35px_rgba(0,61,85,0.06)] sm:px-9 sm:py-9">
-    <div className="mb-5 flex gap-4 border-b border-primary/15 pb-4 sm:mb-7 sm:pb-6">
-      <span className="font-headline text-2xl text-secondary" aria-hidden="true">{number}</span>
+  return <section className="rounded-xl border border-border/50 bg-card px-5 py-6 shadow-lg sm:px-9 sm:py-9">
+    <div className="mb-6 flex gap-4 border-b border-primary/10 pb-5 sm:mb-8 sm:pb-6">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent font-headline text-xl text-primary" aria-hidden="true">{number}</span>
       <div><h2 className="font-headline text-xl leading-tight text-primary sm:text-2xl">{title}</h2>
         <p className={`mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base ${number === "01" ? "hidden sm:block" : ""}`}>{description}</p></div>
     </div>
@@ -201,32 +212,21 @@ const Saisonfeedback = () => {
   };
 
   return <PageLayout>
-    <section className="relative overflow-hidden bg-primary pb-12 pt-20 text-accent sm:pb-16 sm:pt-24 md:pb-28 md:pt-40">
-      <div className="absolute inset-x-0 top-0 h-24 bg-accent md:h-28" aria-hidden="true" />
-      <div className="absolute -right-24 top-32 hidden size-72 rotate-45 bg-secondary lg:block lg:size-96" aria-hidden="true" />
-      <div className="container-kl relative z-10">
-        <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.24em] text-accent/85 sm:mb-4">Kletterliga NRW · Saisonfeedback 2026</p>
-        <h1 className="max-w-4xl font-headline text-3xl leading-[1.08] text-accent sm:text-5xl md:text-6xl">DEIN BLICK AUF 2026. DEINE IDEEN FÜR 2027.</h1>
-        <p className="mt-3 max-w-2xl text-base leading-6 text-accent/90 sm:mt-5 sm:text-lg sm:leading-7">Was sollte bleiben, was sich ändern? Deine Ideen helfen uns bei der Planung für 2027.</p>
-      </div>
-    </section>
-    <section className="relative -mt-8 bg-[#F7F0E2] pb-20 sm:-mt-12">
+    <PageHeader title="SAISONFEEDBACK 2026" subtitle="Was lief gut – und was sollten wir für 2027 ändern? Wir freuen uns auf deine ehrliche Sicht." />
+    <section className="bg-background py-10 pb-20 sm:py-14 sm:pb-24">
       <div className="container-kl max-w-5xl">
-        <div className="mb-4 flex flex-col gap-2 border-l-4 border-secondary bg-accent px-5 py-3 text-primary sm:mb-6 sm:flex-row sm:items-start sm:gap-4 sm:py-4">
-          <ClipboardList className="hidden size-6 shrink-0 sm:block" aria-hidden="true" />
-          <p className="text-sm leading-6 sm:text-base">Kurz und anonym: Deine Perspektive und ggf. ein Grund sind Pflicht. Wer die Liga kennt, nennt außerdem einen Wunsch für 2027. Ohne Name oder E-Mail-Adresse.</p>
-        </div>
-        {sent ? <div className="border-t-4 border-secondary bg-white p-8 text-center shadow-sm sm:p-12" role="status">
+        <p className="mb-6 max-w-3xl text-sm leading-6 text-muted-foreground sm:mb-8 sm:text-base">Das Formular ist ohne Namen oder E-Mail-Adresse. Wähle zunächst aus, wie du die Saison erlebt hast. Danach zeigen wir dir die passenden Fragen.</p>
+        {sent ? <div className="rounded-xl border border-border/50 bg-card p-8 text-center shadow-lg sm:p-12" role="status">
           <Check className="mx-auto mb-5 size-10 text-secondary" aria-hidden="true" />
           <h2 className="font-headline text-2xl text-primary sm:text-3xl">DANKE FÜR DEIN FEEDBACK!</h2>
           <p className="mx-auto mt-4 max-w-lg text-muted-foreground">Deine Ideen fließen in die Auswertung der Saison und die Planung für 2027 ein.</p>
           <Link to="/finale" className="mt-7 inline-flex items-center gap-2 font-bold text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary">Zum Finaltag <ArrowRight className="size-4" aria-hidden="true" /></Link>
         </div> : <form onSubmit={submit} className="space-y-5" noValidate>
           <div className="sr-only" aria-hidden="true"><label htmlFor="feedback-website">Website</label><input id="feedback-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} /></div>
-          <FormSection number="01" title="DEINE PERSPEKTIVE" description="Die folgenden Fragen passen sich daran an, ob du mitgeklettert bist oder nicht.">
-            <div id="feedback-participation"><ChoiceField legend="Wie warst du 2026 dabei?" name="participation" options={participationOptions} value={answers.participation} onChange={(value) => setAnswer("participation", value)} /></div>
+          <FormSection number="01" title="DEINE PERSPEKTIVE" description="Die folgenden Fragen passen sich daran an, ob du mitgemacht hast oder nicht.">
+            <div id="feedback-participation"><ChoiceField legend="Wie hast du die Kletterliga 2026 erlebt?" name="participation" options={participationOptions} value={answers.participation} onChange={(value) => setAnswer("participation", value)} /></div>
             {error.startsWith("Bitte wähle zuerst") && <p role="alert" className={errorClass}>{error}</p>}
-            {answers.participation && answers.participation !== "active" && <div id="feedback-reasons" className="space-y-7 border-l-4 border-secondary/60 bg-accent/30 p-4 sm:p-6">
+            {answers.participation && answers.participation !== "active" && <div id="feedback-reasons" className="space-y-7 rounded-xl border border-secondary/20 bg-accent/20 p-4 sm:p-6">
               <ReasonsField legend="Wie kam es dazu, dass du 2026 nicht mitgeklettert bist?" name="non_participation_reasons" options={reasonOptions} values={answers.non_participation_reasons} onToggle={(value) => toggleReason("non_participation_reasons", value)} />
               {error.startsWith("Bitte nenne mindestens") && <p role="alert" className={errorClass}>{error}</p>}
               <WrittenField id="feedback-non-participation-detail" label="Was war für dich der entscheidende Punkt?" hint="Zum Beispiel eine konkrete Hürde, ein Moment im Saisonablauf oder etwas, das wir bislang nicht bedacht haben." value={answers.non_participation_detail} onChange={(value) => setAnswer("non_participation_detail", value)} placeholder="Erzähl uns, was bei dir den Ausschlag gegeben hat …" />
@@ -239,7 +239,7 @@ const Saisonfeedback = () => {
               </div>
               <div className="space-y-6 border-t border-primary/15 pt-6">
                 <ChoiceField legend="Wie sieht es mit deiner Teilnahme am Finale am 3. Oktober aus?" name="finale_attendance" options={finaleOptions} value={answers.finale_attendance} onChange={(value) => setAnswer("finale_attendance", value)} />
-                {(answers.finale_attendance === "no" || answers.finale_attendance === "unsure") && <div className="space-y-6 border-l-4 border-secondary/60 bg-accent/30 p-4 sm:p-6">
+                {(answers.finale_attendance === "no" || answers.finale_attendance === "unsure") && <div className="space-y-6 rounded-xl border border-secondary/20 bg-accent/20 p-4 sm:p-6">
                   <ReasonsField legend="Was spricht für dich gegen eine Teilnahme am Finale?" name="finale_reasons" options={finaleReasonOptions} values={answers.finale_reasons} onToggle={(value) => toggleReason("finale_reasons", value)} />
                   <WrittenField id="feedback-finale-detail" label="Möchtest du uns den Grund genauer erklären?" hint="Auch Probleme mit der Finalanmeldung kannst du hier beschreiben. Bitte keine persönlichen Daten eintragen." value={answers.finale_detail} onChange={(value) => setAnswer("finale_detail", value)} placeholder="Das war für mich ausschlaggebend …" />
                 </div>}
@@ -264,10 +264,10 @@ const Saisonfeedback = () => {
             {error.startsWith("Bitte schreibe uns") && <p role="alert" className={errorClass}>{error}</p>}
             <ChoiceField legend="Könntest du dir vorstellen, 2027 dabei zu sein?" name="next_year" options={nextYearOptions} value={answers.next_year} onChange={(value) => setAnswer("next_year", value)} />
           </FormSection>
-          <div className="bg-white px-5 py-7 sm:px-9">
+          <div className="rounded-xl border border-border/50 bg-card px-5 py-7 shadow-lg sm:px-9">
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">Bitte trage keine Namen oder andere personenbezogene Daten in die Freitextfelder ein. Deine Antworten werden ohne Konto-Zuordnung gespeichert und für die Planung der nächsten Saison ausgewertet. Mehr dazu in unserer <Link className="font-semibold text-primary underline underline-offset-2" to="/datenschutz">Datenschutzerklärung</Link>.</p>
             {error.startsWith("Das Speichern") && <p role="alert" className={`mt-5 ${errorClass}`}>{error}</p>}
-            <Button type="submit" variant="secondary" size="lg" disabled={sending} className="mt-6 min-h-12 w-full font-bold sm:w-auto">{sending ? "Wird gespeichert …" : "Feedback absenden"}</Button>
+            <Button type="submit" size="lg" disabled={sending} className="mt-6 min-h-12 w-full font-bold sm:w-auto"><span className="skew-x-6">{sending ? "Wird gespeichert …" : "Feedback absenden"}</span></Button>
           </div>
         </form>}
       </div>
