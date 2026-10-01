@@ -17,12 +17,12 @@ export interface CompetitionResult {
   id: string; route_id: string; profile_id: string; zone: number; flash: boolean; points: number; created_at: string;
 }
 export interface CompetitionDay {
-  event: null | { id: string; season_year: string; phase: CompetitionPhase; zone_points: number[]; flash_bonus: number; opened_at: string | null };
+  event: null | { id: string; season_year: string; phase: CompetitionPhase; zone_points: number[]; flash_bonus: number; opened_at: string | null; submission_deadline_at?: string | null };
   eligible: boolean; league: CompetitionLeague | null; class_label: string | null;
   routes: CompetitionRoute[]; results: CompetitionResult[]; is_staff: boolean; is_admin: boolean;
 }
 export interface CompetitionStaffRoute extends CompetitionRoute { qr_token: string }
-export interface CompetitionJudgeAccess { event: { id: string; phase: CompetitionPhase }; routes: CompetitionStaffRoute[] }
+export interface CompetitionJudgeAccess { event: { id: string; phase: CompetitionPhase; submission_deadline_at?: string | null }; routes: CompetitionStaffRoute[] }
 export interface CompetitionStaffMember { profile_id: string; name: string }
 export interface CompetitionAdminResult extends CompetitionResult {
   name: string; league: CompetitionLeague; class_label: string;
@@ -50,6 +50,7 @@ function readableError(error: unknown): string {
     LEAGUE_ADMIN_REQUIRED: "Diese Aktion ist nur für die Liga-Administration verfügbar.",
     COMPETITION_STAFF_REQUIRED: "Du bist für diesen Wettkampftag nicht als Staff eingetragen.",
     COMPETITION_NOT_OPEN: "Die Ergebniseingabe ist derzeit geschlossen.",
+    COMPETITION_DEADLINE_REACHED: "Die Halbfinaleingabe ist seit 16:00 Uhr geschlossen. Bitte wende dich für einen Nachtrag an René.",
     COMPETITION_NOT_ELIGIBLE: "Du bist für diese Wertung nicht startberechtigt.",
     COMPETITION_QR_INVALID: "Der QR-Code ist ungültig. Bitte scanne den Code der Route erneut.",
     COMPETITION_RESULT_IMMUTABLE: "Dieses Ergebnis ist bereits abgegeben und kann nicht geändert werden.",

@@ -93,6 +93,7 @@ export interface LiveNotice {
 }
 export interface FinalAdmin {
   phase: "draft" | "open" | "closed";
+  submission_deadline_at?: string | null;
   classes: FinalClass[];
   routes: FinalRoute[];
   semifinal: SemifinalRow[];

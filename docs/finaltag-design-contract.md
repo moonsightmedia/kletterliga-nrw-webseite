@@ -6,7 +6,7 @@ Stand 01.10.2026. Gilt für die tatsächliche Wettkampfzentrale, Finalstation, T
 
 René entscheidet je Klasse, was als Nächstes passiert. Die Übersicht kombiniert Klassenstatus, konkreten nächsten Schritt, Erklärung und direkten Einstieg. Bearbeitungsansichten zeigen immer die aktuelle Klasse und einen beschrifteten Klassenwechsel. Die fünf Ansichten bleiben erreichbar; laufende Klassen dürfen unabhängig voneinander fortschreiten.
 
-1. Halbfinaleingabe schließen, fehlende Werte ausdrücklich klären.
+1. Halbfinalranglisten live verfolgen und Namen für Routendetails aufklappen. QR-bestätigte und abgesendete Ergebnisse zählen ohne zweite Freigabe. Um 16 Uhr am Wettkampftag sperrt die normale Abgabe automatisch; René klärt fehlende Werte anschließend mit Begründung. Nullwerte bleiben von fehlenden Einträgen unterscheidbar.
 2. Finalfeld mit Punktgleichen, physische Route und digitale Station bestätigen.
 3. Startliste prüfen, gegebenenfalls umordnen und im separaten Drucktab ausgeben.
 4. Klasse starten; die Zeitnahme erfasst manuell und bestätigt die Zusammenfassung.
@@ -38,5 +38,6 @@ Die Teilnehmerseite trennt Halbfinale und Finale in zwei Ansichten und filtert n
 - Browser-Probe mit synthetischen Daten: U18 starten, Station anmelden, Nora Muster mit Griff 24 und 3:12 erfassen, Speicherung bestätigen, identischen Wert in Teilnehmeransicht sehen. Offene Toprope-Route klären und Startliste bestätigen.
 - Darstellung: Handy 390 px, Tablet 768 px, Verwaltung 1440 px, TV 1920 × 1080. Screenshots in `docs/screenshots/` dokumentieren den beobachteten Stand.
 - Gesamttests: 70 Dateien, 307 Tests bestanden; nach den letzten Druck- und Rücksetzkorrekturen die 14 betroffenen Oberflächentests erneut bestanden. Gezielter ESLint-Lauf und Produktionsbuild bestanden. Die 15 bereits bestehenden TypeScript-Fehler außerhalb dieser Änderung bleiben bestehen.
+- Nach der Halbfinalkonkretisierung: 46 gezielte Tests in acht Dateien bestanden, einschließlich des Fristwechsels bei bereits offener Teilnehmer-Eingabe, QR-Abgabe, Nullwerten, Ranglisten und TV. Erneuter ESLint-Lauf ohne Fehler (drei bestehende Fast-Refresh-Warnungen) und Produktionsbuild bestanden. Der App-Typecheck zeigt weiterhin dieselben 15 bestehenden Fehler. Lokale Browserprobe: 16-Uhr-Sperre simulieren, Robins fehlende Route begründet nachtragen und identische 280 Punkte in Admin- und Teilnehmeransicht; TV zeigt automatisch wechselnde Halbfinalklassen und Seiten ohne Login.
 - Browserdruck: zwei freigegebene Klassen mit jeweils sieben Startern ergeben zwei nicht leere A4-Seiten. Lange Namen, Schreibfelder und Unterschriftsfelder wurden in der gerenderten PDF geprüft. Eine leere erste Seite wurde behoben.
 - Lokal fehlen Supabase-Umgebungsvariablen und ein funktionierender isolierter Datenbankzugang. SQL-Rechte-/Transaktionstests und Renés tatsächliches Konto bleiben offen. Browserdaten sind kein Nachweis produktiver Datenbankrechte. Vor Produktivfreigabe Migrationen und SQL-Test in isolierter Umgebung ausführen, danach zwei Stationsgeräte, TV und echte Ausdrucke prüfen.

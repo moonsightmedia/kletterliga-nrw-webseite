@@ -61,8 +61,14 @@ export function classNextStep(
   if (!started && semifinalPhase !== "closed")
     return {
       tab: "semifinal",
-      title: "Halbfinaleingabe abschließen",
-      detail: "Ergebnisse kontrollieren, dann die Eingabe schließen.",
+      title:
+        semifinalPhase === "open"
+          ? "Halbfinale live verfolgen"
+          : "Halbfinale vorbereiten",
+      detail:
+        semifinalPhase === "open"
+          ? "QR-bestätigte Ergebnisse erscheinen automatisch. Fehlende Routeneinträge im Blick behalten."
+          : "Routen und Klassen zuordnen, anschließend die Halbfinaleingabe öffnen.",
     };
   if (!started && missing > 0)
     return {

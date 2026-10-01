@@ -43,7 +43,23 @@ describe("competition participant day page", () => {
     api.load.mockResolvedValue(makeData());
     api.submit.mockImplementation((input: { routeId: string; zone: number }) => Promise.resolve(makeAcceptedResult(input)));
   });
-  afterEach(() => cleanup());
+  afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+  it("closes an already open input at the server-provided 16:00 cutoff without erasing saved results", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-10-03T13:59:59Z"));
+    const data = makeData();
+    data.event!.submission_deadline_at = "2026-10-03T16:00:00+02:00";
+    api.load.mockResolvedValue(data);
+    mountPage();
+    await chooseRoute();
+    clickZone(8);
+    expect(screen.getByRole("button", {name:"Ergebnis absenden"})).toBeInTheDocument();
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(screen.queryByRole("button", {name:"Ergebnis absenden"})).not.toBeInTheDocument();
+    expect(screen.getByText(/Fehlende Einträge kann René begründet nachtragen/)).toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+  });
 
   it("shows only the five assigned routes and offers no results for an unprepared or ineligible event", async () => {
     api.load.mockResolvedValueOnce(makeData());

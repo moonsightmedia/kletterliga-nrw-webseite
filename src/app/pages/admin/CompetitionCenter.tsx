@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -16,6 +17,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { classNextStep } from "@/lib/competitionPresentation";
+import {
+  competitionDeadlineReached,
+  formatCompetitionDeadline,
+} from "@/lib/competitionDeadline";
+import SemifinalRanking from "@/app/components/SemifinalRanking";
 import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -167,6 +173,9 @@ export function CompetitionCenterContent({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState(initialTab);
+  const [clock, setClock] = useState(Date.now);
+  const [updated, setUpdated] = useState<Date | null>(null);
+  const loadPending = useRef(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [semifinalZones, setSemifinalZones] = useState<Record<string, string>>(
@@ -201,7 +210,8 @@ export function CompetitionCenterContent({
 
   const reload = useCallback(
     async (quiet = false) => {
-      if (!season) return;
+      if (!season || loadPending.current) return;
+      loadPending.current = true;
       if (!quiet) setLoading(true);
       try {
         const [next, halftime] = await Promise.all([
@@ -210,6 +220,7 @@ export function CompetitionCenterContent({
         ]);
         setData(next);
         setSemiAdmin(halftime);
+        setUpdated(new Date());
         if (!quiet)
           setDisplay(
             next.display ?? {
@@ -227,6 +238,7 @@ export function CompetitionCenterContent({
             : "Wettkampfdaten konnten nicht geladen werden.",
         );
       } finally {
+        loadPending.current = false;
         if (!quiet) setLoading(false);
       }
     },
@@ -245,9 +257,13 @@ export function CompetitionCenterContent({
     if (!season || busy) return;
     const id = window.setInterval(() => {
       if (document.visibilityState === "visible") void reload(true);
-    }, 15000);
+    }, 5000);
     return () => window.clearInterval(id);
   }, [season, busy, reload]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   async function run(
     action: () => Promise<unknown>,
     success: string,
@@ -270,6 +286,12 @@ export function CompetitionCenterContent({
       setBusy(false);
     }
   }
+  const deadlinePassed = competitionDeadlineReached(
+    data?.submission_deadline_at,
+    clock,
+  );
+  const semifinalPhase =
+    data?.phase === "open" && deadlinePassed ? "closed" : data?.phase;
   const classPairs = useMemo(() => {
     const map = new Map<
       string,
@@ -299,7 +321,7 @@ export function CompetitionCenterContent({
     0,
   );
   const readyForPublish = (rows: SemifinalRow[]) =>
-    data?.phase === "closed" &&
+    semifinalPhase === "closed" &&
     rows.every((row) => row.missing.every((m) => m.settled));
   const reasonReady = reason.trim().length > 0 && reason.length <= 500;
   const activePair =
@@ -315,7 +337,7 @@ export function CompetitionCenterContent({
   const nextStep = classNextStep(
     activeFinal,
     activeMissing,
-    data?.phase ?? "draft",
+    semifinalPhase ?? "draft",
   );
   const filteredPairs = classPairs.filter(([key]) => key === activeKey);
   const activeTvHref = tvHref ?? `/live/${season}`;
@@ -441,6 +463,42 @@ export function CompetitionCenterContent({
           )}
 
           <TabsContent value="overview" className="space-y-5 pt-4">
+            {data.semifinal.length > 0 && (
+              <StitchCard className="space-y-4 p-5">
+                <div>
+                  <h2 className="stitch-headline text-xl">
+                    Halbfinalranglisten
+                  </h2>
+                  <p className="mt-2 text-sm">
+                    QR-bestätigte Ergebnisse erscheinen automatisch. Namen
+                    anklicken, um die einzelnen Routen zu sehen.
+                  </p>
+                </div>
+                <Select value={activeKey} onValueChange={setSelectedKey}>
+                  <SelectTrigger
+                    aria-label="Halbfinalklasse in der Übersicht"
+                    className="min-h-12 max-w-sm bg-white"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classPairs.map(([key, group]) => (
+                      <SelectItem key={key} value={key}>
+                        {className(group.league, group.label)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {activePair && (
+                  <SemifinalRanking
+                    rows={activePair[1].rows}
+                    results={data.semifinal_results ?? []}
+                    assignments={semiAdmin?.config.assignments ?? []}
+                    audit={data.semifinal_audit}
+                  />
+                )}
+              </StitchCard>
+            )}
             <section className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
               <div className="border-b p-5">
                 <h2 className="stitch-headline text-xl">So geht es weiter</h2>
@@ -456,7 +514,11 @@ export function CompetitionCenterContent({
                     count + row.missing.filter((m) => !m.settled).length,
                   0,
                 );
-                const step = classNextStep(item, missing, data.phase);
+                const step = classNextStep(
+                  item,
+                  missing,
+                  semifinalPhase ?? "draft",
+                );
                 return (
                   <div
                     key={key}
@@ -504,9 +566,9 @@ export function CompetitionCenterContent({
               <StitchCard tone="navy" className="p-5 text-[#f2dcab]">
                 <p>Halbfinale</p>
                 <strong className="stitch-headline text-2xl">
-                  {data.phase === "closed"
+                  {semifinalPhase === "closed"
                     ? "Geschlossen"
-                    : data.phase === "open"
+                    : semifinalPhase === "open"
                       ? "Eingabe offen"
                       : "Vorbereitung"}
                 </strong>
@@ -578,225 +640,287 @@ export function CompetitionCenterContent({
           <TabsContent value="semifinal" className="space-y-5 pt-4">
             <StitchCard className="space-y-3 p-5">
               <h2 className="stitch-headline text-xl">
-                Offene Halbfinalrouten klären
+                Halbfinale live verfolgen
               </h2>
-              <p className="text-sm">
-                Nach Schließen der Eingabe jeden fehlenden Eintrag anhand der
-                Papierliste nachtragen oder begründet als nicht geklettert mit
-                null Punkten markieren. {unresolved} offen.
+              <p className="text-sm leading-6">
+                Teilnehmer tragen ihr Ergebnis ein, der Schiedsrichter
+                kontrolliert es und lässt den Routen-QR scannen. Nach dem
+                Absenden erscheint der Wert automatisch in der Rangliste für
+                René, Teilnehmer und TV. René muss diese Einträge nicht noch
+                einmal bestätigen.
               </p>
-              <StitchTextField
-                label="Begründung für die nächste Änderung"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-              {data.phase !== "closed" && (
-                <div className="space-y-3">
-                  <p className="text-sm font-bold text-[#a15523]">
-                    {data.phase === "open"
-                      ? "Erst die Eingabe für alle Halbfinalklassen schließen. Anschließend lassen sich offene Werte klären."
-                      : "Zuerst die Halbfinalkonfiguration unten vorbereiten und die Eingabe öffnen."}
-                  </p>
-                  {data.phase === "open" && (
-                    <StitchButton
-                      disabled={busy}
-                      onClick={() =>
-                        void run(
-                          () => setCompetitionPhase(season, "closed"),
-                          "Halbfinaleingabe für alle Klassen geschlossen.",
-                        )
-                      }
-                    >
-                      Halbfinaleingabe schließen
-                    </StitchButton>
-                  )}
-                </div>
+              <p className="text-sm">
+                0 Punkte sind ein eingetragenes Ergebnis. Ein fehlender Eintrag
+                bleibt offen. Teilnehmer prüfen ihre eigenen Einträge unter
+                „Meine Routen“.
+              </p>
+              {data.submission_deadline_at && (
+                <p className="rounded-lg bg-[#f2dcab]/50 p-3 text-sm font-bold">
+                  {deadlinePassed
+                    ? "Automatische Abgabefrist erreicht"
+                    : "Automatische Sperre"}
+                  : {formatCompetitionDeadline(data.submission_deadline_at)} Uhr
+                  · René kann anschließend begründet nachtragen.
+                </p>
               )}
+              <p className="text-xs text-[#003d55]/70">
+                {semifinalPhase === "open"
+                  ? "Eingabe offen"
+                  : semifinalPhase === "closed"
+                    ? "Normale Eingabe geschlossen"
+                    : "Vorbereitung"}{" "}
+                · Aktualisierung alle 5 Sekunden
+                {updated &&
+                  ` · Datenstand ${updated.toLocaleTimeString("de-DE")}`}
+                . Namen anklicken für Routenergebnisse und Eingabezeiten.
+              </p>
             </StitchCard>
-            {filteredPairs.map(([key, group]) => (
-              <StitchCard key={key} className="p-5">
-                <h3 className="stitch-headline mb-3 text-xl">
-                  {className(group.league, group.label)}
-                </h3>
-                <div className="space-y-2">
-                  {group.rows.map((row) => (
-                    <div
-                      key={row.profile_id}
-                      className="rounded-xl bg-white p-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <strong>
-                            {row.rank}. {row.name}
-                          </strong>
-                          <p className="text-sm">
-                            {row.points} Punkte · {row.completed}/5 Ergebnisse{" "}
-                            {row.excluded &&
-                              `· ${row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen"}`}
-                          </p>
-                        </div>
-                      </div>
-                      {semiAdmin && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          {(
-                            semiAdmin.config.assignments.find(
-                              (assignment) =>
-                                assignment.league === row.league &&
-                                assignment.class_label === row.class_label,
-                            )?.route_numbers ?? []
-                          ).map((routeNumber) => {
-                            const result = data.semifinal_results.find(
-                              (item) =>
-                                item.profile_id === row.profile_id &&
-                                item.route_number === routeNumber,
-                            );
-                            const lastCorrection = data.semifinal_audit.find(
-                              (item) => item.result_id === result?.id,
-                            );
-                            return (
-                              <span
-                                key={routeNumber}
-                                className="rounded-lg bg-[#f2dcab]/60 px-2 py-1"
-                              >
-                                R{routeNumber}:{" "}
-                                {result
-                                  ? `${result.points} P. · Griff ${result.zone * 10}`
-                                  : row.missing.some(
-                                        (m) =>
-                                          m.number === routeNumber && m.settled,
-                                      )
-                                    ? "Nicht geklettert · 0 P."
-                                    : "offen"}
-                                {result &&
-                                  ` · Erst ${formatWhen(result.created_at)}`}
-                                {lastCorrection &&
-                                  ` · Korr. ${formatWhen(lastCorrection.created_at)}`}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {row.missing.length > 0 && (
-                        <div className="mt-2 space-y-2">
-                          {row.missing.map((m) => (
-                            <div
-                              key={m.route_id}
-                              className="flex flex-wrap items-center gap-2 text-sm"
-                            >
-                              <span>
-                                Route {m.number}:{" "}
-                                {m.settled
-                                  ? "Nicht geklettert · 0 P."
-                                  : "Offen"}
-                              </span>
-                              {!m.settled && (
-                                <>
-                                  <Select
-                                    value={
-                                      semifinalZones[
-                                        `${row.profile_id}|${m.route_id}`
-                                      ] ?? ""
-                                    }
-                                    onValueChange={(value) =>
-                                      setSemifinalZones((current) => ({
-                                        ...current,
-                                        [`${row.profile_id}|${m.route_id}`]:
-                                          value,
-                                      }))
-                                    }
-                                  >
-                                    <SelectTrigger
-                                      aria-label={`${row.name}, Route ${m.number}: Griff`}
-                                      className="min-h-11 w-36 bg-white"
-                                    >
-                                      <SelectValue placeholder="Griff wählen" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Array.from({ length: 11 }, (_, i) => (
-                                        <SelectItem key={i} value={String(i)}>
-                                          {i === 0
-                                            ? "Kein Griff"
-                                            : `Griff ${i * 10}`}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <StitchButton
-                                    size="sm"
-                                    disabled={
-                                      busy ||
-                                      data.phase !== "closed" ||
-                                      !reasonReady ||
-                                      semifinalZones[
-                                        `${row.profile_id}|${m.route_id}`
-                                      ] === undefined
-                                    }
-                                    onClick={() => {
-                                      const value =
-                                        semifinalZones[
-                                          `${row.profile_id}|${m.route_id}`
-                                        ];
-                                      const zone = Number(value);
-                                      if (
-                                        !Number.isInteger(zone) ||
-                                        zone < 0 ||
-                                        zone > 10 ||
-                                        value === undefined
-                                      ) {
-                                        setError(
-                                          "Bitte zuerst einen Griff wählen.",
-                                        );
-                                        return;
-                                      }
-                                      void run(
-                                        () =>
-                                          enterSemifinalResult(
-                                            season,
-                                            row.profile_id,
-                                            m.route_id,
-                                            zone,
-                                            reason,
-                                          ),
-                                        "Halbfinalergebnis nachgetragen.",
-                                      );
-                                    }}
-                                  >
-                                    Nachtragen
-                                  </StitchButton>
-                                  <StitchButton
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={
-                                      busy ||
-                                      data.phase !== "closed" ||
-                                      !reasonReady
-                                    }
-                                    onClick={() =>
-                                      void run(
-                                        () =>
-                                          settleSemifinal(
-                                            season,
-                                            row.profile_id,
-                                            m.route_id,
-                                            reason,
-                                          ),
-                                        "Nicht geklettert dokumentiert.",
-                                      )
-                                    }
-                                  >
-                                    Nicht geklettert
-                                  </StitchButton>
-                                </>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {activePair && (
+              <SemifinalRanking
+                rows={activePair[1].rows}
+                results={data.semifinal_results ?? []}
+                assignments={semiAdmin?.config.assignments ?? []}
+                audit={data.semifinal_audit}
+              />
+            )}
+            <details className="rounded-xl border border-[#003d55]/15 bg-white p-4">
+              <summary className="min-h-11 cursor-pointer py-3 font-bold">
+                Fehlende Einträge nachtragen · {activeMissing} offen in dieser
+                Klasse
+              </summary>
+              <StitchCard className="space-y-3 p-5">
+                <h2 className="stitch-headline text-xl">
+                  Offene Halbfinalrouten klären
+                </h2>
+                <p className="text-sm">
+                  Nach Schließen der Eingabe jeden fehlenden Eintrag anhand der
+                  Papierliste nachtragen oder begründet als nicht geklettert mit
+                  null Punkten markieren. {unresolved} offen.
+                </p>
+                <StitchTextField
+                  label="Begründung für die nächste Änderung"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+                {semifinalPhase !== "closed" && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-bold text-[#a15523]">
+                      {semifinalPhase === "open"
+                        ? "Erst die Eingabe für alle Halbfinalklassen schließen. Anschließend lassen sich offene Werte klären."
+                        : "Zuerst die Halbfinalkonfiguration unten vorbereiten und die Eingabe öffnen."}
+                    </p>
+                    {semifinalPhase === "open" && (
+                      <StitchButton
+                        disabled={busy}
+                        onClick={() =>
+                          void run(
+                            () => setCompetitionPhase(season, "closed"),
+                            "Halbfinaleingabe für alle Klassen geschlossen.",
+                          )
+                        }
+                      >
+                        Halbfinaleingabe schließen
+                      </StitchButton>
+                    )}
+                  </div>
+                )}
               </StitchCard>
-            ))}
+              {filteredPairs.map(([key, group]) => (
+                <StitchCard key={key} className="p-5">
+                  <h3 className="stitch-headline mb-3 text-xl">
+                    {className(group.league, group.label)}
+                  </h3>
+                  <div className="space-y-2">
+                    {group.rows
+                      .filter((row) => row.missing.some((m) => !m.settled))
+                      .map((row) => (
+                        <div
+                          key={row.profile_id}
+                          className="rounded-xl bg-white p-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <strong>
+                                {row.rank}. {row.name}
+                              </strong>
+                              <p className="text-sm">
+                                {row.points} Punkte · {row.completed}/5
+                                Ergebnisse{" "}
+                                {row.excluded &&
+                                  `· ${row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen"}`}
+                              </p>
+                            </div>
+                          </div>
+                          {semiAdmin && (
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                              {(
+                                semiAdmin.config.assignments.find(
+                                  (assignment) =>
+                                    assignment.league === row.league &&
+                                    assignment.class_label === row.class_label,
+                                )?.route_numbers ?? []
+                              ).map((routeNumber) => {
+                                const result = data.semifinal_results.find(
+                                  (item) =>
+                                    item.profile_id === row.profile_id &&
+                                    item.route_number === routeNumber,
+                                );
+                                const lastCorrection =
+                                  data.semifinal_audit.find(
+                                    (item) => item.result_id === result?.id,
+                                  );
+                                return (
+                                  <span
+                                    key={routeNumber}
+                                    className="rounded-lg bg-[#f2dcab]/60 px-2 py-1"
+                                  >
+                                    R{routeNumber}:{" "}
+                                    {result
+                                      ? `${result.points} P. · Griff ${result.zone * 10}`
+                                      : row.missing.some(
+                                            (m) =>
+                                              m.number === routeNumber &&
+                                              m.settled,
+                                          )
+                                        ? "Nicht geklettert · 0 P."
+                                        : "offen"}
+                                    {result &&
+                                      ` · Erst ${formatWhen(result.created_at)}`}
+                                    {lastCorrection &&
+                                      ` · Korr. ${formatWhen(lastCorrection.created_at)}`}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {row.missing.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                              {row.missing.map((m) => (
+                                <div
+                                  key={m.route_id}
+                                  className="flex flex-wrap items-center gap-2 text-sm"
+                                >
+                                  <span>
+                                    Route {m.number}:{" "}
+                                    {m.settled
+                                      ? "Nicht geklettert · 0 P."
+                                      : "Offen"}
+                                  </span>
+                                  {!m.settled && (
+                                    <>
+                                      <Select
+                                        value={
+                                          semifinalZones[
+                                            `${row.profile_id}|${m.route_id}`
+                                          ] ?? ""
+                                        }
+                                        onValueChange={(value) =>
+                                          setSemifinalZones((current) => ({
+                                            ...current,
+                                            [`${row.profile_id}|${m.route_id}`]:
+                                              value,
+                                          }))
+                                        }
+                                      >
+                                        <SelectTrigger
+                                          aria-label={`${row.name}, Route ${m.number}: Griff`}
+                                          className="min-h-11 w-36 bg-white"
+                                        >
+                                          <SelectValue placeholder="Griff wählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {Array.from(
+                                            { length: 11 },
+                                            (_, i) => (
+                                              <SelectItem
+                                                key={i}
+                                                value={String(i)}
+                                              >
+                                                {i === 0
+                                                  ? "Kein Griff"
+                                                  : `Griff ${i * 10}`}
+                                              </SelectItem>
+                                            ),
+                                          )}
+                                        </SelectContent>
+                                      </Select>
+                                      <StitchButton
+                                        size="sm"
+                                        disabled={
+                                          busy ||
+                                          semifinalPhase !== "closed" ||
+                                          !reasonReady ||
+                                          semifinalZones[
+                                            `${row.profile_id}|${m.route_id}`
+                                          ] === undefined
+                                        }
+                                        onClick={() => {
+                                          const value =
+                                            semifinalZones[
+                                              `${row.profile_id}|${m.route_id}`
+                                            ];
+                                          const zone = Number(value);
+                                          if (
+                                            !Number.isInteger(zone) ||
+                                            zone < 0 ||
+                                            zone > 10 ||
+                                            value === undefined
+                                          ) {
+                                            setError(
+                                              "Bitte zuerst einen Griff wählen.",
+                                            );
+                                            return;
+                                          }
+                                          void run(
+                                            () =>
+                                              enterSemifinalResult(
+                                                season,
+                                                row.profile_id,
+                                                m.route_id,
+                                                zone,
+                                                reason,
+                                              ),
+                                            "Halbfinalergebnis nachgetragen.",
+                                          );
+                                        }}
+                                      >
+                                        Nachtragen
+                                      </StitchButton>
+                                      <StitchButton
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={
+                                          busy ||
+                                          semifinalPhase !== "closed" ||
+                                          !reasonReady
+                                        }
+                                        onClick={() =>
+                                          void run(
+                                            () =>
+                                              settleSemifinal(
+                                                season,
+                                                row.profile_id,
+                                                m.route_id,
+                                                reason,
+                                              ),
+                                            "Nicht geklettert dokumentiert.",
+                                          )
+                                        }
+                                      >
+                                        Nicht geklettert
+                                      </StitchButton>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </StitchCard>
+              ))}
+            </details>
             {semiAdmin && (
               <StitchCard className="p-5">
                 <h3 className="stitch-headline text-xl">Eingabezeiten</h3>
@@ -974,7 +1098,7 @@ export function CompetitionCenterContent({
                               ? "· Finalvorschlag"
                               : "· Nachrücker"}
                         </span>
-                        {data.phase === "closed" &&
+                        {semifinalPhase === "closed" &&
                           (!c || c.phase === "published") && (
                             <div className="flex gap-1">
                               {row.excluded ? (
@@ -1108,9 +1232,9 @@ export function CompetitionCenterContent({
                         !selectedRoute ||
                         Boolean(
                           c?.phase === "published" &&
-                            !c.stale &&
-                            selectedRoute === c.route_id &&
-                            Number(selectedStation) === c.station_no,
+                          !c.stale &&
+                          selectedRoute === c.route_id &&
+                          Number(selectedStation) === c.station_no,
                         ) ||
                         Boolean(
                           c && !["preparation", "published"].includes(c.phase),

@@ -27,6 +27,8 @@ import {
   demoSource,
   demoStationCode,
   resetCompetitionDemo,
+  startSemifinalDemo,
+  closeSemifinalDemoDeadline,
   useCompetitionDemo,
 } from "@/lib/competitionDemoSource";
 
@@ -82,6 +84,30 @@ export default function CompetitionDemo() {
             <RotateCcw size={14} />
             Testdaten zurücksetzen
           </button>
+          <StitchButton
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              startSemifinalDemo();
+              setResetVersion((version) => version + 1);
+              navigate(`${root}?ansicht=halbfinale`);
+            }}
+          >
+            Halbfinale ausprobieren
+          </StitchButton>
+          {view === "halbfinale" && (
+            <StitchButton
+              size="sm"
+              variant="outline"
+              disabled={value.admin.phase !== "open"}
+              onClick={() => {
+                closeSemifinalDemoDeadline();
+                setResetVersion((version) => version + 1);
+              }}
+            >
+              16-Uhr-Sperre testen
+            </StitchButton>
+          )}
         </div>
         <nav aria-label="Testansichten" className="flex flex-wrap gap-2">
           {view && (
@@ -160,7 +186,11 @@ export default function CompetitionDemo() {
             season="2026"
             source={demoSource}
             demo
-            initialTab={params.get("reiter") ?? "overview"}
+            initialTab={
+              view === "halbfinale"
+                ? "semifinal"
+                : (params.get("reiter") ?? "overview")
+            }
             tvHref={`${root}/tv`}
             printHref={`${root}/druck`}
             stationHref={`${root}/station`}

@@ -8,11 +8,15 @@ Unter **So geht es weiter** steht für jede Klasse der aktuelle Status, die näc
 
 ![Übersicht mit konkretem nächsten Schritt je Klasse](screenshots/zentrale-demo.jpg)
 
-## 2. Halbfinale klären und Startliste drucken
+## 2. Halbfinale verfolgen und Startliste drucken
 
-Die Halbfinaleingabe für alle Klassen schließen. Fehlende Werte mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. In der Probe ist Robins fünfte Toprope-Route offen. Anschließend **Finalfeld bestätigen**: Route und digitale Station auswählen, Vorschlag prüfen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
+Schiedsrichter kontrollieren das Ergebnis und zeigen den Routen-QR. Nach Scan und **Ergebnis absenden** zählt der bestätigte Eintrag sofort. René sieht die Klassenrangliste unter **Übersicht** oder **Halbfinale**; ein Klick auf den Namen zeigt alle fünf Routenergebnisse und ihre Eingabezeiten. Er bestätigt diese Ergebnisse nicht erneut. **0 Punkte** ist ein eingetragenes Ergebnis, **Noch nicht eingetragen** bleibt offen. Teilnehmer prüfen ihre eigenen Einträge.
 
-![Ausgewählte Klasse mit offener Halbfinalroute](screenshots/halbfinale-demo.jpg)
+![Halbfinalrangliste mit aufgeklappten Routenergebnissen: null und fehlend sind unterscheidbar](screenshots/halbfinale-rangliste-details.jpg)
+
+Am **3. Oktober 2026 um 16:00 Uhr** sperrt die normale Abgabe automatisch. René kann anschließend im aufklappbaren Bereich **Fehlende Einträge nachtragen** mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. In der lokalen Probe startet **Halbfinale ausprobieren** diesen Ablauf neu. **16-Uhr-Sperre testen** simuliert das Fristende; Robins fünfte Toprope-Route ist offen.
+
+Wenn die fehlenden Einträge geklärt sind: **Finalfeld bestätigen**, Route und digitale Station auswählen, Vorschlag prüfen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
 
 In **Finalstartlisten** stehen die Starts vom schlechtesten qualifizierten Halbfinalplatz zum besten. Pfeile ändern ausschließlich die Startfolge. Ausfälle vor Klassenstart begründet dokumentieren und das Feld erneut bestätigen. **Drucken** öffnet einen separaten Tab. Nach Änderungen gilt die neue Version: alten Ausdruck ersetzen.
 
@@ -57,4 +61,4 @@ Hinweise erhalten Titel, Text, Ziel App/TV/beide und eine Anzeigedauer. Ein Voll
 
 Bei Netzausfall auf Papier weiterarbeiten. Nach Wiederverbindung aktuellen Stand prüfen und den lokal erhaltenen Entwurf bewusst erneut senden. Eine unbestätigte Übertragung ist kein veröffentlichtes Ergebnis.
 
-**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, beide Finalmigrationen, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md).
+**Vor dem echten Event noch erforderlich:** Supabase-Anbindung, die beiden Finalmigrationen und die neue Migration zur 16-Uhr-Sperre, SQL-Tests in isolierter Datenbank, Renés tatsächliches Konto und ein vollständiger Durchlauf mit zwei Geräten sowie echtem TV und Drucker. Die lokale Probe bestätigt die Bedienung, nicht produktive Datenbankrechte. Ausführlicher Ablauf: [Bedienung am Wettkampftag](finale-wettkampfzentrale-2026.md); vereinbarte Halbfinalregeln: [Halbfinale](halbfinale-bedienkonzept.md).

@@ -9,7 +9,7 @@
 
 ## Übergang vom Halbfinale
 
-1. Halbfinaleingabe schließen. Für jede Klasse fehlende Routeneinträge anhand der Papierunterlagen nachtragen oder begründet als **nicht geklettert, 0 Punkte** bestätigen.
+1. Die normale Halbfinaleingabe endet am 3. Oktober automatisch um **16:00 Uhr Europe/Berlin**. Bis dahin erscheinen QR-bestätigte und abgesendete Ergebnisse sofort in der Rangliste; René muss sie nicht erneut freigeben. Namen aufklappen, um die fünf Routen und Eingabezeiten zu sehen. Anschließend fehlende Routeneinträge anhand der Unterlagen begründet nachtragen oder als **nicht geklettert, 0 Punkte** klären. Ein schon eingetragener Nullwert ist vollständig. Ein vorzeitiger manueller Abschluss bleibt möglich; nach 16 Uhr ist keine allgemeine Wiederöffnung erlaubt.
 2. Bei Absage oder Nichterscheinen eine Begründung eintragen und den Status setzen. Vor dem Klassenstart kann dadurch nachgerückt werden.
 3. Je Klasse Route und digitale Station auswählen. **Finalfeld bestätigen** friert Halbfinalplatz und Punkte ein und erstellt die umgekehrte Startreihenfolge. Alle Punktgleichen an der Grenze zum sechsten Platz werden einbezogen.
 4. Startreihenfolge bei Bedarf mit den Pfeilen verschieben. Danach die Liste aus **Finalstartlisten** drucken. Nach einer Änderung die neue Version erneut drucken.
@@ -32,4 +32,4 @@
 
 ## Technische Freigabe
 
-Die Migrationen `20260930180000_competition_final_center.sql` und `20261001090000_competition_live_public_guard.sql` müssen vor dem Frontend ausgerollt werden. Die zweite Migration hält den Vorbereitungsstatus privat und erlaubt das begründete Wiederöffnen einer bereits gestarteten Klasse nach Halbfinalkorrekturen bei unverändert eingefrorenen Halbfinalplätzen. Danach den SQL-Test auf einer isolierten Datenbank ausführen und mit zwei getrennten Stationsgeräten, Admin-Konto, TV-Browser und echten A4-Ausdrucken einen vollständigen Durchlauf auf Testdaten machen. Renés persönlicher Liga-Admin-Zugang, die tatsächliche TV-URL und der Hallendrucker müssen am Gerät vor Ort geprüft werden.
+Die Migrationen `20260930180000_competition_final_center.sql`, `20261001090000_competition_live_public_guard.sql` und `20261001120000_semifinal_deadline.sql` müssen vor dem Frontend ausgerollt werden. Die zweite Migration hält den Vorbereitungsstatus privat und erlaubt das begründete Wiederöffnen einer bereits gestarteten Finalklasse nach Halbfinalkorrekturen bei unverändert eingefrorenen Halbfinalplätzen. Die dritte Migration sperrt normale Halbfinalabgaben serverseitig ab 16 Uhr und erhält begründete Admin-Nachträge. Danach die SQL-Tests einschließlich `supabase/tests/semifinal_deadline.sql` auf einer isolierten Datenbank ausführen und mit zwei getrennten Stationsgeräten, Admin-Konto, TV-Browser und echten A4-Ausdrucken einen vollständigen Durchlauf auf Testdaten machen. Renés persönlicher Liga-Admin-Zugang, die tatsächliche TV-URL und der Hallendrucker müssen am Gerät vor Ort geprüft werden.

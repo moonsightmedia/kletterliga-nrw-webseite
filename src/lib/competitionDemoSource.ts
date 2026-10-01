@@ -9,6 +9,7 @@ import type {
   StationClass,
 } from "@/services/competitionFinal";
 import type { CompetitionStanding } from "@/services/competitionDay";
+import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 
 const key = "kletterliga:guided-final-demo:v2";
 export const demoStationCode = "DEMO12345678901234567890";
@@ -74,6 +75,7 @@ function seed(): Store {
   ];
   const admin: FinalAdmin = {
     phase: "closed",
+    submission_deadline_at: "2026-10-03T16:00:00+02:00",
     classes: [],
     routes: [
       { id: "route1", number: 1, name: "Finale Vorstieg", max_grip: 32 },
@@ -223,6 +225,11 @@ function read(): Store {
     const value = JSON.parse(localStorage.getItem(key) ?? "null") as Store;
     if (value?.admin?.semifinal?.length) {
       value.admin = rank(value.admin);
+      if (
+        value.admin.phase === "open" &&
+        competitionDeadlineReached(value.admin.submission_deadline_at)
+      )
+        value.admin.phase = "closed";
       return value;
     }
   } catch {
@@ -253,6 +260,26 @@ export const resetCompetitionDemo = () => {
   }
   write(seed());
 };
+export function startSemifinalDemo() {
+  const value = seed();
+  value.admin.phase = "open";
+  value.admin.classes = [];
+  value.admin.display = {
+    phase: "semifinal",
+    class_keys: [],
+    pinned_key: null,
+    interval_seconds: 15,
+  };
+  write(value);
+}
+export function closeSemifinalDemoDeadline() {
+  mutate((value) => {
+    value.admin.submission_deadline_at = new Date(
+      Date.now() - 1000,
+    ).toISOString();
+    value.admin.phase = "closed";
+  });
+}
 export function useCompetitionDemo() {
   const [value, setValue] = useState(read);
   useEffect(() => {
