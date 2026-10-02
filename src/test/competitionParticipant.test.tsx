@@ -51,7 +51,8 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     expect(screen.getByRole("button", { name: /Route 5 Linie 5/ })).toBeInTheDocument();
-    expect(screen.getAllByText(/Bitte zuerst beim Einlass anmelden/)).toHaveLength(2);
+    expect(screen.getByText(/Bitte beim Einlass melden/)).toBeInTheDocument();
+    expect(screen.getByText("Einlass ausstehend")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Griff 80" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Anwesenheit bestätigen/ })).not.toBeInTheDocument();
@@ -67,6 +68,17 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
   });
 
+  it("counts saved zero points in progress but excludes results outside the assigned routes", async () => {
+    api.load.mockResolvedValue(makeData({ results: [
+      makeAcceptedResult({ routeId: "route-1", zone: 0 }),
+      { ...makeAcceptedResult({ routeId: "route-2", zone: 8 }), id: "result-2" },
+      { ...makeAcceptedResult({ routeId: "another-class-route", zone: 10 }), id: "result-other" },
+    ] }));
+    mountPage();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("2 von 5 Ergebnissen eingetragen"));
+    expect(screen.getByText("Eingabe offen")).toBeInTheDocument();
+  });
+
   it("automatically enables entry after check-in without re-login and restores the existing draft", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     api.load.mockResolvedValue(makeData({ check_in: { required: true, status: "expected", checked_in_at: null } }));
@@ -76,7 +88,8 @@ describe("competition participant day page", () => {
     expect(screen.queryByRole("button", { name: "Griff 80" })).not.toBeInTheDocument();
     api.load.mockResolvedValue(makeData());
     await act(async () => { vi.advanceTimersByTime(5000); });
-    expect(screen.getByText("Anwesenheit bestätigt")).toBeInTheDocument();
+    expect(screen.getByText("Eingabe offen")).toBeInTheDocument();
+    expect(screen.queryByText(/Bitte beim Einlass melden/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Wettkampf wird geladen …")).not.toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
@@ -153,7 +166,7 @@ describe("competition participant day page", () => {
     expect(screen.getByRole("button", {name:"Ergebnis absenden"})).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(1000); });
     expect(screen.queryByRole("button", {name:"Ergebnis absenden"})).not.toBeInTheDocument();
-    expect(screen.getByText(/Fehlende Einträge kann René begründet nachtragen/)).toBeInTheDocument();
+    expect(screen.getByText("Eingabe geschlossen")).toBeInTheDocument();
     expect(api.submit).not.toHaveBeenCalled();
   });
 
@@ -238,7 +251,6 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     expect(screen.getAllByText("Farbe: Blau")).toHaveLength(5);
-    expect(screen.getByText(/Griff 80 bringt 80 Punkte/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Keinen nummerierten Griff erreicht · 0 Punkte" }));
     fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
     act(() => api.scan?.(validQr()));
@@ -348,7 +360,7 @@ describe("competition participant day page", () => {
     api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
     const view = mountPage("/app/wettkampf?probelauf=1");
     await chooseRoute();
-    expect(screen.getByText("PROBELAUF")).toBeInTheDocument();
+    expect(screen.getByText("Probelauf")).toBeInTheDocument();
     clickZone(10);
     expect(screen.getByRole("button", { name: "Testwert speichern" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
@@ -371,7 +383,7 @@ describe("competition participant day page", () => {
     api.load.mockResolvedValueOnce(makeData({ event: { ...makeData().event!, phase: "draft", opened_at: null } }));
     mountPage();
     await chooseRoute();
-    expect(screen.getByText("PROBELAUF")).toBeInTheDocument();
+    expect(screen.getByText("Probelauf")).toBeInTheDocument();
     expect(screen.queryByText("NOCH NICHT GEÖFFNET")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Probelauf beenden" })).not.toBeInTheDocument();
     clickZone(6);
