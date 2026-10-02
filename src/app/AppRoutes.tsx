@@ -47,6 +47,7 @@ const Finale = lazy(() => import("@/app/pages/participant/Finale"));
 const CompetitionDay = lazy(() => import("@/app/pages/participant/CompetitionDay"));
 const JudgeDashboard = lazy(() => import("@/app/pages/competition/JudgeDashboard"));
 const FinalStation = lazy(() => import("@/app/pages/competition/FinalStation"));
+const CompetitionCheckIn = lazy(() => import("@/app/pages/competition/CompetitionCheckIn"));
 const LiveScreen = lazy(() => import("@/app/pages/competition/LiveScreen"));
 const CompetitionPrint = lazy(() => import("@/app/pages/admin/CompetitionPrint"));
 const CompetitionCenter = lazy(() => import("@/app/pages/admin/CompetitionCenter"));
@@ -124,6 +125,7 @@ export const appRoutes = (
 
     <Route path="/app/schiedsrichter" element={<JudgeLayout><JudgeDashboard /></JudgeLayout>} />
     <Route path="/app/schiedsrichter/finale" element={<JudgeLayout><FinalStation /></JudgeLayout>} />
+    <Route path="/app/schiedsrichter/einlass" element={<JudgeLayout><CompetitionCheckIn /></JudgeLayout>} />
     <Route path="/live/:season" element={<LiveScreen />} />
 
     <Route

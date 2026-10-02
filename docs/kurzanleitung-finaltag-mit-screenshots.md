@@ -1,5 +1,19 @@
 # Finaltag · Kurzanleitung für René und die Zeitnahme
 
+## Einlass und Nachmeldungen · 2. Oktober 2026
+
+Im Adminmenü **Wettkampftag → Einlass & Anmeldungen** öffnen. Unter **Angemeldet** die Person suchen und **Einchecken** antippen. Erst danach kann sie Halbfinalergebnisse nach dem Schiedsrichter-QR absenden. Eine Anmeldung allein bestätigt keine Anwesenheit. Die Teilnehmeransicht aktualisiert sich automatisch.
+
+Unter **Nachmelden** stehen bestehende, aktivierte und zugelassene Liga-Teilnehmer ohne Eventanmeldung. **Nachmelden** öffnet die Prüfung von Name und Klasse; **Nachmelden & einchecken** meldet die Person an und bestätigt ihre Anwesenheit. Das benötigt fünf eingestellte Klassenrouten und ist nur vor 16 Uhr und vor Veröffentlichung der Finalklasse möglich. Neue Konten ohne Liga-Freigabe erhalten dadurch keine Startberechtigung.
+
+René kann ohne vorhandene Halbfinalergebnisse eine Anwesenheit begründet zurücknehmen oder **Nicht erschienen** dokumentieren. Nicht-Erschienene bleiben in der Einlassverwaltung sichtbar; sie erhalten keinen regulären öffentlichen Halbfinalrang und blockieren die Finalfreigabe nicht. Fehlende Einträge anwesender Teilnehmer bleiben weiterhin offen.
+
+Die Crew öffnet **/app/schiedsrichter/einlass** ohne persönliches Konto. René richtet dafür unter **Halbfinale & Finale → Einrichtung → Zugänge & Eingabe → Einlasspasswort** einen eigenen gemeinsamen Zugang ein. Er gilt ausschließlich für Einchecken und Nachmelden. **Zugang deaktivieren** widerruft ihn; ein neues Passwort ersetzt das bisherige. Passwörter werden hier nicht dokumentiert.
+
+![Einlass auf dem Handy mit ausschließlich erfundenen Testdaten](screenshots/einlass-mobil-2026-10-02.jpg)
+
+Bei Verbindungsfehlern gilt eine Aktion erst nach bestätigter Speicherung als erledigt. Den offenen Vorgang bewusst erneut senden. Nach einer Änderung durch ein anderes Gerät zuerst aktualisieren und den neuen Stand prüfen. Bei Ausfall Anwesenheit und Nachmeldungen auf Papier notieren; René gleicht sie vor digitalen Abgaben ab.
+
 ## Neue Navigation · 2. Oktober 2026
 
 Im Adminmenü **Wettkampftag → Halbfinale & Finale** öffnen. Dort gilt jetzt:

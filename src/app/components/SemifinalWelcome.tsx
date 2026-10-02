@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { StitchButton } from "@/app/components/StitchPrimitives";
 
 const seenInSession = new Set<string>();
-const welcomeKey = (profileId: string, season: string) => `competition-day:welcome:${profileId}:${season}:v1`;
+const welcomeKey = (profileId: string, season: string) => `competition-day:welcome:${profileId}:${season}:v2`;
 
 export default function SemifinalWelcome({ profileId, season }: { profileId: string; season: string }) {
   const key = welcomeKey(profileId, season);
@@ -34,6 +34,7 @@ export default function SemifinalWelcome({ profileId, season }: { profileId: str
         </DialogHeader>
         <ol className="my-5 space-y-4 text-sm leading-6">
           {[
+            { title: "Beim Einlass anmelden", points: ["Die Crew bestätigt zuerst deine Anwesenheit. Danach kannst du echte Ergebnisse eintragen."] },
             { title: "Routen & Start", points: ["Fünf Routen in der App · Reihenfolge frei.", "An jeder Route anstellen – ihr seid der Reihe nach dran.", "Eigenen Sicherungspartner mitbringen oder mit einem anderen Teilnehmer zusammentun."] },
             { title: "Ergebnis eintragen", points: ["Nach jeder Route das Ergebnis direkt in der App eintragen.", "Zur Bestätigung den QR-Code des Schiedsrichters scannen.", "Wert prüfen und „Ergebnis absenden“ tippen – der Scan allein sendet nichts ab."] },
           ].map(({ title, points }, index) => <li key={title} className="flex gap-3">

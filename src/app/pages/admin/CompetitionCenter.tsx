@@ -12,6 +12,7 @@ import { classNextStep } from "@/lib/competitionPresentation";
 import { validFinalPassword } from "@/lib/finalPassword";
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import SemifinalAdminRanking from "@/app/components/SemifinalAdminRanking";
+import { AttendanceAccessSettings } from "@/app/components/AttendanceAccessSettings";
 import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -136,6 +137,7 @@ export function CompetitionCenterContent({
   source = defaultSource,
   semifinalConfiguration,
   certificateConfiguration,
+  attendanceConfiguration,
   tvHref,
   printHref = "/app/admin/league/wettkampf/druck",
   stationHref = "/app/schiedsrichter/finale",
@@ -147,6 +149,7 @@ export function CompetitionCenterContent({
   source?: CompetitionCenterSource;
   semifinalConfiguration?: ReactNode;
   certificateConfiguration?: ReactNode;
+  attendanceConfiguration?: ReactNode;
   tvHref?: string;
   printHref?: string;
   stationHref?: string;
@@ -308,7 +311,7 @@ export function CompetitionCenterContent({
   );
   const activeTvHref = tvHref ?? `/live/${season}`;
   const unresolved = (data?.semifinal ?? []).reduce(
-    (total, row) => total + row.missing.filter((item) => !item.settled).length,
+    (total, row) => total + (row.excluded ? 0 : row.missing.filter((item) => !item.settled).length),
     0,
   );
   const unchecked = (data?.classes ?? []).reduce(
@@ -445,7 +448,7 @@ export function CompetitionCenterContent({
                   (c) => classKey(c.league, c.class_label) === key,
                 );
                 const missing = group.rows.reduce(
-                  (n, row) => n + row.missing.filter((m) => !m.settled).length,
+                  (n, row) => n + (row.excluded ? 0 : row.missing.filter((m) => !m.settled).length),
                   0,
                 );
                 const step = classNextStep(item, missing, semifinalPhase);
@@ -537,6 +540,7 @@ export function CompetitionCenterContent({
                 <CompetitionFinalRoutes data={data} season={season} busy={busy} source={source} run={run} />
               </div>
               <div hidden={setupTab !== "access"}>
+            {setupTab === "access" && (attendanceConfiguration ?? (!demo && season ? <AttendanceAccessSettings season={season} /> : null))}
             <details
               className="rounded-xl border border-[#003d55]/15 bg-white p-4"
               open={!data.final_password_set}

@@ -101,6 +101,8 @@ describe("competition-day RPC contract", () => {
     ["COMPETITION_STAFF_REQUIRED", "Staff"],
     ["COMPETITION_NOT_OPEN", "geschlossen"],
     ["COMPETITION_NOT_ELIGIBLE", "startberechtigt"],
+    ["COMPETITION_CHECK_IN_REQUIRED", "Einlass"],
+    ["COMPETITION_ABSENT", "abwesend"],
     ["COMPETITION_QR_INVALID", "QR-Code"],
     ["COMPETITION_RESULT_IMMUTABLE", "nicht geändert"],
     ["COMPETITION_CONFIG_LOCKED", "gesperrt"],

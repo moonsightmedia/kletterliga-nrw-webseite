@@ -15,7 +15,7 @@ vi.mock("@/components/CodeQrScanner", () => ({ CodeQrScanner: ({ onScan }: { onS
 const routeSet = [1, 2, 3, 4, 5].map((number) => ({ id: `route-${number}`, number, name: `Linie ${number}`, grade: "6a", color: "#a15523" }));
 const makeData = (overrides: Partial<CompetitionDayData> = {}): CompetitionDayData => ({
   event: { id: "event-1", season_year: "2026", phase: "open", zone_points: Array.from({ length: 11 }, (_, i) => i * 10), flash_bonus: 0, opened_at: "2026-10-03T08:00:00Z" },
-  eligible: true, league: "lead", class_label: "U15-w", routes: routeSet, results: [], is_staff: false, is_admin: false, ...overrides,
+  eligible: true, league: "lead", class_label: "U15-w", check_in: { required: true, status: "arrived", checked_in_at: "2026-10-03T08:00:00Z" }, routes: routeSet, results: [], is_staff: false, is_admin: false, ...overrides,
 });
 const makeAcceptedResult = (input: { routeId: string; zone: number }) => ({
   id: "result-1", route_id: input.routeId, profile_id: "participant-1", zone: input.zone,
@@ -45,6 +45,101 @@ describe("competition participant day page", () => {
     api.submit.mockImplementation((input: { routeId: string; zone: number }) => Promise.resolve(makeAcceptedResult(input)));
   });
   afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+  it.each([undefined, { required: true, status: "expected", checked_in_at: null }, { required: false, status: "arrived", checked_in_at: null }] as const)("keeps assigned routes visible but fails closed without a confirmed crew check-in (%j)", async (check_in) => {
+    api.load.mockResolvedValue(makeData({ check_in }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.getByRole("button", { name: /Route 5 Linie 5/ })).toBeInTheDocument();
+    expect(screen.getAllByText(/Bitte zuerst beim Einlass anmelden/)).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Griff 80" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Anwesenheit bestätigen/ })).not.toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+  });
+
+  it("shows an absent participant how to resolve the status while retaining a saved zero result", async () => {
+    api.load.mockResolvedValue(makeData({ check_in: { required: true, status: "absent", checked_in_at: null }, results: [makeAcceptedResult({ routeId: "route-1", zone: 0 })] }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.getByText(/als abwesend markiert/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Eingetragenes Ergebnis")).toHaveTextContent("Punkte0");
+    expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
+  });
+
+  it("automatically enables entry after check-in without re-login and restores the existing draft", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    api.load.mockResolvedValue(makeData({ check_in: { required: true, status: "expected", checked_in_at: null } }));
+    window.localStorage.setItem("competition-day:draft:participant-1:2026:route-1", JSON.stringify({ zone: 8 }));
+    mountPage();
+    await chooseRoute();
+    expect(screen.queryByRole("button", { name: "Griff 80" })).not.toBeInTheDocument();
+    api.load.mockResolvedValue(makeData());
+    await act(async () => { vi.advanceTimersByTime(5000); });
+    expect(screen.getByText("Anwesenheit bestätigt")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Wettkampf wird geladen …")).not.toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+  });
+
+  it("does not replace a slow initial status request with overlapping background polls", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    let resolveLoad: ((data: CompetitionDayData) => void) | undefined;
+    api.load.mockImplementationOnce(() => new Promise<CompetitionDayData>((resolve) => { resolveLoad = resolve; }));
+    mountPage();
+    expect(screen.getByText("Wettkampf wird geladen …")).toBeInTheDocument();
+    await act(async () => { vi.advanceTimersByTime(15_000); window.dispatchEvent(new Event("focus")); });
+    expect(api.load).toHaveBeenCalledTimes(1);
+    await act(async () => { resolveLoad?.(makeData()); });
+    expect(screen.getByRole("button", { name: /Route 1 Linie 1/ })).toBeInTheDocument();
+  });
+
+  it("locks the scanner on tab return when check-in is withdrawn and keeps the draft", async () => {
+    mountPage();
+    await chooseRoute();
+    clickZone(8);
+    fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    api.load.mockResolvedValue(makeData({ check_in: { required: true, status: "expected", checked_in_at: null } }));
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
+    expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 8 }));
+    act(() => api.scan?.(validQr()));
+    api.load.mockResolvedValue(makeData());
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    expect(screen.getByRole("button", { name: "Ergebnis absenden" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
+    expect(api.submit).not.toHaveBeenCalled();
+  });
+
+  it("pauses on failed status refresh and resumes online without discarding the local draft", async () => {
+    mountPage();
+    await chooseRoute();
+    clickZone(7);
+    api.load.mockRejectedValueOnce(new Error("network"));
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    expect(screen.getByRole("alert")).toHaveTextContent("Eingabe pausiert");
+    expect(screen.getByRole("button", { name: /Route 1 Linie 1/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
+    expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 7 }));
+    await act(async () => { window.dispatchEvent(new Event("online")); });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Griff 70" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Ergebnis absenden" })).toBeDisabled();
+  });
+
+  it("retains the local-only probe when crew check-in is missing", async () => {
+    api.load.mockResolvedValue(makeData({ check_in: undefined }));
+    mountPage("/app/wettkampf?probelauf=1");
+    await chooseRoute();
+    clickZone(8);
+    fireEvent.click(screen.getByRole("button", { name: "Test-QR bestätigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Testwert speichern" }));
+    expect(await screen.findByText(/Testwert · 80 Punkte/)).toBeInTheDocument();
+    expect(api.submit).not.toHaveBeenCalled();
+    expect(window.localStorage.length).toBe(0);
+  });
 
   it("closes an already open input at the server-provided 16:00 cutoff without erasing saved results", async () => {
     vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });

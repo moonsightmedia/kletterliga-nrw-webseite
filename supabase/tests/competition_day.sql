@@ -36,9 +36,10 @@ select public.save_competition_config('COMP-TEST',jsonb_build_object(
  'assignments',jsonb_build_array(
    jsonb_build_object('league','lead','class_label','Youth','route_numbers',jsonb_build_array(1,2,3,4,5)),
    jsonb_build_object('league','toprope','class_label','Adults','route_numbers',jsonb_build_array(6,7,8,9,10))),
- 'zone_points',jsonb_build_array(0,1,2,3,4,5,6,7,8,9,10),'flash_bonus',2));
+ 'zone_points',jsonb_build_array(0,1,2,3,4,5,6,7,8,9,10),'flash_bonus',0));
 select public.set_competition_staff('COMP-TEST','99999999-6000-4000-8000-000000000001',true);
 select public.set_competition_phase('COMP-TEST','open');
+select public.set_competition_attendance('COMP-TEST','99999999-6000-4000-8000-000000000002','arrive',0,gen_random_uuid());
 select pg_temp.assert_true((public.get_competition_day('COMP-TEST')->'event'->>'phase')='open','admin can open fully configured day');
 select pg_temp.assert_true((public.get_competition_day('COMP-TEST')->'event'->>'opened_at') is not null,'first opening timestamp is recorded');
 select set_config('test.competition_qr',(public.get_competition_staff_routes('COMP-TEST')->0->>'qr_token'),true);
@@ -52,9 +53,9 @@ select pg_temp.assert_true(not (public.get_competition_day('COMP-TEST')->>'is_ad
 select pg_temp.assert_true(position(current_setting('test.competition_qr') in public.get_competition_day('COMP-TEST')::text)=0,'participant state never exposes QR secrets');
 select pg_temp.assert_denied($sql$select public.get_competition_staff_routes('COMP-TEST')$sql$,'COMPETITION_STAFF_REQUIRED');
 
-select public.submit_competition_result('COMP-TEST',current_setting('test.competition_route')::uuid,10,true,current_setting('test.competition_qr'));
+select public.submit_competition_result('COMP-TEST',current_setting('test.competition_route')::uuid,10,false,current_setting('test.competition_qr'));
 select pg_temp.assert_true(jsonb_array_length(public.get_competition_day('COMP-TEST')->'results')=1,'participant result saved once');
-select public.submit_competition_result('COMP-TEST',current_setting('test.competition_route')::uuid,10,true,current_setting('test.competition_qr'));
+select public.submit_competition_result('COMP-TEST',current_setting('test.competition_route')::uuid,10,false,current_setting('test.competition_qr'));
 select pg_temp.assert_true(jsonb_array_length(public.get_competition_day('COMP-TEST')->'results')=1,'same retry is idempotent');
 select pg_temp.assert_denied('select public.submit_competition_result(''COMP-TEST'','''||current_setting('test.competition_route')||'''::uuid,9,false,'''||current_setting('test.competition_qr')||''')','COMPETITION_RESULT_IMMUTABLE');
 select pg_temp.assert_denied('select public.submit_competition_result(''COMP-TEST'','''||current_setting('test.competition_wrong_route')||'''::uuid,10,true,'''||current_setting('test.competition_qr')||''')','COMPETITION_QR_INVALID');

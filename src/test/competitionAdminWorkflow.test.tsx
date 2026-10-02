@@ -139,6 +139,25 @@ afterEach(() => {
 });
 
 describe("focused final administration", () => {
+  it("treats a documented absence as resolved without requiring invented zero results", async () => {
+    const data = fixture();
+    data.classes = [];
+    data.semifinal[0].excluded = "dns";
+    data.semifinal[0].missing = [{ route_id: "missing-route", number: 1, settled: false }];
+    render(wrap(<CompetitionRosterPanel {...common(data)} group={{ league: "lead", label: "A", rows: data.semifinal }} phase="closed" onSemifinal={vi.fn()} />));
+    await choose("Finalroute", "Route 1 · Finalroute · Griff 32");
+    expect(screen.getByRole("button", { name: "Finalfeld bestätigen" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /fehlende Routeneinträge klären/ })).not.toBeInTheDocument();
+  });
+
+  it("renders final results by rank even when the supplied entries are in start order", () => {
+    const data = fixture();
+    data.classes[0].entries = [entry("third", { rank: 3, start_position: 1 }), entry("winner", { rank: 1, start_position: 2 }), entry("pending", { rank: null, attempt_id: null, start_position: 3 }), entry("second", { rank: 2, start_position: 4 })];
+    render(wrap(<CompetitionFinalPanel {...common(data)} finalClass={data.classes[0]} stationHref="/entry" onRoster={vi.fn()} />));
+    expect(screen.getAllByRole("button", { name: /Person (third|winner|pending|second)/ }).map((button) => button.textContent)).toEqual([
+      expect.stringContaining("Person winner"), expect.stringContaining("Person second"), expect.stringContaining("Person third"), expect.stringContaining("Person pending"),
+    ]);
+  });
   it("proposes all seven at the tied cutoff, confirms explicitly and keeps frozen published order", async () => {
     const data = fixture();
     data.classes = [];
@@ -534,6 +553,7 @@ describe("status in customer exports", () => {
       </MemoryRouter>,
     );
     const first = await screen.findByText("Person dns");
+    expect(screen.getByText(/Finalroute 1 · Finalroute · Eingabegerät 1/)).toBeInTheDocument();
     const dnsRow = first.closest("tr")!;
     expect(dnsRow).toHaveTextContent("Nicht gestartet");
     expect(dnsRow).not.toHaveTextContent("3:12");

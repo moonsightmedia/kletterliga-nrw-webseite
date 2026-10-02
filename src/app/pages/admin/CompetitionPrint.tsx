@@ -109,7 +109,10 @@ export function CompetitionPrintContent({
             </div>
             <p className="mt-2 text-sm">
               Finalroute{" "}
-              {data.routes.find((r) => r.id === c.route_id)?.number ?? "–"} · Stand{" "}
+              {data.routes.find((r) => r.id === c.route_id)?.number ?? "–"}
+              {data.routes.find((r) => r.id === c.route_id)?.name &&
+                ` · ${data.routes.find((r) => r.id === c.route_id)?.name}`}
+              {c.station_no && ` · Eingabegerät ${c.station_no}`} · Stand{" "}
               {c.published_at
                 ? new Date(c.published_at).toLocaleString("de-DE")
                 : "–"}

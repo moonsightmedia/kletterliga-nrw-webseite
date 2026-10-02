@@ -19,6 +19,7 @@ export interface CompetitionResult {
 export interface CompetitionDay {
   event: null | { id: string; season_year: string; phase: CompetitionPhase; zone_points: number[]; flash_bonus: number; opened_at: string | null; submission_deadline_at?: string | null };
   eligible: boolean; league: CompetitionLeague | null; class_label: string | null;
+  check_in?: { required: boolean; status: "expected" | "arrived" | "absent"; checked_in_at: string | null };
   routes: CompetitionRoute[]; results: CompetitionResult[]; is_staff: boolean; is_admin: boolean;
 }
 export interface CompetitionStaffRoute extends CompetitionRoute { qr_token: string }
@@ -53,6 +54,8 @@ function readableError(error: unknown): string {
     COMPETITION_NOT_OPEN: "Die Ergebniseingabe ist derzeit geschlossen.",
     COMPETITION_DEADLINE_REACHED: "Die Halbfinaleingabe ist seit 16:00 Uhr geschlossen. Bitte wende dich für einen Nachtrag an René.",
     COMPETITION_NOT_ELIGIBLE: "Du bist für diese Wertung nicht startberechtigt.",
+    COMPETITION_CHECK_IN_REQUIRED: "Bitte zuerst beim Einlass anmelden. Die Crew bestätigt deine Anwesenheit.",
+    COMPETITION_ABSENT: "Deine Teilnahme wurde als abwesend markiert. Bitte kläre das beim Einlass.",
     COMPETITION_QR_INVALID: "Der QR-Code ist ungültig. Bitte scanne den Code der Route erneut.",
     COMPETITION_RESULT_IMMUTABLE: "Dieses Ergebnis ist bereits abgegeben und kann nicht geändert werden.",
     COMPETITION_CONFIG_LOCKED: "Die Wettkampfeinstellungen sind nach dem Öffnen gesperrt.",
