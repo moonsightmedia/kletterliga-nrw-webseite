@@ -1,11 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CompetitionCenter, {
   CompetitionCenterContent,
 } from "@/app/pages/admin/CompetitionCenter";
 
-const api = vi.hoisted(() => ({ final: vi.fn(), semifinal: vi.fn() }));
+const api = vi.hoisted(() => ({ final: vi.fn(), semifinal: vi.fn(), route: vi.fn() }));
 vi.mock("@/services/seasonSettings", () => ({
   useSeasonSettings: () => ({
     settings: { season_year: "2026" },
@@ -15,6 +15,7 @@ vi.mock("@/services/seasonSettings", () => ({
 vi.mock("@/services/competitionFinal", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/competitionFinal")>()),
   getFinalAdmin: api.final,
+  saveFinalRoute: api.route,
 }));
 vi.mock("@/services/competitionDay", () => ({
   getCompetitionAdmin: api.semifinal,
@@ -90,7 +91,7 @@ describe("competition center", () => {
       screen.queryByRole("button", { name: "Finalfeld bestätigen" }),
     ).not.toBeInTheDocument();
   });
-  it("loads an empty competition and exposes the five operating views", async () => {
+  it("loads an empty competition and exposes grouped operating views", async () => {
     api.final.mockResolvedValue({
       phase: "draft",
       classes: [],
@@ -113,17 +114,34 @@ describe("competition center", () => {
       </MemoryRouter>,
     );
     expect(
-      await screen.findByRole("heading", { name: "Wettkampfzentrale" }),
+      await screen.findByRole("heading", { name: "Halbfinale & Finale" }),
     ).toBeInTheDocument();
     for (const name of [
       "Übersicht",
       "Halbfinale",
-      "Finalstartlisten",
+      "Einrichtung",
       "Finale",
-      "Anzeige & Hinweise",
+      "TV & Hinweise",
+      "Abschluss",
     ]) {
       expect(screen.getByRole("tab", { name })).toBeInTheDocument();
     }
     expect(screen.getByText("Vorbereitung")).toBeInTheDocument();
+  });
+  it("creates final routes without classes and preserves the draft across navigation", async () => {
+    api.final.mockResolvedValue({phase:"draft",classes:[],routes:[],semifinal:[],stations:[],display:null,notices:[],audit:[],semifinal_audit:[]});
+    api.semifinal.mockResolvedValue({config:{routes:[],assignments:[]},staff:[],results:[]}); api.route.mockResolvedValue(null);
+    render(<MemoryRouter><CompetitionCenterContent season="2026" /></MemoryRouter>);
+    fireEvent.mouseDown(await screen.findByRole("tab",{name:"Einrichtung"}), {button:0});
+    fireEvent.click(screen.getByRole("button",{name:"Finalrouten"}));
+    fireEvent.change(screen.getByLabelText("Routenname"), {target:{value:"Finalroute Gelb"}});
+    fireEvent.change(screen.getByLabelText("Letzter Griff"), {target:{value:"42"}});
+    expect(api.route).not.toHaveBeenCalled();
+    fireEvent.mouseDown(screen.getByRole("tab",{name:"Halbfinale"}), {button:0});
+    expect(screen.queryByRole("button",{name:"Route speichern"})).not.toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole("tab",{name:"Einrichtung"}), {button:0});
+    expect(screen.getByLabelText("Routenname")).toHaveValue("Finalroute Gelb");
+    fireEvent.click(screen.getByRole("button",{name:"Route speichern"}));
+    await waitFor(()=>expect(api.route).toHaveBeenCalledWith("2026",1,"Finalroute Gelb",42));
   });
 });

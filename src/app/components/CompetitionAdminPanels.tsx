@@ -253,69 +253,15 @@ export function CompetitionDecisionDialog({
   );
 }
 
-export function CompetitionRosterPanel({
-  data,
-  season,
-  busy,
-  error,
-  source,
-  run,
-  printHref,
-  group,
-  phase,
-  onSemifinal,
-}: SharedProps & {
-  group?: { league: League; label: string; rows: SemifinalRow[] };
-  phase: string;
-  onSemifinal: () => void;
-}) {
-  const [routeSelection, setRouteSelection] = useState<{
-    key: string;
-    id: string;
-  } | null>(null);
+export function CompetitionFinalRoutes({ data, season, busy, source, run }: Pick<SharedProps, "data" | "season" | "busy" | "source" | "run">) {
   const [routeNumber, setRouteNumber] = useState("1");
   const [routeName, setRouteName] = useState("");
   const [maxGrip, setMaxGrip] = useState("30");
-  const [decision, setDecision] = useState<Decision | null>(null);
-  if (!group)
-    return <p className="py-6 text-sm">Noch keine Klassen vorhanden.</p>;
-  const key = classKey(group.league, group.label);
-  const c = data.classes.find(
-    (item) => classKey(item.league, item.class_label) === key,
-  );
-  const mutable = !c || ["preparation", "published"].includes(c.phase);
-  const routeId =
-    routeSelection?.key === key ? routeSelection.id : (c?.route_id ?? "");
-  const route = data.routes.find((item) => item.id === routeId);
-  const eligible = [...group.rows]
-    .filter((row) => !row.excluded)
-    .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "de"));
-  const boundary = eligible[5]?.points;
-  const proposed = eligible.filter(
-    (row) => boundary === undefined || row.points >= boundary,
-  );
-  const missing = group.rows.reduce(
-    (total, row) => total + row.missing.filter((item) => !item.settled).length,
-    0,
-  );
-  const ready =
-    phase === "closed" &&
-    missing === 0 &&
-    proposed.length > 0 &&
-    Boolean(route);
-  const confirmed = Boolean(c?.entries.length && c.phase !== "preparation");
-  const canExclude = mutable && phase === "closed";
-  const startRows = confirmed
-    ? [...c!.entries].sort((a, b) => a.start_position - b.start_position)
-    : [...proposed].sort(
-        (a, b) => b.rank - a.rank || a.name.localeCompare(b.name, "de"),
-      );
-  return (
-    <div className="space-y-4">
-      <details className={panel} open={!data.routes.length}>
-        <summary className="cursor-pointer py-1 text-sm font-semibold">
+  return (<section aria-label="Finalrouten einrichten" className="space-y-4">
+      <div className={panel}>
+        <h2 className="text-lg font-semibold">
           Finalrouten · {data.routes.length} eingerichtet
-        </summary>
+        </h2>
         <div className="mt-4 space-y-4">
           {data.routes.length > 0 && (
             <ul className="divide-y text-sm">
@@ -390,7 +336,66 @@ export function CompetitionRosterPanel({
             sind gesperrt.
           </p>
         </div>
-      </details>
+      </div>
+  </section>);
+}
+
+export function CompetitionRosterPanel({
+  data,
+  season,
+  busy,
+  error,
+  source,
+  run,
+  printHref,
+  group,
+  phase,
+  onSemifinal,
+}: SharedProps & {
+  group?: { league: League; label: string; rows: SemifinalRow[] };
+  phase: string;
+  onSemifinal: () => void;
+}) {
+  const [routeSelection, setRouteSelection] = useState<{
+    key: string;
+    id: string;
+  } | null>(null);
+  const [decision, setDecision] = useState<Decision | null>(null);
+  if (!group)
+    return <p className="py-6 text-sm">Noch keine Klassen vorhanden.</p>;
+  const key = classKey(group.league, group.label);
+  const c = data.classes.find(
+    (item) => classKey(item.league, item.class_label) === key,
+  );
+  const mutable = !c || ["preparation", "published"].includes(c.phase);
+  const routeId =
+    routeSelection?.key === key ? routeSelection.id : (c?.route_id ?? "");
+  const route = data.routes.find((item) => item.id === routeId);
+  const eligible = [...group.rows]
+    .filter((row) => !row.excluded)
+    .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "de"));
+  const boundary = eligible[5]?.points;
+  const proposed = eligible.filter(
+    (row) => boundary === undefined || row.points >= boundary,
+  );
+  const missing = group.rows.reduce(
+    (total, row) => total + row.missing.filter((item) => !item.settled).length,
+    0,
+  );
+  const ready =
+    phase === "closed" &&
+    missing === 0 &&
+    proposed.length > 0 &&
+    Boolean(route);
+  const confirmed = Boolean(c?.entries.length && c.phase !== "preparation");
+  const canExclude = mutable && phase === "closed";
+  const startRows = confirmed
+    ? [...c!.entries].sort((a, b) => a.start_position - b.start_position)
+    : [...proposed].sort(
+        (a, b) => b.rank - a.rank || a.name.localeCompare(b.name, "de"),
+      );
+  return (
+    <div className="space-y-4">
       <section className={panel} aria-label="Finalstartliste">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

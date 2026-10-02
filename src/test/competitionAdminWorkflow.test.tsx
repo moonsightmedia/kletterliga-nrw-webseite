@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CompetitionFinalPanel,
   CompetitionRosterPanel,
+  CompetitionFinalRoutes,
 } from "@/app/components/CompetitionAdminPanels";
 import CompetitionDisplayPanel from "@/app/components/CompetitionDisplayPanel";
 import { CompetitionPrintContent } from "@/app/pages/admin/CompetitionPrint";
@@ -220,6 +221,7 @@ describe("focused final administration", () => {
       screen.getByRole("button", { name: "1 fehlende Routeneinträge klären" }),
     );
     expect(onSemifinal).toHaveBeenCalledOnce();
+    render(wrap(<CompetitionFinalRoutes {...common(data)} />));
     fireEvent.change(screen.getByLabelText("Routenname"), {
       target: { value: "Route" },
     });

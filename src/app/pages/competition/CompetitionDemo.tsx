@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { AdminShell } from "@/app/layouts/AdminLayout";
+import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 import {
   Link,
   useLocation,
@@ -25,6 +27,8 @@ import {
   demoLiveData,
   demoSemifinalRows,
   demoSource,
+  demoConfigurationSource,
+  prepareCompetitionDemo,
   demoStationCode,
   resetCompetitionDemo,
   startSemifinalDemo,
@@ -64,8 +68,8 @@ export default function CompetitionDemo() {
         demo
       />
     );
-  return (
-    <div className="stitch-app min-h-screen bg-[#f5f1e7] p-4 text-[#003d55] sm:p-6">
+  const content = (
+    <div className="stitch-app min-h-screen bg-[#f4f3ee] text-[#003d55]">
       <div
         className={`mx-auto space-y-5 ${view === "station" ? "max-w-md" : "max-w-7xl"}`}
       >
@@ -93,6 +97,7 @@ export default function CompetitionDemo() {
               <RotateCcw size={14} />
               Testdaten zurücksetzen
             </button>
+            <StitchButton size="sm" variant="outline" onClick={() => { prepareCompetitionDemo(); setResetVersion(version => version + 1); navigate(`${root}?bereich=setup`); }}>Vorbereitung ausprobieren</StitchButton>
             <StitchButton
               size="sm"
               variant="outline"
@@ -203,16 +208,12 @@ export default function CompetitionDemo() {
             tvHref={`${root}/tv`}
             printHref={`${root}/druck`}
             stationHref={`${root}/station`}
-            semifinalConfiguration={
-              <p className="text-sm">
-                Die Demo beginnt mit geschlossener Halbfinaleingabe. Die
-                eigentliche Routen- und Halbfinalkonfiguration bleibt im
-                produktiven Adminbereich.
-              </p>
-            }
+            semifinalConfiguration={<LeagueCompetition seasonOverride="2026" source={demoConfigurationSource} section={params.get("einrichtung") === "access" ? "access" : "routes"} />}
+            certificateConfiguration={<LeagueCompetition seasonOverride="2026" source={demoConfigurationSource} section="certificates" />}
           />
         )}
       </div>
     </div>
   );
+  return view === "station" || view === "rangliste" ? content : <AdminShell role="league_admin" previewPath="/app/admin/league/wettkampf">{content}</AdminShell>;
 }
