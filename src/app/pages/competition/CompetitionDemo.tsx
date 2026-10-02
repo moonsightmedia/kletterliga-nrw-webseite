@@ -23,6 +23,7 @@ import CompetitionLiveView from "@/app/components/CompetitionLiveView";
 import CompetitionRankingsView from "@/app/components/CompetitionRankingsView";
 import { CompetitionNoticeList } from "@/app/components/CompetitionLiveBanner";
 import { activeNotices } from "@/lib/competitionPresentation";
+import { competitionTvDemo } from "@/lib/competitionTvDemo";
 import { StitchButton } from "@/app/components/StitchPrimitives";
 import {
   demoFinalClasses,
@@ -55,7 +56,7 @@ export default function CompetitionDemo() {
   if (view === "tv")
     return (
       <CompetitionLiveView
-        data={demoLiveData(value)}
+        data={params.get("belastung") === "1" ? competitionTvDemo(params.get("phase") === "final", params.get("hinweis") === "vollbild", params.get("lang") === "1") : demoLiveData(value)}
         season="2026"
         lastSuccess={lastRefresh}
         demo

@@ -28,6 +28,13 @@ export const activeNotices = (
       (!notice.expires_at || Date.parse(notice.expires_at) > time),
   );
 
+// Keep the complete last row inside the display, including its bottom border.
+export function livePageSize(height: number, heading: number, row: number) {
+  if (![height, heading, row].every(Number.isFinite) || height <= 0 || row <= 0)
+    return 8;
+  return Math.min(8, Math.max(1, Math.floor((height - heading - 2) / row)));
+}
+
 export function liveFrames(
   classes: LiveClass[],
   keys: string[],
