@@ -3,6 +3,7 @@ import {
   activeNotices,
   classNextStep,
   liveFrames,
+  livePageSize,
 } from "@/lib/competitionPresentation";
 import type {
   LiveClass,
@@ -25,6 +26,17 @@ const classes: LiveClass[] = [
   { key: "lead|B", league: "lead", class_label: "B", entries: [] },
 ];
 describe("competition guidance", () => {
+  it("fits complete rows into the available height and reserves the table heading", () => {
+    expect(livePageSize(400, 50, 50)).toBe(6);
+    expect(livePageSize(452, 50, 50)).toBe(8);
+    expect(livePageSize(150, 50, 70)).toBe(1);
+    expect(livePageSize(900, 50, 50)).toBe(8);
+    expect(livePageSize(0, 0, 0)).toBe(8);
+    expect(livePageSize(400, 50, Number.NaN)).toBe(8);
+    expect(liveFrames(classes, [], null, 3).map((frame) => frame.key)).toEqual([
+      "lead|A:0", "lead|A:1", "lead|A:2", "lead|A:3", "lead|A:4", "lead|A:5", "lead|B:0",
+    ]);
+  });
   it("shows every page before the next class, including when a class is pinned", () => {
     expect(liveFrames(classes, [], null).map((frame) => frame.key)).toEqual([
       "lead|A:0",

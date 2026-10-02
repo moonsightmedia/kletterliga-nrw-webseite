@@ -57,3 +57,7 @@ Die digitale Zeitnahme verwendet getrennte Klassen-, Teilnehmer-, Eingabe- und P
 ## Verwaltungsprüfung 02.10.2026
 
 72 gezielte Tests in 13 Dateien bestanden; neun neue Ablaufprüfungen für Startfeld, veraltete Papierdialoge, Ausfallbegründung, Klassenfreigabe, TV-Entwürfe, Hinweisablauf und Ergebnisexport. Browser: Startfeld mit sieben Personen freigegeben, umgeordnet, neue Druckversion geprüft; Papierabgleich, Nicht gestartet, Schließen/Wiederöffnen, Hinweis veröffentlichen/zurückziehen und TV-Rotation. Verwaltung bei 390/768/1440 px, Teilnehmerliste bei 390 px und TV bei 1920 × 1080 ohne Seitenüberlauf. Browser-PDF mit zwei vollständigen A4-Seiten, sieben Startern pro Klasse und langem Namen. Produktionsbuild und gezielter ESLint bestanden; App-Typecheck weiterhin 15 bekannte Fehler außerhalb der Änderungen. Details: [Verwaltungskonzept](finaltag-verwaltung-design.md).
+
+## TV ohne Maus · 02.10.2026
+
+Die TV-Seite nutzt die Browserhöhe und passt die Personenzahl an die längste Zeile aller gewählten Klassen an. Sie blättert automatisch durch sämtliche Seiten und Klassen, auch bei fixierter Klasse. Sanfte Übergänge laufen nur beim tatsächlichen Seitenwechsel; Ergebnisabrufe starten sie nicht neu. Die Klassenübersicht ist auf aktuelle Position und nächste Klasse begrenzt. Prüfung mit 82 synthetischen Personen, zwölf Klassen und vier Bildschirmgrößen; 424 Tests bestanden. Details und Screenshot: [TV-Anzeige ohne Maus](tv-anzeige-ohne-maus.md).

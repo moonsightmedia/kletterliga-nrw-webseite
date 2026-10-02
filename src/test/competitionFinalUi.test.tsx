@@ -17,6 +17,7 @@ describe("final live screen", () => {
     cleanup();
     vi.useRealTimers();
     api.live.mockReset();
+    vi.restoreAllMocks();
   });
 
   const data = (): LiveData => ({
@@ -103,6 +104,61 @@ describe("final live screen", () => {
     expect(
       screen.getByText("Daten sind möglicherweise veraltet"),
     ).toBeInTheDocument();
+  });
+
+  it("automatically cycles all pages of a pinned class and repeats without input", async () => {
+    vi.useFakeTimers();
+    const value = data();
+    value.pinned_key = "lead|A";
+    const { container } = render(<CompetitionLiveView data={value} season="2026" lastSuccess={new Date()} />);
+    const initialSlide = container.querySelector("main");
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
+    expect(container.querySelector("main")).not.toBe(initialSlide);
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 1")).toBeInTheDocument();
+    expect(screen.queryByText("Nächste Klasse")).not.toBeInTheDocument();
+  });
+
+  it("accounts for a long name on a later page and recalculates after resizing", async () => {
+    vi.useFakeTimers();
+    let height = 320;
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(function () {
+      return this.classList.contains("tv-table-space") ? height : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function () {
+      const measuredHeight = this.tagName === "THEAD" ? 40 : this.tagName === "TR" ? (this.textContent?.includes("Person 9") ? 100 : 40) : height;
+      return { x: 0, y: 0, top: 0, left: 0, right: 900, bottom: measuredHeight, width: 900, height: measuredHeight, toJSON: () => ({}) };
+    });
+    const { container } = render(<CompetitionLiveView data={data()} season="2026" lastSuccess={new Date()} />);
+    expect(container.querySelector(".competition-tv")).toHaveAttribute("data-page-size", "2");
+    expect(screen.getByText("Person 2")).toBeInTheDocument();
+    expect(screen.queryByText("Person 3")).not.toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 3")).toBeInTheDocument();
+    expect(screen.getByText("Person 4")).toBeInTheDocument();
+    height = 450;
+    act(() => window.dispatchEvent(new Event("resize")));
+    expect(container.querySelector(".competition-tv")).toHaveAttribute("data-page-size", "4");
+    expect(screen.getByText("Person 5")).toBeInTheDocument();
+    expect(screen.getByText("Person 8")).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
+  });
+
+  it("updates scores without replaying the page transition or delaying rotation", async () => {
+    vi.useFakeTimers();
+    const value = data();
+    const { container, rerender } = render(<CompetitionLiveView data={value} season="2026" lastSuccess={new Date()} />);
+    const slide = container.querySelector("main");
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    const updated = data();
+    updated.classes[0].entries[0] = { name: "Person 1", rank: 1, points: 250, completed: 5 };
+    rerender(<CompetitionLiveView data={updated} season="2026" lastSuccess={new Date()} />);
+    expect(screen.getByText("250 P. · 5/5")).toBeInTheDocument();
+    expect(container.querySelector("main")).toBe(slide);
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(screen.getByText("Person 9")).toBeInTheDocument();
   });
 
   it("retains the last public ranking after a failed refresh without requesting a login", async () => {
