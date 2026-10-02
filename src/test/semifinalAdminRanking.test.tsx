@@ -98,6 +98,20 @@ function selectGrip(value: string) {
 }
 
 describe("participant-first semifinal administration", () => {
+  it("keeps absent participants visible but excludes them from open-result work", () => {
+    const value = data();
+    value.semifinal[0].excluded = "dns";
+    render(<SemifinalAdminRanking {...props(value)} />);
+    const person = screen.getByRole("button", { name: /Alex Beispiel: 0 Punkte/ });
+    expect(person).toHaveTextContent("Nicht erschienen");
+    expect(person).not.toHaveTextContent("4 offen");
+    open();
+    expect(screen.getByRole("button", { name: "Route 2: Eintragen" })).toBeDisabled();
+    expect(screen.getAllByText("Nicht erschienen · kein Ergebnis erforderlich")).toHaveLength(4);
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Offene Ergebnisse" }));
+    expect(screen.queryByRole("button", { name: /Alex Beispiel/ })).not.toBeInTheDocument();
+  });
   afterEach(cleanup);
   it("keeps first entry and later correction timestamps distinct", () => {
     const input = props();

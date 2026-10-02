@@ -5,11 +5,12 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); });
 it("explains the first visit, remembers confirmation and allows reopening", () => {
   const view = render(<SemifinalWelcome profileId="welcome-test-1" season="2026" />);
   expect(screen.getByRole("dialog")).toHaveTextContent("Sicherungspartner");
+  expect(screen.getByRole("dialog")).toHaveTextContent("Die Crew bestätigt zuerst deine Anwesenheit");
   expect(screen.getByRole("dialog")).toHaveTextContent("QR-Code");
   expect(screen.getByRole("dialog")).toHaveTextContent("der Reihe nach");
   expect(screen.getByRole("dialog")).toHaveTextContent("Teile dir deine Zeit gut ein");
   fireEvent.click(screen.getByRole("button", { name: "Alles klar, los geht’s!" }));
-  expect(localStorage.getItem("competition-day:welcome:welcome-test-1:2026:v1")).toBe("seen");
+  expect(localStorage.getItem("competition-day:welcome:welcome-test-1:2026:v2")).toBe("seen");
   view.unmount();
   const next = render(<SemifinalWelcome profileId="welcome-test-1" season="2026" />);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

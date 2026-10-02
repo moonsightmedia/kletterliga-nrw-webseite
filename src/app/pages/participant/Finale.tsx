@@ -98,7 +98,7 @@ const Finale = () => {
               : data?.registered ? <div className="space-y-3">
                 <p ref={registeredHeadingRef} tabIndex={-1} className="flex items-center gap-2 text-lg font-bold">{data.eligible ? <CheckCircle2 className="h-6 w-6 shrink-0" aria-hidden="true" /> : <Clock3 className="h-6 w-6 shrink-0" aria-hidden="true" />}{data.eligible ? "Du bist angemeldet" : "Anmeldung gespeichert · Freigabe offen"}</p>
                 {approvedClass && data.eligible && <p className="text-sm">Bestätigte Startklasse: <strong>{approvedClass}</strong></p>}
-                <p className="text-sm leading-6">{data.eligible ? "Deine Zusage ist in der App gespeichert. Hier findest du auch die weiteren Informationen zum Veranstaltungstag." : "Deine Zusage bleibt gespeichert, aber deine Startberechtigung ist aktuell nicht bestätigt. Bitte kläre die Teilnahme mit der Organisation; eine endgültige Startzusage liegt derzeit nicht vor."}</p>
+                <p className="text-sm leading-6">{data.eligible ? "Deine Anmeldung ist gespeichert. Am Veranstaltungstag bestätigt die Crew deine Anwesenheit beim Einlass." : "Deine Zusage bleibt gespeichert, aber deine Startberechtigung ist aktuell nicht bestätigt. Bitte kläre die Teilnahme mit der Organisation; eine endgültige Startzusage liegt derzeit nicht vor."}</p>
                 {canCancel ? <StitchButton variant="ghost" disabled={busy} onClick={() => setCancelOpen(true)} className="semifinal-secondary">Vom Halbfinale abmelden</StitchButton>
                   : <p className="text-sm leading-6">Für eine Absage nach Anmeldeschluss oder bei geschlossener Anmeldung kontaktiere bitte die Organisation.</p>}
               </div>
@@ -110,7 +110,7 @@ const Finale = () => {
                     <p className="flex items-start gap-2 font-bold"><LockKeyhole className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />{data?.eligibility_status === "not_eligible" ? "Keine Startberechtigung freigegeben" : "Startberechtigung noch nicht bestätigt"}</p>
                     <p className="text-sm leading-6">{data?.eligibility_status === "not_eligible" ? "Für dein Profil liegt aktuell keine Freigabe vor. Wenn du einen Fehler vermutest, melde dich bitte bei der Organisation." : "Die Organisation prüft die endgültige Teilnehmerliste und Klassenzuordnung. Sobald deine Freigabe vorliegt und die Anmeldung geöffnet ist, kannst du hier zusagen."}</p>
                   </>}
-                  {!data?.registration_open && <p className="text-sm font-semibold">{deadlinePassed ? "Die Anmeldefrist ist abgelaufen." : "Die Anmeldung ist derzeit noch geschlossen."}</p>}
+                  {!data?.registration_open && <p className="text-sm font-semibold">{deadlinePassed ? "Die Anmeldefrist ist abgelaufen. Eine Nachmeldung klärst du vor Ort beim Einlass." : "Die Anmeldung ist derzeit noch geschlossen."}</p>}
                   <StitchButton ref={registerButtonRef} disabled={!canRegister} onClick={() => { setActionError(null); setConfirmOpen(true); }} className="semifinal-primary" aria-haspopup="dialog">
                     {busy ? "Anmeldung wird gespeichert …" : "Verbindlich zum Halbfinale anmelden"}<ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                   </StitchButton>
@@ -123,7 +123,7 @@ const Finale = () => {
           <section className="semifinal-panel" aria-labelledby="competition-day-heading">
             <p className="stitch-kicker semifinal-eyebrow">Am Veranstaltungstag</p>
             <h2 id="competition-day-heading" className="stitch-headline semifinal-section-title">Deine fünf Routen</h2>
-            <p className="semifinal-copy mt-3">Hier findest du nach der Routenzuordnung deine Halbfinalrouten. Ergebnisse trägst du nach dem Klettern ein und scannst den Routen-QR beim Schiedsrichter direkt in der App.</p>
+            <p className="semifinal-copy mt-3">Hier findest du nach der Routenzuordnung deine Halbfinalrouten. Nach der Anwesenheitsbestätigung beim Einlass kannst du Ergebnisse eintragen und den Routen-QR beim Schiedsrichter scannen.</p>
             <Link to="/app/wettkampf" className="semifinal-archive-link"><Trophy size={17} aria-hidden="true" /><span>Zum Wettkampftag</span><ArrowRight size={16} aria-hidden="true" /></Link>
             <Link to="/app/wettkampf/rangliste" className="semifinal-archive-link"><ListOrdered size={17} aria-hidden="true" /><span>Halbfinalwertung ansehen</span><ArrowRight size={16} aria-hidden="true" /></Link>
             <Link to="/app/schiedsrichter" className="semifinal-text-link mt-3">Zugang für Schiedsrichter<ArrowRight size={16} aria-hidden="true" /></Link>
@@ -133,7 +133,7 @@ const Finale = () => {
             <h2 id="event-info-heading" className="stitch-headline semifinal-section-title">Gut zu wissen</h2>
             <dl className="semifinal-facts mt-5 space-y-5 text-sm leading-6">
               <div><dt className="font-bold">Austragungsort</dt><dd>Kletterwelt Sauerland<br />Rosmarter Allee 12<br />58762 Altena</dd></div>
-              <div><dt className="font-bold">Ablauf & Check-in</dt><dd>Startzeiten, Check-in und Hinweise zur benötigten Ausrüstung werden nach der finalen Abstimmung hier und auf der Eventseite ergänzt.</dd></div>
+              <div><dt className="font-bold">Ablauf & Check-in</dt><dd>Melde dich vor dem Klettern bei der Crew am Einlass. Sie bestätigt deine Anwesenheit und schaltet die Ergebniseingabe frei. Startzeiten und Ausrüstung findest du auf der Eventseite.</dd></div>
               <div><dt className="font-bold">Vom Halbfinale ins Finale</dt><dd>Die Finalplätze werden am Veranstaltungstag ausgeklettert.</dd></div>
               <div><dt className="font-bold">Fragen oder notwendige Korrekturen?</dt><dd><a href="mailto:info@kletterliga-nrw.de" className="break-all font-semibold underline underline-offset-4">info@kletterliga-nrw.de</a></dd></div>
             </dl>

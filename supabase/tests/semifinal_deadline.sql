@@ -29,6 +29,7 @@ select public.save_competition_config('DEADLINE-TEST',jsonb_build_object(
  'assignments',jsonb_build_array(jsonb_build_object('league','lead','class_label','Youth','route_numbers',jsonb_build_array(1,2,3,4,5))),
  'zone_points','[0,10,20,30,40,50,60,70,80,90,100]'::jsonb,'flash_bonus',0));
 select public.set_competition_phase('DEADLINE-TEST','open');
+select public.set_competition_attendance('DEADLINE-TEST','99999999-7100-4000-8000-000000000002','arrive',0,gen_random_uuid());
 select public.set_competition_judge_password('DEADLINE-TEST','DEADLINE1234567890123456');
 select set_config('test.deadline.route1',(public.get_competition_judge_routes('DEADLINE-TEST','DEADLINE1234567890123456')->'routes'->0->>'id'),true);
 select set_config('test.deadline.qr1',(public.get_competition_judge_routes('DEADLINE-TEST','DEADLINE1234567890123456')->'routes'->0->>'qr_token'),true);

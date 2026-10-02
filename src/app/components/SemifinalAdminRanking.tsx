@@ -97,7 +97,7 @@ export default function SemifinalAdminRanking({
         row.name
           .toLocaleLowerCase("de")
           .includes(search.trim().toLocaleLowerCase("de")) &&
-        (!onlyOpen || row.missing.some((m) => !m.settled)),
+        (!onlyOpen || (!row.excluded && row.missing.some((m) => !m.settled))),
     )
     .sort(
       (a, b) =>
@@ -136,6 +136,7 @@ export default function SemifinalAdminRanking({
     return JSON.stringify(
       result
         ? [
+            participant?.excluded ?? null,
             result.id,
             result.zone,
             result.points,
@@ -143,6 +144,7 @@ export default function SemifinalAdminRanking({
               null,
           ]
         : [
+            participant?.excluded ?? null,
             "missing",
             participant?.missing.find((item) => item.number === number)
               ?.settled ?? false,
@@ -296,11 +298,9 @@ export default function SemifinalAdminRanking({
               <span className="mt-1 block text-xs text-[#003d55]/65">
                 {classFilter === "all" &&
                   `${className(row.league, row.class_label)} · `}
-                {row.missing.filter((m) => !m.settled).length
+                {row.excluded ? (row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen") : row.missing.filter((m) => !m.settled).length
                   ? `${row.missing.filter((m) => !m.settled).length} offen`
                   : "Vollständig"}
-                {row.excluded &&
-                  ` · ${row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen"}`}
               </span>
             </span>
             <span className="font-bold tabular-nums">{row.points}</span>
@@ -367,11 +367,11 @@ export default function SemifinalAdminRanking({
                     <div>
                       <h3 className="font-bold">Route {number}</h3>
                       <p
-                        className={`mt-1 text-sm ${!result && !missing?.settled ? "text-[#a15523]" : ""}`}
+                        className={`mt-1 text-sm ${!result && !missing?.settled && !participant?.excluded ? "text-[#a15523]" : ""}`}
                       >
                         {result
                           ? `${gripLabel(result.zone)}${result.zone !== 0 ? ` · ${result.points} Punkte` : ""}`
-                          : missing?.settled
+                          : participant?.excluded ? (participant.excluded === "dns" ? "Nicht erschienen · kein Ergebnis erforderlich" : "Zurückgezogen · kein Ergebnis erforderlich") : missing?.settled
                             ? "Nicht geklettert · 0 Punkte"
                             : "Offen"}
                       </p>
@@ -385,7 +385,7 @@ export default function SemifinalAdminRanking({
                     </div>
                     <button
                       type="button"
-                      disabled={busy || phase === "draft"}
+                      disabled={busy || phase === "draft" || Boolean(participant?.excluded && !result)}
                       onClick={() => {
                         setEditingRoute(number);
                         setEditingSnapshot(routeSnapshot(number));

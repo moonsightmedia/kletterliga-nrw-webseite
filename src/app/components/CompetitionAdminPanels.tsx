@@ -257,6 +257,7 @@ export function CompetitionFinalRoutes({ data, season, busy, source, run }: Pick
   const [routeNumber, setRouteNumber] = useState("1");
   const [routeName, setRouteName] = useState("");
   const [maxGrip, setMaxGrip] = useState("30");
+  const existingRoute = data.routes.find((route) => route.number === Number(routeNumber));
   return (<section aria-label="Finalrouten einrichten" className="space-y-4">
       <div className={panel}>
         <h2 className="text-lg font-semibold">
@@ -303,6 +304,7 @@ export function CompetitionFinalRoutes({ data, season, busy, source, run }: Pick
               />
             </label>
           </div>
+          {existingRoute && <p className="text-sm">Route {existingRoute.number} ist bereits eingerichtet: {existingRoute.name}. Speichern aktualisiert diese Route.</p>}
           <CompetitionButton
             disabled={
               busy ||
@@ -379,7 +381,7 @@ export function CompetitionRosterPanel({
     (row) => boundary === undefined || row.points >= boundary,
   );
   const missing = group.rows.reduce(
-    (total, row) => total + row.missing.filter((item) => !item.settled).length,
+    (total, row) => total + (row.excluded ? 0 : row.missing.filter((item) => !item.settled).length),
     0,
   );
   const ready =
@@ -845,7 +847,8 @@ export function CompetitionFinalPanel({
           </label>
         </div>
         <ol className="mt-2 divide-y divide-[#003d55]/10">
-          {c.entries
+          {[...c.entries]
+            .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) || a.start_position - b.start_position)
             .filter(
               (entry) =>
                 !onlyOpen ||

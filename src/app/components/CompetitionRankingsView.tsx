@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Medal, Clock3, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   className,
   resultLabel,
@@ -47,19 +48,16 @@ export default function CompetitionRankingsView({
     }));
   }, [semifinal]);
   const groups = phase === "final" ? finals : semifinals;
-  const activeKey = chosen ?? groups[0]?.key ?? "lead|U15-m";
-  const [league, classLabel] = activeKey.split("|");
-  const separator = classLabel.lastIndexOf("-");
-  const age = separator < 0 ? classLabel : classLabel.slice(0, separator);
-  const gender = separator < 0 ? "m" : classLabel.slice(separator + 1);
-  const selected = groups.find((item) => item.key === activeKey);
-  const chooseClass = (next: { league?: string; age?: string; gender?: string }) =>
-    setChosen(`${next.league ?? league}|${next.age ?? age}-${next.gender ?? gender}`);
-  const filterGroups = [
-    { label: "Liga", value: league, options: [{ value: "lead", label: "Vorstieg" }, { value: "toprope", label: "Toprope" }], change: (value: string) => chooseClass({ league: value }) },
-    { label: "Geschlecht", value: gender, options: [{ value: "m", label: "M" }, { value: "w", label: "W" }], change: (value: string) => chooseClass({ gender: value }) },
-    { label: "Altersklasse", value: age, options: [{ value: "U15", label: "U15" }, { value: "Ü15", label: "Ü15" }, { value: "Ü40", label: "Ü40" }], change: (value: string) => chooseClass({ age: value }) },
-  ];
+  const chosenLeague = chosen?.split("|")[0];
+  const selected = groups.find((item) => item.key === chosen)
+    ?? groups.find((item) => item.league === chosenLeague)
+    ?? groups[0];
+  const availableClasses = groups.filter((item) => item.league === selected?.league);
+  const chooseLeague = (league: string) => {
+    const next = groups.find((item) => item.league === league && item.class_label === selected?.class_label)
+      ?? groups.find((item) => item.league === league);
+    if (next) setChosen(next.key);
+  };
   const finalClass = finals.find((item) => item.key === selected?.key);
   const official = phase === "final" && finalClass?.phase === "final";
   const error = phase === "final" ? finalError : semifinalError;
@@ -100,19 +98,26 @@ export default function CompetitionRankingsView({
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-[1.5fr_0.8fr_1.2fr] gap-1.5" aria-label="Wertungsklasse">
-              {filterGroups.map((group) => (
-                <div key={group.label} role="group" aria-label={group.label} className="flex min-w-0 gap-0.5 rounded-sm bg-[#003d55]/5 p-0.5">
-                  {group.options.map((option) => (
-                    <button key={option.value} type="button" aria-pressed={group.value === option.value}
-                      onClick={() => group.change(option.value)}
-                      className={`min-h-11 min-w-0 flex-1 rounded-sm px-1 py-2 font-['Space_Grotesk'] text-[9px] font-bold uppercase tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 sm:text-xs ${group.value === option.value ? "bg-[#a15523] text-[#f2dcab] shadow-sm" : "text-[#003d55]/60 hover:text-[#003d55]"}`}>
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
+            {selected && <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Wertungsklasse">
+              <div role="group" aria-label="Liga" className="flex min-w-0 gap-1 rounded-lg bg-[#003d55]/5 p-1">
+                {[{ value: "lead", label: "Vorstieg" }, { value: "toprope", label: "Toprope" }].map((option) => (
+                  <button key={option.value} type="button" aria-pressed={selected.league === option.value}
+                    disabled={!groups.some((item) => item.league === option.value)}
+                    onClick={() => chooseLeague(option.value)}
+                    className={`min-h-11 min-w-0 flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35 ${selected.league === option.value ? "bg-[#a15523] text-[#f2dcab]" : "text-[#003d55] hover:bg-[#003d55]/5"}`}>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <Select value={selected.key} onValueChange={(key) => { if (availableClasses.some((item) => item.key === key)) setChosen(key); }}>
+                <SelectTrigger aria-label="Klasse" className="h-auto min-h-12 min-w-0 rounded-lg border-[#003d55]/20 bg-white px-4 text-sm font-semibold text-[#003d55] focus:ring-[#003d55]">
+                  <SelectValue placeholder="Klasse wählen" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 rounded-lg border-[#003d55]/20 bg-white text-[#003d55]">
+                  {availableClasses.map((item) => <SelectItem key={item.key} value={item.key} className="min-h-11 text-sm focus:bg-[#f2dcab] focus:text-[#003d55]">{item.class_label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>}
             {error && (
               <p
                 role="alert"

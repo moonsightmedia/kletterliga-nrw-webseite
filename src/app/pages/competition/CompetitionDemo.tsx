@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/app/layouts/AdminLayout";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
+import { AttendanceDesk } from "@/app/components/AttendanceDesk";
+import { demoAttendanceSource, resetAttendanceDemo } from "@/lib/attendanceDemoSource";
 import {
   Link,
   useLocation,
@@ -90,6 +92,7 @@ export default function CompetitionDemo() {
               className="flex min-h-10 items-center gap-2 text-xs font-bold underline underline-offset-4"
               onClick={() => {
                 resetCompetitionDemo();
+                resetAttendanceDemo();
                 setResetVersion((version) => version + 1);
                 navigate(root);
               }}
@@ -124,6 +127,7 @@ export default function CompetitionDemo() {
             )}
           </div>
           <nav aria-label="Testansichten" className="flex flex-wrap gap-2">
+            {view !== "einlass" && <StitchButton asChild variant="outline" size="sm"><Link to={`${root}/einlass`}>Einlass ausprobieren</Link></StitchButton>}
             {view && (
               <StitchButton asChild variant="outline" size="sm">
                 <Link to={root}>
@@ -164,7 +168,7 @@ export default function CompetitionDemo() {
             </p>
           )}
         </details>
-        {view === "station" ? (
+        {view === "einlass" ? <><header><h1 className="text-2xl font-semibold">Einlass & Anmeldungen</h1></header><AttendanceDesk season="2026" source={demoAttendanceSource} /></> : view === "station" ? (
           <FinalStationContent
             season="2026"
             source={demoSource}

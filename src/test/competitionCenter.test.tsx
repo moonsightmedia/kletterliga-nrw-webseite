@@ -27,6 +27,13 @@ vi.mock("@/app/pages/admin/LeagueCompetition", () => ({
 }));
 
 describe("competition center", () => {
+  it("keeps documented absences out of the open-route workload in the overview", async () => {
+    api.final.mockResolvedValue({ phase: "closed", classes: [], routes: [], semifinal: [{ profile_id: "absent-athlete", name: "Nicht vor Ort", league: "lead", class_label: "Testklasse", points: 0, completed: 0, rank: 1, excluded: "dns", missing: [{ route_id: "unclimbed", number: 1, settled: false }] }], semifinal_results: [], stations: [], display: null, notices: [], audit: [], semifinal_audit: [] });
+    api.semifinal.mockResolvedValue({ config: { routes: [], assignments: [] }, staff: [], results: [] });
+    render(<MemoryRouter><CompetitionCenterContent season="2026" /></MemoryRouter>);
+    expect(await screen.findByText("0 offene Routeneinträge")).toBeInTheDocument();
+    expect(screen.queryByText("1 offene Routeneinträge")).not.toBeInTheDocument();
+  });
   afterEach(cleanup);
   it("keeps the semifinal view focused on semifinal results even when that class has a running final", async () => {
     api.final.mockResolvedValue({

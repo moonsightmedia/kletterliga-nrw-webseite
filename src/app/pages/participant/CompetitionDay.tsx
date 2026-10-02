@@ -87,6 +87,9 @@ export default function CompetitionDay() {
   const probeMode = shouldUseCompetitionProbe(profile?.id, localProbeAvailable, data?.event?.phase, searchParams.get("probelauf") === "1");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [accessVerified, setAccessVerified] = useState(false);
+  const [verifiedProfileId, setVerifiedProfileId] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [zone, setZone] = useState<number | null>(null);
   const [qrToken, setQrToken] = useState<string | null>(null);
@@ -100,35 +103,71 @@ export default function CompetitionDay() {
   const [probeResults, setProbeResults] = useState<SavedResult[]>([]);
   const submitLockRef = useRef(false);
   const loadRequestRef = useRef(0);
+  const loadPendingRef = useRef(0);
   const deadlinePassed = competitionDeadlineReached(data?.event?.submission_deadline_at, clock);
+  const checkedIn = data?.check_in?.required === true && data.check_in.status === "arrived";
+  const canEnter = probeMode || Boolean(accessVerified && verifiedProfileId === profile?.id && data?.eligible && checkedIn && data.event?.phase === "open" && !deadlinePassed);
+  const canEnterRef = useRef(canEnter);
+  canEnterRef.current = canEnter;
   useEffect(() => {
     if (!data?.event?.submission_deadline_at) return;
     const timer = window.setInterval(() => setClock(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [data?.event?.submission_deadline_at]);
 
-  const load = useCallback(async () => {
-    if (!season) return;
+  const load = useCallback(async (background = false) => {
+    if (!season || (background && loadPendingRef.current > 0)) return;
     const requestId = ++loadRequestRef.current;
-    setLoading(true);
-    setLoadError(null);
+    loadPendingRef.current += 1;
+    if (!background) {
+      setLoading(true);
+      setLoadError(null);
+    }
     try {
       const next = await getCompetitionDay(season);
       if (requestId !== loadRequestRef.current) return;
       setData(next);
+      setAccessVerified(true);
+      setVerifiedProfileId(profile?.id ?? null);
+      setRefreshError(null);
+      setLoadError(null);
       setSelectedRouteId((current) => current && next.routes.some((route) => route.id === current) ? current : null);
     } catch {
       if (requestId !== loadRequestRef.current) return;
-      setLoadError("Die Wettkampfdaten konnten nicht geladen werden. Bitte versuche es erneut.");
+      setAccessVerified(false);
+      if (background) setRefreshError("Dein aktueller Teilnahmestatus konnte nicht geprüft werden. Eingabe pausiert; dein Entwurf bleibt erhalten.");
+      else setLoadError("Die Wettkampfdaten konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
+      loadPendingRef.current -= 1;
       if (requestId === loadRequestRef.current) setLoading(false);
     }
-  }, [season]);
+  }, [season, profile?.id]);
 
   useEffect(() => {
     void load();
     return () => { loadRequestRef.current += 1; };
   }, [load]);
+
+  useEffect(() => {
+    if (!season) return;
+    const refresh = () => { if (document.visibilityState !== "hidden" && !submitLockRef.current) void load(true); };
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("online", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [season, load]);
+
+  useEffect(() => {
+    if (canEnter) return;
+    setQrToken(null);
+    setScannerOpen(false);
+  }, [canEnter]);
 
   const route = data?.routes.find((item) => item.id === selectedRouteId) ?? null;
   const visibleResults = probeMode ? probeResults : data?.results ?? [];
@@ -163,7 +202,7 @@ export default function CompetitionDay() {
   }, [draftKey, result]);
 
   const persistDraft = (nextZone: number | null) => {
-    if (!draftKey || nextZone === null || !data?.event || result || (!probeMode && (data.event.phase !== "open" || competitionDeadlineReached(data.event.submission_deadline_at)))) return false;
+    if (!draftKey || nextZone === null || !data?.event || result || !canEnter || (!probeMode && competitionDeadlineReached(data.event.submission_deadline_at))) return false;
     if (!Number.isInteger(nextZone) || nextZone < 0 || nextZone > 10) return false;
     try {
       (probeMode ? window.sessionStorage : window.localStorage).setItem(draftKey, JSON.stringify({ zone: nextZone } satisfies Draft));
@@ -178,6 +217,7 @@ export default function CompetitionDay() {
   };
 
   const acceptQr = (value: string) => {
+    if (!canEnterRef.current) { setScannerOpen(false); setQrToken(null); return; }
     const token = route ? parseCompetitionQr(value, route) : null;
     setScannerOpen(false);
     if (!token) {
@@ -191,7 +231,7 @@ export default function CompetitionDay() {
   };
 
   const submit = async () => {
-    if (submitLockRef.current || !season || !profile?.id || !route || !qrToken || zone === null || !data?.event || result || (!probeMode && (data.event.phase !== "open" || competitionDeadlineReached(data.event.submission_deadline_at)))) return;
+    if (submitLockRef.current || !season || !profile?.id || !route || !qrToken || zone === null || !data?.event || result || !canEnter || (!probeMode && competitionDeadlineReached(data.event.submission_deadline_at))) return;
     submitLockRef.current = true;
     setSubmitting(true);
     setSubmitError(null);
@@ -218,6 +258,7 @@ export default function CompetitionDay() {
       if (!validAcknowledgement || accepted.route_id !== route.id || accepted.profile_id !== profile.id || accepted.zone !== zone || accepted.flash !== false || !pointsMatch) {
         throw new Error("The accepted result did not match the submitted result.");
       }
+      loadRequestRef.current += 1;
       setData((current) => current ? { ...current, results: [...current.results.filter((item) => item.route_id !== route.id), accepted] } : current);
       if (draftKey) {
         try { window.localStorage.removeItem(draftKey); } catch { /* The accepted server result remains authoritative. */ }
@@ -236,11 +277,18 @@ export default function CompetitionDay() {
   if (loading) return <div className={pageClass}><StitchCard tone="cream" className="p-6" role="status">Wettkampf wird geladen …</StitchCard></div>;
   if (loadError || !data) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab]" eyebrow="Halbfinale" title="Wettkampftag" /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>{loadError ?? "Wettkampfdaten nicht verfügbar."}</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
   if (!data.event) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Wettkampftag" description="Die Wettkampfeingabe wurde noch nicht vorbereitet." /><StitchCard tone="cream" className="p-6 text-[#003d55]">Sobald die Routen bereit sind, erscheinen sie hier.</StitchCard></div>;
-  if (!data.eligible) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Wettkampftag" description="Für dein Profil ist keine Wettkampfroute freigegeben." /></div>;
+  if (!data.eligible) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Wettkampftag" description="Für dein Profil ist keine Wettkampfroute freigegeben." /><StitchCard tone="cream" className="space-y-3 p-5 text-[#003d55]"><p>Bitte kläre deine Anmeldung und Startklasse beim Einlass.</p><StitchButton asChild variant="outline"><Link to="/app/finale">Anmeldung ansehen</Link></StitchButton></StitchCard></div>;
   if (data.event.phase === "draft" && data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routen in Vorbereitung" description="Die physischen Routen werden geplant. Deine fünf Halbfinalrouten werden hier angezeigt, sobald die Zuordnung feststeht." /><StitchCard tone="cream" className="p-6 text-[#003d55]">Die Ergebniseingabe ist noch geschlossen. Deine Qualifikation und Anmeldung bleiben unverändert.</StitchCard></div>;
   if (data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routenzuordnung prüfen" description="Dein Routenset konnte nicht vollständig geladen werden." /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>Bitte lade die Zuordnung erneut oder wende dich an die Organisation. Es werden keine Ergebnisseingaben angezeigt.</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
 
-  const readOnly = !probeMode && (data.event.phase !== "open" || deadlinePassed);
+  const readOnly = !canEnter;
+  const entryBlockedMessage = refreshError ?? (data.event.phase === "draft"
+    ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet."
+    : data.event.phase === "closed" || deadlinePassed
+      ? "Für diese Route wurde kein Ergebnis eingetragen. Die Eingabe ist geschlossen."
+      : data.check_in?.status === "absent"
+        ? "Deine Teilnahme wurde als abwesend markiert. Bitte kläre das beim Einlass."
+        : "Bitte zuerst beim Einlass anmelden. Die Crew bestätigt deine Anwesenheit.");
   const clearProbe = () => {
     if (probeResultsKey) {
       try {
@@ -259,8 +307,9 @@ export default function CompetitionDay() {
   return <div className={pageClass}>
     <header className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
       <StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale · Wettkampftag" title="Deine Routen" description={`${data.league === "lead" ? "Vorstieg" : data.league === "toprope" ? "Toprope" : "Kletterliga NRW"}${data.class_label ? ` · ${data.class_label}` : ""} — wähle eine deiner zugeordneten Routen.`} />
-      <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : readOnly ? data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : "EINGABE GESCHLOSSEN" : "5 ROUTEN"}</StitchBadge>
+      <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : data.event.phase === "closed" || deadlinePassed ? "EINGABE GESCHLOSSEN" : !accessVerified ? "STATUS PRÜFEN" : data.check_in?.status === "absent" ? "TEILNAHME KLÄREN" : !checkedIn ? "EINLASS OFFEN" : "5 ROUTEN"}</StitchBadge>
     </header>
+    {!probeMode && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role={refreshError ? "alert" : "status"}>{refreshError ?? (checkedIn ? "Anwesenheit bestätigt" : data.check_in?.status === "absent" ? "Deine Teilnahme wurde als abwesend markiert. Bitte kläre das beim Einlass." : "Bitte zuerst beim Einlass anmelden. Die Crew bestätigt deine Anwesenheit.")}</StitchCard>}
     {profile?.id && <SemifinalWelcome profileId={profile.id} season={season} />}
     {!probeMode && data.event.submission_deadline_at && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role="status">{deadlinePassed ? "Die Halbfinaleingabe ist geschlossen. Fehlende Einträge kann René begründet nachtragen." : `Bitte alle fünf Routen bis ${formatCompetitionDeadline(data.event.submission_deadline_at)} Uhr eintragen. Danach wird die Eingabe automatisch gesperrt.`} Prüfe auch Einträge mit 0 Punkten unter deinen Routen.</StitchCard>}
     {probeAvailable && (probeMode
@@ -284,8 +333,8 @@ export default function CompetitionDay() {
           {itemResult && <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold"><Check size={14} /> {probeMode ? "Testwert" : "Ergebnis eingetragen"} · {itemResult.points} Punkte</span>}
           </button>
           {active && route && <div id={`competition-route-entry-${item.id}`} className="space-y-5 border-t border-[#003d55]/15 bg-[#f2dcab] p-5 text-[#002637] sm:p-7" aria-labelledby="competition-route-title">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="stitch-kicker text-[#a15523]">{probeMode ? "TESTWERTUNG" : "DEINE WERTUNG"}</p><h2 id="competition-route-title" className="stitch-headline mt-2 text-2xl text-[#002637]">{result ? "Dein Ergebnis" : "Wertung eintragen"}</h2></div>{result && <StitchBadge tone="terracotta"><Check size={14} /> {probeMode ? "TESTWERT GESPEICHERT" : "ERGEBNIS EINGETRAGEN"}</StitchBadge>}</div>
-      {result ? <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Eingetragenes Ergebnis"><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Letzter Griff</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.zone === 0 ? "Keiner" : competitionGripNumber(result.zone)}</strong></div><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Punkte</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.points}</strong></div></div> : readOnly ? <p className="text-[#36515b]">{data.event.phase === "draft" ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet." : "Für diese Route wurde kein Ergebnis eingetragen. Die Eingabe ist geschlossen."}</p> : <>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="stitch-kicker text-[#a15523]">{probeMode ? "TESTWERTUNG" : "DEINE WERTUNG"}</p><h2 id="competition-route-title" className="stitch-headline mt-2 text-2xl text-[#002637]">{result ? "Dein Ergebnis" : readOnly ? "Deine Route" : "Wertung eintragen"}</h2></div>{result && <StitchBadge tone="terracotta"><Check size={14} /> {probeMode ? "TESTWERT GESPEICHERT" : "ERGEBNIS EINGETRAGEN"}</StitchBadge>}</div>
+      {result ? <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Eingetragenes Ergebnis"><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Letzter Griff</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.zone === 0 ? "Keiner" : competitionGripNumber(result.zone)}</strong></div><div className="min-w-0 rounded-xl bg-white/70 p-2 sm:p-4"><span className="text-xs text-[#36515b]">Punkte</span><strong className="stitch-headline mt-1 block text-2xl text-[#002637]">{result.points}</strong></div></div> : readOnly ? <p className="text-[#36515b]">{entryBlockedMessage}</p> : <>
         <fieldset disabled={submitting} className="space-y-3 disabled:opacity-70"><legend className="mb-3 text-sm font-semibold text-[#002637]">Letzter sicher gehaltener Griff</legend><div className="grid grid-cols-5 gap-2 sm:grid-cols-10">{Array.from({ length: 10 }, (_, index) => index + 1).map((value) => <button type="button" key={value} aria-label={`Griff ${competitionGripNumber(value)}`} aria-pressed={zone === value} onClick={() => { persistDraft(value); setZone(value); setQrToken(null); }} className={`min-h-12 rounded-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === value ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/75 text-[#002637] hover:bg-white"}`}>{competitionGripNumber(value)}</button>)}</div><button type="button" aria-pressed={zone === 0} onClick={() => { persistDraft(0); setZone(0); setQrToken(null); }} className={`min-h-11 rounded-lg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] ${zone === 0 ? "bg-[#003d55] text-[#f2dcab]" : "bg-white/60 text-[#002637]"}`}>Keinen nummerierten Griff erreicht · 0 Punkte</button></fieldset>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#003d55] p-4 text-[#f2dcab]"><span className="text-sm">Vorschau deiner Wertung</span><strong className="stitch-headline text-3xl">{points ?? "—"} <span className="text-sm font-medium">Punkte</span></strong></div>
         {draftSaved && <p role="status" className="text-sm font-semibold text-[#245d47]">Auswahl automatisch als Entwurf gespeichert. Noch kein Ergebnis eingetragen.</p>}

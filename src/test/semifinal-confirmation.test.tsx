@@ -47,7 +47,7 @@ describe("semifinal registration confirmation", () => {
     api.state.mockResolvedValue({ ...eligible, registration_deadline: "2026-09-29T22:00:00Z", registration_open: false });
     mount();
     expect(await screen.findByRole("button", { name: "Verbindlich zum Halbfinale anmelden" })).toBeDisabled();
-    expect(screen.getByText("Die Anmeldefrist ist abgelaufen.")).toBeInTheDocument();
+    expect(screen.getByText("Die Anmeldefrist ist abgelaufen. Eine Nachmeldung klärst du vor Ort beim Einlass.")).toBeInTheDocument();
     expect(api.register).not.toHaveBeenCalled();
   });
 
@@ -86,6 +86,7 @@ describe("semifinal registration confirmation", () => {
     await act(async () => finish({ ...eligible, registered: true }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
     expect(screen.getByText("Du bist angemeldet")).toBeInTheDocument();
+    expect(screen.getByText(/Am Veranstaltungstag bestätigt die Crew deine Anwesenheit beim Einlass/)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Du bist angemeldet")).toHaveFocus());
   });
 
