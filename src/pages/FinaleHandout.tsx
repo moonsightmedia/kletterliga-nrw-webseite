@@ -21,6 +21,14 @@ const crewSchedule = [
   ...schedule.slice(1),
 ];
 
+const participantSchedule = [
+  schedule[2],
+  { time: "12:00", label: "Foodtruck öffnet" },
+  schedule[4],
+  schedule[5],
+  schedule[6],
+];
+
 export const FinaleHandout = ({ kind }: { kind: HandoutKind }) => {
   const isCrew = kind === "crew";
   const title = isCrew ? "Crew-Handout" : "Teilnehmerhandout";
@@ -44,7 +52,7 @@ export const FinaleHandout = ({ kind }: { kind: HandoutKind }) => {
           <p className="mt-5 max-w-2xl text-base text-[#f2dcab]/90 sm:text-lg">
             {isCrew
               ? "Danke, dass du den Finaltag möglich machst! Hier findest du die wichtigsten Zeiten und Hinweise für deinen Einsatz."
-              : "Willkommen zum Saisonabschluss! Hier findest du alles Wichtige für Check-in, Halbfinale und Finale."}
+              : "Dein Finaltag auf einen Blick: Zeiten, deine Halbfinalrouten, Routenregeln und Ergebniseingabe."}
           </p>
           <div className="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:gap-8">
             <span className="flex items-center gap-2"><Clock3 size={18} aria-hidden="true" /> Samstag, 03.10.2026</span>
@@ -57,7 +65,7 @@ export const FinaleHandout = ({ kind }: { kind: HandoutKind }) => {
         <section aria-labelledby="zeiten">
           <h2 id="zeiten" className="font-headline text-2xl text-primary">Zeitplan</h2>
           <ol className="mt-5 divide-y divide-primary/15 border-y border-primary/15">
-            {(isCrew ? crewSchedule : schedule).map(({ time, label }) => (
+            {(isCrew ? crewSchedule : participantSchedule).map(({ time, label }) => (
               <li key={`${time}-${label}`} className="grid grid-cols-[7.5rem_1fr] gap-3 py-3 text-sm sm:text-base">
                 <strong className="text-secondary">{time}</strong>
                 <span className="text-primary">{label}</span>
@@ -98,13 +106,22 @@ export const FinaleHandout = ({ kind }: { kind: HandoutKind }) => {
             </>
           ) : (
             <>
-              <section className="border-l-4 border-secondary bg-[#f2dcab]/35 p-5" aria-labelledby="checkin">
-                <h2 id="checkin" className="font-headline text-xl text-primary">Check-in & Halbfinale</h2>
+              <section className="border-l-4 border-secondary bg-[#f2dcab]/35 p-5" aria-labelledby="routen">
+                <h2 id="routen" className="font-headline text-xl text-primary">Deine Halbfinalrouten</h2>
                 <p className="mt-3 text-sm leading-relaxed text-primary">
-                  Check-in am Empfang: 08:45–12:00 Uhr. Erst danach kannst du Ergebnisse eintragen.
-                  Deine fünf zugeteilten Routen kannst du in freier Reihenfolge klettern – pro Route genau ein Versuch.
-                  Starte möglichst früh, damit du alle Routen entspannt schaffst.
+                  Für deine Wertungsklasse sind fünf Routen zugeteilt. Die Routennummern findest du in der
+                  Kletterliga-App unter „Wettkampftag“. Klettere die dort angezeigten Routen; mehrere Klassen
+                  können dieselbe Route nutzen.
                 </p>
+                <Link to="/app/wettkampf" className="mt-4 inline-flex items-center gap-2 font-bold text-primary underline underline-offset-4">
+                  Deine Routen in der App öffnen <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+                <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-primary">
+                  <li>Du kannst deine fünf Routen in freier Reihenfolge klettern.</li>
+                  <li>Pro Route hast du genau einen Versuch und maximal fünf Minuten Kletterzeit.</li>
+                  <li>Melde dich vor deinem Versuch bei der Stationscrew und beachte ihre Anweisungen.</li>
+                  <li>Starte früh, damit du alle Routen bis 16:00 Uhr entspannt schaffst.</li>
+                </ul>
                 <p className="mt-3 text-sm leading-relaxed text-primary">
                   Bring möglichst eine geeignete Sicherungsperson mit. Falls du ohne Partner:in kommst, melde dich
                   am Empfang; wir helfen dir, dich mit anderen Teilnehmenden zusammenzutun.
@@ -113,13 +130,26 @@ export const FinaleHandout = ({ kind }: { kind: HandoutKind }) => {
               <section className="border-l-4 border-secondary bg-[#f2dcab]/35 p-5" aria-labelledby="wertung">
                 <h2 id="wertung" className="font-headline text-xl text-primary">App & Wertung</h2>
                 <p className="mt-3 text-sm leading-relaxed text-primary">
-                  Halte dein Handy geladen und die Kletterliga-App angemeldet bereit. Scanne an jeder Route den QR-Code
-                  und trag dein Ergebnis bis 16:00 Uhr ein; die Stationscrew prüft mit. Bei Problemen sprich sie sofort an.
-                  Die Reihenfolge der Finalstarts geben wir nach dem Halbfinale bekannt.
+                  Halte dein Handy geladen und die Kletterliga-App angemeldet bereit. Trage nach jeder Route den
+                  letzten sicher gehaltenen nummerierten Griff ein; die Stationscrew prüft mit.
                 </p>
-                <Link to="/app/wettkampf" className="mt-4 inline-flex items-center gap-2 font-bold text-primary underline underline-offset-4">
-                  Wettkampftag in der App öffnen <ArrowRight size={17} aria-hidden="true" />
-                </Link>
+                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-primary">
+                  <li>Route in der App öffnen und den erreichten Griff auswählen. Ohne nummerierten Griff wählst du 0.</li>
+                  <li>Den QR-Code am Routenposten scannen.</li>
+                  <li>Wertung prüfen und „Ergebnis absenden“ drücken. Der QR-Scan allein speichert kein Ergebnis.</li>
+                </ol>
+                <p className="mt-3 text-sm leading-relaxed text-primary">
+                  Alle fünf Ergebnisse müssen bis 16:00 Uhr abgesendet sein. Ein Entwurf reicht nicht.
+                  Bei Problemen oder einem falschen Eintrag sprich sofort die Stationscrew oder René an.
+                </p>
+              </section>
+              <section className="border-l-4 border-secondary bg-[#f2dcab]/35 p-5" aria-labelledby="finale">
+                <h2 id="finale" className="font-headline text-xl text-primary">Finale ab 16:30 Uhr</h2>
+                <p className="mt-3 text-sm leading-relaxed text-primary">
+                  Die Top 6 je Wertungsklasse ziehen ins Finale ein. Dort wird eine Finalroute je Klasse geklettert.
+                  Die Reihenfolge der Finalstarts geben wir nach dem Halbfinale bekannt. Halte dich für die Aufrufe
+                  bereit und beachte die Ansagen der Orga.
+                </p>
               </section>
               <section className="border-l-4 border-secondary bg-[#f2dcab]/35 p-5" aria-labelledby="vorort">
                 <h2 id="vorort" className="font-headline text-xl text-primary">Rund um den Wettkampf</h2>
