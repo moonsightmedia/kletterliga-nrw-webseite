@@ -9,6 +9,7 @@ import { getCompetitionJudgeRoutes, type CompetitionStaffRoute } from "@/service
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearJudgeAccess, readJudgeAccess, saveJudgeAccess } from "@/lib/judgeAccessSession";
+import { JudgeOnboarding } from "@/app/components/JudgeOnboarding";
 import {
   COMPETITION_TIMER_DURATION_MS,
   COMPETITION_TIMER_WARNING_MS,
@@ -326,7 +327,8 @@ export default function JudgeDashboard() {
       {loadError && <div role="alert" className="rounded-xl border border-[#a15523]/30 bg-[#f2dcab] px-4 py-3 text-sm font-semibold text-[#003d55]">Verbindung unterbrochen. Die lokalen Uhren laufen weiter; prüfe die Verbindung, bevor du QR-Codes verwendest. <button type="button" className="underline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => void load(activeCode, true)}>Erneut prüfen</button></div>}
       <header className="flex flex-wrap items-start justify-between gap-4 pt-1">
         <div><p className="stitch-kicker text-[#a15523]">Halbfinale · {season}</p><h1 className="stitch-headline mt-2 text-2xl leading-none sm:text-3xl">Schiedsrichter-Station</h1><p className="mt-2 text-sm text-[#425967]">{visibleTimerRoutes.length} {visibleTimerRoutes.length === 1 ? "Route" : "Routen"} im Blick · 5 Minuten pro Start</p></div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {season && event && routes.length > 0 && <JudgeOnboarding key={season} season={season} />}
           <StitchButton variant={soundEnabled ? "navy" : "outline"} size="sm" className="min-h-11 tracking-normal" aria-pressed={soundEnabled} aria-label={`Signalton ${soundEnabled ? "ausschalten" : "einschalten"}`} onClick={() => setSound(!soundEnabled)} title={soundEnabled ? "Signalton ausschalten" : "Signalton einschalten"}>{soundEnabled ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}<span className="hidden min-[390px]:inline">Ton {soundEnabled ? "an" : "aus"}</span></StitchButton>
           <StitchButton variant="ghost" size="sm" className="min-h-11 tracking-normal" onClick={() => { eventSequence.current += 1; try { clearJudgeAccess(window.localStorage); } catch { /* Storage may be disabled. */ } pendingRememberCode.current = null; setActiveCode(""); setRoutes([]); setEvent(null); setQuickQrId(null); }}>Verlassen</StitchButton>
         </div>
