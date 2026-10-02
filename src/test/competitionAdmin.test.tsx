@@ -26,7 +26,7 @@ describe("competition admin", () => {
     expect(api.phase).not.toHaveBeenCalled(); expect(api.save).not.toHaveBeenCalled();
   });
   it("requires explicit confirmation to open", async () => {
-    view(); fireEvent.click(await screen.findByRole("button", { name: /^Ergebniseingabe/ }));
+    view(); fireEvent.click(await screen.findByRole("button", { name: /^Halbfinaleingabe/ }));
     expect(screen.getByText(/Griff 10–100 in Zehnerschritten = 10–100 Punkte/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Eingabe öffnen" }));
     expect(await screen.findByRole("alertdialog")).toHaveTextContent("Nach der ersten Öffnung sind diese Einstellungen gesperrt");
@@ -36,7 +36,7 @@ describe("competition admin", () => {
   });
   it("does not allow opening when configuration has unsaved edits", async () => {
     view(); fireEvent.change(await screen.findByLabelText("Name · Route 1"), { target: { value: "Neuer Name" } });
-    fireEvent.click(screen.getByRole("button", { name: /^Ergebniseingabe/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Halbfinaleingabe/ }));
     expect(screen.getByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
   });
@@ -57,15 +57,15 @@ describe("competition admin", () => {
     api.day.mockResolvedValue({ event: { phase: "open", opened_at: "2026-10-03" }, routes: [] });
     view(); expect(await screen.findByLabelText("Name · Route 1")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Eigene Farbe" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: /^Ergebniseingabe/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Halbfinaleingabe/ }));
     expect(screen.getByRole("button", { name: "Eingabe schließen" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: /^Schiedsrichter/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Halbfinal-Schiedsrichter/ }));
     expect(screen.getByRole("button", { name: "Zugangscode erzeugen" })).toBeEnabled();
   });
   it("generates a strong shared code only after an explicit admin action", async () => {
     api.setJudgeCode.mockResolvedValue(null);
     view();
-    fireEvent.click(await screen.findByRole("button", { name: /^Schiedsrichter/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Halbfinal-Schiedsrichter/ }));
     await screen.findByRole("button", { name: "Zugangscode erzeugen" });
     expect(api.setJudgeCode).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Zugangscode erzeugen" }));
@@ -112,7 +112,7 @@ describe("competition admin", () => {
   it("requires saving the fixed scoring before opening an old unconfigured draft", async () => {
     api.admin.mockResolvedValue({ config: { ...config, zone_points: Array(11).fill(0) }, staff: [], results: [] });
     view();
-    fireEvent.click(await screen.findByRole("button", { name: /^Ergebniseingabe/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Halbfinaleingabe/ }));
     expect(await screen.findByRole("button", { name: "Eingabe öffnen" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Änderungen speichern" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
@@ -131,7 +131,7 @@ describe("competition admin", () => {
   });
   it("keeps operations collapsed and opens one menu at a time", async () => {
     view();
-    const entry = await screen.findByRole("button", { name: /^Ergebniseingabe/ });
+    const entry = await screen.findByRole("button", { name: /^Halbfinaleingabe/ });
     expect(entry).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("button", { name: "Eingabe öffnen" })).not.toBeInTheDocument();
     fireEvent.click(entry);

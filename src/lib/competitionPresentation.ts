@@ -60,11 +60,11 @@ export function classNextStep(
   const started = item && ["running", "review", "final"].includes(item.phase);
   if (!started && semifinalPhase !== "closed")
     return {
-      tab: "semifinal",
+      tab: semifinalPhase === "open" ? "semifinal" : "setup",
       title:
         semifinalPhase === "open"
           ? "Halbfinale live verfolgen"
-          : "Halbfinale vorbereiten",
+          : "Routen & Zugang prüfen",
       detail:
         semifinalPhase === "open"
           ? "QR-bestätigte Ergebnisse erscheinen automatisch. Fehlende Routeneinträge im Blick behalten."

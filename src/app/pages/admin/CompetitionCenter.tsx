@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowRight, ExternalLink, RefreshCw } from "lucide-react";
 import { classNextStep } from "@/lib/competitionPresentation";
 import { validFinalPassword } from "@/lib/finalPassword";
@@ -33,6 +33,7 @@ import {
   CompetitionButton,
   CompetitionField,
   CompetitionRosterPanel,
+  CompetitionFinalRoutes,
   CompetitionFinalPanel,
 } from "@/app/components/CompetitionAdminPanels";
 import CompetitionDisplayPanel from "@/app/components/CompetitionDisplayPanel";
@@ -133,7 +134,8 @@ export function CompetitionCenterContent({
   season,
   settingsLoading = false,
   source = defaultSource,
-  semifinalConfiguration = <LeagueCompetition />,
+  semifinalConfiguration,
+  certificateConfiguration,
   tvHref,
   printHref = "/app/admin/league/wettkampf/druck",
   stationHref = "/app/schiedsrichter/finale",
@@ -144,6 +146,7 @@ export function CompetitionCenterContent({
   settingsLoading?: boolean;
   source?: CompetitionCenterSource;
   semifinalConfiguration?: ReactNode;
+  certificateConfiguration?: ReactNode;
   tvHref?: string;
   printHref?: string;
   stationHref?: string;
@@ -157,7 +160,22 @@ export function CompetitionCenterContent({
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [notice, setNotice] = useState("");
-  const [tab, setTab] = useState(initialTab);
+  const [params, setParams] = useSearchParams();
+  const supportedTabs = ["overview", "setup", "semifinal", "roster", "final", "display", "certificates"];
+  const requestedTab = params.get("bereich") ?? initialTab;
+  const tab = supportedTabs.includes(requestedTab) ? requestedTab : "overview";
+  const requestedSetup = params.get("einrichtung") ?? "routes";
+  const setupTab = ["routes", "final-routes", "access"].includes(requestedSetup) ? requestedSetup : "routes";
+  const [setupVisited, setSetupVisited] = useState(tab === "setup");
+  useEffect(() => { if (tab === "setup") setSetupVisited(true); }, [tab]);
+  function setTab(value: string) {
+    const next = new URLSearchParams(params); next.set("bereich", value);
+    setParams(next); setNotice("");
+  }
+  function setSetupTab(value: string) {
+    const next = new URLSearchParams(params); next.set("einrichtung", value);
+    setParams(next); setNotice("");
+  }
   const [clock, setClock] = useState(Date.now);
   const [updated, setUpdated] = useState<Date | null>(null);
   const sequence = useRef(0);
@@ -311,7 +329,7 @@ export function CompetitionCenterContent({
             {demo && " · Demo"}
           </p>
           <h1 className="[font-family:inherit] text-2xl font-bold tracking-normal">
-            Wettkampfzentrale
+            Halbfinale & Finale
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -357,19 +375,20 @@ export function CompetitionCenterContent({
       ) : !data || !season ? (
         <p>Die Daten sind nicht verfügbar.</p>
       ) : (
-        <Tabs value={tab} onValueChange={(value) => { setTab(value); setNotice(""); }}>
-          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b border-[#003d55]/15 bg-transparent p-0">
+        <Tabs value={["roster", "final"].includes(tab) ? "finale" : tab} onValueChange={(value) => setTab(value === "finale" ? "roster" : value)}>
+          <TabsList aria-label="Wettkampftag" className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl bg-[#ebe8df] p-1 sm:flex sm:flex-wrap sm:justify-start">
             {[
               ["overview", "Übersicht"],
+              ["setup", "Einrichtung"],
               ["semifinal", "Halbfinale"],
-              ["roster", "Finalstartlisten"],
-              ["final", "Finale"],
-              ["display", "Anzeige & Hinweise"],
+              ["finale", "Finale"],
+              ["display", "TV & Hinweise"],
+              ["certificates", "Abschluss"],
             ].map(([value, label]) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="min-h-12 rounded-none border-b-2 border-transparent px-3 text-sm font-medium shadow-none data-[state=active]:border-[#a15523] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                className="min-h-11 rounded-lg px-3 text-sm font-medium shadow-none focus-visible:ring-2 focus-visible:ring-[#a15523] data-[state=active]:bg-white data-[state=active]:text-[#003d55] data-[state=active]:shadow-sm"
               >
                 {label}
               </TabsTrigger>
@@ -504,97 +523,20 @@ export function CompetitionCenterContent({
               </div>
             </details>
           </TabsContent>
-          <TabsContent value="semifinal" className="space-y-5 pt-4">
-            <SemifinalAdminRanking
-              data={data}
-              admin={semiAdmin}
-              phase={semifinalPhase}
-              busy={busy}
-              updated={updated}
-              errorMessage={error}
-              onSave={(edit) =>
-                run(
-                  () =>
-                    edit.kind === "not-climbed"
-                      ? source.settleSemifinal(
-                          season,
-                          edit.profileId,
-                          edit.routeId,
-                          edit.reason,
-                        )
-                      : edit.resultId
-                        ? source.correctCompetitionResult({
-                            resultId: edit.resultId,
-                            expected: edit.expected,
-                            zone: edit.zone,
-                            reason: edit.reason,
-                          })
-                        : source.enterSemifinalResult(
-                            season,
-                            edit.profileId,
-                            edit.routeId,
-                            edit.zone,
-                            edit.reason,
-                          ),
-                  edit.kind === "not-climbed"
-                    ? "Nicht geklettert dokumentiert."
-                    : edit.resultId
-                      ? "Halbfinalergebnis geändert."
-                      : "Halbfinalergebnis eingetragen.",
-                )
-              }
-            />
-            <details className="rounded-xl border border-[#003d55]/15 bg-white p-4">
-              <summary className="cursor-pointer py-1 text-sm font-semibold">
-                Einstellungen & Eingabestatus
-              </summary>
-              {semifinalPhase === "open" && (
-                <CompetitionButton
-                  className="mt-3"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(
-                      () => source.setCompetitionPhase(season, "closed"),
-                      "Halbfinaleingabe geschlossen.",
-                    )
-                  }
-                >
-                  Eingabe vorzeitig schließen
-                </CompetitionButton>
-              )}
-              <div className="mt-4">{semifinalConfiguration}</div>
-            </details>
-          </TabsContent>
-          <TabsContent value="roster" className="pt-4">
-            <CompetitionRosterPanel
-              key={activeKey}
-              data={data}
-              season={season}
-              busy={busy}
-              error={error}
-              source={source}
-              run={run}
-              printHref={printHref}
-              group={activePair?.[1]}
-              phase={semifinalPhase}
-              onSemifinal={() => setTab("semifinal")}
-            />
-          </TabsContent>
-          <TabsContent value="final" className="space-y-4 pt-4">
-            <CompetitionFinalPanel
-              key={activeKey}
-              data={data}
-              season={season}
-              busy={busy}
-              error={error}
-              source={source}
-              run={run}
-              printHref={printHref}
-              finalClass={activeFinal}
-              stationHref={stationHref}
-              onRoster={() => setTab("roster")}
-            />
+          <TabsContent value="setup" forceMount hidden={tab !== "setup"} className="pt-4 data-[state=inactive]:hidden">
+            {setupVisited && <div className="space-y-5">
+              <nav aria-label="Wettkampf einrichten">
+                <div className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b border-[#003d55]/15 bg-transparent p-0">
+                  {[["routes", "Halbfinalrouten"], ["final-routes", "Finalrouten"], ["access", "Zugänge & Eingabe"]].map(([value, label]) => <button key={value} type="button" aria-current={setupTab === value ? "page" : undefined} onClick={() => setSetupTab(value)} className={`min-h-11 border-b-2 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523] ${setupTab === value ? "border-[#a15523] font-semibold" : "border-transparent text-[#526570]"}`}>{label}</button>)}
+                </div>
+              </nav>
+              <div hidden={setupTab === "final-routes"}>
+                {semifinalConfiguration ?? <LeagueCompetition section={setupTab === "access" ? "access" : "routes"} />}
+              </div>
+              <div hidden={setupTab !== "final-routes"}>
+                <CompetitionFinalRoutes data={data} season={season} busy={busy} source={source} run={run} />
+              </div>
+              <div hidden={setupTab !== "access"}>
             <details
               className="rounded-xl border border-[#003d55]/15 bg-white p-4"
               open={!data.final_password_set}
@@ -659,9 +601,96 @@ export function CompetitionCenterContent({
                 </CompetitionButton>
               </div>
             </details>
+              </div>
+            </div>}
+          </TabsContent>
+          <TabsContent value="certificates" className="pt-4">
+            {certificateConfiguration ?? <LeagueCompetition section="certificates" />}
+          </TabsContent>
+          <TabsContent value="semifinal" className="space-y-5 pt-4">
+            <SemifinalAdminRanking
+              data={data}
+              admin={semiAdmin}
+              phase={semifinalPhase}
+              busy={busy}
+              updated={updated}
+              errorMessage={error}
+              onSave={(edit) =>
+                run(
+                  () =>
+                    edit.kind === "not-climbed"
+                      ? source.settleSemifinal(
+                          season,
+                          edit.profileId,
+                          edit.routeId,
+                          edit.reason,
+                        )
+                      : edit.resultId
+                        ? source.correctCompetitionResult({
+                            resultId: edit.resultId,
+                            expected: edit.expected,
+                            zone: edit.zone,
+                            reason: edit.reason,
+                          })
+                        : source.enterSemifinalResult(
+                            season,
+                            edit.profileId,
+                            edit.routeId,
+                            edit.zone,
+                            edit.reason,
+                          ),
+                  edit.kind === "not-climbed"
+                    ? "Nicht geklettert dokumentiert."
+                    : edit.resultId
+                      ? "Halbfinalergebnis geändert."
+                      : "Halbfinalergebnis eingetragen.",
+                )
+              }
+            />
+
+          </TabsContent>
+          <TabsContent value="finale" className="pt-4">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList aria-label="Finale bearbeiten" className="mb-4 h-auto rounded-lg bg-white p-1">
+                <TabsTrigger value="roster" className="min-h-11 px-4">Finalstartlisten</TabsTrigger>
+                <TabsTrigger value="final" className="min-h-11 px-4">Finalergebnisse</TabsTrigger>
+              </TabsList>
+          <TabsContent value="roster">
+            <CompetitionRosterPanel
+              key={activeKey}
+              data={data}
+              season={season}
+              busy={busy}
+              error={error}
+              source={source}
+              run={run}
+              printHref={printHref}
+              group={activePair?.[1]}
+              phase={semifinalPhase}
+              onSemifinal={() => setTab("semifinal")}
+            />
+          </TabsContent>
+          <TabsContent value="final" className="space-y-4 pt-4">
+            <CompetitionFinalPanel
+              key={activeKey}
+              data={data}
+              season={season}
+              busy={busy}
+              error={error}
+              source={source}
+              run={run}
+              printHref={printHref}
+              finalClass={activeFinal}
+              stationHref={stationHref}
+              onRoster={() => setTab("roster")}
+            />
+
+          </TabsContent>
+            </Tabs>
           </TabsContent>
           <TabsContent
             value="display"
+            hidden={tab !== "display"}
             forceMount
             className="pt-4 data-[state=inactive]:hidden"
           >

@@ -1,5 +1,21 @@
 # Finaltag · Kurzanleitung für René und die Zeitnahme
 
+## Neue Navigation · 2. Oktober 2026
+
+Im Adminmenü **Wettkampftag → Halbfinale & Finale** öffnen. Dort gilt jetzt:
+
+- **Einrichtung → Halbfinalrouten:** Routen und Klassenzuordnung vorbereiten und speichern.
+- **Einrichtung → Finalrouten:** Namen und letzte Griffnummer anlegen. Die Klassen werden erst unter **Finale → Finalstartlisten** zugeordnet.
+- **Einrichtung → Zugänge & Eingabe:** Halbfinalzugang, Öffnen und Schließen der Halbfinaleingabe sowie das gemeinsame Finalpasswort.
+- **Halbfinale:** Rangliste, fehlende Einträge und Korrekturen direkt beim Teilnehmer.
+- **Finale → Finalstartlisten / Finalergebnisse:** Finalfeld und Drucklisten beziehungsweise Erfassungskontrolle und Papierabgleich.
+- **TV & Hinweise:** Öffentliche Bildschirmansicht und Mitteilungen steuern.
+- **Abschluss:** Urkunden der bisherigen Halbfinalwertung. Die finale Ergebnisliste wird weiterhin unter **Finalergebnisse** gedruckt oder exportiert.
+
+![Neue Adminnavigation mit getrennten Routeneinstellungen](screenshots/admin-navigation-2026-10-02.jpg)
+
+Die folgenden älteren Screenshots zeigen den Ablauf; Menüpositionen wurden wie oben beschrieben gebündelt.
+
 Die Bilder zeigen die überarbeiteten **App-Oberflächen mit erfundenen Testdaten**. [Lokal ausprobieren](http://127.0.0.1:5337/demo/finaltag), solange der Entwicklungsserver läuft. Die Testdaten bleiben im Browser. **Testdaten zurücksetzen** stellt drei Klassen wieder her: Vorstieg U18 hat eine freigegebene Startliste, Vorstieg Ü18 läuft bereits und Toprope hat eine offene Halbfinalroute.
 
 ## 1. Über die Übersicht einsteigen
@@ -28,7 +44,7 @@ In **Finalstartlisten** stehen die Starts zunächst vom schlechtesten qualifizie
 
 ## 3. Klasse starten und digital erfassen
 
-In **Finale** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Im aufklappbaren Bereich **Finalpasswort** legt René einmal ein gemeinsames Passwort für beide Handys fest (mindestens zwölf Zeichen). Ein neues Passwort ersetzt das alte auf beiden Handys.
+In **Finale → Finalergebnisse** aktuelle Startliste drucken und verteilen, dann **Klasse starten**. Erst danach ist die digitale Eingabe offen. Unter **Einrichtung → Zugänge & Eingabe → Finalpasswort** legt René einmal ein gemeinsames Passwort für beide Handys fest (mindestens zwölf Zeichen). Ein neues Passwort ersetzt das alte auf beiden Handys.
 
 Die Zeitnehmenden öffnen die **Finaleingabe**, wählen einmal **Handy 1** beziehungsweise **Handy 2** und geben dasselbe Finalpasswort ein. Beide sehen alle freigegebenen Klassen. Die Handynummer dient nur dem Protokoll. **Klasse antippen → Teilnehmer antippen → Griff oder TOP und Minuten/Sekunden eintragen → Eintrag prüfen → Ergebnis speichern.** Die Prüfung zeigt Name, Klasse, Route, Startposition und Werte. Nach dem Speichern bleibt die Teilnehmerliste derselben Klasse offen; das Ergebnis steht direkt beim Namen.
 
@@ -60,7 +76,7 @@ Die Teilnehmer-Rangliste öffnet bei bestätigten Finaldaten direkt das **Finale
 
 ## 5. TV läuft automatisch
 
-Im echten Betrieb öffnet der TV-Browser **`/live/2026` ohne Anmeldung**. René steuert den Bildschirm unter **Anzeige & Hinweise**. Halbfinale oder Finale wählen, gewünschte Klassen auswählen, Wechselintervall einstellen und **Anzeige speichern**. **Klassen automatisch wechseln** rotiert über die angekreuzten Klassen. Alternativ eine Klasse fixieren. Bearbeitete Einstellungen bleiben beim Aktualisieren oder Ansichtswechsel erhalten.
+Im echten Betrieb öffnet der TV-Browser **`/live/2026` ohne Anmeldung**. René steuert den Bildschirm unter **TV & Hinweise**. Halbfinale oder Finale wählen, gewünschte Klassen auswählen, Wechselintervall einstellen und **Anzeige speichern**. **Klassen automatisch wechseln** rotiert über die angekreuzten Klassen. Alternativ eine Klasse fixieren. Bearbeitete Einstellungen bleiben beim Aktualisieren oder Ansichtswechsel erhalten.
 
 ![TV-Einstellungen und aktueller Hinweis](screenshots/tv-steuerung-mobil.jpg)
 

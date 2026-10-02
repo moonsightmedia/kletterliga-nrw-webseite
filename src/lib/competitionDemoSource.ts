@@ -10,6 +10,7 @@ import type {
 } from "@/services/competitionFinal";
 import type {
   CompetitionResult,
+  CompetitionConfig,
   CompetitionStanding,
 } from "@/services/competitionDay";
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
@@ -21,6 +22,9 @@ type Store = {
   admin: FinalAdmin;
   codes: Record<number, string>;
   passwordHash?: string;
+  semifinalConfig?: CompetitionConfig;
+  openedAt?: string | null;
+  semifinalJudgeConfigured?: boolean;
   requests: string[];
   changed: string;
 };
@@ -358,7 +362,7 @@ export const demoSource: CompetitionCenterSource & {
   getCompetitionAdmin: async () => {
     const { admin } = read();
     return {
-      config: {
+      config: read().semifinalConfig ?? {
         routes: Array.from({ length: 5 }, (_, index) => ({
           number: index + 1,
           name: `Halbfinalroute ${index + 1}`,
@@ -798,4 +802,40 @@ export function demoLiveData(value: Store): LiveData {
     classes,
     notices: admin.notices,
   };
+}
+
+export const demoConfigurationSource: import("@/app/pages/admin/LeagueCompetition").LeagueConfigurationSource = {
+  getCompetitionAdmin: demoSource.getCompetitionAdmin,
+  correctCompetitionResult: demoSource.correctCompetitionResult,
+  setCompetitionPhase: async (season, phase) => { mutate((value) => { if (phase === "open") value.openedAt ??= now(); }); await demoSource.setCompetitionPhase(season, phase); },
+  getCompetitionDay: async (season) => { const value=read(), config=(await demoSource.getCompetitionAdmin(season)).config; return { event: { id: "demo-event", season_year: season, phase: value.admin.phase, opened_at: value.openedAt ?? (value.admin.phase === "draft" ? null : "2026-10-03T08:00:00Z"), zone_points: config.zone_points, flash_bonus: 0, submission_deadline_at: value.admin.submission_deadline_at }, eligible: false, league: null, class_label: null, routes: config.routes.map(route=>({...route,id:`semi${route.number}`})), results: [], is_staff: false, is_admin: true }; },
+  listAdminSemifinalRegistrations: async (season) => read().admin.semifinal.map(row=>({ id: row.profile_id, profile_id: row.profile_id, season_year: season, registration_status: "registered", created_at: now(), profiles: { id: row.profile_id, first_name: row.name, last_name: null, email: null, role: "participant", archived_at: null, participation_activated_at: now() }, approved_league: row.league, approved_class_label: row.class_label, eligibility_status: "eligible" })),
+  getCompetitionJudgeAccessStatus: async () => read().semifinalJudgeConfigured ?? true,
+  setCompetitionJudgePassword: async () => { mutate(value=>{ value.semifinalJudgeConfigured=true; }); },
+  saveCompetitionConfig: async (_season, config) => { mutate(value=> { if(value.admin.phase !== "draft" || value.openedAt) throw Error("Zuordnung bereits gesperrt."); value.semifinalConfig=structuredClone(config); }); },
+  saveCompetitionRouteDraft: async (_season, routes) => { mutate(value=> { if(value.admin.phase !== "draft" || value.openedAt) throw Error("Zuordnung bereits gesperrt."); value.semifinalConfig={routes:structuredClone(routes),assignments:[],zone_points:Array.from({length:11},(_,i)=>i*10),flash_bonus:0}; }); },
+  getCertificatePublication: async () => ({published_at:null,revision:null,certificate_count:0,needs_refresh:false}),
+  publishFinaleCertificates: async () => { throw Error("Urkundenfreigabe nur im echten Adminbereich."); },
+};
+export function prepareCompetitionDemo() {
+  const value = seed();
+  value.admin.phase = "draft";
+  value.openedAt = null;
+  value.admin.classes = [];
+  value.admin.routes = [];
+  value.admin.final_password_set = false;
+  value.admin.semifinal_results = [];
+  value.admin.semifinal = value.admin.semifinal.map((row) => ({
+    ...row,
+    points: 0,
+    completed: 0,
+    rank: 1,
+    missing: Array.from({ length: 5 }, (_, index) => ({
+      route_id: `semi${index + 1}`,
+      number: index + 1,
+      settled: false,
+    })),
+  }));
+  if (value.admin.display) value.admin.display.phase = "semifinal";
+  write(value);
 }

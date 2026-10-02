@@ -23,9 +23,12 @@ const createJudgeCode = () => {
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
 };
 
-export default function LeagueCompetition() {
+const defaultConfigurationSource = { getCompetitionDay, getCompetitionAdmin, listAdminSemifinalRegistrations, getCompetitionJudgeAccessStatus, getCertificatePublication, saveCompetitionConfig, saveCompetitionRouteDraft, setCompetitionPhase, setCompetitionJudgePassword, correctCompetitionResult, publishFinaleCertificates };
+export type LeagueConfigurationSource = typeof defaultConfigurationSource;
+
+export default function LeagueCompetition({ section = "all", seasonOverride, source = defaultConfigurationSource }: { section?: "all" | "routes" | "access" | "certificates"; seasonOverride?: string; source?: LeagueConfigurationSource }) {
   const { settings, loading: settingsLoading } = useSeasonSettings();
-  const season = settings?.season_year?.trim();
+  const season = seasonOverride ?? settings?.season_year?.trim();
   const [day, setDay] = useState<CompetitionDay | null>(null);
   const [admin, setAdmin] = useState<CompetitionAdminData | null>(null);
   const [certificatePublication, setCertificatePublication] = useState<CertificatePublication | null>(null);
@@ -54,7 +57,7 @@ export default function LeagueCompetition() {
     if (!season) return;
     setLoading(true);
     try {
-      const [current, administration, roster, codeConfigured, publication] = await Promise.all([getCompetitionDay(season), getCompetitionAdmin(season), listAdminSemifinalRegistrations(season), getCompetitionJudgeAccessStatus(season), getCertificatePublication(season)]);
+      const [current, administration, roster, codeConfigured, publication] = await Promise.all([source.getCompetitionDay(season), source.getCompetitionAdmin(season), source.listAdminSemifinalRegistrations(season), source.getCompetitionJudgeAccessStatus(season), source.getCertificatePublication(season)]);
       setDay(current); setAdmin(administration); setRegistrations(roster);
       setCertificatePublication(publication);
       setJudgeCodeConfigured(codeConfigured);
@@ -66,7 +69,7 @@ export default function LeagueCompetition() {
       return true;
     } catch (err) { setError(errorText(err)); return false; }
     finally { setLoading(false); }
-  }, [season]);
+  }, [season, source]);
   useEffect(() => { if (!settingsLoading) { if (season) void reload(); else { setLoading(false); setError("Die Saison ist nicht verfügbar. Bitte lade die Seite erneut."); } } }, [reload, season, settingsLoading]);
   const classes = useMemo(() => registeredCompetitionClasses(registrations), [registrations]);
   const classRows = useMemo(() => {
@@ -118,16 +121,17 @@ export default function LeagueCompetition() {
 
   return <div className="mx-auto max-w-6xl space-y-6 pb-12 text-[#003d55]">
     <header className="flex flex-wrap items-center justify-between gap-4">
-      <div><p className="stitch-kicker text-[#a15523]">Halbfinale · {season ?? "–"}</p><h1 className="stitch-headline mt-2 text-3xl">Wettkampftag</h1></div>
+      <div><p className="stitch-kicker text-[#a15523]">Halbfinale · {season ?? "–"}</p><h2 className="mt-2 text-xl font-semibold">{section === "routes" ? "Halbfinalrouten" : section === "access" ? "Halbfinalzugang" : section === "certificates" ? "Urkunden" : "Wettkampftag"}</h2></div>
       <div className="flex flex-wrap items-center gap-2">
         <StitchBadge tone={day?.event?.phase === "open" ? "navy" : "cream"}>{day?.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</StitchBadge>
         <StitchButton variant="ghost" size="icon" aria-label="Neu laden" disabled={busy || loading || dirty} onClick={() => void reload()}><RefreshCw size={18} /></StitchButton>
       </div>
     </header>
     {error && <div role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</div>}
+    {dirty && section === "access" && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-950">Routenänderungen zuerst unter Halbfinalrouten speichern.</p>}
     {notice && <div role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-900">{notice}</div>}
     {loading || settingsLoading ? <p role="status">Wettkampfdaten werden geladen …</p> : !admin || !day ? <p>Die Verwaltung ist erst nach erfolgreichem Laden verfügbar.</p> : <>
-      <section aria-labelledby="competition-routes-heading" className="space-y-4">
+      {(section === "all" || section === "routes") && <section aria-labelledby="competition-routes-heading" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="competition-routes-heading" className="stitch-headline text-xl">Routen <span className="text-[#a15523]">{config.routes.length}</span></h2>
           {!locked && <div className="flex flex-wrap gap-2">
@@ -184,22 +188,22 @@ export default function LeagueCompetition() {
           </div>
           <StitchButton disabled={busy || (!canSaveConfig && !canSaveRouteDraft)} onClick={() => {
             if (!season) return;
-            if (canSaveConfig) void action(() => saveCompetitionConfig(season, config), "Routen und Klassen gespeichert.", true);
-            else if (canSaveRouteDraft) void action(() => saveCompetitionRouteDraft(season, config.routes), "Routen gespeichert. Die Klassen kannst du als Nächstes zuordnen.", true);
+            if (canSaveConfig) void action(() => source.saveCompetitionConfig(season, config), "Routen und Klassen gespeichert.", true);
+            else if (canSaveRouteDraft) void action(() => source.saveCompetitionRouteDraft(season, config.routes), "Routen gespeichert. Die Klassen kannst du als Nächstes zuordnen.", true);
           }}><Check size={18} /> Änderungen speichern</StitchButton>
         </div>}
-      </section>
-      <Accordion type="single" collapsible value={operationsMenu} onValueChange={setOperationsMenu} className="space-y-2" aria-label="Wettkampfbetrieb">
+      </section>}
+      {(section === "all" || section === "access") && <Accordion type="single" collapsible value={operationsMenu} onValueChange={setOperationsMenu} className="space-y-2">
         <AccordionItem value="entry" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
-          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ToggleRight size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebniseingabe</span><span className="block text-xs font-normal text-[#526b72]">{day.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</span></span></AccordionTrigger>
+          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ToggleRight size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Halbfinaleingabe</span><span className="block text-xs font-normal text-[#526b72]">{day.event ? phaseLabels[day.event.phase] : "In Vorbereitung"}</span></span></AccordionTrigger>
           <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
-          <p className="text-sm">Griff 10–100 in Zehnerschritten = 10–100 Punkte. Kein nummerierter Griff = 0. Über fünf Routen sind maximal 500 Punkte möglich.</p>
+          {section === "all" && <p className="text-sm">Griff 10–100 in Zehnerschritten = 10–100 Punkte. Kein nummerierter Griff = 0. Über fünf Routen sind maximal 500 Punkte möglich.</p>}
           <StitchButton disabled={busy || !day.event || dirty || (day.event.phase !== "open" && (Boolean(validation) || scoringNeedsSave))} onClick={() => setPhaseDialog(day.event?.phase === "open" ? "closed" : "open")}>{day.event?.phase === "open" ? "Eingabe schließen" : "Eingabe öffnen"}</StitchButton>
           <p className="text-xs leading-5 text-[#526b72]">Nach der ersten Öffnung ist die Routenzuordnung gesperrt.</p>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="judges" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
-          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><Shield size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Schiedsrichter</span><span className="block text-xs font-normal text-[#526b72]">{judgeCodeConfigured ? "Zugangscode aktiv" : "Zugangscode noch nicht eingerichtet"}</span></span></AccordionTrigger>
+          <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><Shield size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Halbfinal-Schiedsrichter</span><span className="block text-xs font-normal text-[#526b72]">{judgeCodeConfigured ? "Zugangscode aktiv" : "Zugangscode noch nicht eingerichtet"}</span></span></AccordionTrigger>
           <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
           <StitchButton asChild variant="outline" size="sm"><Link to="/app/schiedsrichter"><QrCode size={16} /> Schiedsrichteransicht</Link></StitchButton>
           {!day.event ? <p className="text-sm">Zuerst die Routen speichern.</p> : <>
@@ -209,7 +213,7 @@ export default function LeagueCompetition() {
           </>}
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="results" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
+        {section === "all" && <AccordionItem value="results" className="overflow-hidden rounded-xl border-0 bg-[#ede9e1]">
           <AccordionTrigger className="gap-3 px-4 text-left hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] sm:px-5"><ListOrdered size={20} className="shrink-0" /><span className="min-w-0 flex-1"><span className="stitch-headline block text-lg">Ergebnisse</span><span className="block text-xs font-normal text-[#526b72]">{admin.results.length} Einträge · Kontrolle und Korrekturen</span></span></AccordionTrigger>
           <AccordionContent className="space-y-3 px-4 pb-5 sm:px-5">
             <Link className="inline-block min-h-11 py-3 text-sm font-bold underline underline-offset-4" to="/app/wettkampf/rangliste">Live-Wertung öffnen</Link>
@@ -218,24 +222,24 @@ export default function LeagueCompetition() {
         {admin.results.filter((r) => r.name.toLocaleLowerCase("de").includes(resultSearch.toLocaleLowerCase("de"))).map((result) => <StitchCard key={result.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><h3 className="font-bold">{result.name}</h3><p className="text-sm">{leagueLabel(result.league)} · {result.class_label} · Route {day.routes.find((r) => r.id === result.route_id)?.number ?? "–"}</p><p className="mt-1">{competitionGripLabel(result.zone)} · <strong>{result.points} Punkte</strong></p></div><StitchButton size="sm" variant="outline" disabled={busy || dirty} onClick={() => { setCorrection(result); setCorrectZone(result.zone); setReason(""); }}>Korrigieren</StitchButton></StitchCard>)}
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
-      <section className="rounded-xl border border-[#003d55]/15 bg-[#f2dcab] p-5" aria-labelledby="certificate-release-heading">
-        <h2 id="certificate-release-heading" className="stitch-headline text-xl">Finalevent-Urkunden</h2>
+      }</Accordion>}
+      {(section === "all" || section === "certificates") && <section className="rounded-xl border border-[#003d55]/15 bg-white p-5" aria-labelledby="certificate-release-heading">
+        <h2 id="certificate-release-heading" className="stitch-headline text-xl">Urkunden · Halbfinalwertung</h2>
         <p className="mt-2 text-sm leading-6">{certificatePublication?.published_at
           ? `Freigegeben: ${new Date(certificatePublication.published_at).toLocaleString("de-DE")} · Version ${certificatePublication.revision} · ${certificatePublication.certificate_count} Urkunden.`
-          : "Noch nicht freigegeben. Erst nach Prüfung der finalen Platzierungen veröffentlichen."}</p>
+          : "Platzierungen aus der Halbfinalwertung. Erst nach Abschluss und Prüfung freigeben."}</p>
         <p className="mt-1 text-xs leading-5 text-[#526b72]">Die Freigabe speichert den aktuellen Ergebnisstand. Korrigierte Ergebnisse erscheinen auf Urkunden erst nach erneuter Freigabe.</p>
         {certificatePublication?.needs_refresh && <p role="alert" className="mt-2 rounded-lg bg-amber-100 p-3 text-sm font-bold text-amber-900">Seit der letzten Freigabe wurden Ergebnisse geändert. Bitte Platzierungen prüfen und den Urkundenstand aktualisieren.</p>}
         <StitchButton type="button" className="mt-4" disabled={busy || dirty || day.event?.phase !== "closed" || !admin.results.length}
           onClick={() => setCertificateDialog(true)}>{certificatePublication?.published_at ? "Urkundenstand aktualisieren" : "Urkunden freigeben"}</StitchButton>
       </section>
-    </>}
+    }</>}
     <AlertDialog open={certificateDialog} onOpenChange={(open) => !open && !busy && setCertificateDialog(false)}>
       <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">
-        <AlertDialogHeader><AlertDialogTitle>{certificatePublication?.published_at ? "Urkundenstand aktualisieren?" : "Finalevent-Urkunden freigeben?"}</AlertDialogTitle>
+        <AlertDialogHeader><AlertDialogTitle>{certificatePublication?.published_at ? "Urkundenstand aktualisieren?" : "Urkunden aus Halbfinalwertung freigeben?"}</AlertDialogTitle>
           <AlertDialogDescription className="text-[#003d55]">Prüfe vorher alle Platzierungen. Nur angemeldete Teilnehmende mit mindestens einem Routenergebnis erhalten eine Urkunde. Die freigegebenen Urkunden sind danach sofort im Profil verfügbar.</AlertDialogDescription></AlertDialogHeader>
         <AlertDialogFooter><AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
-          <StitchButton disabled={busy} onClick={async () => { if (season && await action(() => publishFinaleCertificates(season), "Finalevent-Urkunden freigegeben.")) setCertificateDialog(false); }}>Freigeben</StitchButton></AlertDialogFooter>
+          <StitchButton disabled={busy} onClick={async () => { if (season && await action(() => source.publishFinaleCertificates(season), "Finalevent-Urkunden freigegeben.")) setCertificateDialog(false); }}>Freigeben</StitchButton></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
     <AlertDialog open={routeToRemove !== null} onOpenChange={(open) => !open && setRouteToRemove(null)}>
@@ -255,7 +259,7 @@ export default function LeagueCompetition() {
         <AlertDialogFooter><AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel><StitchButton disabled={busy} onClick={async () => {
           if (!season || busy) return;
           const code = createJudgeCode();
-          const ok = await action(() => setCompetitionJudgePassword(season, code), judgeCodeConfigured ? "Alter Schiedsrichter-Code ersetzt." : "Schiedsrichter-Code eingerichtet.");
+          const ok = await action(() => source.setCompetitionJudgePassword(season, code), judgeCodeConfigured ? "Alter Schiedsrichter-Code ersetzt." : "Schiedsrichter-Code eingerichtet.");
           if (ok) { setGeneratedJudgeCode(code); setJudgeCodeConfigured(true); setCopyError(""); setJudgeCodeDialog(false); }
         }}>{busy ? "Wird erzeugt …" : "Code jetzt erzeugen"}</StitchButton></AlertDialogFooter>
       </AlertDialogContent>
@@ -270,7 +274,7 @@ export default function LeagueCompetition() {
         <AlertDialogFooter>
           <AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
           <StitchButton disabled={busy} onClick={async () => {
-            if (season && phaseDialog && await action(() => setCompetitionPhase(season, phaseDialog), "Eingabestatus aktualisiert.")) setPhaseDialog(null);
+            if (season && phaseDialog && await action(() => source.setCompetitionPhase(season, phaseDialog), "Eingabestatus aktualisiert.")) setPhaseDialog(null);
           }}>{busy ? "Wird gespeichert …" : "Bestätigen"}</StitchButton>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -284,7 +288,7 @@ export default function LeagueCompetition() {
         <AlertDialogFooter>
           <AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
           <StitchButton className="whitespace-normal tracking-[0.1em]" disabled={busy || reason.trim().length < 5} onClick={async () => {
-            if (correction && await action(() => correctCompetitionResult({ resultId: correction.id, zone: correctZone, reason: reason.trim() }), "Korrektur gespeichert und protokolliert.")) setCorrection(null);
+            if (correction && await action(() => source.correctCompetitionResult({ resultId: correction.id, zone: correctZone, reason: reason.trim() }), "Korrektur gespeichert und protokolliert.")) setCorrection(null);
           }}>Korrektur speichern</StitchButton>
         </AlertDialogFooter>
       </AlertDialogContent>
