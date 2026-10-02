@@ -6,6 +6,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { StitchButton, StitchCard, StitchTextField } from "@/app/components/StitchPrimitives";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { getCompetitionJudgeRoutes, type CompetitionStaffRoute } from "@/services/competitionDay";
+import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearJudgeAccess, readJudgeAccess, saveJudgeAccess } from "@/lib/judgeAccessSession";
 import {
@@ -68,7 +69,7 @@ export default function JudgeDashboard() {
   const [enteredCode, setEnteredCode] = useState("");
   const [activeCode, setActiveCode] = useState("");
   const [accessReadySeason, setAccessReadySeason] = useState<string | null>(null);
-  const [event, setEvent] = useState<{ id: string; phase: string } | null>(null);
+  const [event, setEvent] = useState<{ id: string; phase: string; submission_deadline_at?: string | null } | null>(null);
   const [routes, setRoutes] = useState<CompetitionStaffRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -77,6 +78,7 @@ export default function JudgeDashboard() {
   const [selectedQrId, setSelectedQrId] = useState<string | null>(null);
   const [timers, setTimers] = useState<RouteTimerMap | null>(null);
   const [now, setNow] = useState(Date.now());
+  const eventPhase = event?.phase === "open" && competitionDeadlineReached(event.submission_deadline_at, now) ? "closed" : event?.phase;
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [resetTarget, setResetTarget] = useState<string | null>(null);
   const [quickQrId, setQuickQrId] = useState<string | null>(null);
@@ -330,7 +332,7 @@ export default function JudgeDashboard() {
         </div>
       </header>
 
-      {event && <div className={`flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold leading-5 ${event.phase === "open" ? "bg-[#e5f1e8] text-[#23523b]" : "bg-[#f2dcab] text-[#003d55]"}`} role="status">{event.phase === "open" ? <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}<span>{event.phase === "open" ? "Ergebniseingabe ist geöffnet. QR-Codes können zur Bestätigung gescannt werden." : event.phase === "closed" ? "Ergebniseingabe ist geschlossen. Es sind keine neuen Abgaben möglich." : "Ergebniseingabe ist noch geschlossen. Uhren können getestet werden; QR-Abgaben sind erst nach Freigabe möglich."}</span></div>}
+      {event && <div className={`flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold leading-5 ${eventPhase === "open" ? "bg-[#e5f1e8] text-[#23523b]" : "bg-[#f2dcab] text-[#003d55]"}`} role="status">{eventPhase === "open" ? <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}<span>{eventPhase === "open" ? "Ergebniseingabe ist geöffnet. QR-Codes können zur Bestätigung gescannt werden." : eventPhase === "closed" ? "Ergebniseingabe ist geschlossen. Es sind keine neuen Abgaben möglich." : "Ergebniseingabe ist noch geschlossen. Uhren können getestet werden; QR-Abgaben sind erst nach Freigabe möglich."}</span></div>}
 
       {trackedRoutes.length > 0 && <section aria-label="Laufende und verwendete Uhren" className="judge-live-rail sticky top-16 z-30 rounded-xl bg-[#003d55] px-3 py-2 text-[#f2dcab] shadow-[0_10px_28px_rgba(0,38,55,0.18)] sm:px-4"><div className="flex items-center gap-2 overflow-x-auto"><span className="stitch-kicker shrink-0 text-[#f2dcab]">Uhren</span>{trackedRoutes.map((route) => { const timer = timers?.[route.id] ?? resetCompetitionTimer(route.id); const status = getCompetitionTimerStatus(timer, now); const remaining = Math.max(0, COMPETITION_TIMER_DURATION_MS - getCompetitionTimerElapsed(timer, now)); return <button key={route.id} type="button" onClick={() => setTab("timers")} className={`flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-extrabold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f2dcab] ${status === "finished" ? "bg-[#a15523] text-white" : status === "last-minute" ? "bg-[#f2dcab] text-[#003d55]" : "bg-[#21566a] text-[#f2dcab]"}`} aria-label={`Route ${route.number}: ${formatCompetitionTimer(remaining)} verbleibend, ${status === "finished" ? "Zeit abgelaufen" : status === "last-minute" ? "letzte Minute" : timer.startedAt ? "läuft" : "pausiert"}. Uhren anzeigen.`}>R{route.number} <span>{formatCompetitionTimer(remaining)}</span>{status === "finished" && <span className="text-[0.6rem] uppercase">Ende</span>}{status === "last-minute" && <span className="text-[0.6rem] uppercase">Letzte Min.</span>}</button>; })}</div></section>}
 

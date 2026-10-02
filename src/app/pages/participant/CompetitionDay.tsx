@@ -9,6 +9,7 @@ import { getCompetitionDay, submitCompetitionResult } from "@/services/competiti
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { competitionRouteColor } from "@/lib/competitionRouteColors";
 import { competitionGripNumber } from "@/lib/competitionConfig";
+import { competitionDeadlineReached, formatCompetitionDeadline } from "@/lib/competitionDeadline";
 import { canUseCompetitionProbe, shouldUseCompetitionProbe } from "@/lib/competitionProbeAccess";
 
 type CompetitionDayData = Awaited<ReturnType<typeof getCompetitionDay>>;
@@ -93,10 +94,17 @@ export default function CompetitionDay() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [clock, setClock] = useState(Date.now);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [probeResults, setProbeResults] = useState<SavedResult[]>([]);
   const submitLockRef = useRef(false);
   const loadRequestRef = useRef(0);
+  const deadlinePassed = competitionDeadlineReached(data?.event?.submission_deadline_at, clock);
+  useEffect(() => {
+    if (!data?.event?.submission_deadline_at) return;
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [data?.event?.submission_deadline_at]);
 
   const load = useCallback(async () => {
     if (!season) return;
@@ -154,7 +162,7 @@ export default function CompetitionDay() {
   }, [draftKey, result]);
 
   const persistDraft = (nextZone: number | null) => {
-    if (!draftKey || nextZone === null || !data?.event || result || (!probeMode && data.event.phase !== "open")) return false;
+    if (!draftKey || nextZone === null || !data?.event || result || (!probeMode && (data.event.phase !== "open" || competitionDeadlineReached(data.event.submission_deadline_at)))) return false;
     if (!Number.isInteger(nextZone) || nextZone < 0 || nextZone > 10) return false;
     try {
       (probeMode ? window.sessionStorage : window.localStorage).setItem(draftKey, JSON.stringify({ zone: nextZone } satisfies Draft));
@@ -182,7 +190,7 @@ export default function CompetitionDay() {
   };
 
   const submit = async () => {
-    if (submitLockRef.current || !season || !profile?.id || !route || !qrToken || zone === null || !data?.event || result || (!probeMode && data.event.phase !== "open")) return;
+    if (submitLockRef.current || !season || !profile?.id || !route || !qrToken || zone === null || !data?.event || result || (!probeMode && (data.event.phase !== "open" || competitionDeadlineReached(data.event.submission_deadline_at)))) return;
     submitLockRef.current = true;
     setSubmitting(true);
     setSubmitError(null);
@@ -231,7 +239,7 @@ export default function CompetitionDay() {
   if (data.event.phase === "draft" && data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routen in Vorbereitung" description="Die physischen Routen werden geplant. Deine fünf Halbfinalrouten werden hier angezeigt, sobald die Zuordnung feststeht." /><StitchCard tone="cream" className="p-6 text-[#003d55]">Die Ergebniseingabe ist noch geschlossen. Deine Qualifikation und Anmeldung bleiben unverändert.</StitchCard></div>;
   if (data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routenzuordnung prüfen" description="Dein Routenset konnte nicht vollständig geladen werden." /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>Bitte lade die Zuordnung erneut oder wende dich an die Organisation. Es werden keine Ergebnisseingaben angezeigt.</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
 
-  const readOnly = !probeMode && data.event.phase !== "open";
+  const readOnly = !probeMode && (data.event.phase !== "open" || deadlinePassed);
   const clearProbe = () => {
     if (probeResultsKey) {
       try {
@@ -252,6 +260,7 @@ export default function CompetitionDay() {
       <StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale · Wettkampftag" title="Deine Routen" description={`${data.league === "lead" ? "Vorstieg" : data.league === "toprope" ? "Toprope" : "Kletterliga NRW"}${data.class_label ? ` · ${data.class_label}` : ""} — wähle eine deiner zugeordneten Routen.`} />
       <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : readOnly ? data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : "EINGABE GESCHLOSSEN" : "5 ROUTEN"}</StitchBadge>
     </header>
+    {!probeMode && data.event.submission_deadline_at && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role="status">{deadlinePassed ? "Die Halbfinaleingabe ist geschlossen. Fehlende Einträge kann René begründet nachtragen." : `Bitte alle fünf Routen bis ${formatCompetitionDeadline(data.event.submission_deadline_at)} Uhr eintragen. Danach wird die Eingabe automatisch gesperrt.`} Prüfe auch Einträge mit 0 Punkten unter deinen Routen.</StitchCard>}
     {probeAvailable && (probeMode
       ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle einen Griff und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>
       : <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]"><p className="max-w-xl text-sm">Du kannst die Ergebniseingabe ausprobieren. Die Testwerte ändern keine echten Ergebnisse.</p><StitchButton asChild variant="navy" size="sm"><Link to="?probelauf=1">Probelauf starten</Link></StitchButton></StitchCard>)}
@@ -281,14 +290,14 @@ export default function CompetitionDay() {
         {draftError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{draftError}</p>}
         {qrError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{qrError}</p>}
         {submitError && <p role="alert" className="text-sm font-semibold text-[#ba1a1a]">{submitError}</p>}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"><StitchButton className="whitespace-normal text-center tracking-[0.1em]" variant={qrToken ? "navy" : "outline"} disabled={zone === null || submitting} onClick={() => { if (submitLockRef.current) return; persistDraft(zone); setScannerOpen(true); setQrError(null); }}><QrCode aria-hidden="true" size={17} />{qrToken ? "QR-Code erneut scannen" : "QR-Code am Routenposten scannen"}</StitchButton>{probeMode && localProbeAvailable && <StitchButton variant="outline" className="whitespace-normal text-center tracking-[0.1em]" disabled={zone === null || submitting} onClick={() => { setQrToken("lokaler-probelauf"); setScannerOpen(false); setQrError(null); }}>Test-QR bestätigen</StitchButton>}<StitchButton className="whitespace-normal text-center tracking-[0.1em]" disabled={!qrToken || zone === null || submitting || (!probeMode && data.event.phase !== "open")} onClick={() => void submit()}>{submitting ? "Wird eingetragen …" : probeMode ? "Testwert speichern" : "Ergebnis absenden"}</StitchButton></div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"><StitchButton className="whitespace-normal text-center tracking-[0.1em]" variant={qrToken ? "navy" : "outline"} disabled={zone === null || submitting} onClick={() => { if (submitLockRef.current) return; persistDraft(zone); setScannerOpen(true); setQrError(null); }}><QrCode aria-hidden="true" size={17} />{qrToken ? "QR-Code erneut scannen" : "QR-Code am Routenposten scannen"}</StitchButton>{probeMode && localProbeAvailable && <StitchButton variant="outline" className="whitespace-normal text-center tracking-[0.1em]" disabled={zone === null || submitting} onClick={() => { setQrToken("lokaler-probelauf"); setScannerOpen(false); setQrError(null); }}>Test-QR bestätigen</StitchButton>}<StitchButton className="whitespace-normal text-center tracking-[0.1em]" disabled={!qrToken || zone === null || submitting || (!probeMode && (data.event.phase !== "open" || competitionDeadlineReached(data.event.submission_deadline_at)))} onClick={() => void submit()}>{submitting ? "Wird eingetragen …" : probeMode ? "Testwert speichern" : "Ergebnis absenden"}</StitchButton></div>
         {qrToken && <p className="flex items-start gap-2 text-xs leading-5 text-[#36515b]"><ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0" size={16} />{probeMode ? "Routen-QR gelesen. Prüfe den Wert und speichere ihn nur im Probelauf." : "QR-Code erkannt. Prüfe deine Wertung und sende sie ausdrücklich ab. Der Scan allein trägt noch kein Ergebnis ein."}</p>}
       </>}
           </div>}
         </article>;
       })}
     </section>
-    <Dialog open={scannerOpen && Boolean(route) && !submitting} onOpenChange={(open) => { if (!open) setScannerOpen(false); }}>
+    <Dialog open={scannerOpen && Boolean(route) && !submitting && !readOnly} onOpenChange={(open) => { if (!open) setScannerOpen(false); }}>
       <DialogContent hideCloseButton className="stitch-app max-h-[calc(100dvh-1rem)] w-full overflow-y-auto border-0 border-t-0 bg-[#f2dcab] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-6 text-[#003d55] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-md sm:rounded-xl sm:border-0 sm:p-6">
         <DialogClose className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-lg bg-white text-[#003d55] transition-colors hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003d55]" aria-label="Scanner schließen"><X className="h-5 w-5" aria-hidden="true" /></DialogClose>
         <DialogHeader className="space-y-2 px-0 pt-0 text-left">
@@ -296,7 +305,7 @@ export default function CompetitionDay() {
           <DialogTitle className="stitch-headline pr-14 text-2xl text-[#003d55]">Stationscode scannen</DialogTitle>
           <DialogDescription className="text-sm leading-6 text-[#36515b]">Route {route?.number}: Halte die Kamera auf den QR-Code beim Schiedsrichter. Der Scan bestätigt nur die Route und sendet noch kein Ergebnis ab.</DialogDescription>
         </DialogHeader>
-        {scannerOpen && route && !submitting && <CodeQrScanner onScan={acceptQr} onError={(message) => setQrError(`${message} Bitte erlaube den Kamerazugriff oder versuche es erneut.`)} />}
+        {scannerOpen && route && !submitting && !readOnly && <CodeQrScanner onScan={acceptQr} onError={(message) => setQrError(`${message} Bitte erlaube den Kamerazugriff oder versuche es erneut.`)} />}
         {qrError && <p role="alert" className="text-sm font-semibold leading-5 text-[#ba1a1a]">{qrError}</p>}
       </DialogContent>
     </Dialog>

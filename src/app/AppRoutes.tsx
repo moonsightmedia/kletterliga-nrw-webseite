@@ -45,8 +45,14 @@ const PartnerVoucherRedeem = lazy(
 const Finale = lazy(() => import("@/app/pages/participant/Finale"));
 const CompetitionDay = lazy(() => import("@/app/pages/participant/CompetitionDay"));
 const JudgeDashboard = lazy(() => import("@/app/pages/competition/JudgeDashboard"));
+const FinalStation = lazy(() => import("@/app/pages/competition/FinalStation"));
+const LiveScreen = lazy(() => import("@/app/pages/competition/LiveScreen"));
+const CompetitionPrint = lazy(() => import("@/app/pages/admin/CompetitionPrint"));
+const CompetitionCenter = lazy(() => import("@/app/pages/admin/CompetitionCenter"));
 const CompetitionStandings = lazy(() => import("@/app/pages/competition/CompetitionStandings"));
-const LeagueCompetition = lazy(() => import("@/app/pages/admin/LeagueCompetition"));
+const CompetitionDemo = import.meta.env.DEV
+  ? lazy(() => import("@/app/pages/competition/CompetitionDemo"))
+  : null;
 const FeatureLocked = lazy(() => import("@/app/pages/participant/FeatureLocked"));
 
 const AdminHome = lazy(() => import("@/app/pages/admin/AdminHome"));
@@ -100,6 +106,7 @@ const LaunchLockedRoute = ({
 
 export const appRoutes = (
   <>
+    {CompetitionDemo && <Route path="/demo/finaltag/*" element={<CompetitionDemo />} />}
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
@@ -110,6 +117,8 @@ export const appRoutes = (
     </Route>
 
     <Route path="/app/schiedsrichter" element={<JudgeLayout><JudgeDashboard /></JudgeLayout>} />
+    <Route path="/app/schiedsrichter/finale" element={<JudgeLayout><FinalStation /></JudgeLayout>} />
+    <Route path="/live/:season" element={<LiveScreen />} />
 
     <Route
       path="/app"
@@ -373,7 +382,8 @@ export const appRoutes = (
           </RoleGuard>
         }
       />
-      <Route path="league/wettkampf" element={<RoleGuard allow={["league_admin"]}><LeagueCompetition /></RoleGuard>} />
+      <Route path="league/wettkampf" element={<RoleGuard allow={["league_admin"]}><CompetitionCenter /></RoleGuard>} />
+      <Route path="league/wettkampf/druck" element={<RoleGuard allow={["league_admin"]}><CompetitionPrint /></RoleGuard>} />
       <Route
         path="league/change-requests"
         element={
