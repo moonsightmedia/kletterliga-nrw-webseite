@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
-import { StitchButton } from "@/app/components/StitchPrimitives";
 import CompetitionRankingsView from "@/app/components/CompetitionRankingsView";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import {
@@ -75,32 +73,26 @@ export default function CompetitionStandings() {
   }, [season, settingsLoading, revision]);
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-12 text-[#003d55]">
-      <header className="border-b border-[#003d55]/15 pb-4">
+      <header className="flex items-center justify-between gap-4 border-b border-[#003d55]/15 pb-4">
+        <div>
         <p className="text-xs text-[#003d55]/70">
           Wettkampftag · {season ?? "–"}
         </p>
         <h1 className="[font-family:inherit] text-2xl font-bold tracking-normal">
           Ranglisten
         </h1>
-      </header>
-      <div className="flex flex-wrap gap-2">
-        <StitchButton
-          className="normal-case tracking-normal shadow-none"
-          variant="outline"
-          asChild
-        >
-          <Link to="/app/wettkampf">Meine Routen</Link>
-        </StitchButton>
-        <StitchButton
-          className="normal-case tracking-normal shadow-none"
-          variant="outline"
+        </div>
+        <button
+          type="button"
+          aria-label="Ranglisten aktualisieren"
+          title="Ranglisten aktualisieren"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[#003d55] transition-colors hover:bg-[#003d55]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 disabled:opacity-40"
           disabled={loading || settingsLoading}
           onClick={() => setRevision((value) => value + 1)}
         >
-          <RefreshCw size={16} />
-          Aktualisieren
-        </StitchButton>
-      </div>
+          <RefreshCw size={20} aria-hidden="true" />
+        </button>
+      </header>
       <CompetitionRankingsView
         semifinal={rows}
         finals={finals}

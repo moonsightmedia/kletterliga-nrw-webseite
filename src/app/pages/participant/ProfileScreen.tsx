@@ -272,7 +272,7 @@ const ProfileScreen = () => {
 
   const participantProfileHref = profile?.id
     ? `/app/rankings/profile/${profile.id}`
-    : "/app/rankings";
+    : "/app/profile/qualification/rankings";
   const shouldShowPrelaunchNotice = beforeAppUnlock && !isPrelaunchNoticeDismissed;
   const shouldShowParticipationNotice = !beforeAppUnlock && !hasOfficialMasterRedemption;
   const unlockDateLabel = formatUnlockDate(unlockDate);
@@ -571,6 +571,18 @@ const ProfileScreen = () => {
             className="text-base text-[#a15523]"
           />
         </button>
+      </section>
+
+      <section className="space-y-3" aria-labelledby="qualification-archive-heading">
+        <h2 id="qualification-archive-heading" className="px-1 font-['Space_Grotesk'] text-lg font-bold uppercase tracking-[0.08em] text-[#003d55]">Deine Qualifikation</h2>
+        <p className="px-1 text-sm text-[#6d7478]">Deine Ergebnisse und Ranglisten aus der Quali bleiben hier abrufbar.</p>
+        <StitchCard tone="surface" className="rounded-xl p-1">
+          <SettingsRow icon="history" label="Meine Quali-Ergebnisse" hint="Dein Ergebnisverlauf" onClick={() => navigate("/app/profile/history")} />
+          <div className="mx-3 h-px bg-[#f2dcab]/40" />
+          <SettingsRow icon="leaderboard" label="Quali-Ranglisten" hint="Gesamtwertung der Qualifikation" onClick={() => navigate("/app/profile/qualification/rankings")} />
+          <div className="mx-3 h-px bg-[#f2dcab]/40" />
+          <SettingsRow icon="route" label="Quali-Routen und Einträge" hint="Ergebnisse aus den Partnerhallen" onClick={() => navigate("/app/gyms")} />
+        </StitchCard>
       </section>
 
       {profile?.id && <ProfileCertificates profileId={profile.id} />}

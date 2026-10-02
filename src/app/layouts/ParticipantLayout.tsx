@@ -29,6 +29,7 @@ const getPageTitle = (path: string) => {
   if (path.startsWith("/app/rankings")) return "Rangliste";
   if (path.startsWith("/app/age-group-rankings")) return "Altersklassen";
   if (path.startsWith("/app/finale")) return "Finale";
+  if (path === "/app/profile/qualification/rankings") return "Quali-Ranglisten";
   if (path === "/app/profile/edit") return "Profil bearbeiten";
   if (path === "/app/profile/history") return "Verlauf";
   if (path.startsWith("/app/profile")) return "Profil";
@@ -45,7 +46,8 @@ const getGymIdFromPath = (path: string) => path.match(/^\/app\/gyms\/([^/]+)/)?.
 
 const getParticipantBackTarget = (path: string) => {
   if (/^\/app\/rankings\/profile\/[^/]+\/history$/.test(path)) return path.replace(/\/history$/, "");
-  if (/^\/app\/rankings\/profile\/[^/]+$/.test(path)) return "/app/rankings";
+  if (/^\/app\/rankings\/profile\/[^/]+$/.test(path)) return "/app/profile/qualification/rankings";
+  if (path === "/app/profile/qualification/rankings" || path === "/app/gyms" || path === "/app/age-group-rankings") return "/app/profile";
   if (path === "/app/profile/edit") return "/app/profile";
   if (path === "/app/profile/history") return "/app/profile";
   return null;

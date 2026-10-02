@@ -11,7 +11,11 @@ export const BottomNav = () => {
   const isParticipantProfileScreen = /^\/app\/rankings\/profile\/[^/]+(?:\/history)?$/.test(
     location.pathname,
   );
-  const items = [
+  const items = hasEnded ? [
+    { to: "/app/wettkampf", label: "Halbfinale", icon: Trophy, locked: false },
+    { to: "/app/wettkampf/rangliste", label: "Ranglisten", icon: ListOrdered, locked: false },
+    { to: "/app/profile", label: "Profil", icon: User, locked: false },
+  ] : [
     { to: "/app", label: hasEnded ? "Halbfinale" : "Home", icon: hasEnded ? Trophy : Home, locked: false },
     { to: "/app/gyms", label: hasEnded ? "Ergebnisse" : "Hallen", icon: MapPinned, locked: participantFeatureLocked },
     { to: "/app/rankings", label: "Rangliste", icon: ListOrdered, locked: participantFeatureLocked },
@@ -19,6 +23,11 @@ export const BottomNav = () => {
   ];
 
   const isItemActive = (to: string) => {
+    if (hasEnded) {
+      if (to === "/app/wettkampf") return ["/app", "/app/finale", "/app/wettkampf"].includes(location.pathname);
+      if (to === "/app/wettkampf/rangliste") return location.pathname === to || location.pathname === "/app/rankings";
+      return location.pathname.startsWith("/app/profile") || location.pathname.startsWith("/app/gyms") || isParticipantProfileScreen || location.pathname === "/app/age-group-rankings";
+    }
     if (to === "/app") return location.pathname === "/app" || location.pathname === "/app/finale";
     if (isParticipantProfileScreen) return to === "/app/rankings";
     if (to === "/app/rankings" && location.pathname.startsWith("/app/age-group-rankings")) {
@@ -30,7 +39,7 @@ export const BottomNav = () => {
   return (
     <nav className="fixed inset-x-0 -bottom-px z-40 px-0">
       <div className="mx-auto w-full max-w-md stitch-dock rounded-t-xl rounded-b-none border-t border-[rgba(242,220,171,0.08)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
-        <div className="grid grid-cols-4 gap-1">
+        <div className={cn("grid gap-1", hasEnded ? "grid-cols-3" : "grid-cols-4")}>
           {items.map((item) => {
             const Icon = item.icon;
             const isActive = isItemActive(item.to);
@@ -54,7 +63,7 @@ export const BottomNav = () => {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === "/app"}
+                end={item.to === "/app" || item.to === "/app/wettkampf"}
                 className={() =>
                   cn(
                     "flex min-h-[4rem] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-1 py-2 text-[0.6rem] font-bold uppercase tracking-[0.08em] transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f2dcab]",

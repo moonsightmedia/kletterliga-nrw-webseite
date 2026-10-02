@@ -1,0 +1,31 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import SemifinalWelcome from "@/app/components/SemifinalWelcome";
+afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); });
+it("explains the first visit, remembers confirmation and allows reopening", () => {
+  const view = render(<SemifinalWelcome profileId="welcome-test-1" season="2026" />);
+  expect(screen.getByRole("dialog")).toHaveTextContent("Sicherungspartner");
+  expect(screen.getByRole("dialog")).toHaveTextContent("QR-Code");
+  expect(screen.getByRole("dialog")).toHaveTextContent("der Reihe nach");
+  expect(screen.getByRole("dialog")).toHaveTextContent("Teile dir deine Zeit gut ein");
+  fireEvent.click(screen.getByRole("button", { name: "Alles klar, los geht’s!" }));
+  expect(localStorage.getItem("competition-day:welcome:welcome-test-1:2026:v1")).toBe("seen");
+  view.unmount();
+  const next = render(<SemifinalWelcome profileId="welcome-test-1" season="2026" />);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "So läuft das Halbfinale" }));
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  next.rerender(<SemifinalWelcome profileId="welcome-test-1" season="2027" />);
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+});
+it("does not share confirmation between participants and tolerates blocked storage", () => {
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+  const view = render(<SemifinalWelcome profileId="welcome-test-2" season="2026" />);
+  fireEvent.click(screen.getByRole("button", { name: "Alles klar, los geht’s!" }));
+  view.unmount();
+  const next = render(<SemifinalWelcome profileId="welcome-test-2" season="2026" />);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  next.rerender(<SemifinalWelcome profileId="welcome-test-3" season="2026" />);
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+});
