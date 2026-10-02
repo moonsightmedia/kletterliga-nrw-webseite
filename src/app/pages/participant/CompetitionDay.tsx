@@ -11,7 +11,7 @@ import { useSeasonSettings } from "@/services/seasonSettings";
 import { competitionRouteColor } from "@/lib/competitionRouteColors";
 import { competitionGripNumber } from "@/lib/competitionConfig";
 import { competitionDeadlineReached, formatCompetitionDeadline } from "@/lib/competitionDeadline";
-import { canUseCompetitionProbe, shouldUseCompetitionProbe } from "@/lib/competitionProbeAccess";
+import { shouldUseCompetitionProbe } from "@/lib/competitionProbeAccess";
 
 type CompetitionDayData = Awaited<ReturnType<typeof getCompetitionDay>>;
 type CompetitionRoute = CompetitionDayData["routes"][number];
@@ -80,7 +80,6 @@ const pageClass = "mx-auto w-full max-w-4xl space-y-7 pb-24 pt-6 text-[#f2dcab]"
 export default function CompetitionDay() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
-  const probeAvailable = canUseCompetitionProbe(profile?.id, localProbeAvailable);
   const { settings, loading: settingsLoading } = useSeasonSettings();
   const season = settings?.season_year ? String(settings.season_year) : null;
   const [data, setData] = useState<CompetitionDayData | null>(null);
@@ -312,9 +311,7 @@ export default function CompetitionDay() {
     {!probeMode && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role={refreshError ? "alert" : "status"}>{refreshError ?? (checkedIn ? "Anwesenheit bestätigt" : data.check_in?.status === "absent" ? "Deine Teilnahme wurde als abwesend markiert. Bitte kläre das beim Einlass." : "Bitte zuerst beim Einlass anmelden. Die Crew bestätigt deine Anwesenheit.")}</StitchCard>}
     {profile?.id && <SemifinalWelcome profileId={profile.id} season={season} />}
     {!probeMode && data.event.submission_deadline_at && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role="status">{deadlinePassed ? "Die Halbfinaleingabe ist geschlossen. Fehlende Einträge kann René begründet nachtragen." : `Bitte alle fünf Routen bis ${formatCompetitionDeadline(data.event.submission_deadline_at)} Uhr eintragen. Danach wird die Eingabe automatisch gesperrt.`} Prüfe auch Einträge mit 0 Punkten unter deinen Routen.</StitchCard>}
-    {probeAvailable && (probeMode
-      ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle einen Griff und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>
-      : <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]"><p className="max-w-xl text-sm">Du kannst die Ergebniseingabe ausprobieren. Die Testwerte ändern keine echten Ergebnisse.</p><StitchButton asChild variant="navy" size="sm"><Link to="?probelauf=1">Probelauf starten</Link></StitchButton></StitchCard>)}
+    {probeMode && <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle einen Griff und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>}
     {!readOnly && <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]/75">Wähle die Nummer des letzten sicher gehaltenen Griffs (10–100 in Zehnerschritten). {data.event.zone_points.every((points, index) => points === index * 10) && "Die Griffnummer entspricht den Punkten: Griff 80 bringt 80 Punkte. "}{probeMode ? localProbeAvailable ? "Im Probelauf kannst du anschließend den Test-QR bestätigen oder einen passenden Routencode scannen." : "Im Probelauf scannst du anschließend den passenden Routencode. Es wird kein echtes Ergebnis übertragen." : "Danach scannst du hier den QR-Code beim Schiedsrichter."}</p>}
     <section aria-label="Deine Wettkampfrouten" className="space-y-3">
       {data.routes.map((item, index) => {
