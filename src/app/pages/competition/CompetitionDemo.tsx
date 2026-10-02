@@ -177,9 +177,11 @@ export default function CompetitionDemo() {
                 )}
               />
             </div>
-            <header className="mb-5 rounded-xl bg-[#003d55] p-6 text-[#f2dcab]">
-              <p className="stitch-kicker text-[#d58a4c]">Teilnehmeransicht</p>
-              <h1 className="stitch-headline mt-2 text-3xl">Ranglisten</h1>
+            <header className="mb-5 border-b border-[#003d55]/15 pb-4 text-[#003d55]">
+              <p className="text-xs text-[#003d55]/70">Teilnehmeransicht</p>
+              <h1 className="[font-family:inherit] text-2xl font-bold tracking-normal">
+                Ranglisten
+              </h1>
             </header>
             <CompetitionRankingsView
               semifinal={demoSemifinalRows(value.admin)}

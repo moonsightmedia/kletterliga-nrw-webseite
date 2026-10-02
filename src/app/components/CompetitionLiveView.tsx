@@ -69,8 +69,8 @@ export default function CompetitionLiveView({
   }, [sequence, seconds, fullscreenId, phase]);
   const frame = frames.find((item) => item.key === frameKey) ?? frames[0];
   const selected = data?.classes.find((item) => item.key === frame?.classKey);
-  const classes = (data?.classes ?? []).filter(
-    (item) => !data?.class_keys.length || data.class_keys.includes(item.key),
+  const classes = (data?.classes ?? []).filter((item) =>
+    frames.some((frame) => frame.classKey === item.key),
   );
   const pageCount = Math.max(1, Math.ceil((selected?.entries.length ?? 0) / 8));
   const remaining = Math.min(
@@ -147,7 +147,9 @@ export default function CompetitionLiveView({
                     `Seite ${(frame?.page ?? 0) + 1} von ${pageCount} · `}
                   {frames.length > 1
                     ? `Wechsel in ${remaining} s`
-                    : "Klasse fixiert"}
+                    : data?.pinned_key
+                      ? "Klasse fixiert"
+                      : ""}
                 </p>
               </div>
               <table className="w-full table-fixed border-collapse text-left">
@@ -177,7 +179,7 @@ export default function CompetitionLiveView({
                         <td className="px-4 py-[clamp(.5rem,1.1vh,.9rem)] text-[clamp(1.1rem,1.8vw,2.1rem)] font-black">
                           {row.rank ?? "–"}
                         </td>
-                        <td className="truncate px-4 py-[clamp(.5rem,1.1vh,.9rem)] text-[clamp(1.1rem,1.8vw,2.1rem)] font-bold">
+                        <td className="break-words px-4 py-[clamp(.5rem,1.1vh,.9rem)] text-[clamp(1.1rem,1.8vw,2.1rem)] font-bold leading-tight">
                           {row.name}
                         </td>
                         <td className="px-4 py-[clamp(.5rem,1.1vh,.9rem)] text-[clamp(1rem,1.65vw,2rem)]">

@@ -7,19 +7,10 @@ import {
   type ReactNode,
 } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Download,
-  ExternalLink,
-  Printer,
-  RefreshCw,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, ExternalLink, RefreshCw } from "lucide-react";
 import { classNextStep } from "@/lib/competitionPresentation";
 import { validFinalPassword } from "@/lib/finalPassword";
 import { competitionDeadlineReached } from "@/lib/competitionDeadline";
-import SemifinalRanking from "@/app/components/SemifinalRanking";
 import SemifinalAdminRanking from "@/app/components/SemifinalAdminRanking";
 import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,12 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  StitchBadge,
-  StitchButton,
-  StitchCard,
-  StitchTextField,
-} from "@/app/components/StitchPrimitives";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import {
   getCompetitionAdmin,
@@ -45,13 +30,16 @@ import {
 } from "@/services/competitionDay";
 import LeagueCompetition from "./LeagueCompetition";
 import {
+  CompetitionButton,
+  CompetitionField,
+  CompetitionRosterPanel,
+  CompetitionFinalPanel,
+} from "@/app/components/CompetitionAdminPanels";
+import CompetitionDisplayPanel from "@/app/components/CompetitionDisplayPanel";
+import {
   classKey,
   className,
-  downloadFinalCsv,
-  resultLabel,
-  type DisplaySettings,
   type FinalAdmin,
-  type FinalClass,
   type League,
   type SemifinalRow,
 } from "@/services/competitionFinal";
@@ -78,7 +66,15 @@ const auditValue = (value: unknown) => {
     return `Griff ${row.grip} · ${row.seconds ?? "?"} s`;
   if (row.zone !== undefined)
     return `Griff ${Number(row.zone) * 10} · ${row.points ?? "?"} P.`;
-  if (row.status !== undefined) return String(row.status ?? "kein Status");
+  if (row.status !== undefined)
+    return (
+      {
+        ready: "Regulär",
+        dns: "Nicht gestartet",
+        incident: "Zwischenfall ungeklärt",
+        withdrawn: "Zurückgezogen",
+      }[String(row.status)] ?? "Teilnahmestatus geändert"
+    );
   if (row.position !== undefined) return `Startplatz ${row.position}`;
   if (row.phase !== undefined)
     return phaseName[String(row.phase)] ?? String(row.phase);
@@ -86,8 +82,16 @@ const auditValue = (value: unknown) => {
   if (row.version !== undefined) return `Listenstand v${row.version}`;
   return "–";
 };
-const numberInput =
-  "min-h-11 w-24 rounded-xl border border-[#003d55]/25 bg-white px-3 text-[#003d55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523]";
+const auditActionLabel = (action: string) =>
+  ({
+    submit: "Ergebnis eingetragen",
+    correct: "Ergebnis korrigiert",
+    check: "Papierabgleich",
+    publish: "Startliste freigegeben",
+    move: "Startreihenfolge geändert",
+    phase: "Klassenstatus geändert",
+    status: "Teilnehmerstatus geändert",
+  })[action] ?? "Änderung";
 
 export type CompetitionCenterSource = Pick<
   typeof finalSource,
@@ -146,97 +150,54 @@ export function CompetitionCenterContent({
   initialTab?: string;
   demo?: boolean;
 }) {
-  const {
-    getFinalAdmin,
-    getCompetitionAdmin,
-    setCompetitionPhase,
-    correctCompetitionResult,
-    checkFinalEntry,
-    enterSemifinalResult,
-    moveFinalEntry,
-    publishFinalClass,
-    saveFinalRoute,
-    saveLiveNotice,
-    setFinalEntryStatus,
-    setFinalExclusion,
-    setFinalPhase,
-    setFinalPassword,
-    setLiveDisplay,
-    settleSemifinal,
-  } = source;
   const [data, setData] = useState<FinalAdmin | null>(null);
   const [semiAdmin, setSemiAdmin] = useState<CompetitionAdminData | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState(initialTab);
   const [clock, setClock] = useState(Date.now);
   const [updated, setUpdated] = useState<Date | null>(null);
-  const loadPending = useRef(false);
+  const sequence = useRef(0);
+  const writing = useRef(false);
+  const stale = useRef(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-  const [routeNumber, setRouteNumber] = useState("1");
-  const [routeName, setRouteName] = useState("");
-  const [maxGrip, setMaxGrip] = useState("30");
-  const [routeSelections, setRouteSelections] = useState<
-    Record<string, string>
-  >({});
-  const [stationSelections, setStationSelections] = useState<
-    Record<string, string>
-  >({});
   const [finalPassword, setFinalPasswordInput] = useState("");
   const [finalPasswordRepeat, setFinalPasswordRepeat] = useState("");
-  const [noticeTitle, setNoticeTitle] = useState("");
-  const [noticeBody, setNoticeBody] = useState("");
-  const [noticeApp, setNoticeApp] = useState(true);
-  const [noticeTv, setNoticeTv] = useState(true);
-  const [noticeFullscreen, setNoticeFullscreen] = useState(false);
-  const [noticeExpiry, setNoticeExpiry] = useState("");
-  const [noticeDuration, setNoticeDuration] = useState("10");
-  const [editingNotice, setEditingNotice] = useState<string | undefined>();
-  const [display, setDisplay] = useState<DisplaySettings>({
-    phase: "semifinal",
-    class_keys: [],
-    pinned_key: null,
-    interval_seconds: 15,
-  });
-
   const reload = useCallback(
     async (quiet = false) => {
-      if (!season || loadPending.current) return;
-      loadPending.current = true;
+      if (!season) return false;
+      const request = ++sequence.current;
       if (!quiet) setLoading(true);
       try {
         const [next, halftime] = await Promise.all([
-          getFinalAdmin(season),
-          getCompetitionAdmin(season),
+          source.getFinalAdmin(season),
+          source.getCompetitionAdmin(season),
         ]);
+        if (request !== sequence.current) return false;
         setData(next);
         setSemiAdmin(halftime);
         setUpdated(new Date());
-        if (!quiet)
-          setDisplay(
-            next.display ?? {
-              phase: "semifinal",
-              class_keys: [],
-              pinned_key: null,
-              interval_seconds: 15,
-            },
-          );
-        if (!quiet) setError("");
+        setLoadError("");
+        stale.current = false;
+        return true;
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Wettkampfdaten konnten nicht geladen werden.",
-        );
+        if (request === sequence.current) {
+          stale.current = true;
+          setLoadError(
+            err instanceof Error
+              ? err.message
+              : "Daten konnten nicht aktualisiert werden. Letzter Stand bleibt sichtbar.",
+          );
+        }
+        return false;
       } finally {
-        loadPending.current = false;
-        if (!quiet) setLoading(false);
+        if (request === sequence.current) setLoading(false);
       }
     },
-    [season, getFinalAdmin, getCompetitionAdmin],
+    [season, source],
   );
   useEffect(() => {
     if (settingsLoading) return;
@@ -246,187 +207,148 @@ export function CompetitionCenterContent({
       return;
     }
     void reload();
+    return () => {
+      sequence.current += 1;
+    };
   }, [reload, season, settingsLoading]);
   useEffect(() => {
     if (!season || busy) return;
     const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") void reload(true);
+      if (document.visibilityState === "visible" && !writing.current)
+        void reload(true);
     }, 5000);
     return () => window.clearInterval(id);
   }, [season, busy, reload]);
   useEffect(() => {
-    const timer = window.setInterval(() => setClock(Date.now()), 1000);
-    return () => window.clearInterval(timer);
+    const id = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(id);
   }, []);
   async function run(
     action: () => Promise<unknown>,
     success: string,
   ): Promise<boolean> {
-    if (busy) return false;
+    if (writing.current) return false;
+    if (stale.current) {
+      setError(
+        "Der Datenstand ist veraltet. Zuerst aktualisieren und erneut prüfen.",
+      );
+      return false;
+    }
+    writing.current = true;
+    sequence.current += 1;
     setBusy(true);
     setError("");
     setNotice("");
     try {
       await action();
-      await reload(true);
-      setNotice(success);
+      const refreshed = await reload(true);
+      setNotice(
+        refreshed
+          ? success
+          : `${success} Der neue Stand konnte noch nicht geladen werden.`,
+      );
       return true;
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Die Aktion ist fehlgeschlagen.",
+        err instanceof Error
+          ? err.message
+          : "Nicht gespeichert. Bitte erneut prüfen.",
       );
       return false;
     } finally {
+      writing.current = false;
       setBusy(false);
     }
   }
-  const deadlinePassed = competitionDeadlineReached(
-    data?.submission_deadline_at,
-    clock,
-  );
   const semifinalPhase =
-    data?.phase === "open" && deadlinePassed ? "closed" : data?.phase;
+    data?.phase === "open" &&
+    competitionDeadlineReached(data.submission_deadline_at, clock)
+      ? "closed"
+      : (data?.phase ?? "draft");
   const classPairs = useMemo(() => {
-    const map = new Map<
+    const groups = new Map<
       string,
       { league: League; label: string; rows: SemifinalRow[] }
     >();
     for (const row of data?.semifinal ?? []) {
       const key = classKey(row.league, row.class_label);
-      if (!map.has(key))
-        map.set(key, { league: row.league, label: row.class_label, rows: [] });
-      map.get(key)!.rows.push(row);
+      if (!groups.has(key))
+        groups.set(key, {
+          league: row.league,
+          label: row.class_label,
+          rows: [],
+        });
+      groups.get(key)!.rows.push(row);
     }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, "de"));
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b, "de"));
   }, [data]);
-  const allKeys = classPairs.map(([key]) => key);
-  const finalClass = (key: string) =>
-    data?.classes.find((c) => classKey(c.league, c.class_label) === key);
-  const unresolved = (data?.semifinal ?? []).reduce(
-    (n, row) => n + row.missing.filter((m) => !m.settled).length,
-    0,
-  );
-  const unchecked = (data?.classes ?? []).reduce(
-    (n, c) =>
-      n +
-      c.entries.filter(
-        (e) => e.status === "ready" && e.attempt_id && !e.checked_at,
-      ).length,
-    0,
-  );
-  const readyForPublish = (rows: SemifinalRow[]) =>
-    semifinalPhase === "closed" &&
-    rows.every((row) => row.missing.every((m) => m.settled));
-  const reasonReady = reason.trim().length > 0 && reason.length <= 500;
   const activePair =
     classPairs.find(([key]) => key === selectedKey) ?? classPairs[0];
   const activeKey = activePair?.[0];
-  const activeFinal = activeKey ? finalClass(activeKey) : undefined;
-  const activeMissing =
-    activePair?.[1].rows.reduce(
-      (total, row) =>
-        total + row.missing.filter((entry) => !entry.settled).length,
-      0,
-    ) ?? 0;
-  const nextStep =
-    tab === "semifinal"
-      ? {
-          tab: "semifinal",
-          title: "Halbfinalrangliste ansehen",
-          detail:
-            "Namen anklicken für die fünf Routenergebnisse und Eingabezeiten. Fehlende Einträge bleiben sichtbar offen.",
-        }
-      : classNextStep(activeFinal, activeMissing, semifinalPhase ?? "draft");
-  const filteredPairs = classPairs.filter(([key]) => key === activeKey);
+  const activeFinal = data?.classes.find(
+    (item) => classKey(item.league, item.class_label) === activeKey,
+  );
   const activeTvHref = tvHref ?? `/live/${season}`;
-
+  const unresolved = (data?.semifinal ?? []).reduce(
+    (total, row) => total + row.missing.filter((item) => !item.settled).length,
+    0,
+  );
+  const unchecked = (data?.classes ?? []).reduce(
+    (total, c) =>
+      total +
+      c.entries.filter(
+        (entry) =>
+          entry.status === "ready" && entry.attempt_id && !entry.checked_at,
+      ).length,
+    0,
+  );
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-16 text-[#003d55]">
-      <header
-        className={
-          tab === "semifinal"
-            ? "flex flex-wrap items-center justify-between gap-3 border-b border-[#003d55]/15 pb-4"
-            : "flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#003d55] p-5 text-[#f2dcab] sm:p-7"
-        }
-      >
+    <div className="mx-auto max-w-7xl space-y-4 pb-16 text-[#003d55]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#003d55]/15 pb-4">
         <div>
-          <p
-            className={
-              tab === "semifinal"
-                ? "text-xs text-[#003d55]/65"
-                : "stitch-kicker text-[#d58a4c]"
-            }
-          >
+          <p className="text-xs text-[#003d55]/65">
             Wettkampftag · {season ?? "–"}
+            {demo && " · Demo"}
           </p>
-          <h1
-            className={
-              tab === "semifinal"
-                ? "text-2xl font-bold"
-                : "stitch-headline text-3xl"
-            }
-          >
+          <h1 className="[font-family:inherit] text-2xl font-bold tracking-normal">
             Wettkampfzentrale
           </h1>
-          {tab !== "semifinal" && (
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[#f2dcab]/85">
-              Ergebnisse klären, Startlisten freigeben und das Finale sicher
-              abschließen. Wähle eine Klasse und folge ihrem nächsten Schritt.
-            </p>
-          )}
-          {tab !== "semifinal" && (
-            <p className="mt-3 flex items-center gap-2 text-xs font-bold">
-              <ShieldCheck size={15} />
-              {demo
-                ? "Testbetrieb · erfundene Daten"
-                : "Geschützter Bereich · Liga-Administration"}
-            </p>
-          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <StitchButton
-            asChild
-            variant={tab === "semifinal" ? "outline" : "cream"}
-            className={
-              tab === "semifinal"
-                ? "normal-case tracking-normal shadow-none"
-                : undefined
-            }
-          >
-            <Link target="_blank" to={activeTvHref}>
+          <CompetitionButton asChild variant="outline">
+            <Link target="_blank" rel="noreferrer" to={activeTvHref}>
               <ExternalLink size={16} />
               TV öffnen
             </Link>
-          </StitchButton>
-          <StitchButton
-            variant={tab === "semifinal" ? "ghost" : "cream"}
-            className={
-              tab === "semifinal"
-                ? "normal-case tracking-normal shadow-none"
-                : undefined
-            }
+          </CompetitionButton>
+          <CompetitionButton
+            variant="ghost"
             disabled={busy || loading}
-            onClick={() => void reload()}
+            onClick={() => void reload(true)}
           >
-            <RefreshCw size={17} className="mr-2" />
+            <RefreshCw size={17} />
             Aktualisieren
-          </StitchButton>
+          </CompetitionButton>
         </div>
       </header>
       {error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
+        <p
+          role="alert"
+          className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
+        >
           {error}
         </p>
       )}
-      {notice && (
+      {loadError && (
         <p
-          role="status"
-          className={
-            tab === "semifinal"
-              ? "text-sm text-emerald-800"
-              : "rounded-xl bg-emerald-50 p-4 text-emerald-900"
-          }
+          role="alert"
+          className="rounded-lg bg-amber-50 p-3 text-sm text-amber-950"
         >
+          {loadError}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="text-sm text-emerald-800">
           {notice}
         </p>
       )}
@@ -435,264 +357,158 @@ export function CompetitionCenterContent({
       ) : !data || !season ? (
         <p>Die Daten sind nicht verfügbar.</p>
       ) : (
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList
-            className={
-              tab === "semifinal"
-                ? "flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-[#003d55]/15 bg-transparent p-0"
-                : "grid h-auto w-full grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-3 lg:grid-cols-5"
-            }
-          >
+        <Tabs value={tab} onValueChange={(value) => { setTab(value); setNotice(""); }}>
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b border-[#003d55]/15 bg-transparent p-0">
             {[
               ["overview", "Übersicht"],
               ["semifinal", "Halbfinale"],
               ["roster", "Finalstartlisten"],
               ["final", "Finale"],
               ["display", "Anzeige & Hinweise"],
-            ].map(([value, label], index) => (
+            ].map(([value, label]) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className={
-                  tab === "semifinal"
-                    ? "min-h-12 shrink-0 rounded-none border-b-2 border-transparent px-3 font-medium shadow-none data-[state=active]:border-[#a15523] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                    : "min-h-14 justify-start gap-2 whitespace-normal rounded-xl border border-[#003d55]/20 bg-white px-3 text-left data-[state=active]:bg-[#003d55] data-[state=active]:text-[#f2dcab]"
-                }
+                className="min-h-12 rounded-none border-b-2 border-transparent px-3 text-sm font-medium shadow-none data-[state=active]:border-[#a15523] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                {tab !== "semifinal" && (
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#a15523]/15 text-xs font-black">
-                    <span aria-hidden="true">{index + 1}</span>
-                  </span>
-                )}
                 {label}
               </TabsTrigger>
             ))}
           </TabsList>
           {["roster", "final"].includes(tab) && activePair && (
-            <div className="mt-5 rounded-xl border border-[#003d55]/15 bg-white p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="stitch-kicker text-[#a15523]">
-                    Aktuelle Klasse
-                  </p>
-                  <h2 className="mt-2 font-bold">
-                    {className(activePair[1].league, activePair[1].label)}
-                  </h2>
-                  <p className="mt-2 text-sm">{nextStep.title}</p>
-                  <p className="mt-1 text-xs leading-5 text-[#003d55]/70">
-                    {nextStep.detail}
-                  </p>
-                </div>
-                <div className="w-full sm:w-72">
-                  <Select value={activeKey} onValueChange={setSelectedKey}>
-                    <SelectTrigger
-                      aria-label="Klasse bearbeiten"
-                      className="min-h-12 bg-[#f7f3e9]"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classPairs.map(([key, group]) => (
-                        <SelectItem key={key} value={key}>
-                          {className(group.league, group.label)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="[font-family:inherit] text-lg font-bold tracking-normal">
+                  {className(activePair[1].league, activePair[1].label)}
+                </h2>
+                <p className="mt-1 text-xs text-[#003d55]/70">
+                  {activeFinal ? phaseName[activeFinal.phase] : "Vorbereitung"}
+                </p>
               </div>
-              {nextStep.tab !== tab && (
-                <StitchButton
-                  className="mt-4"
-                  onClick={() => setTab(nextStep.tab)}
+                <Select value={activeKey} onValueChange={(value) => { setSelectedKey(value); setNotice(""); }}>
+                <SelectTrigger
+                  aria-label="Klasse bearbeiten"
+                  className="min-h-12 w-full bg-white sm:w-72"
                 >
-                  {nextStep.title}
-                  <ArrowRight size={16} />
-                </StitchButton>
-              )}
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {classPairs.map(([key, group]) => (
+                    <SelectItem key={key} value={key}>
+                      {className(group.league, group.label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
-
-          <TabsContent value="overview" className="space-y-5 pt-4">
-            {data.semifinal.length > 0 && (
-              <StitchCard className="space-y-4 p-5">
-                <div>
-                  <h2 className="stitch-headline text-xl">
-                    Halbfinalranglisten
-                  </h2>
-                  <p className="mt-2 text-sm">
-                    QR-bestätigte Ergebnisse erscheinen automatisch. Namen
-                    anklicken, um die einzelnen Routen zu sehen.
-                  </p>
-                </div>
-                <Select value={activeKey} onValueChange={setSelectedKey}>
-                  <SelectTrigger
-                    aria-label="Halbfinalklasse in der Übersicht"
-                    className="min-h-12 max-w-sm bg-white"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classPairs.map(([key, group]) => (
-                      <SelectItem key={key} value={key}>
-                        {className(group.league, group.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {activePair && (
-                  <SemifinalRanking
-                    rows={activePair[1].rows}
-                    results={data.semifinal_results ?? []}
-                    assignments={semiAdmin?.config.assignments ?? []}
-                    audit={data.semifinal_audit}
-                  />
-                )}
-              </StitchCard>
-            )}
-            <section className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
-              <div className="border-b p-5">
-                <h2 className="stitch-headline text-xl">So geht es weiter</h2>
-                <p className="mt-2 text-sm">
-                  Jede Klasse kann unabhängig ins Finale wechseln. Der Fernseher
-                  läuft parallel.
-                </p>
-              </div>
-              {classPairs.map(([key, group]) => {
-                const item = finalClass(key);
-                const missing = group.rows.reduce(
-                  (count, row) =>
-                    count + row.missing.filter((m) => !m.settled).length,
-                  0,
-                );
-                const step = classNextStep(
-                  item,
-                  missing,
-                  semifinalPhase ?? "draft",
-                );
-                return (
-                  <div
-                    key={key}
-                    className="flex flex-wrap items-center justify-between gap-4 border-b p-5 last:border-0"
-                  >
-                    <div>
-                      <p className="font-bold">
-                        {className(group.league, group.label)}
-                      </p>
-                      <p className="mt-1 text-xs font-bold text-[#003d55]/70">
-                        {item ? phaseName[item.phase] : "Vorbereitung"}
-                      </p>
-                      <p className="mt-1 text-sm text-[#a15523]">
-                        {step.title}
-                      </p>
-                      <p className="mt-1 max-w-lg text-xs leading-5 text-[#003d55]/70">
-                        {step.detail}
-                      </p>
-                    </div>
-                    <StitchButton
-                      variant={item?.phase === "final" ? "outline" : "primary"}
-                      onClick={() => {
-                        setSelectedKey(key);
-                        setTab(step.tab);
-                      }}
-                    >
-                      {item?.phase === "final" ? (
-                        <CheckCircle2 size={16} />
-                      ) : (
-                        <ArrowRight size={16} />
-                      )}
-                      Klasse öffnen
-                    </StitchButton>
-                  </div>
-                );
-              })}
-              {!classPairs.length && (
-                <p className="p-5 text-sm">
-                  Zuerst den Halbfinal-Wettkampf mit Klassen und Routen
-                  vorbereiten.
-                </p>
-              )}
-            </section>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StitchCard tone="navy" className="p-5 text-[#f2dcab]">
-                <p>Halbfinale</p>
-                <strong className="stitch-headline text-2xl">
+          <TabsContent value="overview" className="space-y-4 pt-4">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <span>
+                Halbfinale:{" "}
+                <strong>
                   {semifinalPhase === "closed"
                     ? "Geschlossen"
                     : semifinalPhase === "open"
                       ? "Eingabe offen"
                       : "Vorbereitung"}
                 </strong>
-              </StitchCard>
-              <StitchCard className="p-5">
-                <p>Ungeklärte Routen</p>
-                <strong className="stitch-headline text-3xl">
-                  {unresolved}
-                </strong>
-              </StitchCard>
-              <StitchCard className="p-5">
-                <p>Freigegebene Finalklassen</p>
-                <strong className="stitch-headline text-3xl">
-                  {data.classes.filter((c) => c.phase !== "preparation").length}
-                  /{classPairs.length}
-                </strong>
-              </StitchCard>
-              <StitchCard className="p-5">
-                <p>Offener Papierabgleich</p>
-                <strong className="stitch-headline text-3xl">
-                  {unchecked}
-                </strong>
-              </StitchCard>
+              </span>
+              <span>{unresolved} offene Routeneinträge</span>
+              <span>{unchecked} offene Papierabgleiche</span>
             </div>
-            {data.classes.some((c) => c.stale) && (
-              <p
-                role="alert"
-                className="rounded-xl bg-amber-100 p-4 font-bold text-[#653414]"
-              >
-                Halbfinaländerung: Noch nicht gestartete Finalklassen erneut
-                bestätigen und neu drucken. Bereits gestartete Klassen behalten
-                ihr Finalfeld und die eingefrorenen Halbfinalplätze.
-              </p>
-            )}
-            <StitchCard className="p-5">
-              <h2 className="stitch-headline text-xl">Letzte Änderungen</h2>
-              <div className="mt-3 space-y-2 text-sm">
+            <section
+              aria-label="Wettkampfstatus je Klasse"
+              className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white"
+            >
+              {classPairs.map(([key, group]) => {
+                const item = data.classes.find(
+                  (c) => classKey(c.league, c.class_label) === key,
+                );
+                const missing = group.rows.reduce(
+                  (n, row) => n + row.missing.filter((m) => !m.settled).length,
+                  0,
+                );
+                const step = classNextStep(item, missing, semifinalPhase);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className="flex min-h-20 w-full items-center justify-between gap-4 border-b border-[#003d55]/10 p-4 text-left last:border-b-0 hover:bg-[#f7f3e9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523]"
+                    onClick={() => {
+                      setSelectedKey(key);
+                      setTab(step.tab);
+                    }}
+                  >
+                    <span className="min-w-0">
+                      <span className="block break-words font-semibold">
+                        {className(group.league, group.label)}
+                      </span>
+                      <span className="mt-1 block text-xs text-[#003d55]/70">
+                        {item ? phaseName[item.phase] : "Halbfinale"}
+                        {missing > 0 && ` · ${missing} offene Routeneinträge`}
+                      </span>
+                      <span className="mt-1 block text-sm text-[#a15523]">
+                        {step.title}
+                      </span>
+                    </span>
+                    <ArrowRight size={18} className="shrink-0" />
+                  </button>
+                );
+              })}
+              {!classPairs.length && (
+                <p className="p-5 text-sm">
+                  Zuerst Halbfinalklassen und Routen vorbereiten.
+                </p>
+              )}
+            </section>
+            <CompetitionButton
+              variant="outline"
+              onClick={() => setTab("semifinal")}
+            >
+              Halbfinalranglisten ansehen
+            </CompetitionButton>
+            <details className="rounded-xl border border-[#003d55]/15 bg-white p-4">
+              <summary className="cursor-pointer py-1 text-sm font-semibold">
+                Letzte Änderungen
+              </summary>
+              <div className="mt-3 divide-y divide-[#003d55]/10 text-sm">
                 {[...data.audit, ...data.semifinal_audit]
                   .sort((a, b) => b.created_at.localeCompare(a.created_at))
-                  .slice(0, 12)
-                  .map((a, i) => (
+                  .slice(0, 20)
+                  .map((item, index) => (
                     <div
-                      key={`${a.created_at}-${i}`}
-                      className="border-b border-[#003d55]/10 py-2"
+                      key={`${item.created_at}-${index}`}
+                      className="space-y-1 py-3"
                     >
                       <p>
-                        <strong>{formatWhen(a.created_at)}</strong> ·{" "}
-                        {a.action ?? "Halbfinalkorrektur"} ·{" "}
-                        {a.actor ||
-                          (a.station_no && `Station ${a.station_no}`) ||
-                          "System"}{" "}
-                        · {a.reason}
+                        {formatWhen(item.created_at)} ·{" "}
+                        {auditActionLabel(item.action)} ·{" "}
+                        {item.actor ||
+                          (item.station_no
+                            ? `Handy ${item.station_no}`
+                            : "System")}
                       </p>
-                      {(a.before_data || a.after_data) && (
-                        <p className="text-[#003d55]/75">
-                          Vorher: {auditValue(a.before_data)} → Nachher:{" "}
-                          {auditValue(a.after_data)}
-                        </p>
+                      <p className="text-[#003d55]/75">
+                        {auditValue(item.before_data)} →{" "}
+                        {auditValue(item.after_data)}
+                      </p>
+                      {item.reason && (
+                        <p className="break-words text-xs">{item.reason}</p>
                       )}
                     </div>
                   ))}
                 {!data.audit.length && !data.semifinal_audit.length && (
-                  <p>Noch keine Korrekturen.</p>
+                  <p>Noch keine Änderungen.</p>
                 )}
               </div>
-            </StitchCard>
+            </details>
           </TabsContent>
-
           <TabsContent value="semifinal" className="space-y-5 pt-4">
             <SemifinalAdminRanking
               data={data}
               admin={semiAdmin}
-              phase={semifinalPhase ?? "draft"}
+              phase={semifinalPhase}
               busy={busy}
               updated={updated}
               errorMessage={error}
@@ -700,20 +516,20 @@ export function CompetitionCenterContent({
                 run(
                   () =>
                     edit.kind === "not-climbed"
-                      ? settleSemifinal(
+                      ? source.settleSemifinal(
                           season,
                           edit.profileId,
                           edit.routeId,
                           edit.reason,
                         )
                       : edit.resultId
-                        ? correctCompetitionResult({
+                        ? source.correctCompetitionResult({
                             resultId: edit.resultId,
                             expected: edit.expected,
                             zone: edit.zone,
                             reason: edit.reason,
                           })
-                        : enterSemifinalResult(
+                        : source.enterSemifinalResult(
                             season,
                             edit.profileId,
                             edit.routeId,
@@ -728,1201 +544,137 @@ export function CompetitionCenterContent({
                 )
               }
             />
-            <details className="rounded-lg border border-[#003d55]/15 bg-white p-4">
-              <summary className="cursor-pointer py-2 text-sm font-semibold">
+            <details className="rounded-xl border border-[#003d55]/15 bg-white p-4">
+              <summary className="cursor-pointer py-1 text-sm font-semibold">
                 Einstellungen & Eingabestatus
               </summary>
               {semifinalPhase === "open" && (
-                <StitchButton
-                  className="mt-3 normal-case tracking-normal shadow-none"
+                <CompetitionButton
+                  className="mt-3"
                   variant="outline"
                   disabled={busy}
                   onClick={() =>
                     void run(
-                      () => setCompetitionPhase(season, "closed"),
+                      () => source.setCompetitionPhase(season, "closed"),
                       "Halbfinaleingabe geschlossen.",
                     )
                   }
                 >
                   Eingabe vorzeitig schließen
-                </StitchButton>
+                </CompetitionButton>
               )}
               <div className="mt-4">{semifinalConfiguration}</div>
             </details>
           </TabsContent>
-
-          <TabsContent value="roster" className="space-y-5 pt-4">
-            <details
-              className="rounded-xl border border-[#003d55]/15 bg-white p-4"
-              open={!data.routes.length}
-            >
-              <summary className="cursor-pointer py-2 font-bold">
-                Finalrouten verwalten · {data.routes.length} vorbereitet
-              </summary>
-              <StitchCard className="space-y-4 p-5">
-                <h2 className="stitch-headline text-xl">Finalrouten</h2>
-                <div className="flex flex-wrap items-end gap-3">
-                  <label className="grid gap-1 text-sm font-bold">
-                    Nummer
-                    <input
-                      className={numberInput}
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={routeNumber}
-                      onChange={(e) => setRouteNumber(e.target.value)}
-                    />
-                  </label>
-                  <div className="min-w-48 flex-1">
-                    <StitchTextField
-                      label="Routenname"
-                      value={routeName}
-                      onChange={(e) => setRouteName(e.target.value)}
-                    />
-                  </div>
-                  <label className="grid gap-1 text-sm font-bold">
-                    Letzter Griff
-                    <input
-                      className={numberInput}
-                      type="number"
-                      min="1"
-                      max="999"
-                      value={maxGrip}
-                      onChange={(e) => setMaxGrip(e.target.value)}
-                    />
-                  </label>
-                  <StitchButton
-                    disabled={
-                      busy ||
-                      !routeName.trim() ||
-                      !Number.isInteger(Number(routeNumber)) ||
-                      !Number.isInteger(Number(maxGrip))
-                    }
-                    onClick={() =>
-                      void run(
-                        () =>
-                          saveFinalRoute(
-                            season,
-                            Number(routeNumber),
-                            routeName,
-                            Number(maxGrip),
-                          ),
-                        "Finalroute gespeichert.",
-                      )
-                    }
-                  >
-                    Route speichern
-                  </StitchButton>
-                </div>
-                <p className="text-sm">
-                  Eine physische Route kann mehreren Klassen zugeordnet werden.
-                  Nach Freigabe einer Klasse ist ihre Route gesperrt.
-                </p>
-              </StitchCard>
-            </details>
-            <StitchCard className="space-y-3 p-5">
-              <h2 className="stitch-headline text-xl">
-                Nachrücken und Ausfälle
-              </h2>
-              <StitchTextField
-                label="Begründung für Absage oder Rücknahme"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-              <p className="text-sm">
-                Vor Klassenstart können Personen als nicht erschienen oder
-                zurückgezogen markiert werden. Danach die Finalstartliste erneut
-                bestätigen und drucken.
-              </p>
-            </StitchCard>
-            {filteredPairs.map(([key, group]) => {
-              const c = finalClass(key);
-              const selectedRoute = routeSelections[key] ?? c?.route_id ?? "";
-              const selectedStation =
-                stationSelections[key] ?? String(c?.station_no ?? "1");
-              const excluded = group.rows.filter((r) => r.excluded);
-              const eligible = group.rows.filter((r) => !r.excluded);
-              const cut = eligible[5]?.points;
-              const proposed = eligible.filter(
-                (r) => cut === undefined || r.points >= cut,
-              );
-              return (
-                <StitchCard key={key} className="space-y-4 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="stitch-headline text-xl">
-                      {className(group.league, group.label)}
-                    </h3>
-                    <StitchBadge tone="cream">
-                      {c
-                        ? `${phaseName[c.phase]} · Liste v${c.version}`
-                        : "Noch nicht freigegeben"}
-                    </StitchBadge>
-                  </div>
-                  {c?.phase === "published" && (
-                    <p className="rounded-lg bg-amber-100 p-3 text-sm font-bold text-[#653414]">
-                      Neu drucken · aktueller Listenstand v{c.version}. Nach
-                      jeder Änderung der Finalstarter oder Startreihenfolge
-                      ersetzt die neue Liste den bisherigen Ausdruck.
-                    </p>
-                  )}
-                  {c?.stale && (
-                    <p
-                      role="alert"
-                      className="rounded-lg bg-amber-100 p-3 text-sm font-bold"
-                    >
-                      Halbfinalwertung seit Freigabe geändert · Liste prüfen und
-                      neu drucken.
-                    </p>
-                  )}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {group.rows.map((row) => (
-                      <div
-                        key={row.profile_id}
-                        className={`flex flex-wrap items-center justify-between gap-2 rounded-lg p-3 text-sm ${row.excluded ? "bg-amber-100" : proposed.some((p) => p.profile_id === row.profile_id) ? "bg-white" : "bg-[#e9e2d3]"}`}
-                      >
-                        <span>
-                          <strong>
-                            {row.rank}. {row.name}
-                          </strong>{" "}
-                          · {row.points} P.{" "}
-                          {row.excluded
-                            ? "· Ausfall"
-                            : proposed.some(
-                                  (p) => p.profile_id === row.profile_id,
-                                )
-                              ? "· Finalvorschlag"
-                              : "· Nachrücker"}
-                        </span>
-                        {semifinalPhase === "closed" &&
-                          (!c || c.phase === "published") && (
-                            <div className="flex gap-1">
-                              {row.excluded ? (
-                                <StitchButton
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={busy || !reasonReady}
-                                  onClick={() =>
-                                    void run(
-                                      () =>
-                                        setFinalExclusion(
-                                          season,
-                                          row.profile_id,
-                                          null,
-                                          reason,
-                                        ),
-                                      "Ausfall zurückgenommen.",
-                                    )
-                                  }
-                                >
-                                  Zurücknehmen
-                                </StitchButton>
-                              ) : (
-                                <>
-                                  <StitchButton
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={busy || !reasonReady}
-                                    onClick={() =>
-                                      void run(
-                                        () =>
-                                          setFinalExclusion(
-                                            season,
-                                            row.profile_id,
-                                            "dns",
-                                            reason,
-                                          ),
-                                        "Nicht erschienen dokumentiert.",
-                                      )
-                                    }
-                                  >
-                                    Nicht erschienen
-                                  </StitchButton>
-                                  <StitchButton
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={busy || !reasonReady}
-                                    onClick={() =>
-                                      void run(
-                                        () =>
-                                          setFinalExclusion(
-                                            season,
-                                            row.profile_id,
-                                            "withdrawn",
-                                            reason,
-                                          ),
-                                        "Rückzug dokumentiert.",
-                                      )
-                                    }
-                                  >
-                                    Zurückgezogen
-                                  </StitchButton>
-                                </>
-                              )}
-                            </div>
-                          )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap items-end gap-3">
-                    <div className="min-w-56">
-                      <label className="mb-1 block text-sm font-bold">
-                        Finalroute
-                      </label>
-                      <Select
-                        value={selectedRoute}
-                        disabled={Boolean(
-                          c && !["preparation", "published"].includes(c.phase),
-                        )}
-                        onValueChange={(v) =>
-                          setRouteSelections((prev) => ({ ...prev, [key]: v }))
-                        }
-                      >
-                        <SelectTrigger
-                          aria-label="Finalroute"
-                          className="min-h-11 bg-white"
-                        >
-                          <SelectValue placeholder="Route wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {data.routes.map((r) => (
-                            <SelectItem key={r.id} value={r.id}>
-                              Route {r.number} · {r.name} · Griff {r.max_grip}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-bold">
-                        Eingabestation
-                      </label>
-                      <Select
-                        value={selectedStation}
-                        disabled={Boolean(
-                          c && !["preparation", "published"].includes(c.phase),
-                        )}
-                        onValueChange={(v) =>
-                          setStationSelections((prev) => ({
-                            ...prev,
-                            [key]: v,
-                          }))
-                        }
-                      >
-                        <SelectTrigger
-                          aria-label="Eingabestation der Klasse"
-                          className="min-h-11 w-40 bg-white"
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Station 1</SelectItem>
-                          <SelectItem value="2">Station 2</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <StitchButton
-                      disabled={
-                        busy ||
-                        !readyForPublish(group.rows) ||
-                        !selectedRoute ||
-                        Boolean(
-                          c?.phase === "published" &&
-                          !c.stale &&
-                          selectedRoute === c.route_id &&
-                          Number(selectedStation) === c.station_no,
-                        ) ||
-                        Boolean(
-                          c && !["preparation", "published"].includes(c.phase),
-                        )
-                      }
-                      onClick={() =>
-                        void run(
-                          () =>
-                            publishFinalClass(
-                              season,
-                              group.league,
-                              group.label,
-                              selectedRoute,
-                              Number(selectedStation),
-                              c?.version ?? 0,
-                            ),
-                          "Finalstartliste bestätigt. Bitte drucken.",
-                        )
-                      }
-                    >
-                      {c?.phase === "published"
-                        ? "Finalfeld aktualisieren"
-                        : "Finalfeld bestätigen"}
-                    </StitchButton>
-                    {c && c.phase !== "preparation" && (
-                      <StitchButton asChild variant="outline">
-                        <Link
-                          target="_blank"
-                          rel="noreferrer"
-                          to={`${printHref}?klasse=${encodeURIComponent(key)}`}
-                        >
-                          <Printer size={16} className="mr-2" />
-                          Drucken
-                        </Link>
-                      </StitchButton>
-                    )}
-                  </div>
-                  {!readyForPublish(group.rows) && (
-                    <p className="text-sm text-[#a15523]">
-                      Freigabe erst nach geschlossener Halbfinaleingabe und
-                      Klärung aller fehlenden Ergebnisse.
-                    </p>
-                  )}
-                  {c?.entries.length ? (
-                    <div className="space-y-2">
-                      <h4 className="font-bold">Bestätigte Startreihenfolge</h4>
-                      {[...c.entries]
-                        .sort((a, b) => a.start_position - b.start_position)
-                        .map((e) => (
-                          <div
-                            key={e.entry_id}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3"
-                          >
-                            <span>
-                              <strong>
-                                {e.start_position}. {e.name}
-                              </strong>{" "}
-                              · Halbfinalplatz {e.semifinal_rank}
-                            </span>
-                            {["published", "running"].includes(c.phase) && (
-                              <div className="flex gap-2">
-                                <StitchButton
-                                  variant="outline"
-                                  size="sm"
-                                  aria-label={`${e.name} früher starten`}
-                                  disabled={
-                                    busy ||
-                                    e.start_position === 1 ||
-                                    Boolean(e.attempt_id) ||
-                                    Boolean(
-                                      c.entries.find(
-                                        (other) =>
-                                          other.start_position ===
-                                          e.start_position - 1,
-                                      )?.attempt_id,
-                                    )
-                                  }
-                                  onClick={() =>
-                                    void run(
-                                      () =>
-                                        moveFinalEntry(
-                                          e.entry_id,
-                                          e.start_position - 1,
-                                          c.version,
-                                        ),
-                                      "Startreihenfolge geändert. Bitte Liste neu drucken.",
-                                    )
-                                  }
-                                >
-                                  ↑
-                                </StitchButton>
-                                <StitchButton
-                                  variant="outline"
-                                  size="sm"
-                                  aria-label={`${e.name} später starten`}
-                                  disabled={
-                                    busy ||
-                                    e.start_position === c.entries.length ||
-                                    Boolean(e.attempt_id) ||
-                                    Boolean(
-                                      c.entries.find(
-                                        (other) =>
-                                          other.start_position ===
-                                          e.start_position + 1,
-                                      )?.attempt_id,
-                                    )
-                                  }
-                                  onClick={() =>
-                                    void run(
-                                      () =>
-                                        moveFinalEntry(
-                                          e.entry_id,
-                                          e.start_position + 1,
-                                          c.version,
-                                        ),
-                                      "Startreihenfolge geändert. Bitte Liste neu drucken.",
-                                    )
-                                  }
-                                >
-                                  ↓
-                                </StitchButton>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  ) : null}
-                </StitchCard>
-              );
-            })}
-            <StitchButton asChild variant="outline">
-              <Link to={printHref} target="_blank" rel="noreferrer">
-                <Printer size={16} className="mr-2" />
-                Alle Startlisten drucken
-              </Link>
-            </StitchButton>
+          <TabsContent value="roster" className="pt-4">
+            <CompetitionRosterPanel
+              key={activeKey}
+              data={data}
+              season={season}
+              busy={busy}
+              error={error}
+              source={source}
+              run={run}
+              printHref={printHref}
+              group={activePair?.[1]}
+              phase={semifinalPhase}
+              onSemifinal={() => setTab("semifinal")}
+            />
           </TabsContent>
-
-          <TabsContent value="final" className="space-y-5 pt-4">
+          <TabsContent value="final" className="space-y-4 pt-4">
+            <CompetitionFinalPanel
+              key={activeKey}
+              data={data}
+              season={season}
+              busy={busy}
+              error={error}
+              source={source}
+              run={run}
+              printHref={printHref}
+              finalClass={activeFinal}
+              stationHref={stationHref}
+              onRoster={() => setTab("roster")}
+            />
             <details
               className="rounded-xl border border-[#003d55]/15 bg-white p-4"
               open={!data.final_password_set}
             >
-              <summary className="cursor-pointer py-2 font-bold">
+              <summary className="cursor-pointer py-1 text-sm font-semibold">
                 Finalpasswort ·{" "}
                 {data.final_password_set
                   ? "eingerichtet"
                   : "noch nicht eingerichtet"}
               </summary>
-              <StitchCard className="space-y-3 p-5">
-                <h2 className="stitch-headline text-xl">
-                  Gemeinsames Passwort für beide Handys
-                </h2>
+              <div className="mt-4 max-w-xl space-y-3">
                 <p className="text-sm">
-                  Beide Zeitnehmenden melden sich mit diesem Passwort an und
-                  können alle freigegebenen Finalklassen auswählen. Ein neues
-                  Passwort ersetzt das bisherige für beide Handys. Bereits
-                  angemeldete Handys müssen sich danach mit dem neuen Passwort
-                  anmelden.
+                  Gemeinsames Passwort für beide Handys. Ein neues Passwort
+                  erfordert eine erneute Anmeldung auf beiden.
                 </p>
-                <StitchTextField
+                <CompetitionField
                   label="Neues Finalpasswort"
                   type="password"
                   autoComplete="new-password"
                   maxLength={72}
                   value={finalPassword}
-                  onChange={(e) => setFinalPasswordInput(e.target.value)}
+                  disabled={busy}
+                  onChange={(event) =>
+                    setFinalPasswordInput(event.target.value)
+                  }
                 />
-                <StitchTextField
+                <CompetitionField
                   label="Finalpasswort wiederholen"
                   type="password"
                   autoComplete="new-password"
                   maxLength={72}
                   value={finalPasswordRepeat}
-                  onChange={(e) => setFinalPasswordRepeat(e.target.value)}
+                  disabled={busy}
+                  onChange={(event) =>
+                    setFinalPasswordRepeat(event.target.value)
+                  }
                 />
-                <p className="text-xs">
-                  Mindestens 12 Zeichen. Keine Leerzeichen am Anfang oder Ende.
-                  Das gespeicherte Passwort wird nicht angezeigt.
+                <p className="text-xs text-[#003d55]/70">
+                  Mindestens 12 Zeichen · keine Leerzeichen am Anfang oder Ende.
                 </p>
-                <StitchButton
+                <CompetitionButton
                   disabled={
                     busy ||
                     !validFinalPassword(finalPassword) ||
                     finalPassword !== finalPasswordRepeat
                   }
-                  onClick={() => {
+                  onClick={() =>
                     void run(
-                      () => setFinalPassword(season, finalPassword),
+                      () => source.setFinalPassword(season, finalPassword),
                       "Finalpasswort für beide Handys gespeichert.",
                     ).then((ok) => {
                       if (ok) {
                         setFinalPasswordInput("");
                         setFinalPasswordRepeat("");
                       }
-                    });
-                  }}
+                    })
+                  }
                 >
                   {data.final_password_set
                     ? "Finalpasswort ändern"
                     : "Finalpasswort speichern"}
-                </StitchButton>
-                <StitchButton asChild variant="outline">
-                  <Link to={stationHref}>
-                    <ExternalLink size={16} className="mr-2" />
-                    Eingabeseite öffnen
-                  </Link>
-                </StitchButton>
-              </StitchCard>
+                </CompetitionButton>
+              </div>
             </details>
-            <StitchCard className="p-5">
-              <StitchTextField
-                label="Begründung für Statusänderungen und Wiederöffnung"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            </StitchCard>
-            {data.classes
-              .filter(
-                (c) =>
-                  c.phase !== "preparation" &&
-                  classKey(c.league, c.class_label) === activeKey,
-              )
-              .map((c) => (
-                <StitchCard key={c.id} className="space-y-4 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="stitch-headline text-xl">
-                        {className(c.league, c.class_label)}
-                      </h3>
-                      <p className="text-sm">
-                        {phaseName[c.phase]} · Liste v{c.version} · Station{" "}
-                        {c.station_no} · Route{" "}
-                        {data.routes.find((r) => r.id === c.route_id)?.number ??
-                          "–"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {c.phase === "published" && (
-                        <StitchButton asChild variant="outline">
-                          <Link
-                            target="_blank"
-                            rel="noreferrer"
-                            to={`${printHref}?klasse=${encodeURIComponent(classKey(c.league, c.class_label))}`}
-                          >
-                            <Printer size={16} />
-                            Startliste drucken
-                          </Link>
-                        </StitchButton>
-                      )}
-                      {c.phase === "published" && (
-                        <StitchButton
-                          disabled={busy || c.stale}
-                          onClick={() =>
-                            void run(
-                              () => setFinalPhase(c.id, "running", c.version),
-                              "Finalklasse gestartet.",
-                            )
-                          }
-                        >
-                          Klasse starten
-                        </StitchButton>
-                      )}
-                      {c.phase === "running" && (
-                        <StitchButton
-                          disabled={busy}
-                          onClick={() =>
-                            void run(
-                              () => setFinalPhase(c.id, "review", c.version),
-                              "Finaleingabe geschlossen; Papierprüfung läuft.",
-                            )
-                          }
-                        >
-                          Eingabe schließen
-                        </StitchButton>
-                      )}
-                      {c.phase === "review" && (
-                        <>
-                          <StitchButton
-                            variant="outline"
-                            disabled={busy || !reasonReady}
-                            onClick={() =>
-                              void run(
-                                () =>
-                                  setFinalPhase(
-                                    c.id,
-                                    "running",
-                                    c.version,
-                                    reason,
-                                  ),
-                                "Eingabe für Korrektur wieder geöffnet.",
-                              )
-                            }
-                          >
-                            Eingabe wieder öffnen
-                          </StitchButton>
-                          <StitchButton
-                            disabled={
-                              busy ||
-                              c.entries.some(
-                                (entry) =>
-                                  entry.status === "incident" ||
-                                  (entry.status === "ready" &&
-                                    (!entry.attempt_id || !entry.checked_at)),
-                              )
-                            }
-                            onClick={() =>
-                              void run(
-                                () => setFinalPhase(c.id, "final", c.version),
-                                "Klassenwertung endgültig freigegeben.",
-                              )
-                            }
-                          >
-                            Endgültig freigeben
-                          </StitchButton>
-                        </>
-                      )}
-                      {c.phase === "final" && (
-                        <StitchButton
-                          variant="outline"
-                          disabled={busy || !reasonReady}
-                          onClick={() =>
-                            void run(
-                              () =>
-                                setFinalPhase(
-                                  c.id,
-                                  "review",
-                                  c.version,
-                                  reason,
-                                ),
-                              "Freigabe mit Begründung aufgehoben.",
-                            )
-                          }
-                        >
-                          Freigabe aufheben
-                        </StitchButton>
-                      )}
-                      <StitchButton
-                        variant="outline"
-                        onClick={() => downloadFinalCsv(c, season)}
-                      >
-                        <Download size={16} className="mr-2" />
-                        CSV {c.phase === "final" ? "offiziell" : "vorläufig"}
-                      </StitchButton>
-                      <StitchButton asChild variant="outline">
-                        <Link
-                          target="_blank"
-                          rel="noreferrer"
-                          to={`${printHref}?klasse=${encodeURIComponent(classKey(c.league, c.class_label))}&art=ergebnis`}
-                        >
-                          <Printer size={16} className="mr-2" />
-                          Ergebnisliste
-                        </Link>
-                      </StitchButton>
-                    </div>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[690px] border-collapse text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-[#003d55]/30">
-                          <th className="p-2">Platz</th>
-                          <th className="p-2">Name</th>
-                          <th className="p-2">Ergebnis</th>
-                          <th className="p-2">Halbfinale</th>
-                          <th className="p-2">Papierabgleich / Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {c.entries.map((e) => (
-                          <tr
-                            key={e.entry_id}
-                            className="border-b border-[#003d55]/10"
-                          >
-                            <td className="p-2">{e.rank ?? "–"}</td>
-                            <td className="p-2 font-bold">{e.name}</td>
-                            <td className="p-2">
-                              <strong>{resultLabel(e)}</strong>
-                              {e.entered_at && (
-                                <span className="mt-1 block text-xs">
-                                  Erst:{" "}
-                                  {formatWhen(
-                                    data.audit.find(
-                                      (a) =>
-                                        a.entry_id === e.entry_id &&
-                                        a.action === "submit",
-                                    )?.created_at ?? e.entered_at,
-                                  )}
-                                  {data.audit.some(
-                                    (a) =>
-                                      a.entry_id === e.entry_id &&
-                                      a.action === "correct",
-                                  ) &&
-                                    ` · Letzte Korrektur: ${formatWhen(e.entered_at)}`}
-                                </span>
-                              )}
-                            </td>
-                            <td className="p-2">{e.semifinal_rank}.</td>
-                            <td className="p-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                {e.checked_at ? (
-                                  <span>
-                                    Geprüft · {formatWhen(e.checked_at)}
-                                  </span>
-                                ) : e.status === "ready" &&
-                                  e.attempt_id &&
-                                  ["running", "review"].includes(c.phase) ? (
-                                  <StitchButton
-                                    size="sm"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      void run(
-                                        () =>
-                                          checkFinalEntry(
-                                            e.entry_id,
-                                            c.version,
-                                          ),
-                                        "Papierabgleich gespeichert.",
-                                      )
-                                    }
-                                  >
-                                    Mit Papier abgeglichen
-                                  </StitchButton>
-                                ) : (
-                                  <span>
-                                    {e.status === "incident"
-                                      ? "Zwischenfall offen"
-                                      : "Offen"}
-                                  </span>
-                                )}
-                                {["published", "running", "review"].includes(
-                                  c.phase,
-                                ) && (
-                                  <>
-                                    <StitchButton
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={busy || !reasonReady}
-                                      onClick={() =>
-                                        void run(
-                                          () =>
-                                            setFinalEntryStatus(
-                                              e.entry_id,
-                                              "dns",
-                                              reason,
-                                              c.version,
-                                            ),
-                                          "Nicht gestartet dokumentiert.",
-                                        )
-                                      }
-                                    >
-                                      DNS
-                                    </StitchButton>
-                                    <StitchButton
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={busy || !reasonReady}
-                                      onClick={() =>
-                                        void run(
-                                          () =>
-                                            setFinalEntryStatus(
-                                              e.entry_id,
-                                              "incident",
-                                              reason,
-                                              c.version,
-                                            ),
-                                          "Zwischenfall dokumentiert.",
-                                        )
-                                      }
-                                    >
-                                      Zwischenfall
-                                    </StitchButton>
-                                    {e.status !== "ready" && (
-                                      <StitchButton
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={busy || !reasonReady}
-                                        onClick={() =>
-                                          void run(
-                                            () =>
-                                              setFinalEntryStatus(
-                                                e.entry_id,
-                                                "ready",
-                                                reason,
-                                                c.version,
-                                              ),
-                                            "Startstatus wiederhergestellt.",
-                                          )
-                                        }
-                                      >
-                                        Werten
-                                      </StitchButton>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </StitchCard>
-              ))}
           </TabsContent>
-
-          <TabsContent value="display" className="space-y-5 pt-4">
-            <div className="rounded-xl bg-[#003d55] p-5 text-sm leading-6 text-[#f2dcab]">
-              <h2 className="stitch-headline text-lg">
-                Einmal öffnen. Automatisch laufen lassen.
-              </h2>
-              <p className="mt-2">
-                Die TV-URL ist öffentlich lesbar und braucht keine Anmeldung.
-                Einstellungen und Hinweise steuerst du hier mit deinem
-                Admin-Konto. Alle Seiten einer Klasse erscheinen nacheinander,
-                anschließend die nächste Klasse. Am Fernseher gibt es keine
-                Bedienelemente.
-              </p>
-            </div>
-            <StitchCard className="space-y-4 p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="stitch-headline text-xl">Fernsehanzeige</h2>
-                  <p className="text-sm">
-                    Feste URL:{" "}
-                    <strong>
-                      {window.location.origin}
-                      {activeTvHref}
-                    </strong>
-                  </p>
-                </div>
-                <StitchButton asChild variant="outline">
-                  <Link target="_blank" to={activeTvHref}>
-                    <ExternalLink size={16} className="mr-2" />
-                    TV-Vorschau
-                  </Link>
-                </StitchButton>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-bold">Phase</label>
-                  <Select
-                    value={display.phase}
-                    onValueChange={(v) =>
-                      setDisplay({
-                        ...display,
-                        phase: v as DisplaySettings["phase"],
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      aria-label="TV-Phase"
-                      className="min-h-11 w-44 bg-white"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="semifinal">Halbfinale</SelectItem>
-                      <SelectItem value="final">Finale</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <label className="grid gap-1 text-sm font-bold">
-                  Wechsel alle Sekunden
-                  <input
-                    className={numberInput}
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={display.interval_seconds}
-                    onChange={(e) =>
-                      setDisplay({
-                        ...display,
-                        interval_seconds: Number(e.target.value),
-                      })
-                    }
-                  />
-                </label>
-                <div>
-                  <label className="mb-1 block text-sm font-bold">
-                    Fixierte Klasse
-                  </label>
-                  <Select
-                    value={display.pinned_key ?? "auto"}
-                    onValueChange={(v) =>
-                      setDisplay({
-                        ...display,
-                        pinned_key: v === "auto" ? null : v,
-                        class_keys:
-                          v !== "auto" && !display.class_keys.length
-                            ? allKeys
-                            : display.class_keys,
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      aria-label="Fixierte TV-Klasse"
-                      className="min-h-11 w-56 bg-white"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">
-                        Automatischer Wechsel
-                      </SelectItem>
-                      {(display.class_keys.length
-                        ? display.class_keys
-                        : allKeys
-                      ).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {key
-                            .replace("lead|", "Vorstieg · ")
-                            .replace("toprope|", "Toprope · ")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <p className="mb-2 text-sm font-bold">
-                  Klassen in der Rotation
-                </p>
-                <p className="mb-3 text-xs leading-5">
-                  {display.class_keys.length
-                    ? `${display.class_keys.length} Klassen ausgewählt.`
-                    : "Alle Klassen automatisch ausgewählt."}{" "}
-                  Im Finale erscheinen nur freigegebene Startlisten. Lange
-                  Klassenlisten werden seitenweise angezeigt.
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {allKeys.map((key) => (
-                    <label
-                      key={key}
-                      className="flex min-h-11 items-center gap-2 rounded-lg bg-white p-3"
-                    >
-                      <input
-                        className="h-5 w-5 accent-[#003d55]"
-                        type="checkbox"
-                        checked={
-                          !display.class_keys.length ||
-                          display.class_keys.includes(key)
-                        }
-                        disabled={
-                          allKeys.length === 1 ||
-                          (display.class_keys.length === 1 &&
-                            display.class_keys.includes(key))
-                        }
-                        onChange={(e) =>
-                          setDisplay((prev) => ({
-                            ...prev,
-                            class_keys: e.target.checked
-                              ? [...prev.class_keys, key]
-                              : (prev.class_keys.length
-                                  ? prev.class_keys
-                                  : allKeys
-                                ).filter((k) => k !== key),
-                            pinned_key:
-                              !e.target.checked && prev.pinned_key === key
-                                ? null
-                                : prev.pinned_key,
-                          }))
-                        }
-                      />
-                      {key
-                        .replace("lead|", "Vorstieg · ")
-                        .replace("toprope|", "Toprope · ")}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <StitchButton
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setDisplay((prev) => ({
-                    ...prev,
-                    class_keys: [],
-                    pinned_key: null,
-                  }))
-                }
-              >
-                Alle Klassen automatisch
-              </StitchButton>
-              <StitchButton
-                disabled={
-                  busy ||
-                  !Number.isInteger(display.interval_seconds) ||
-                  display.interval_seconds < 5 ||
-                  display.interval_seconds > 120
-                }
-                onClick={() =>
-                  void run(
-                    () => setLiveDisplay(season, display),
-                    "Fernsehanzeige aktualisiert.",
-                  )
-                }
-              >
-                Anzeige speichern
-              </StitchButton>
-            </StitchCard>
-            <StitchCard className="space-y-4 p-5">
-              <h2 className="stitch-headline text-xl">
-                Hinweis veröffentlichen
-              </h2>
-              <StitchTextField
-                label="Titel"
-                value={noticeTitle}
-                onChange={(e) => setNoticeTitle(e.target.value)}
-              />
-              <label className="grid gap-1 text-sm font-bold">
-                Text
-                <textarea
-                  className="min-h-28 rounded-xl border border-[#003d55]/25 bg-white p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a15523]"
-                  maxLength={500}
-                  value={noticeBody}
-                  onChange={(e) => setNoticeBody(e.target.value)}
-                />
-              </label>
-              <div className="flex flex-wrap gap-4 text-sm">
-                {[
-                  ["App", noticeApp, setNoticeApp],
-                  ["TV", noticeTv, setNoticeTv],
-                  [
-                    "TV bildschirmfüllend",
-                    noticeFullscreen,
-                    setNoticeFullscreen,
-                  ],
-                ].map(([label, checked, setter]) => (
-                  <label
-                    key={String(label)}
-                    className="flex min-h-11 items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 accent-[#003d55]"
-                      checked={checked as boolean}
-                      onChange={(e) =>
-                        (setter as (v: boolean) => void)(e.target.checked)
-                      }
-                    />
-                    {String(label)}
-                  </label>
-                ))}
-              </div>
-              <div className="max-w-sm">
-                <label className="mb-2 block text-sm font-bold">
-                  Hinweis automatisch ausblenden
-                </label>
-                <Select
-                  value={noticeDuration}
-                  onValueChange={setNoticeDuration}
-                >
-                  <SelectTrigger
-                    aria-label="Hinweis automatisch ausblenden"
-                    className="min-h-12 bg-white"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {editingNotice && (
-                      <SelectItem value="existing">
-                        Bisherige Ablaufzeit beibehalten
-                      </SelectItem>
-                    )}
-                    <SelectItem value="5">Nach 5 Minuten</SelectItem>
-                    <SelectItem value="10">Nach 10 Minuten</SelectItem>
-                    <SelectItem value="30">Nach 30 Minuten</SelectItem>
-                    <SelectItem value="60">Nach 60 Minuten</SelectItem>
-                    <SelectItem value="0">Bis ich ihn zurückziehe</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="mt-2 text-xs leading-5">
-                  Nach dem Ablauf läuft die Klassenanzeige automatisch weiter.
-                  Das funktioniert auch bei einem Verbindungsabbruch.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <StitchButton
-                  disabled={
-                    busy ||
-                    !noticeTitle.trim() ||
-                    !noticeBody.trim() ||
-                    !(noticeApp || noticeTv)
-                  }
-                  onClick={() =>
-                    void run(
-                      () =>
-                        saveLiveNotice(season, {
-                          id: editingNotice,
-                          title: noticeTitle,
-                          body: noticeBody,
-                          show_app: noticeApp,
-                          show_tv: noticeTv,
-                          fullscreen: noticeFullscreen,
-                          expires_at:
-                            noticeDuration === "existing"
-                              ? noticeExpiry || null
-                              : Number(noticeDuration) > 0
-                                ? new Date(
-                                    Date.now() + Number(noticeDuration) * 60000,
-                                  ).toISOString()
-                                : null,
-                        }),
-                      editingNotice
-                        ? "Hinweis aktualisiert."
-                        : "Hinweis veröffentlicht.",
-                    ).then((ok) => {
-                      if (ok) {
-                        setEditingNotice(undefined);
-                        setNoticeTitle("");
-                        setNoticeBody("");
-                        setNoticeDuration("10");
-                      }
-                    })
-                  }
-                >
-                  {editingNotice
-                    ? "Änderung speichern"
-                    : "Hinweis veröffentlichen"}
-                </StitchButton>
-                {editingNotice && (
-                  <StitchButton
-                    variant="outline"
-                    onClick={() => {
-                      setEditingNotice(undefined);
-                      setNoticeTitle("");
-                      setNoticeBody("");
-                      setNoticeDuration("10");
-                    }}
-                  >
-                    Abbrechen
-                  </StitchButton>
-                )}
-              </div>
-              <div className="space-y-2">
-                {data.notices
-                  .filter((n) => !n.withdrawn_at)
-                  .map((n) => (
-                    <div
-                      key={n.id}
-                      className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-white p-3"
-                    >
-                      <div>
-                        <strong>{n.title}</strong>
-                        <p className="text-sm">{n.body}</p>
-                        <small>
-                          {n.expires_at &&
-                            Date.parse(n.expires_at) <= Date.now() &&
-                            "Abgelaufen · "}
-                          {n.show_app && "App "}
-                          {n.show_tv && "TV "}
-                          {n.expires_at && `· bis ${formatWhen(n.expires_at)}`}
-                        </small>
-                      </div>
-                      <div className="flex gap-2">
-                        <StitchButton
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingNotice(n.id);
-                            setNoticeTitle(n.title);
-                            setNoticeBody(n.body);
-                            setNoticeApp(n.show_app);
-                            setNoticeTv(n.show_tv);
-                            setNoticeFullscreen(n.fullscreen);
-                            setNoticeExpiry(n.expires_at ?? "");
-                            setNoticeDuration("existing");
-                          }}
-                        >
-                          Bearbeiten
-                        </StitchButton>
-                        <StitchButton
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() =>
-                            void run(
-                              () =>
-                                saveLiveNotice(season, {
-                                  ...n,
-                                  withdrawn: true,
-                                }),
-                              "Hinweis zurückgezogen.",
-                            )
-                          }
-                        >
-                          Zurückziehen
-                        </StitchButton>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </StitchCard>
+          <TabsContent
+            value="display"
+            forceMount
+            className="pt-4 data-[state=inactive]:hidden"
+          >
+            <CompetitionDisplayPanel
+              data={data}
+              season={season}
+              busy={busy}
+              error={error}
+              source={source}
+              run={run}
+              tvHref={activeTvHref}
+              clock={clock}
+            />
           </TabsContent>
         </Tabs>
       )}

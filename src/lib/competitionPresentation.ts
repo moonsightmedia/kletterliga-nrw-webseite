@@ -82,7 +82,7 @@ export function classNextStep(
       tab: "roster",
       title: "Finalfeld bestätigen",
       detail:
-        "Qualifizierte, Route und Station prüfen. Danach die Startliste drucken.",
+        "Qualifizierte und Route prüfen. Danach die Startliste drucken.",
     };
   if (item.stale && item.phase === "published")
     return {
@@ -100,7 +100,7 @@ export function classNextStep(
   if (item.phase === "running")
     return {
       tab: "final",
-      title: "Finalergebnisse begleiten",
+      title: "Ergebnisse prüfen",
       detail: item.stale
         ? "Halbfinalkorrektur prüfen; das gestartete Finalfeld bleibt bestehen. Eingaben und Ausfälle begleiten."
         : "Eingaben und Ausfälle prüfen. Nach dem letzten Start Eingabe schließen.",

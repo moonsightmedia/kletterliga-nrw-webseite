@@ -75,21 +75,24 @@ export default function CompetitionStandings() {
   }, [season, settingsLoading, revision]);
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-12 text-[#003d55]">
-      <header className="rounded-xl bg-[#003d55] p-6 text-[#f2dcab]">
-        <p className="stitch-kicker text-[#d58a4c]">
+      <header className="border-b border-[#003d55]/15 pb-4">
+        <p className="text-xs text-[#003d55]/70">
           Wettkampftag · {season ?? "–"}
         </p>
-        <h1 className="stitch-headline mt-2 text-3xl">Ranglisten</h1>
-        <p className="mt-3 text-sm">
-          Halbfinale und Finale nach Klasse. Neue Ergebnisse erscheinen
-          automatisch alle fünf Sekunden.
-        </p>
+        <h1 className="[font-family:inherit] text-2xl font-bold tracking-normal">
+          Ranglisten
+        </h1>
       </header>
       <div className="flex flex-wrap gap-2">
-        <StitchButton variant="outline" asChild>
+        <StitchButton
+          className="normal-case tracking-normal shadow-none"
+          variant="outline"
+          asChild
+        >
           <Link to="/app/wettkampf">Meine Routen</Link>
         </StitchButton>
         <StitchButton
+          className="normal-case tracking-normal shadow-none"
           variant="outline"
           disabled={loading || settingsLoading}
           onClick={() => setRevision((value) => value + 1)}

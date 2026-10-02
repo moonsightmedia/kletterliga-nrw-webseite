@@ -85,7 +85,7 @@ export default function CompetitionRankingsView({
           <TabsContent key={value} value={value} className="space-y-5 pt-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="stitch-headline text-2xl">
+                <h2 className="[font-family:inherit] text-lg font-bold tracking-normal">
                   {phase === "final" ? "Finalwertung" : "Halbfinalwertung"}
                 </h2>
                 <p className="mt-1 flex items-center gap-2 text-sm">
@@ -130,11 +130,16 @@ export default function CompetitionRankingsView({
                   : "Vorläufiger Live-Stand. Die endgültige Wertung erfolgt nach Abschluss des Finales und Prüfung der Papierlisten."}
               </p>
             ) : (
-              <p className="text-sm leading-6">
-                Summe der fünf Halbfinalrouten mit jeweils 0–100 Punkten
-                (maximal 500). Sechs Finalplätze plus alle Punktgleichen an der
-                Grenze. Die Finalstartliste wird gesondert bestätigt.
-              </p>
+              <details className="text-sm leading-6">
+                <summary className="cursor-pointer py-2 font-semibold">
+                  Halbfinalwertung & Finaleinzug
+                </summary>
+                <p className="pt-2">
+                  Summe der fünf Halbfinalrouten mit jeweils 0–100 Punkten
+                  (maximal 500). Sechs Finalplätze plus alle Punktgleichen an
+                  der Grenze. Die Finalstartliste wird gesondert bestätigt.
+                </p>
+              </details>
             )}
             {!loading && !selected && (
               <div className="rounded-xl border border-dashed border-[#003d55]/25 p-8 text-center">
@@ -179,7 +184,7 @@ export default function CompetitionRankingsView({
                                   ? `Platz ${entry.rank}`
                                   : "Ohne Ergebnisrang"
                               }
-                              className={`stitch-headline text-2xl ${entry.rank === 1 ? "text-[#a15523]" : "text-[#003d55]"}`}
+                              className={`text-xl font-bold ${entry.rank === 1 ? "text-[#a15523]" : "text-[#003d55]"}`}
                             >
                               {entry.rank ?? "–"}
                             </span>
@@ -208,7 +213,7 @@ export default function CompetitionRankingsView({
                         >
                           <span
                             aria-label={`Platz ${row.rank}`}
-                            className="stitch-headline text-2xl"
+                            className="text-xl font-bold"
                           >
                             {row.rank}
                           </span>
@@ -224,11 +229,16 @@ export default function CompetitionRankingsView({
                       ))}
                 </ol>
                 {phase === "final" && (
-                  <p className="border-t bg-[#f7f3e9] p-4 text-xs leading-5">
-                    Wertung: TOP vor Griffnummer → besserer Halbfinalplatz →
-                    kürzere Zeit → geteilter Platz. Offene Ergebnisse und nicht
-                    gestartete Personen erhalten keinen regulären Rang.
-                  </p>
+                  <details className="border-t bg-[#f7f3e9] p-4 text-xs leading-5">
+                    <summary className="cursor-pointer py-1 font-semibold">
+                      So wird gewertet
+                    </summary>
+                    <p className="pt-2">
+                      Wertung: TOP vor Griffnummer → besserer Halbfinalplatz →
+                      kürzere Zeit → geteilter Platz. Offene Ergebnisse und
+                      nicht gestartete Personen erhalten keinen regulären Rang.
+                    </p>
+                  </details>
                 )}
               </section>
             )}

@@ -62,10 +62,18 @@ export function CompetitionPrintContent({
   return (
     <div className="min-h-screen bg-white text-[#003d55]">
       <div className="print:hidden mx-auto flex max-w-5xl flex-wrap items-center gap-3 p-5">
-        <StitchButton variant="outline" asChild>
+        <StitchButton
+          className="normal-case tracking-normal shadow-none"
+          variant="outline"
+          asChild
+        >
           <Link to={backHref}>Zurück zur Wettkampfzentrale</Link>
         </StitchButton>
-        <StitchButton disabled={!classes.length} onClick={() => window.print()}>
+        <StitchButton
+          className="normal-case tracking-normal shadow-none"
+          disabled={!classes.length}
+          onClick={() => window.print()}
+        >
           Drucken / als PDF speichern
         </StitchButton>
       </div>
@@ -101,8 +109,7 @@ export function CompetitionPrintContent({
             </div>
             <p className="mt-2 text-sm">
               Finalroute{" "}
-              {data.routes.find((r) => r.id === c.route_id)?.number ?? "–"} ·
-              Station {c.station_no ?? "–"} · Stand{" "}
+              {data.routes.find((r) => r.id === c.route_id)?.number ?? "–"} · Stand{" "}
               {c.published_at
                 ? new Date(c.published_at).toLocaleString("de-DE")
                 : "–"}
@@ -155,14 +162,14 @@ export function CompetitionPrintContent({
                     </td>
                     <td className="p-2 align-top">{e.semifinal_rank}</td>
                     <td className="h-16 p-2 align-top">
-                      {results && e.attempt_id
+                      {results && e.status === "ready" && e.attempt_id
                         ? e.is_top
                           ? "TOP"
                           : e.grip
                         : ""}
                     </td>
                     <td className="p-2 align-top">
-                      {results && e.attempt_id
+                      {results && e.status === "ready" && e.attempt_id
                         ? `${Math.floor((e.seconds ?? 0) / 60)}:${String((e.seconds ?? 0) % 60).padStart(2, "0")}`
                         : ""}
                     </td>

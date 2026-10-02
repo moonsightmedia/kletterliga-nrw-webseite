@@ -366,13 +366,19 @@ export function downloadFinalCsv(c: FinalClass, season: string): void {
     e.rank ?? "",
     e.name,
     className(c.league, c.class_label),
-    e.attempt_id ? (e.is_top ? "TOP" : e.grip) : "",
-    e.seconds ?? "",
+    e.status === "ready" && e.attempt_id ? (e.is_top ? "TOP" : e.grip) : "",
+    e.status === "ready" && e.attempt_id ? (e.seconds ?? "") : "",
     e.semifinal_rank,
-    e.status,
+    e.status === "dns"
+      ? "Nicht gestartet"
+      : e.status === "incident"
+        ? "Zwischenfall ungeklärt"
+        : e.attempt_id
+          ? "Ergebnis eingetragen"
+          : "Offen",
   ]);
   const quote = (value: string | number) =>
-    `"${String(value).replace(/"/g, '""')}"`;
+    `"${(typeof value === "string" && /^\s*[=+@-]/.test(value) ? `'${value}` : String(value)).replace(/"/g, '""')}"`;
   const csv =
     "\ufeff" +
     [head, ...rows].map((row) => row.map(quote).join(";")).join("\r\n");

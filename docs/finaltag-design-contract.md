@@ -1,13 +1,13 @@
 # Finaltag: Bedien- und Darstellungskonzept
 
-Stand 01.10.2026. Gilt für die tatsächliche Wettkampfzentrale, Finalstation, Teilnehmer-Rangliste und öffentliche TV-Seite. Die Entwicklungsdemo bindet dieselben React-Komponenten mit ausschließlich erfundenen Browserdaten ein.
+Stand 02.10.2026. Gilt für die tatsächliche Wettkampfzentrale, Finalstation, Teilnehmer-Rangliste und öffentliche TV-Seite. Die Entwicklungsdemo bindet dieselben React-Komponenten mit ausschließlich erfundenen Browserdaten ein.
 
 ## Zweck und Führung
 
-René entscheidet je Klasse, was als Nächstes passiert. Die Übersicht kombiniert Klassenstatus, konkreten nächsten Schritt, Erklärung und direkten Einstieg. Bearbeitungsansichten zeigen immer die aktuelle Klasse und einen beschrifteten Klassenwechsel. Die fünf Ansichten bleiben erreichbar; laufende Klassen dürfen unabhängig voneinander fortschreiten.
+René entscheidet je Klasse, was als Nächstes passiert. Die Übersicht zeigt Klassenstatus und nächste Aktion; die Klassenzeile öffnet direkt die passende Ansicht. Bearbeitungsansichten zeigen immer die aktuelle Klasse und einen beschrifteten Klassenwechsel. Die fünf Ansichten bleiben erreichbar; laufende Klassen dürfen unabhängig voneinander fortschreiten.
 
 1. Halbfinalranglisten live verfolgen und Namen für Routendetails aufklappen. QR-bestätigte und abgesendete Ergebnisse zählen ohne zweite Freigabe. Um 16 Uhr am Wettkampftag sperrt die normale Abgabe automatisch; René klärt fehlende Werte anschließend mit Begründung. Nullwerte bleiben von fehlenden Einträgen unterscheidbar.
-2. Finalfeld mit Punktgleichen, physische Route und digitale Station bestätigen.
+2. Finalfeld mit Punktgleichen, physische Route bestätigen. Beide Final-Handys sehen alle freigegebenen Klassen.
 3. Startliste prüfen, gegebenenfalls umordnen und im separaten Drucktab ausgeben.
 4. Klasse starten; die Zeitnahme erfasst manuell und bestätigt die Zusammenfassung.
 5. Eingabe schließen, Papierabgleich vollständig durchführen, offiziell freigeben.
@@ -16,7 +16,7 @@ Routenpflege, Finalpasswort und Halbfinal-Grundkonfiguration sind aufklappbar. S
 
 ## Design
 
-Bestehende Stitch-Komponenten, Space Grotesk/Manrope und Kletterliga-Farben: Navy #003d55/#002637, Creme #f2dcab, Terracotta #a15523. Ein dunkler Orientierungskopf, nummerierte Ansichten, ruhige helle Arbeitsflächen, kräftige primäre Aktion, 12-px-Radien. Bestehende Radix-Auswahlmenüs mit expliziten zugänglichen Namen. Touchziele mindestens 40–48 px. Keine neue Bibliothek.
+Bestehende Stitch-Komponenten, Space Grotesk/Manrope und Kletterliga-Farben: Navy #003d55/#002637, Creme #f2dcab, Terracotta #a15523. Kompakter heller Kopf, kurze unnummerierte Navigation, ruhige Listen, normale Schrift, kräftige primäre Aktion und 12-px-Radien. Bestehende Radix-Auswahlmenüs mit expliziten zugänglichen Namen. Touchziele mindestens 40–48 px. Keine neue Bibliothek.
 
 Auf kleinen Bildschirmen fließen Navigation und Steuerung um. Ranglisten sind als Namenszeilen gestaltet, sodass Name, Ergebnis und Status ohne seitliches Scrollen lesbar sind. Ausführliche Admin-Ergebnistabellen dürfen innerhalb ihres Containers seitlich scrollen; die Seite selbst läuft nicht über.
 
@@ -53,3 +53,7 @@ Die Halbfinalansicht verwendet eine kompakte Kopfzeile und Navigation, Suche üb
 ## Finaleingabe auf dem Handy · 01.10.2026
 
 Die digitale Zeitnahme verwendet getrennte Klassen-, Teilnehmer-, Eingabe- und Prüfungsansichten. Große Tippzeilen ersetzen Dropdowns; Ergebnis und gestoppte Zeit werden über Griff/TOP und Zahlenfelder erfasst. Name, Route und Startposition bleiben sichtbar. Speichern führt zurück zur gleichen Klasse; bestehende Werte öffnen eine begründete Korrektur. Lokale Entwürfe bleiben beim Zurückgehen, Netzausfall und Versionskonflikt erhalten. Bestätigte Speicherung wird vom folgenden Listenabruf getrennt. Details: [Mobile Finaleingabe](finaleingabe-mobile-design.md).
+
+## Verwaltungsprüfung 02.10.2026
+
+72 gezielte Tests in 13 Dateien bestanden; neun neue Ablaufprüfungen für Startfeld, veraltete Papierdialoge, Ausfallbegründung, Klassenfreigabe, TV-Entwürfe, Hinweisablauf und Ergebnisexport. Browser: Startfeld mit sieben Personen freigegeben, umgeordnet, neue Druckversion geprüft; Papierabgleich, Nicht gestartet, Schließen/Wiederöffnen, Hinweis veröffentlichen/zurückziehen und TV-Rotation. Verwaltung bei 390/768/1440 px, Teilnehmerliste bei 390 px und TV bei 1920 × 1080 ohne Seitenüberlauf. Browser-PDF mit zwei vollständigen A4-Seiten, sieben Startern pro Klasse und langem Namen. Produktionsbuild und gezielter ESLint bestanden; App-Typecheck weiterhin 15 bekannte Fehler außerhalb der Änderungen. Details: [Verwaltungskonzept](finaltag-verwaltung-design.md).

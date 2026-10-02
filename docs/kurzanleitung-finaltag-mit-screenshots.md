@@ -4,7 +4,7 @@ Die Bilder zeigen die überarbeiteten **App-Oberflächen mit erfundenen Testdate
 
 ## 1. Über die Übersicht einsteigen
 
-Unter **So geht es weiter** steht für jede Klasse der aktuelle Status, die nächste Aufgabe und deren Erklärung. **Klasse öffnen** führt direkt zur passenden Ansicht. Im Halbfinale stehen Suche und Klassenfilter direkt über der Liste. In Finalstartlisten und Finale lässt sich oben die **Klasse bearbeiten** wechseln. Der Fernseher läuft unabhängig davon.
+Die Übersicht zeigt je Klasse Status und nächste Aktion. **Die Klassenzeile antippen** öffnet die passende Ansicht. Im Halbfinale stehen Suche und Klassenfilter direkt über der Liste. In Finalstartlisten und Finale lässt sich oben die **Klasse bearbeiten** wechseln. Der Fernseher läuft unabhängig davon.
 
 ![Übersicht mit konkretem nächsten Schritt je Klasse](screenshots/zentrale-demo.jpg)
 
@@ -18,9 +18,9 @@ Schiedsrichter kontrollieren das Ergebnis und zeigen den Routen-QR. Nach Scan un
 
 Am **3. Oktober 2026 um 16:00 Uhr** sperrt die normale Abgabe automatisch. René kann anschließend weiterhin im Teilnehmerdialog mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. Unter **Demo-Optionen** startet **Halbfinale ausprobieren** diesen Ablauf neu. **16-Uhr-Sperre testen** simuliert das Fristende; Robins fünfte Toprope-Route ist offen.
 
-Wenn die fehlenden Einträge geklärt sind: **Finalfeld bestätigen**, Route und digitale Station auswählen, Vorschlag prüfen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
+Wenn die fehlenden Einträge geklärt sind: In **Finalstartlisten** Vorschlag prüfen, Finalroute auswählen und **Finalfeld bestätigen**. Der Dialog nennt Klasse, Route und Starterzahl. Beide Final-Handys sehen alle freigegebenen Klassen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
 
-In **Finalstartlisten** stehen die Starts vom schlechtesten qualifizierten Halbfinalplatz zum besten. Pfeile ändern ausschließlich die Startfolge. Ausfälle vor Klassenstart begründet dokumentieren und das Feld erneut bestätigen. **Drucken** öffnet einen separaten Tab. Nach Änderungen gilt die neue Version: alten Ausdruck ersetzen.
+In **Finalstartlisten** stehen die Starts zunächst vom schlechtesten qualifizierten Halbfinalplatz zum besten. Pfeile ändern ausschließlich die Startfolge. Unter **Halbfinalfeld & Nachrücker** Ausfälle vor Klassenstart begründet dokumentieren und das Feld erneut bestätigen. **Startliste drucken** öffnet einen separaten Tab. Nach Änderungen gilt die neue Version: alten Ausdruck ersetzen.
 
 ![Versionierte Startliste und Nachrücker](screenshots/startlisten-demo.jpg)
 
@@ -46,7 +46,13 @@ Eine bereits gespeicherte Person antippen, um den Wert zu korrigieren. Die vorha
 
 ## 4. Papierabgleich und Ergebnisfreigabe
 
-René sieht gespeicherte Ergebnisse sofort in **Finale**. Jeden Wert mit dem Papier vergleichen und abgleichen. Nach dem letzten Start **Eingabe schließen**. **Endgültig freigeben** wird erst aktiv, wenn alle Starter ein geprüftes Ergebnis oder einen geklärten Ausfall haben. Technische Zwischenfälle müssen zuerst entschieden werden. Korrekturen brauchen eine Begründung; nach Freigabe zunächst begründet wieder öffnen und anschließend erneut prüfen.
+René sieht gespeicherte Ergebnisse sofort in **Finale**. **Person antippen → Wert mit Papier vergleichen → Mit Papier abgeglichen.** Unter **Ausfall oder Zwischenfall** einen Status mit Begründung speichern. **Nicht gestartet** erhält keinen regulären Ergebnisrang; offene Einträge bleiben offen. **Nur offene Prüfungen** reduziert die Liste auf noch zu klärende Personen.
+
+![Kompakte Finalverwaltung](screenshots/finalverwaltung-mobil.jpg)
+
+![Teilnehmerdialog für den Papierabgleich](screenshots/final-papierabgleich-mobil.jpg)
+
+Nach dem letzten Start **Eingabe schließen**. **Offiziell freigeben** wird erst aktiv, wenn alle Starter ein geprüftes Ergebnis oder einen geklärten Ausfall haben. Technische Zwischenfälle müssen zuerst entschieden werden. Unter **Drucken, Export & Wiederöffnung** stehen Ergebnisdruck, CSV und begründetes Wiederöffnen. Nach einer Korrektur erneut mit Papier abgleichen. Bei einem zwischenzeitlich geänderten Klassenstand zuerst **Aktuellen Stand übernehmen** und erneut prüfen.
 
 Die Teilnehmer-Rangliste öffnet bei bestätigten Finaldaten direkt das **Finale**. Über den Klassenwähler wechselt man zwischen den Klassen; **Halbfinale** bleibt separat erreichbar. Rang, Startposition und Halbfinalplatz sind klar getrennt.
 
@@ -54,13 +60,17 @@ Die Teilnehmer-Rangliste öffnet bei bestätigten Finaldaten direkt das **Finale
 
 ## 5. TV läuft automatisch
 
-Im echten Betrieb öffnet der TV-Browser **`/live/2026` ohne Anmeldung**. René steuert den Bildschirm unter **Anzeige & Hinweise**. Halbfinale oder Finale wählen, gewünschte Klassen auswählen, Wechselintervall einstellen und **Anzeige speichern**. **Alle Klassen automatisch** nimmt alle Klassen auf. Alternativ eine Klasse fixieren.
+Im echten Betrieb öffnet der TV-Browser **`/live/2026` ohne Anmeldung**. René steuert den Bildschirm unter **Anzeige & Hinweise**. Halbfinale oder Finale wählen, gewünschte Klassen auswählen, Wechselintervall einstellen und **Anzeige speichern**. **Klassen automatisch wechseln** rotiert über die angekreuzten Klassen. Alternativ eine Klasse fixieren. Bearbeitete Einstellungen bleiben beim Aktualisieren oder Ansichtswechsel erhalten.
+
+![TV-Einstellungen und aktueller Hinweis](screenshots/tv-steuerung-mobil.jpg)
 
 Der TV zeigt acht Personen pro Seite. Er zeigt zuerst alle Seiten einer Klasse, dann die nächste Klasse. Die Klassen sind unten sichtbar. Standard: Wechsel alle 15 Sekunden, neue Werte alle fünf Sekunden. Auf dem TV stehen keine Verwaltungsbuttons. Bei Verbindungsproblemen bleibt der letzte Stand sichtbar und erhält eine Warnung.
 
 ![Öffentliche TV-Darstellung mit automatischer Klassenrotation](screenshots/tv-demo.jpg)
 
-Hinweise erhalten Titel, Text, Ziel App/TV/beide und eine Anzeigedauer. Ein Vollbildhinweis pausiert die Rangliste. Nach Ablauf oder Rücknahme verschwindet er und die Rangliste läuft automatisch weiter. **Bis zur Rücknahme** bleibt dauerhaft sichtbar; für Zeitänderungen eine passende Dauer wählen. **TV öffnen** zeigt genau die Bildschirmansicht in einem separaten Tab.
+**Neuer Hinweis** öffnet einen Dialog für Titel, Text, Ziel App/TV/beide und Anzeigedauer. Standardmäßig verschwindet der Hinweis nach zehn Minuten. Aktuelle Hinweise lassen sich bearbeiten oder **Zurückziehen**; abgelaufene Hinweise stehen separat. Ein Vollbildhinweis pausiert die Rangliste. Nach Ablauf oder Rücknahme verschwindet er und die Rangliste läuft automatisch weiter. **Bis zur Rücknahme** bleibt dauerhaft sichtbar; für Zeitänderungen eine passende Dauer wählen. **TV öffnen** zeigt genau die Bildschirmansicht in einem separaten Tab.
+
+![Hinweis bearbeiten mit automatischem Ausblenden](screenshots/hinweis-dialog-mobil.jpg)
 
 ## Zugänge und Ausfallverfahren
 
