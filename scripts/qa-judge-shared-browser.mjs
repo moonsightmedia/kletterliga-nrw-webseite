@@ -7,7 +7,7 @@ const runtime = process.env.PLAYWRIGHT_PACKAGE || 'C:/Users/Janosch/.cache/codex
 const { chromium } = createRequire(runtime)('playwright');
 const base = process.env.QA_BASE_URL || 'http://127.0.0.1:3593';
 if (!['127.0.0.1', 'localhost'].includes(new URL(base).hostname)) throw new Error('Local QA only');
-const out = resolve('.qa-post-qualification/judge-shared');
+const out = resolve('.qa-post-qualification/judge-onboarding');
 await mkdir(out, { recursive: true });
 const report = { checks: [], errors: [], note: 'Synthetic routes and codes; not a production database test.' };
 const check = (label, pass) => { report.checks.push({ label, pass }); if (!pass) throw new Error(label); };
@@ -58,6 +58,28 @@ try {
     }
     await page.getByLabel('Schiedsrichter-Code').fill(code);
     await page.getByRole('button', { name: 'Bereich öffnen' }).click();
+    await page.getByRole('dialog').getByRole('heading', { name: 'Deine Routen auswählen' }).waitFor();
+    for (const [index, title] of ['Deine Routen auswählen', 'Zeit nehmen und ankündigen', 'Ergebnis per QR bestätigen'].entries()) {
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('heading', { name: title }).waitFor();
+      await page.waitForTimeout(300);
+      const fit = await dialog.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top >= -1 && rect.bottom <= innerHeight + 1 && rect.left >= -1 && rect.right <= innerWidth + 1 && element.scrollWidth <= element.clientWidth + 1;
+      });
+      await page.screenshot({ path: resolve(out, `judge-${width}-onboarding-${index + 1}.png`) });
+      check(`${width}: onboarding step ${index + 1} fits viewport`, fit);
+      await dialog.getByRole('button', { name: index === 2 ? 'Los geht’s' : 'Weiter', exact: true }).click();
+    }
+    check(`${width}: onboarding completion saved`, await page.evaluate(() => localStorage.getItem('kletterliga:judge-onboarding:2026:v1') === 'done'));
+    await page.getByRole('button', { name: 'Kurzanleitung' }).click();
+    await page.getByRole('heading', { name: 'Deine Routen auswählen' }).waitFor();
+    await page.keyboard.press('Tab');
+    check(`${width}: keyboard focus stays inside guide`, await page.getByRole('dialog').evaluate((element) => element.contains(document.activeElement)));
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await page.waitForTimeout(300);
+    check(`${width}: closing guide restores focus`, await page.getByRole('button', { name: 'Kurzanleitung' }).evaluate((element) => element === document.activeElement));
     await page.getByRole('tab', { name: 'Routenuhren' }).waitFor();
     check(`${width}: 14 routes available after code`, await page.getByLabel(/Timer für Route/).count() === 14);
     await page.getByRole('button', { name: 'Route 1 starten' }).click();
@@ -118,6 +140,7 @@ try {
     const checksBeforeReload = accessChecks;
     await page.reload();
     await page.getByRole('button', { name: 'Route 1 pausieren' }).waitFor();
+    check(`${width}: guide stays dismissed after reload`, await page.getByRole('dialog').count() === 0);
     check(`${width}: reload revalidates remembered access`, accessChecks > checksBeforeReload);
     check(`${width}: timer survives automatic re-entry`, await page.getByRole('button', { name: /pausieren/ }).count() === 2);
     if (width === 390) {

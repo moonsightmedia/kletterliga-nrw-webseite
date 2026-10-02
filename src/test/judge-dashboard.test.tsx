@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import JudgeDashboard from "@/app/pages/competition/JudgeDashboard";
+import { judgeOnboardingKey } from "@/lib/judgeOnboarding";
 import { getCompetitionTimerStorageKey } from "@/lib/competitionTimers";
 import { JUDGE_ACCESS_MAX_AGE_MS, JUDGE_ACCESS_STORAGE_KEY, saveJudgeAccess } from "@/lib/judgeAccessSession";
 
@@ -24,16 +25,21 @@ function unlock() {
 describe("judge dashboard", () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem(judgeOnboardingKey("2026"), "done");
     vi.clearAllMocks();
     service.getCompetitionJudgeRoutes.mockResolvedValue({ event: { id: "event-1", phase: "open" }, routes });
   });
   afterEach(() => cleanup());
 
   it("opens without an app account after the shared code is entered", async () => {
+    localStorage.removeItem(judgeOnboardingKey("2026"));
     render(<JudgeDashboard />);
     expect(await screen.findByLabelText("Schiedsrichter-Code")).toBeInTheDocument();
     expect(service.getCompetitionJudgeRoutes).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     unlock();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Anleitung schließen" }));
     expect(await screen.findByRole("heading", { name: "Routen für die Zeitnahme" })).toBeInTheDocument();
     expect(service.getCompetitionJudgeRoutes).toHaveBeenCalledWith("2026", code);
     expect(localStorage.getItem(JUDGE_ACCESS_STORAGE_KEY)).toContain(code);
