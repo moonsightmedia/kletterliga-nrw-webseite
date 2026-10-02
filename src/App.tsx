@@ -19,6 +19,7 @@ import Index from "./pages/Index";
 import Liga from "./pages/Liga";
 import Modus from "./pages/Modus";
 import Finale from "./pages/Finale";
+import { FinaleHandout } from "./pages/FinaleHandout";
 import Regelwerk from "./pages/Regelwerk";
 import Teilnahmebedingungen from "./pages/Teilnahmebedingungen";
 import Hallen from "./pages/Hallen";
@@ -71,6 +72,8 @@ const AppShell = () => {
               <Route path="/liga" element={<Liga />} />
               <Route path="/modus" element={<Modus />} />
               <Route path="/finale" element={<Finale />} />
+              <Route path="/finale-2026/teilnehmende" element={<FinaleHandout kind="teilnehmende" />} />
+              <Route path="/finale-2026/crew" element={<FinaleHandout kind="crew" />} />
               <Route path="/regelwerk" element={<Regelwerk />} />
               <Route path="/teilnahmebedingungen" element={<Teilnahmebedingungen />} />
               <Route path="/hallen" element={<Hallen />} />
