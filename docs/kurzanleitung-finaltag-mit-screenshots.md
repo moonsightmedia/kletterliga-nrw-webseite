@@ -1,5 +1,15 @@
 # Finaltag · Kurzanleitung für René und die Zeitnahme
 
+## Teilnehmeransicht · 2. Oktober 2026
+
+Unter **Halbfinale** stehen Klasse, Eingabestatus, eingetragene Ergebnisse und Abgabezeit kompakt über den fünf Routen. Die Aufforderung zum Einlass erscheint nur bis zur Bestätigung durch die Crew. Auch ein gespeichertes Ergebnis mit 0 Punkten zählt beim Fortschritt mit; fehlende Einträge bleiben offen.
+
+Die Anleitung öffnet man bei Bedarf unter den Routen über **Hilfe zum Halbfinale**. Es gibt keinen automatisch geöffneten Begrüßungsdialog. Den kurzen QR-Tipp kann man mit **×** ausblenden; das merkt sich dieser Browser je Teilnehmer und Saison. Nach dem ersten Ergebnis verschwindet er ebenfalls. Verbindungsfehler und notwendige Einlassinformationen bleiben sichtbar.
+
+![Aufgeräumte Teilnehmeransicht mit erfundenen Daten, einschließlich eines bestätigten Null-Ergebnisses](screenshots/teilnehmer-hinweise-390.jpg)
+
+Die lokale Vorschau unter **/demo/finaltag/teilnehmer** verwendet die tatsächliche Teilnehmerseite mit erfundenen Daten und speichert keine echten Ergebnisse. Sie ist im Produktionsbuild nicht enthalten.
+
 ## Einlass und Nachmeldungen · 2. Oktober 2026
 
 Im Adminmenü **Wettkampftag → Einlass & Anmeldungen** öffnen. Unter **Angemeldet** die Person suchen und **Einchecken** antippen. Erst danach kann sie Halbfinalergebnisse nach dem Schiedsrichter-QR absenden. Eine Anmeldung allein bestätigt keine Anwesenheit. Die Teilnehmeransicht aktualisiert sich automatisch.

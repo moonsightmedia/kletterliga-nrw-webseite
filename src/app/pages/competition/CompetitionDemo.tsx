@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminShell } from "@/app/layouts/AdminLayout";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 import { AttendanceDesk } from "@/app/components/AttendanceDesk";
+import CompetitionParticipantPreview from "@/app/pages/competition/CompetitionParticipantPreview";
 import { demoAttendanceSource, resetAttendanceDemo } from "@/lib/attendanceDemoSource";
 import {
   Link,
@@ -53,6 +54,7 @@ export default function CompetitionDemo() {
   }, []);
   const view =
     params.get("ansicht") ?? location.pathname.slice(root.length + 1);
+  if (view === "teilnehmer") return <CompetitionParticipantPreview />;
   if (view === "tv")
     return (
       <CompetitionLiveView

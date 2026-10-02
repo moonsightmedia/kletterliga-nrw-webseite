@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, QrCode, RotateCw, ShieldCheck, Trophy, X } from "lucide-react";
+import { Check, QrCode, RotateCw, ShieldCheck, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
 import SemifinalWelcome from "@/app/components/SemifinalWelcome";
+import CompetitionParticipantOverview, { type ParticipantEntryStatus } from "@/app/components/CompetitionParticipantOverview";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getCompetitionDay, submitCompetitionResult } from "@/services/competitionDay";
 import { useSeasonSettings } from "@/services/seasonSettings";
 import { competitionRouteColor } from "@/lib/competitionRouteColors";
 import { competitionGripNumber } from "@/lib/competitionConfig";
-import { competitionDeadlineReached, formatCompetitionDeadline } from "@/lib/competitionDeadline";
+import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import { shouldUseCompetitionProbe } from "@/lib/competitionProbeAccess";
 
 type CompetitionDayData = Awaited<ReturnType<typeof getCompetitionDay>>;
@@ -75,13 +76,15 @@ function parseCompetitionQr(value: string, route: CompetitionRoute): string | nu
   }
 }
 
-const pageClass = "mx-auto w-full max-w-4xl space-y-7 pb-24 pt-6 text-[#f2dcab]";
+const pageClass = "mx-auto w-full max-w-4xl space-y-4 pb-24 pt-6 text-[#f2dcab]";
 
-export default function CompetitionDay() {
+export default function CompetitionDay({ preview: previewData }: { preview?: { profileId: string; season: string; load: typeof getCompetitionDay; submit: typeof submitCompetitionResult } } = {}) {
+  const preview = import.meta.env.DEV ? previewData : undefined;
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  const { profile: signedInProfile } = useAuth();
+  const profile = preview ? { id: preview.profileId } : signedInProfile;
   const { settings, loading: settingsLoading } = useSeasonSettings();
-  const season = settings?.season_year ? String(settings.season_year) : null;
+  const season = preview?.season ?? (settings?.season_year ? String(settings.season_year) : null);
   const [data, setData] = useState<CompetitionDayData | null>(null);
   const probeMode = shouldUseCompetitionProbe(profile?.id, localProbeAvailable, data?.event?.phase, searchParams.get("probelauf") === "1");
   const [loading, setLoading] = useState(true);
@@ -123,7 +126,7 @@ export default function CompetitionDay() {
       setLoadError(null);
     }
     try {
-      const next = await getCompetitionDay(season);
+      const next = await (preview?.load ?? getCompetitionDay)(season);
       if (requestId !== loadRequestRef.current) return;
       setData(next);
       setAccessVerified(true);
@@ -140,7 +143,7 @@ export default function CompetitionDay() {
       loadPendingRef.current -= 1;
       if (requestId === loadRequestRef.current) setLoading(false);
     }
-  }, [season, profile?.id]);
+  }, [season, profile?.id, preview?.load]);
 
   useEffect(() => {
     void load();
@@ -250,7 +253,7 @@ export default function CompetitionDay() {
         setQrToken(null);
         return;
       }
-      const accepted = await submitCompetitionResult({ season, routeId: route.id, zone, qrToken });
+      const accepted = await (preview?.submit ?? submitCompetitionResult)({ season, routeId: route.id, zone, qrToken });
       const expectedPoints = data.event.zone_points[zone];
       const pointsMatch = Number.isFinite(accepted.points) && Math.abs(accepted.points - expectedPoints) <= 1e-8;
       const validAcknowledgement = Boolean(accepted.id && accepted.created_at && Number.isFinite(Date.parse(accepted.created_at)));
@@ -271,7 +274,7 @@ export default function CompetitionDay() {
     }
   };
 
-  if (settingsLoading) return <div className={pageClass}><StitchCard tone="cream" className="p-6" role="status">Saison wird geladen …</StitchCard></div>;
+  if (settingsLoading && !preview) return <div className={pageClass}><StitchCard tone="cream" className="p-6" role="status">Saison wird geladen …</StitchCard></div>;
   if (!season) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Wettkampftag" description="Die Saison ist derzeit nicht verfügbar." /></div>;
   if (loading) return <div className={pageClass}><StitchCard tone="cream" className="p-6" role="status">Wettkampf wird geladen …</StitchCard></div>;
   if (loadError || !data) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab]" eyebrow="Halbfinale" title="Wettkampftag" /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>{loadError ?? "Wettkampfdaten nicht verfügbar."}</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
@@ -281,6 +284,14 @@ export default function CompetitionDay() {
   if (data.routes.length !== 5) return <div className={pageClass}><StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale" title="Routenzuordnung prüfen" description="Dein Routenset konnte nicht vollständig geladen werden." /><StitchCard tone="cream" className="space-y-4 p-6" role="alert"><p>Bitte lade die Zuordnung erneut oder wende dich an die Organisation. Es werden keine Ergebnisseingaben angezeigt.</p><StitchButton onClick={() => void load()}><RotateCw aria-hidden="true" size={17} /> Erneut laden</StitchButton></StitchCard></div>;
 
   const readOnly = !canEnter;
+  const completed = data.routes.filter((item) => savedResult(item)).length;
+  const entryStatus: ParticipantEntryStatus = probeMode ? "probe"
+    : data.event.phase === "draft" ? "preparation"
+    : data.event.phase === "closed" || deadlinePassed ? "closed"
+    : !accessVerified ? "unverified"
+    : data.check_in?.status === "absent" ? "absent"
+    : !checkedIn ? "check-in"
+    : completed === data.routes.length ? "complete" : "open";
   const entryBlockedMessage = refreshError ?? (data.event.phase === "draft"
     ? "Die Routen sind sichtbar. Die Ergebniseingabe ist noch nicht geöffnet."
     : data.event.phase === "closed" || deadlinePassed
@@ -304,15 +315,8 @@ export default function CompetitionDay() {
     setSubmitError(null);
   };
   return <div className={pageClass}>
-    <header className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
-      <StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale · Wettkampftag" title="Deine Routen" description={`${data.league === "lead" ? "Vorstieg" : data.league === "toprope" ? "Toprope" : "Kletterliga NRW"}${data.class_label ? ` · ${data.class_label}` : ""} — wähle eine deiner zugeordneten Routen.`} />
-      <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : data.event.phase === "closed" || deadlinePassed ? "EINGABE GESCHLOSSEN" : !accessVerified ? "STATUS PRÜFEN" : data.check_in?.status === "absent" ? "TEILNAHME KLÄREN" : !checkedIn ? "EINLASS OFFEN" : "5 ROUTEN"}</StitchBadge>
-    </header>
-    {!probeMode && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role={refreshError ? "alert" : "status"}>{refreshError ?? (checkedIn ? "Anwesenheit bestätigt" : data.check_in?.status === "absent" ? "Deine Teilnahme wurde als abwesend markiert. Bitte kläre das beim Einlass." : "Bitte zuerst beim Einlass anmelden. Die Crew bestätigt deine Anwesenheit.")}</StitchCard>}
-    {profile?.id && <SemifinalWelcome profileId={profile.id} season={season} />}
-    {!probeMode && data.event.submission_deadline_at && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role="status">{deadlinePassed ? "Die Halbfinaleingabe ist geschlossen. Fehlende Einträge kann René begründet nachtragen." : `Bitte alle fünf Routen bis ${formatCompetitionDeadline(data.event.submission_deadline_at)} Uhr eintragen. Danach wird die Eingabe automatisch gesperrt.`} Prüfe auch Einträge mit 0 Punkten unter deinen Routen.</StitchCard>}
+    <CompetitionParticipantOverview className={`${data.league === "lead" ? "Vorstieg" : data.league === "toprope" ? "Toprope" : "Kletterliga NRW"}${data.class_label ? ` · ${data.class_label}` : ""}`} completed={completed} total={data.routes.length} deadline={data.event.submission_deadline_at} status={entryStatus} error={!probeMode ? refreshError : null} />
     {probeMode && <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle einen Griff und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>}
-    {!readOnly && <p className="max-w-2xl text-sm leading-6 text-[#f2dcab]/75">Wähle die Nummer des letzten sicher gehaltenen Griffs (10–100 in Zehnerschritten). {data.event.zone_points.every((points, index) => points === index * 10) && "Die Griffnummer entspricht den Punkten: Griff 80 bringt 80 Punkte. "}{probeMode ? localProbeAvailable ? "Im Probelauf kannst du anschließend den Test-QR bestätigen oder einen passenden Routencode scannen." : "Im Probelauf scannst du anschließend den passenden Routencode. Es wird kein echtes Ergebnis übertragen." : "Danach scannst du hier den QR-Code beim Schiedsrichter."}</p>}
     <section aria-label="Deine Wettkampfrouten" className="space-y-3">
       {data.routes.map((item, index) => {
         const itemResult = savedResult(item);
@@ -357,7 +361,8 @@ export default function CompetitionDay() {
         {qrError && <p role="alert" className="text-sm font-semibold leading-5 text-[#ba1a1a]">{qrError}</p>}
       </DialogContent>
     </Dialog>
-    <footer className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-[#f2dcab]/75"><span className="flex items-center gap-2"><Trophy aria-hidden="true" size={15} />{probeMode ? "Testwerte kannst du oben zurücksetzen. Die echte Wertung bleibt unverändert." : "Ergebnisse sind nach dem Eintragen für dich nicht bearbeitbar. Bitte wende dich bei einem Fehler an die Organisation."}</span><Link className="underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]" to="/app/wettkampf/rangliste">Halbfinalwertung ansehen</Link><StitchButton size="sm" variant="cream" disabled={submitting} onClick={() => void load()}>Status aktualisieren</StitchButton></footer>
+    {profile?.id && <SemifinalWelcome profileId={profile.id} season={season} deadline={data.event.submission_deadline_at} showTip={canEnter && !probeMode && completed === 0} />}
+    <footer className="flex flex-wrap items-center justify-between gap-3 text-sm text-[#f2dcab]/75"><Link className="underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]" to="/app/wettkampf/rangliste">Rangliste ansehen</Link><StitchButton size="sm" variant="cream" disabled={submitting} onClick={() => void load()}>Aktualisieren</StitchButton></footer>
   </div>;
 }
 
