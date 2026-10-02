@@ -7,6 +7,7 @@ import { AdminLayout } from "@/app/layouts/AdminLayout";
 import { ProtectedRoute, RoleGuard } from "@/app/auth/ProtectedRoute";
 import { useLaunchSettings } from "@/config/launch";
 import { QualificationWriteRoute } from "@/app/pages/participant/QualificationWriteRoute";
+import { useQualificationPhase } from "@/services/useQualificationPhase";
 
 const Login = lazy(() => import("@/app/pages/auth/Login"));
 const Register = lazy(() => import("@/app/pages/auth/Register"));
@@ -104,6 +105,11 @@ const LaunchLockedRoute = ({
   return participantFeatureLocked ? <FeatureLocked title={title} /> : <>{children}</>;
 };
 
+const ParticipantRankings = () => {
+  const { hasEnded } = useQualificationPhase();
+  return hasEnded ? <Navigate to="/app/wettkampf/rangliste" replace /> : <Rankings />;
+};
+
 export const appRoutes = (
   <>
     {CompetitionDemo && <Route path="/demo/finaltag/*" element={<CompetitionDemo />} />}
@@ -181,7 +187,7 @@ export const appRoutes = (
         path="rankings"
         element={
           <LaunchLockedRoute title="Ranglisten folgen zum Saisonstart">
-            <Rankings />
+            <ParticipantRankings />
           </LaunchLockedRoute>
         }
       />
@@ -217,6 +223,7 @@ export const appRoutes = (
           </LaunchLockedRoute>
         }
       />
+      <Route path="profile/qualification/rankings" element={<LaunchLockedRoute title="Quali-Ranglisten"><Rankings /></LaunchLockedRoute>} />
       <Route path="profile" element={<Profile />} />
       <Route path="wettkampf" element={<CompetitionDay />} />
       <Route path="wettkampf/rangliste" element={<CompetitionStandings />} />

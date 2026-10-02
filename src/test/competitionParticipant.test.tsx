@@ -6,6 +6,7 @@ import { parseCompetitionParticipantQr, readCompetitionParticipantDraft } from "
 import type { CompetitionDay as CompetitionDayData } from "@/services/competitionDay";
 
 const api = vi.hoisted(() => ({ load: vi.fn(), submit: vi.fn(), scan: undefined as undefined | ((value: string) => void), profileId: "participant-1" }));
+vi.mock("@/app/components/SemifinalWelcome", () => ({ default: () => null }));
 vi.mock("@/app/auth/AuthProvider", () => ({ useAuth: () => ({ profile: { id: api.profileId } }) }));
 vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => ({ settings: { season_year: "2026" }, loading: false }) }));
 vi.mock("@/services/competitionDay", () => ({ getCompetitionDay: api.load, submitCompetitionResult: api.submit }));

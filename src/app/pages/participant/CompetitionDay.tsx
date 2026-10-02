@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { StitchBadge, StitchButton, StitchCard, StitchSectionHeading } from "@/app/components/StitchPrimitives";
 import { CodeQrScanner } from "@/components/CodeQrScanner";
+import SemifinalWelcome from "@/app/components/SemifinalWelcome";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getCompetitionDay, submitCompetitionResult } from "@/services/competitionDay";
 import { useSeasonSettings } from "@/services/seasonSettings";
@@ -260,6 +261,7 @@ export default function CompetitionDay() {
       <StitchSectionHeading titleAs="h1" className="[&_.stitch-headline]:!text-[#f2dcab] [&_p]:!text-[#f2dcab]/70" eyebrow="Halbfinale · Wettkampftag" title="Deine Routen" description={`${data.league === "lead" ? "Vorstieg" : data.league === "toprope" ? "Toprope" : "Kletterliga NRW"}${data.class_label ? ` · ${data.class_label}` : ""} — wähle eine deiner zugeordneten Routen.`} />
       <StitchBadge tone={probeMode ? "terracotta" : readOnly ? "ghost" : "navy"}>{probeMode ? "PROBELAUF" : readOnly ? data.event.phase === "draft" ? "NOCH NICHT GEÖFFNET" : "EINGABE GESCHLOSSEN" : "5 ROUTEN"}</StitchBadge>
     </header>
+    {profile?.id && <SemifinalWelcome profileId={profile.id} season={season} />}
     {!probeMode && data.event.submission_deadline_at && <StitchCard tone="cream" className="p-4 text-sm text-[#003d55]" role="status">{deadlinePassed ? "Die Halbfinaleingabe ist geschlossen. Fehlende Einträge kann René begründet nachtragen." : `Bitte alle fünf Routen bis ${formatCompetitionDeadline(data.event.submission_deadline_at)} Uhr eintragen. Danach wird die Eingabe automatisch gesperrt.`} Prüfe auch Einträge mit 0 Punkten unter deinen Routen.</StitchCard>}
     {probeAvailable && (probeMode
       ? <StitchCard tone="cream" className="flex flex-wrap items-center justify-between gap-4 p-4 text-[#003d55]" role="status"><div><strong className="stitch-headline text-lg">Probelauf · keine echte Wertung</strong><p className="mt-1 text-sm">Wähle einen Griff und scanne einen passenden Routencode{localProbeAvailable ? " oder bestätige den Test-QR" : ""}. Testwerte bleiben nur in diesem Browser-Tab und erscheinen nicht in der Rangliste.</p></div><div className="flex flex-wrap gap-2"><StitchButton variant="outline" size="sm" onClick={clearProbe}>Testwerte löschen</StitchButton>{data.event.phase !== "draft" && <StitchButton asChild variant="navy" size="sm"><Link to="/app/wettkampf">Probelauf beenden</Link></StitchButton>}</div></StitchCard>

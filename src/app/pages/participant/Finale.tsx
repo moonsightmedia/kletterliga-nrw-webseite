@@ -142,7 +142,7 @@ const Finale = () => {
           <section className="semifinal-archive" aria-labelledby="season-archive-heading">
             <h2 id="season-archive-heading" className="stitch-kicker">Deine Saison bleibt sichtbar</h2>
             <p className="semifinal-copy mt-3">{hasEnded ? "Punkte, Routenbewertungen und Einträge bleiben erhalten. Die Ergebniseingabe ist geschlossen." : "Deine bisherigen Einträge bleiben im Teilnehmerbereich erreichbar."}</p>
-            <Link to="/app/rankings" className="semifinal-archive-link"><ListOrdered size={17} aria-hidden="true" /><span>Ranglisten ansehen</span><ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/app/profile/qualification/rankings" className="semifinal-archive-link"><ListOrdered size={17} aria-hidden="true" /><span>Quali-Ranglisten ansehen</span><ArrowRight size={16} aria-hidden="true" /></Link>
             <Link to="/app/gyms" className="semifinal-archive-link"><LockKeyhole size={17} aria-hidden="true" /><span>Routen & Einträge ansehen</span><ArrowRight size={16} aria-hidden="true" /></Link>
           </section>
         </div>

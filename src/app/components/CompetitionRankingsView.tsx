@@ -2,13 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Medal, Clock3, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   className,
   resultLabel,
   type LiveClass,
@@ -54,7 +47,19 @@ export default function CompetitionRankingsView({
     }));
   }, [semifinal]);
   const groups = phase === "final" ? finals : semifinals;
-  const selected = groups.find((item) => item.key === chosen) ?? groups[0];
+  const activeKey = chosen ?? groups[0]?.key ?? "lead|U15-m";
+  const [league, classLabel] = activeKey.split("|");
+  const separator = classLabel.lastIndexOf("-");
+  const age = separator < 0 ? classLabel : classLabel.slice(0, separator);
+  const gender = separator < 0 ? "m" : classLabel.slice(separator + 1);
+  const selected = groups.find((item) => item.key === activeKey);
+  const chooseClass = (next: { league?: string; age?: string; gender?: string }) =>
+    setChosen(`${next.league ?? league}|${next.age ?? age}-${next.gender ?? gender}`);
+  const filterGroups = [
+    { label: "Liga", value: league, options: [{ value: "lead", label: "Vorstieg" }, { value: "toprope", label: "Toprope" }], change: (value: string) => chooseClass({ league: value }) },
+    { label: "Geschlecht", value: gender, options: [{ value: "m", label: "M" }, { value: "w", label: "W" }], change: (value: string) => chooseClass({ gender: value }) },
+    { label: "Altersklasse", value: age, options: [{ value: "U15", label: "U15" }, { value: "Ü15", label: "Ü15" }, { value: "Ü40", label: "Ü40" }], change: (value: string) => chooseClass({ age: value }) },
+  ];
   const finalClass = finals.find((item) => item.key === selected?.key);
   const official = phase === "final" && finalClass?.phase === "final";
   const error = phase === "final" ? finalError : semifinalError;
@@ -94,25 +99,19 @@ export default function CompetitionRankingsView({
                   {updated && `· ${updated.toLocaleTimeString("de-DE")}`}
                 </p>
               </div>
-              {groups.length > 0 && (
-                <div className="w-full sm:w-72">
-                  <Select value={selected?.key} onValueChange={setChosen}>
-                    <SelectTrigger
-                      aria-label="Wertungsklasse"
-                      className="min-h-12 bg-white"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groups.map((item) => (
-                        <SelectItem key={item.key} value={item.key}>
-                          {className(item.league, item.class_label)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            </div>
+            <div className="grid grid-cols-[1.5fr_0.8fr_1.2fr] gap-1.5" aria-label="Wertungsklasse">
+              {filterGroups.map((group) => (
+                <div key={group.label} role="group" aria-label={group.label} className="flex min-w-0 gap-0.5 rounded-sm bg-[#003d55]/5 p-0.5">
+                  {group.options.map((option) => (
+                    <button key={option.value} type="button" aria-pressed={group.value === option.value}
+                      onClick={() => group.change(option.value)}
+                      className={`min-h-11 min-w-0 flex-1 rounded-sm px-1 py-2 font-['Space_Grotesk'] text-[9px] font-bold uppercase tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55] focus-visible:ring-offset-2 sm:text-xs ${group.value === option.value ? "bg-[#a15523] text-[#f2dcab] shadow-sm" : "text-[#003d55]/60 hover:text-[#003d55]"}`}>
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
-              )}
+              ))}
             </div>
             {error && (
               <p
@@ -147,7 +146,7 @@ export default function CompetitionRankingsView({
                 <h3 className="font-bold">
                   {phase === "final"
                     ? "Finalstartlisten noch nicht freigegeben"
-                    : "Noch keine Wertung vorhanden"}
+                    : "Noch keine Wertung für diese Klasse"}
                 </h3>
                 <p className="mt-2 text-sm">
                   Neue Ergebnisse erscheinen hier automatisch.
