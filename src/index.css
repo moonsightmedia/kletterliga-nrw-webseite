@@ -48,6 +48,7 @@
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+    --form-error: 0 70% 32%;
     
     --border: 195 30% 85%;
     --input: 195 30% 85%;
@@ -90,6 +91,7 @@
     
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
+    --form-error: 0 70% 32%;
     
     --border: 195 80% 20%;
     --input: 195 80% 20%;

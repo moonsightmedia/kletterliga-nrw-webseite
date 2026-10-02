@@ -1,4 +1,4 @@
--- Run after all competition migrations, including 20261001140000, in an isolated test database.
+-- Run after all competition migrations, including 20261002100300, in an isolated test database.
 begin;
 create function pg_temp.ok(value boolean,label text) returns void language plpgsql as $$
 begin if value is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -30,7 +30,7 @@ select public.save_competition_config('FINAL-TEST',jsonb_build_object(
 select public.set_competition_phase('FINAL-TEST','open');
 select public.set_competition_phase('FINAL-TEST','closed');
 select public.set_competition_final_route('FINAL-TEST',1,'Finalroute',30);
-select pg_temp.denied('select public.publish_competition_final_class(''FINAL-TEST'',''lead'',''Testklasse'',(public.get_competition_final_admin(''FINAL-TEST'')->''routes''->0->>''id'')::uuid,1,0)','Halbfinalergebnisse fehlen');
+select pg_temp.denied('select public.publish_competition_final_class(''FINAL-TEST'',''lead'',''Testklasse'',(public.get_competition_final_admin(''FINAL-TEST'')->''routes''->0->>''id'')::uuid,1::smallint,0)','Halbfinalergebnisse fehlen');
 reset role;
 
 -- Seven registered starters: sixth and seventh tie at the qualification boundary.
@@ -49,7 +49,7 @@ insert into public.competition_day_results(event_id,route_id,profile_id,zone,fla
   where ev.season_year='FINAL-TEST';
 set local role authenticated;
 select public.publish_competition_final_class('FINAL-TEST','lead','Testklasse',
-  (public.get_competition_final_admin('FINAL-TEST')->'routes'->0->>'id')::uuid,1,0);
+  (public.get_competition_final_admin('FINAL-TEST')->'routes'->0->>'id')::uuid,1::smallint,0);
 reset role;
 select pg_temp.ok((select count(*)=7 from public.competition_final_entries),'all tied at sixth enter final');
 select pg_temp.ok((select min(start_position)=1 and max(start_position)=7 from public.competition_final_entries),'start positions are contiguous');
@@ -113,5 +113,40 @@ select pg_temp.denied('select public.get_competition_final_station(''FINAL-TEST'
 select pg_temp.denied('select public.submit_competition_final_attempt(''FINAL-TEST'',2::smallint,''ABCDEFGHIJKLMNOPQRSTUVWX'',current_setting(''test.entry2'')::uuid,''99999999-7000-4000-8000-000000000102'',20,false,100,3,'''')','FINAL_PASSWORD_INVALID');
 select pg_temp.ok(public.get_competition_final_station('FINAL-TEST',1::smallint,'Changed-Password-Demo')->'classes'=public.get_competition_final_station('FINAL-TEST',2::smallint,'Changed-Password-Demo')->'classes','new password works on both phones');
 select pg_temp.ok(position('password_hash' in public.get_competition_live('FINAL-TEST')::text)=0,'public endpoint excludes password hashes');
+reset role;
+-- Exercise the remaining ranking tie breakers using only this rolled-back fixture.
+update public.competition_final_entries set semifinal_rank=2
+where id in (current_setting('test.entry1')::uuid,current_setting('test.entry2')::uuid);
+update public.competition_final_attempts set grip=30,is_top=false
+where entry_id in (current_setting('test.entry1')::uuid,current_setting('test.entry2')::uuid) and counted;
+select pg_temp.ok((public.get_competition_final_public('FINAL-TEST')->0->'entries'->0->>'name')='Final Person 3','time breaks equal grip and equal semifinal rank');
+update public.competition_final_attempts set seconds=100 where entry_id=current_setting('test.entry1')::uuid and counted;
+select pg_temp.ok((select count(*)=2 from jsonb_array_elements(public.get_competition_final_public('FINAL-TEST')->0->'entries') e where (e->>'rank')::integer=1),'complete tie shares first place');
+update public.competition_final_attempts set is_top=true,seconds=300 where entry_id=current_setting('test.entry1')::uuid and counted;
+select pg_temp.ok((public.get_competition_final_public('FINAL-TEST')->0->'entries'->0->>'name')='Final Person 2','TOP beats equal maximum grip even with slower time');
+select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000001',true);
+select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+create function pg_temp.class_id() returns uuid language sql as $$ select (public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid $$;
+create function pg_temp.version() returns integer language sql as $$ select (public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'version')::integer $$;
+select public.set_competition_final_phase(pg_temp.class_id(),'review',pg_temp.version());
+select pg_temp.denied('select public.set_competition_final_phase(pg_temp.class_id(),''final'',pg_temp.version())','Ergebnisse oder Papierabgleich fehlen');
+do $$ declare e jsonb; begin
+ for e in select value from jsonb_array_elements(public.get_competition_final_admin('FINAL-TEST')->'classes'->0->'entries') loop
+  if (e->>'entry_id')::uuid not in (current_setting('test.entry1')::uuid,current_setting('test.entry2')::uuid) then
+   perform public.set_competition_final_entry_status((e->>'entry_id')::uuid,'dns','Fixture: not started',pg_temp.version());
+  end if;
+ end loop;
+end $$;
+select public.check_competition_final_entry(current_setting('test.entry1')::uuid,pg_temp.version());
+select public.check_competition_final_entry(current_setting('test.entry2')::uuid,pg_temp.version());
+select public.set_competition_final_phase(pg_temp.class_id(),'final',pg_temp.version());
+select pg_temp.ok(public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'phase'='final','checked results and explicit nonstarts allow final approval');
+select pg_temp.denied('select public.set_competition_final_phase(pg_temp.class_id(),''review'',pg_temp.version(),null)','Klassenwechsel');
+select public.set_competition_final_phase(pg_temp.class_id(),'review',pg_temp.version(),'Fixture: paper correction');
+select pg_temp.ok(public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'phase'='review','official result reopens only with a reason');
+select public.set_competition_final_entry_status(current_setting('test.entry2')::uuid,'incident','Fixture: technical incident',pg_temp.version());
+select pg_temp.denied('select public.set_competition_final_phase(pg_temp.class_id(),''final'',pg_temp.version())','Ergebnisse oder Papierabgleich fehlen');
+select pg_temp.ok((select e->>'rank' is null from jsonb_array_elements(public.get_competition_final_public('FINAL-TEST')->0->'entries') e where e->>'name'='Final Person 3'),'incident has no sporting rank');
 reset role;
 rollback;

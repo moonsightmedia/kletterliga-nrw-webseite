@@ -16,7 +16,12 @@ describe("public finale page", () => {
     expect(screen.getAllByText("Samstag, 3. Oktober 2026").length).toBeGreaterThan(0);
     expect(screen.getByText("Rosmarter Allee 12")).toBeInTheDocument();
     expect(screen.getByText("58762 Altena")).toBeInTheDocument();
-    expect(screen.getByText("Zeitplan wird finalisiert")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "FINALTAG: DER ABLAUF" })).toBeInTheDocument();
+    expect(screen.getByText("08:45").closest("time")).toHaveAttribute("dateTime", "2026-10-03T08:45:00+02:00");
+    expect(screen.getByRole("heading", { name: "Halbfinale endet" })).toBeInTheDocument();
+    expect(screen.getByText("Bis 16:00 Uhr müssen alle Halbfinal-Ergebnisse in der App eingetragen sein.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Siegerehrung" })).toBeInTheDocument();
+    expect(screen.getByText(/ohne Startanmeldung kannst du zum Zuschauen vorbeikommen/)).toBeInTheDocument();
     expect(screen.getByText("29. September")).toBeInTheDocument();
     expect(screen.getByText("30. September")).toBeInTheDocument();
     expect(screen.queryByText("27. September")).not.toBeInTheDocument();

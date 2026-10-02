@@ -17,7 +17,7 @@ export const SeasonSection = () => {
   };
   
   const formatFinaleDate = (date: string | null) => {
-    if (!date) return "Termin folgt";
+    if (!date) return seasonYear === "2026" ? "Samstag, 03.10.2026" : "Termin folgt";
     const d = new Date(date);
     const dayName = d.toLocaleDateString("de-DE", { weekday: "long" });
     return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}, ${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
@@ -32,7 +32,9 @@ export const SeasonSection = () => {
             SAISON {seasonYear}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Die kommende Saison steht in den Startlöchern
+            {seasonYear === "2026"
+              ? "Die Qualifikation ist abgeschlossen – am 3. Oktober treffen wir uns zum Finaltag in Altena."
+              : "Die kommende Saison steht in den Startlöchern"}
           </p>
         </AnimatedSection>
 

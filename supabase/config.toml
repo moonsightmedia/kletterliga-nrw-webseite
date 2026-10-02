@@ -53,6 +53,10 @@ verify_jwt = true
 [functions.send-contact-email]
 verify_jwt = false
 
+# submit-season-feedback: public anonymous survey, validates and stores server-side
+[functions.submit-season-feedback]
+verify_jwt = false
+
 # participant-email-consent: öffentliche DOI-Links, Auth-Prüfung erfolgt je Aktion in der Function
 [functions.participant-email-consent]
 verify_jwt = false

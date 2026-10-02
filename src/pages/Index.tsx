@@ -4,6 +4,7 @@ import { QualificationNoticeBanner } from "@/components/home/QualificationNotice
 import { AboutSection } from "@/components/home/AboutSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { SeasonSection } from "@/components/home/SeasonSection";
+import { FinaleDaySchedule } from "@/components/home/FinaleDaySchedule";
 import { GymsSection } from "@/components/home/GymsSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { CTASection } from "@/components/home/CTASection";
@@ -38,6 +39,7 @@ const Index = () => {
       <AboutSection />
       <HowItWorksSection />
       <SeasonSection />
+      <FinaleDaySchedule onHomePage />
       <GymsSection />
       <InstagramSection />
       <CTASection />
