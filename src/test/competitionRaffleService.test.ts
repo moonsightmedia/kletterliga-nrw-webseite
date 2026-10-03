@@ -23,6 +23,10 @@ describe("raffle repeated wins", () => {
     await raffleSource.export!("2026");
     expect(rpc).toHaveBeenCalledWith("export_competition_raffle_winners",{p_season:"2026"});
   });
+  it("sends the confirmed draw snapshot and idempotency ID for cancellation",async()=>{
+    await raffleSource.cancel!("2026",{draw_ids:["d1","d2"],reset_all:true,request_id:"cancel1"});
+    expect(rpc).toHaveBeenCalledWith("cancel_competition_raffle_wins",{p_season:"2026",p_draw_ids:["d1","d2"],p_reset_all:true,p_request_id:"cancel1"});
+  });
   it("exports every win with contact and prize and neutralizes spreadsheet formulas",()=>{
     const row={id:"d1",profile_id:"p1",winner_name:"Peter",email:"peter@example.test",prize:'Board "Spezial"',created_at:"2026-10-03T11:00:00Z",scope:"semifinal" as const};
     const csv=raffleWinnersCsv([row,{...row,id:"d2",prize:"=HYPERLINK(bad)"},{...row,id:"d3",prize:null}]);
