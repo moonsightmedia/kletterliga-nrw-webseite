@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import JudgeDashboard from "@/app/pages/competition/JudgeDashboard";
 import { judgeOnboardingKey } from "@/lib/judgeOnboarding";
@@ -12,7 +12,7 @@ vi.mock("@/services/seasonSettings", () => ({ useSeasonSettings: () => settings 
 vi.mock("@/services/competitionDay", () => service);
 
 const routes = [
-  { id: "route-a", number: 1, name: "Kante", grade: "6", color: "red", qr_token: "private-a" },
+  { id: "route-a", number: 1, name: "Kante", grade: "6", color: "red", qr_token: "private-a", progress: {total:20,completed:7,remaining:13,not_checked_in:3}, classes:[{league:"lead",class_label:"U18-w",total:12,completed:4,remaining:8,not_checked_in:2},{league:"toprope",class_label:"Ü18 offen",total:8,completed:3,remaining:5,not_checked_in:1}] },
   { id: "route-b", number: 2, name: "Dach", grade: "7", color: "blue", qr_token: "private-b" },
 ];
 const code = "AbCdEfGhJkMnPqRsTuVwXyZ2";
@@ -29,7 +29,38 @@ describe("judge dashboard", () => {
     vi.clearAllMocks();
     service.getCompetitionJudgeRoutes.mockResolvedValue({ event: { id: "event-1", phase: "open" }, routes });
   });
-  afterEach(() => cleanup());
+  afterEach(() => { cleanup(); vi.useRealTimers(); });
+
+  it("refreshes remaining participants after ten seconds without resetting a running timer", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    await screen.findByLabelText("Teilnehmerstand Route 1");
+    fireEvent.click(screen.getByRole("button", { name: "Route 1 starten" }));
+    service.getCompetitionJudgeRoutes.mockResolvedValue({
+      event: { id: "event-1", phase: "open" },
+      routes: [{ ...routes[0], progress: { total: 20, completed: 8, remaining: 12, not_checked_in: 3 } }, routes[1]],
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(service.getCompetitionJudgeRoutes).toHaveBeenCalledTimes(2);
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("12 noch offen");
+    expect(screen.getByRole("button", { name: "Route 1 pausieren" })).toBeInTheDocument();
+    expect(screen.getByLabelText("4 Minuten 50 Sekunden verbleibend")).toBeInTheDocument();
+  });
+
+  it("shows assigned classes and remaining participants in timers and QR view", async () => {
+    render(<JudgeDashboard />);
+    await screen.findByLabelText("Schiedsrichter-Code");
+    unlock();
+    expect(await screen.findByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("13 noch offen");
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("7/20 erledigt");
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("Davon 3 noch nicht eingecheckt");
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("Vorstieg · U18-w8 offen");
+    fireEvent.mouseDown(screen.getByRole("tab", {name:"QR-Codes"}));
+    fireEvent.click(screen.getByRole("tab", {name:"QR-Codes"}));
+    expect(await screen.findByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("Toprope · Ü18 offen5 offen");
+  });
 
   it("opens without an app account after the shared code is entered", async () => {
     localStorage.removeItem(judgeOnboardingKey("2026"));
@@ -132,6 +163,8 @@ describe("judge dashboard", () => {
     fireEvent(window, new Event("focus"));
     expect(await screen.findByRole("alert")).toHaveTextContent("Verbindung unterbrochen");
     expect(screen.getByRole("button", { name: "Route 1 pausieren" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("13 noch offen");
+    expect(screen.getByLabelText("Teilnehmerstand Route 1")).toHaveTextContent("Stand veraltet");
   });
 
   it("runs independent route timers and restores them with remembered access", async () => {

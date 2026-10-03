@@ -22,7 +22,9 @@ export interface CompetitionDay {
   check_in?: { required: boolean; status: "expected" | "arrived" | "absent"; checked_in_at: string | null };
   routes: CompetitionRoute[]; results: CompetitionResult[]; is_staff: boolean; is_admin: boolean;
 }
-export interface CompetitionStaffRoute extends CompetitionRoute { qr_token: string }
+export interface CompetitionRouteProgress { total: number; completed: number; remaining: number; not_checked_in: number }
+export interface CompetitionRouteClass extends CompetitionRouteProgress { league: CompetitionLeague; class_label: string }
+export interface CompetitionStaffRoute extends CompetitionRoute { qr_token: string; classes?: CompetitionRouteClass[]; progress?: CompetitionRouteProgress }
 export interface CompetitionJudgeAccess { event: { id: string; phase: CompetitionPhase; submission_deadline_at?: string | null }; routes: CompetitionStaffRoute[] }
 export interface CompetitionStaffMember { profile_id: string; name: string }
 export interface CompetitionAdminResult extends CompetitionResult {
