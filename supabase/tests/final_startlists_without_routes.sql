@@ -1,4 +1,4 @@
--- Run after all competition migrations, including 20261002100300, in an isolated test database.
+-- Run after all competition migrations, including 20261003125100, in an isolated test database.
 begin;
 create function pg_temp.ok(value boolean,label text) returns void language plpgsql as $$
 begin if value is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -50,7 +50,14 @@ insert into public.competition_day_results(event_id,route_id,profile_id,zone,fla
 -- Paper lists need neither a final route nor an input station.
 delete from public.competition_final_routes where event_id=(select id from competition_day_events where season_year='FINAL-TEST');
 set local role authenticated;
+select set_config('paper.test_password',gen_random_uuid()::text,true);
+select public.set_competition_final_password('FINAL-TEST',current_setting('paper.test_password'));
+select pg_temp.ok((public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->>'phase')='preparation','configured class visible before final field exists');
+select pg_temp.ok(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->'entries'='[]'::jsonb,'class preview never guesses qualifiers');
+select pg_temp.ok(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'=public.get_competition_final_station_preview('FINAL-TEST',2::smallint,current_setting('paper.test_password'))->'classes','both phones see the same preview classes');
+select pg_temp.denied('select public.get_competition_final_station_preview(''FINAL-TEST'',1::smallint,null)','FINAL_PASSWORD_INVALID');
 select public.publish_competition_final_class('FINAL-TEST','lead','Testklasse',null,null,0);
+select pg_temp.ok(public.get_competition_final_station('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'='[]'::jsonb,'legacy phones never receive a null route');
 reset role;
 select pg_temp.ok((select route_id is null and station_no is null and phase='published' and version=1 from competition_final_classes where event_id=(select id from competition_day_events where season_year='FINAL-TEST')),'paper list published without route or station');
 select pg_temp.ok((select count(*)=7 from competition_final_entries),'six places include every tied qualifier');
@@ -85,7 +92,7 @@ set local role authenticated;
 select pg_temp.denied('select public.publish_competition_final_class(''FINAL-TEST'',''lead'',''Testklasse'',null,null,2)','bereits begonnen');
 select set_config('paper.test_password',gen_random_uuid()::text,true);
 select public.set_competition_final_password('FINAL-TEST',current_setting('paper.test_password'));
-select pg_temp.ok(public.get_competition_final_station('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'='[]'::jsonb,'paper-only classes stay out of digital entry');
+select pg_temp.ok(jsonb_array_length(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes')=1 and public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->'route'='null'::jsonb and jsonb_array_length(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->'entries')=2,'paper-only class and confirmed starters visible without digital route');
 select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',1::smallint,%L,(public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,gen_random_uuid(),999,false,10,2,'''')',current_setting('paper.test_password')),'auf Papier');
 reset role;
 select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000003',true);
