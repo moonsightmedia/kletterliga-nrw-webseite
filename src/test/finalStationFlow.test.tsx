@@ -154,18 +154,24 @@ describe("mobile final result flow", () => {
     expect(screen.queryByText("Anna Beispiel")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Erreichter Griff")).not.toBeInTheDocument();
   });
-  it.each(["published", "running"] as const)("shows paper starters in reverse list order but prevents scoring in phase %s", async (phase) => {
-    data = [{ ...fixture()[0], phase, route: null }];
-    mount();
-    await login();
-    fireEvent.click(screen.getByRole("button", { name: /Vorstieg · U18 2 Starter · Papierliste/ }));
-    const anna = await screen.findByRole("button", { name: /1\. Anna Beispiel/ });
-    expect(anna).toBeDisabled();
-    expect(screen.getByRole("button", { name: /2\. Ben Muster/ })).toBeDisabled();
-    expect(screen.getByText("Halbfinalplatz 6")).toBeInTheDocument();
-    fireEvent.click(anna);
-    expect(screen.queryByLabelText("Erreichter Griff")).not.toBeInTheDocument();
+  it("keeps a route-less published class read-only until started", async () => {
+    data = [{ ...fixture()[0], phase: "published", route: null }];
+    mount(); await login();
+    fireEvent.click(screen.getByRole("button", { name: /Vorstieg · U18 1\/2 erfasst/ }));
+    expect(await screen.findByRole("button", { name: /1\. Anna Beispiel/ })).toBeDisabled();
     expect(source.submitFinalAttempt).not.toHaveBeenCalled();
+  });
+  it.each([false, true])("saves grip or TOP without a route after class start (TOP=%s)", async (top) => {
+    data = [{ ...fixture()[0], route: null }];
+    mount(); await login(2);
+    fireEvent.click(screen.getByRole("button", { name: /Vorstieg · U18 1\/2 erfasst/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /1\. Anna Beispiel/ }));
+    fill("27", "2", "13");
+    if (top) fireEvent.click(screen.getByRole("button", { name: "TOP" }));
+    review();
+    fireEvent.click(screen.getByRole("button", { name: "Ergebnis speichern" }));
+    await waitFor(() => expect(source.submitFinalAttempt).toHaveBeenCalledWith(expect.objectContaining({entry: "a", top, grip: top ? 0 : 27, seconds: 133, station: 2})));
+    expect(await screen.findByRole("heading", { name: "Vorstieg · U18" })).toBeInTheDocument();
   });
   it("keeps the selected upcoming class open when René publishes its real starter list", async () => {
     data = [{ ...fixture()[0], id: "upcoming-class", phase: "preparation", route: null, entries: [] }];

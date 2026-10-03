@@ -683,14 +683,6 @@ export function CompetitionFinalPanel({
         </CompetitionButton>
       </div>
     );
-  if (!c.route_id)
-    return (
-      <section className={panel}>
-        <h3 className={competitionHeading}>Finale auf Papier</h3>
-        <p className="my-3 text-sm">Ergebnisse werden auf der ausgedruckten Starterliste eingetragen.</p>
-        <CompetitionButton onClick={onRoster}>Zur Starterliste</CompetitionButton>
-      </section>
-    );
   const chosen = c.entries.find((entry) => entry.entry_id === selection?.id);
   const conflict = Boolean(selection && selection.version !== c.version);
   const pending = c.entries.filter(
