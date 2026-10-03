@@ -10,11 +10,18 @@ const scopes: Record<RaffleScope, string> = {
 };
 const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[#f2dcab]/30 px-4 py-2 text-sm font-semibold transition-colors hover:bg-[#f2dcab]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab] disabled:cursor-not-allowed disabled:opacity-40";
 const storageKey = (season: string) => `kletterliga-raffle-pending-${season}`;
+const repeatKey = (season: string) => `kletterliga-raffle-repeat-v1-${season}`;
+const readRepeat = (season: string) => {
+  try { return localStorage.getItem(repeatKey(season)) !== "false"; }
+  catch { return true; }
+};
 const readPending = (season: string): RaffleRequest | null => {
   try {
     const value = JSON.parse(sessionStorage.getItem(storageKey(season)) || "null");
     return value && ["all", "semifinal", "final"].includes(value.scope) && typeof value.request_id === "string"
-      && typeof value.prize === "string" && typeof value.present_only === "boolean" ? value : null;
+      && typeof value.prize === "string" && typeof value.present_only === "boolean"
+      && (value.repeat_allowed === undefined || typeof value.repeat_allowed === "boolean")
+      ? { ...value, repeat_allowed: value.repeat_allowed ?? true } : null;
   } catch { return null; }
 };
 const persistPending = (season: string, request: RaffleRequest | null) => {
@@ -29,6 +36,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
   const initial = useRef(readPending(season));
   const [scope, setScope] = useState<RaffleScope>(initial.current?.scope ?? "semifinal");
   const [present, setPresent] = useState(initial.current?.present_only ?? true);
+  const [repeat, setRepeat] = useState(() => initial.current?.repeat_allowed ?? readRepeat(season));
   const [prize, setPrize] = useState(initial.current?.prize ?? "");
   const [state, setState] = useState<RaffleState | null>(null);
   const [winner, setWinner] = useState<RaffleDraw | null>(null);
@@ -59,7 +67,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
   const load = useCallback(async () => {
     const revision = ++loadRevision.current;
     try {
-      const data = await source.get(season, scope, scope !== "all" && present);
+      const data = await source.get(season, scope, scope !== "all" && present, repeat);
       if (!alive.current || revision !== loadRevision.current) return;
       setState(data); setUpdated(new Date()); setError("");
       const recovered = pendingRef.current && data.history.find(draw => draw.request_id === pendingRef.current?.request_id);
@@ -69,7 +77,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
     } catch {
       if (alive.current && revision === loadRevision.current) setError("Daten konnten nicht geladen werden. Bitte aktualisieren – es wird nicht mit veralteten Daten ausgelost.");
     } finally { if (alive.current && revision === loadRevision.current) setLoading(false); }
-  }, [season, source, scope, present]);
+  }, [season, source, scope, present, repeat]);
 
   useEffect(() => {
     setLoading(true); setState(null);
@@ -82,7 +90,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
     if (busyRef.current || loading || (!pendingRef.current && (!state?.entries.length || error))) return;
     busyRef.current = true; setBusy(true); setError(""); setWinner(null);
     const request = pendingRef.current ?? {
-      scope, present_only: scope !== "all" && present, prize: prize.trim() || "Überraschungsgewinn", request_id: crypto.randomUUID(),
+      scope, present_only: scope !== "all" && present, repeat_allowed: repeat, prize: prize.trim() || "Überraschungsgewinn", request_id: crypto.randomUUID(),
     };
     pendingRef.current = request; setPending(request); persistPending(season, request);
     const started = Date.now();
@@ -114,7 +122,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
         setError("Dieser Lostopf ist jetzt leer. Es wurde niemand ausgelost. Bitte Teilnehmerkreis wechseln oder aktualisieren.");
       } else setError("Die Antwort fehlt. Mit „Ziehung prüfen / fortsetzen“ dieselbe Ziehung sicher wiederholen – es wird kein zweiter Gewinner gezogen.");
     }
-  }, [loading, state, error, scope, present, prize, season, source, load]);
+  }, [loading, state, error, scope, present, repeat, prize, season, source, load]);
 
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
@@ -143,6 +151,11 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-48"><label className="mb-1 block text-xs" id="raffle-scope-label">Teilnehmerkreis</label><Select value={scope} disabled={locked} onValueChange={value => setScope(value as RaffleScope)}><SelectTrigger aria-labelledby="raffle-scope-label" className="min-h-11 rounded-md border-[#f2dcab]/35 bg-transparent text-[#f2dcab] focus:ring-[#f2dcab]"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(scopes).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
           <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="h-4 w-4 accent-[#a15523]" checked={scope === "all" ? false : present} disabled={scope === "all" || locked} onChange={event => setPresent(event.target.checked)} />Nur eingecheckte</label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="h-4 w-4 accent-[#a15523]" checked={repeat} disabled={locked} onChange={event => {
+            const allowed = event.target.checked;
+            setRepeat(allowed);
+            try { localStorage.setItem(repeatKey(season), String(allowed)); } catch { /* Setting still works for this page. */ }
+          }} />Mehrfachgewinne erlauben</label>
           <button className={button} disabled={busy || loading} onClick={() => void load()} aria-label="Lose aktualisieren"><RefreshCw size={18} /></button>
           <button className={button} onClick={() => void fullscreen()} aria-label="Vollbild umschalten"><Maximize size={18} /></button>
         </div>
@@ -168,7 +181,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
             {busy ? "Wird ausgelost …" : pending ? "Ziehung prüfen / fortsetzen" : "Jetzt auslosen"}
           </button></div>
         </div>
-        <p className="mt-4 text-xs text-[#f2dcab]/70">Leertaste zum Losen · 1 Los je besuchter Halle + 1 für die Finaltag-Anmeldung · maximal 9 Lose · mehrere Gewinne pro Person möglich{updated && ` · Stand ${updated.toLocaleTimeString("de-DE")}`}</p>
+        <p className="mt-4 text-xs text-[#f2dcab]/70">Leertaste zum Losen · 1 Los je besuchter Halle + 1 für die Finaltag-Anmeldung · maximal 9 Lose · {repeat ? "mehrere Gewinne pro Person möglich" : "bisherige Gewinner ausgeschlossen – auch bei Filterwechsel"}{updated && ` · Stand ${updated.toLocaleTimeString("de-DE")}`}</p>
         <details className="mt-4 border-t border-[#f2dcab]/15 pt-3"><summary className="cursor-pointer text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]">Bisherige Gewinne ({state?.history.length ?? 0})</summary><ol className="mt-3 grid gap-2 sm:grid-cols-2">{state?.history.map(draw => <li key={draw.id} className="border-l-2 border-[#a15523] pl-3 text-sm"><span className="font-semibold">{draw.winner_name}</span> · {draw.prize}<span className="block text-xs text-[#f2dcab]/70">{new Date(draw.created_at).toLocaleTimeString("de-DE")} · {draw.tickets} Lose</span></li>)}</ol></details>
       </footer>
     </main>
