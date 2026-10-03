@@ -30,17 +30,18 @@ export interface RaffleState {
 export interface RaffleRequest {
   scope: RaffleScope;
   present_only: boolean;
+  repeat_allowed: boolean;
   request_id: string;
   prize: string;
 }
 export interface RaffleSource {
-  get: (season: string, scope: RaffleScope, presentOnly: boolean) => Promise<RaffleState>;
+  get: (season: string, scope: RaffleScope, presentOnly: boolean, repeatAllowed: boolean) => Promise<RaffleState>;
   draw: (season: string, request: RaffleRequest) => Promise<RaffleDraw>;
 }
 export const raffleSource: RaffleSource = {
-  async get(season, scope, presentOnly) {
+  async get(season, scope, presentOnly, repeatAllowed) {
     const { data, error } = await supabase.rpc("get_competition_raffle", {
-      p_season: season, p_scope: scope, p_present_only: presentOnly, p_repeat_allowed: true,
+      p_season: season, p_scope: scope, p_present_only: presentOnly, p_repeat_allowed: repeatAllowed,
     });
     if (error) throw new Error(error.message);
     return data as RaffleState;
@@ -48,7 +49,7 @@ export const raffleSource: RaffleSource = {
   async draw(season, request) {
     const { data, error } = await supabase.rpc("draw_competition_raffle", {
       p_season: season, p_scope: request.scope, p_present_only: request.present_only,
-      p_request_id: request.request_id, p_prize: request.prize, p_repeat_allowed: true,
+      p_request_id: request.request_id, p_prize: request.prize, p_repeat_allowed: request.repeat_allowed,
     });
     if (error) throw new Error(error.message);
     return data as RaffleDraw;

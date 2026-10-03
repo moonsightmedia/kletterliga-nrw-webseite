@@ -7,11 +7,11 @@ const pool: RaffleState = {entries:[{profile_id:"p1",name:"Klara Peters",tickets
 const source = (): RaffleSource => ({get:vi.fn().mockResolvedValue(pool),draw:vi.fn().mockImplementation(async (_,r)=>({...draw,request_id:r.request_id}))});
 const flush = async () => { await act(async () => { await Promise.resolve(); await Promise.resolve(); }); };
 describe("TV raffle", () => {
-  beforeEach(() => { sessionStorage.clear(); vi.useFakeTimers(); Object.defineProperty(window,"matchMedia",{configurable:true,value:vi.fn(()=>({matches:false}))}); });
+  beforeEach(() => { sessionStorage.clear(); localStorage.clear(); vi.useFakeTimers(); Object.defineProperty(window,"matchMedia",{configurable:true,value:vi.fn(()=>({matches:false}))}); });
   afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
   it("defaults to checked-in semifinalists and shows actual ticket counts",async()=>{
     const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
-    expect(s.get).toHaveBeenCalledWith("2026","semifinal",true);
+    expect(s.get).toHaveBeenCalledWith("2026","semifinal",true,true);
     expect(screen.getByLabelText("Nur eingecheckte")).toBeChecked();
     expect(screen.getByText("14")).toBeInTheDocument();
   });
@@ -21,6 +21,7 @@ describe("TV raffle", () => {
     fireEvent.keyDown(window,{code:"Space"}); fireEvent.keyDown(window,{code:"Space",repeat:true}); fireEvent.keyDown(window,{code:"Space"}); await flush();
     expect(s.draw).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button",{name:"Wird ausgelost …"})).toBeDisabled();
+    expect(screen.getByLabelText("Mehrfachgewinne erlauben")).toBeDisabled();
     await act(async()=>vi.advanceTimersByTime(4000));
     expect(screen.getByText("Herzlichen Glückwunsch")).toBeInTheDocument();
     expect(screen.getByText("Klara Peters")).toBeInTheDocument();
@@ -28,6 +29,24 @@ describe("TV raffle", () => {
   it("space in the prize input never triggers a draw",async()=>{
     const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
     fireEvent.keyDown(screen.getByLabelText("Preis für die nächste Ziehung"),{code:"Space"}); await flush(); expect(s.draw).not.toHaveBeenCalled();
+  });
+  it("refreshes the pool and snapshots the selected winner policy for a draw",async()=>{
+    const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
+    fireEvent.click(screen.getByLabelText("Mehrfachgewinne erlauben")); await flush();
+    expect(s.get).toHaveBeenLastCalledWith("2026","semifinal",true,false);
+    expect(screen.getByText(/bisherige Gewinner ausgeschlossen/)).toBeInTheDocument();
+    expect(localStorage.getItem("kletterliga-raffle-repeat-v1-2026")).toBe("false");
+    fireEvent.click(screen.getByRole("button",{name:"Jetzt auslosen"})); await flush();
+    expect(vi.mocked(s.draw).mock.calls[0][1].repeat_allowed).toBe(false);
+  });
+  it("restores a pending request policy instead of using a changed saved preference",async()=>{
+    localStorage.setItem("kletterliga-raffle-repeat-v1-2026","true");
+    sessionStorage.setItem("kletterliga-raffle-pending-2026",JSON.stringify({scope:"semifinal",present_only:true,repeat_allowed:false,request_id:"pending1",prize:"Board"}));
+    const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
+    expect(screen.getByLabelText("Mehrfachgewinne erlauben")).not.toBeChecked();
+    expect(screen.getByLabelText("Mehrfachgewinne erlauben")).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"Ziehung prüfen / fortsetzen"})); await flush();
+    expect(vi.mocked(s.draw).mock.calls[0][1]).toMatchObject({request_id:"pending1",repeat_allowed:false});
   });
   it("retries the same request ID after a lost response instead of redrawing",async()=>{
     const s=source(); vi.mocked(s.draw).mockRejectedValueOnce(new Error("offline"));
