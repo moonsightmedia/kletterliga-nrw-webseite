@@ -299,7 +299,7 @@ export function FinalStationContent({
   const selectedEntry = selectedClass?.entries.find(
     (e) => e.entry_id === draft.entryId,
   );
-  const listedClass = classes.find((c) => c.id === browsingClass);
+  const listedClass = classes.find((c) => c.id === browsingClass || `${c.league}|${c.class_label}` === browsingClass);
   const dirty = !!draft.entryId && values(draft) !== draft.baseline;
   const stale = !!selectedClass && selectedClass.version !== draft.version;
   const totalSeconds = Number(draft.minutes) * 60 + Number(draft.seconds);
@@ -729,7 +729,7 @@ export function FinalStationContent({
               key={c.id}
               disabled={busy}
               onClick={() => {
-                setBrowsingClass(c.id);
+                setBrowsingClass(`${c.league}|${c.class_label}`);
                 setView("participants");
                 setNotice("");
               }}
