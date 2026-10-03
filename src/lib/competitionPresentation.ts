@@ -13,6 +13,11 @@ export const finalPhaseLabels = {
   final: "Offiziell",
 } as const;
 
+export const isOutOfCompetition = (row: { is_out_of_competition?: boolean; excluded?: string | null }) =>
+  row.is_out_of_competition === true || row.excluded === "aw";
+export const semifinalRankLabel = (row: { rank: number | null; is_out_of_competition?: boolean; excluded?: string | null }) =>
+  isOutOfCompetition(row) ? "AW" : row.excluded === "dns" ? "DNS" : String(row.rank ?? "–");
+
 export const isFinalEntry = (
   row: LiveClass["entries"][number],
 ): row is PublicFinalEntry => "has_result" in row;

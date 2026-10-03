@@ -4,6 +4,8 @@ import {
   isFinalEntry,
   liveFrames,
   livePageSize,
+  isOutOfCompetition,
+  semifinalRankLabel,
 } from "@/lib/competitionPresentation";
 import { resultLabel, type LiveData } from "@/services/competitionFinal";
 import "./CompetitionLiveView.css";
@@ -108,7 +110,7 @@ export default function CompetitionLiveView({
       const body = probe.createTBody();
       for (const item of classes) for (const entry of item.entries) {
         const row = template.cloneNode(true) as HTMLTableRowElement;
-        [String(entry.rank ?? "–"), entry.name, scoreLabel(entry)].forEach(
+        [semifinalRankLabel(entry), entry.name, scoreLabel(entry)].forEach(
           (value, index) => { row.cells[index].textContent = value; },
         );
         body.append(row);
@@ -234,12 +236,14 @@ export default function CompetitionLiveView({
                     .map((row, index) => (
                       <tr
                         key={`${frame?.key}-${index}`}
+                        className={!isFinalEntry(row) && isOutOfCompetition(row) ? "opacity-[0.65]" : undefined}
                       >
                         <td className="tv-rank">
-                          {row.rank ?? "–"}
+                          {isFinalEntry(row) ? row.rank ?? "–" : semifinalRankLabel(row)}
                         </td>
                         <td className="tv-name">
                           {row.name}
+                          {!isFinalEntry(row) && isOutOfCompetition(row) && <span className="ml-3 text-[0.6em] font-normal">Außer Wertung</span>}
                         </td>
                         <td className="tv-score">
                           {scoreLabel(row)}

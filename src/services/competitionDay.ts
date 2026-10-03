@@ -35,7 +35,8 @@ export interface CompetitionAdminData {
 }
 export interface CompetitionStanding {
   profile_id: string; name: string; league: CompetitionLeague; class_label: string;
-  points: number; completed_routes: number; rank: number;
+  points: number; completed_routes: number; rank: number | null;
+  is_out_of_competition?: boolean;
 }
 
 const rpc = async <T>(name: string, args: Record<string, unknown>): Promise<T> => {

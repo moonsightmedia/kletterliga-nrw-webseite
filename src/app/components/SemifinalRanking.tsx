@@ -7,6 +7,7 @@ import {
 import type { FinalAdmin, SemifinalRow } from "@/services/competitionFinal";
 import type { CompetitionAssignment } from "@/services/competitionDay";
 import { className } from "@/services/competitionFinal";
+import { isOutOfCompetition, semifinalRankLabel } from "@/lib/competitionPresentation";
 
 export default function SemifinalRanking({
   rows,
@@ -42,7 +43,7 @@ export default function SemifinalRanking({
       </header>
       <Accordion type="multiple">
         {[...rows]
-          .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "de"))
+          .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"))
           .map((row) => {
             const numbers =
               assignments.find(
@@ -54,7 +55,7 @@ export default function SemifinalRanking({
               <AccordionItem
                 key={row.profile_id}
                 value={row.profile_id}
-                className="border-[#003d55]/10"
+                className={`border-[#003d55]/10 ${isOutOfCompetition(row) ? "bg-[#f7f3e9] text-[#003d55]/65" : ""}`}
               >
                 <AccordionTrigger
                   className="gap-3 px-4 py-4 text-left hover:bg-[#f7f3e9] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523]"
@@ -62,12 +63,13 @@ export default function SemifinalRanking({
                 >
                   <span className="grid flex-1 grid-cols-[2rem_1fr_auto] items-center gap-3">
                     <span className="stitch-headline text-2xl">
-                      {row.rank}.
+                      {semifinalRankLabel(row)}{!isOutOfCompetition(row) && row.rank !== null && "."}
                     </span>
                     <span className="min-w-0">
                       <span className="block break-words font-bold">
                         {row.name}
                       </span>
+                      {isOutOfCompetition(row) && <span className="block text-xs">Außer Wertung</span>}
                       <span className="mt-1 block text-xs font-normal text-[#003d55]/70">
                         {row.completed}/5 Routen eingetragen
                         {row.completed < 5 && " · Einträge fehlen"}
