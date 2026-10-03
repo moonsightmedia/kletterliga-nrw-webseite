@@ -65,7 +65,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
       const recovered = pendingRef.current && data.history.find(draw => draw.request_id === pendingRef.current?.request_id);
       if (recovered && !busyRef.current) {
         setWinner(recovered); setPending(null); pendingRef.current = null; persistPending(season, null);
-      } else if (!busyRef.current) setWinner(current => current ?? data.history[0] ?? null);
+      } else if (!busyRef.current && !pendingRef.current) setWinner(data.history[0] ?? null);
     } catch {
       if (alive.current && revision === loadRevision.current) setError("Daten konnten nicht geladen werden. Bitte aktualisieren – es wird nicht mit veralteten Daten ausgelost.");
     } finally { if (alive.current && revision === loadRevision.current) setLoading(false); }
@@ -74,7 +74,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
   useEffect(() => {
     setLoading(true); setState(null);
     void load();
-    const timer = window.setInterval(() => { if (!busyRef.current && document.visibilityState === "visible") void load(); }, 15000);
+    const timer = window.setInterval(() => { if (!busyRef.current && document.visibilityState === "visible") void load(); }, 5000);
     return () => { window.clearInterval(timer); };
   }, [load]);
 
