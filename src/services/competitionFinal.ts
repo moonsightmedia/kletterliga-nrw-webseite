@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import type { CompetitionStanding } from "@/services/competitionDay";
 
 export type League = "toprope" | "lead";
 export type FinalPhase =
@@ -167,6 +168,8 @@ export const getLiveCompetition = (season: string) =>
   rpc<LiveData>("get_competition_live", { p_season: season });
 export const getPublicFinal = (season: string) =>
   rpc<LiveClass[]>("get_competition_final_public", { p_season: season });
+export const getPublicSemifinal = (season: string) =>
+  rpc<Omit<CompetitionStanding, "profile_id">[]>("get_competition_semifinal_public", { p_season: season });
 export const saveFinalRoute = (
   season: string,
   number: number,
