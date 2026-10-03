@@ -168,7 +168,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
             {busy ? "Wird ausgelost …" : pending ? "Ziehung prüfen / fortsetzen" : "Jetzt auslosen"}
           </button></div>
         </div>
-        <p className="mt-4 text-xs text-[#f2dcab]/70">Leertaste zum Losen · 1 Los je besuchter Halle + 1 für die Finaltag-Anmeldung · maximal 9 Lose · ein Gewinn pro Person{updated && ` · Stand ${updated.toLocaleTimeString("de-DE")}`}</p>
+        <p className="mt-4 text-xs text-[#f2dcab]/70">Leertaste zum Losen · 1 Los je besuchter Halle + 1 für die Finaltag-Anmeldung · maximal 9 Lose · mehrere Gewinne pro Person möglich{updated && ` · Stand ${updated.toLocaleTimeString("de-DE")}`}</p>
         <details className="mt-4 border-t border-[#f2dcab]/15 pt-3"><summary className="cursor-pointer text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]">Bisherige Gewinne ({state?.history.length ?? 0})</summary><ol className="mt-3 grid gap-2 sm:grid-cols-2">{state?.history.map(draw => <li key={draw.id} className="border-l-2 border-[#a15523] pl-3 text-sm"><span className="font-semibold">{draw.winner_name}</span> · {draw.prize}<span className="block text-xs text-[#f2dcab]/70">{new Date(draw.created_at).toLocaleTimeString("de-DE")} · {draw.tickets} Lose</span></li>)}</ol></details>
       </footer>
     </main>
