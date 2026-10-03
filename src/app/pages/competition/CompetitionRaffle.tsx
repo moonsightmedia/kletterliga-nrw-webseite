@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Download, Maximize, RefreshCw, Ticket, Trophy } from "lucide-react";
+import { Download, Maximize, RefreshCw, Ticket, Trophy, Undo2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { raffleSource, raffleWinnersCsv, type RaffleDraw, type RaffleRequest, type RaffleScope, type RaffleSource, type RaffleState } from "@/services/competitionRaffle";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { raffleSource, raffleWinnersCsv, type RaffleCancelRequest, type RaffleDraw, type RaffleRequest, type RaffleScope, type RaffleSource, type RaffleState } from "@/services/competitionRaffle";
 
 const scopes: Record<RaffleScope, string> = {
   semifinal: "Anwesende", final: "Frühere Finalisten-Ziehung", all: "Alle Teilnehmenden",
@@ -53,6 +54,11 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
   const [updated, setUpdated] = useState<Date | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [cancelTarget, setCancelTarget] = useState<(RaffleCancelRequest & { name?: string }) | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const cancellingRef = useRef(false);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelStatus, setCancelStatus] = useState("");
 
   useEffect(() => {
     alive.current = true;
@@ -74,7 +80,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
       const recovered = pendingRef.current && data.history.find(draw => draw.request_id === pendingRef.current?.request_id);
       if (recovered && !busyRef.current) {
         setWinner(recovered); setPending(null); pendingRef.current = null; persistPending(season, null);
-      } else if (!busyRef.current && !pendingRef.current) setWinner(current => data.history[0] ?? current);
+      } else if (!busyRef.current && !pendingRef.current) setWinner(data.history[0] ?? null);
     } catch {
       if (alive.current && revision === loadRevision.current) setError("Daten konnten nicht geladen werden. Bitte aktualisieren – es wird nicht mit veralteten Daten ausgelost.");
     } finally { if (alive.current && revision === loadRevision.current) setLoading(false); }
@@ -88,7 +94,7 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
   }, [load]);
 
   const start = useCallback(async () => {
-    if (busyRef.current || loading || (!pendingRef.current && (!state?.entries.length || error))) return;
+    if (busyRef.current || cancellingRef.current || cancelTarget || loading || (!pendingRef.current && (!state?.entries.length || error))) return;
     busyRef.current = true; setBusy(true); setError(""); setWinner(null);
     const request = pendingRef.current ?? {
       scope, present_only: scope !== "all", repeat_allowed: repeat, prize: prize.trim() || "Überraschungsgewinn", request_id: crypto.randomUUID(),
@@ -117,19 +123,23 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
       clearInterval(animationTimer.current);
       if (!alive.current) return;
       setBusy(false); busyRef.current = false;
-      if (failure instanceof Error && failure.message.includes("RAFFLE_POOL_EMPTY")) {
+      if (failure instanceof Error && failure.message.includes("RAFFLE_DRAW_CANCELLED")) {
+        setPending(null); pendingRef.current = null; persistPending(season, null);
+        setError("Diese Ziehung wurde bereits rückgängig gemacht. Bitte die Lose aktualisieren.");
+        void load();
+      } else if (failure instanceof Error && failure.message.includes("RAFFLE_POOL_EMPTY")) {
         setPending(null); pendingRef.current = null; persistPending(season, null);
         setState(current => current ? { ...current, entries: [], pool_count: 0, total_tickets: 0 } : current);
         setError("Dieser Lostopf ist jetzt leer. Es wurde niemand ausgelost. Bitte Teilnehmerkreis wechseln oder aktualisieren.");
       } else setError("Die Antwort fehlt. Mit „Ziehung prüfen / fortsetzen“ dieselbe Ziehung sicher wiederholen – es wird kein zweiter Gewinner gezogen.");
     }
-  }, [loading, state, error, scope, repeat, prize, season, source, load]);
+  }, [loading, state, error, scope, repeat, prize, season, source, load, cancelTarget]);
 
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
       if (event.code !== "Space" || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target instanceof Element ? event.target : null;
-      if (target?.closest("input, textarea, select, button, [contenteditable='true'], [role='combobox'], [role='listbox'], [role='dialog']")) return;
+      if (target?.closest("input, textarea, select, button, [contenteditable='true'], [role='combobox'], [role='listbox'], [role='dialog'], [role='alertdialog']")) return;
       event.preventDefault(); void start();
     };
     window.addEventListener("keydown", handle);
@@ -156,8 +166,33 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
       if (alive.current) setExportError("Die Gewinnliste konnte nicht heruntergeladen werden. Bitte erneut versuchen.");
     } finally { if (alive.current) setExporting(false); }
   };
-  const locked = busy || !!pending;
-  const disabled = busy || loading || (!pending && (!state?.entries.length || !!error));
+  const requestCancellation = (draw?: RaffleDraw) => {
+    if (!source.cancel || busy || pending || cancelling || !state?.history.length) return;
+    setCancelError(""); setCancelStatus("");
+    setCancelTarget({ draw_ids: draw ? [draw.id] : state.history.map(d => d.id), reset_all: !draw, request_id: crypto.randomUUID(), name: draw?.winner_name });
+  };
+  const confirmCancellation = async () => {
+    if (!source.cancel || !cancelTarget || cancellingRef.current) return;
+    cancellingRef.current = true; setCancelling(true); setCancelError("");
+    try {
+      const result = await source.cancel(season, cancelTarget);
+      if (!alive.current) return;
+      setCancelTarget(null); setWinner(null);
+      setCancelStatus(`${result.cancelled_count} ${result.cancelled_count === 1 ? "Gewinn wurde" : "Gewinne wurden"} rückgängig gemacht. Die Lose sind wieder im Topf.`);
+      await load();
+    } catch (failure) {
+      if (!alive.current) return;
+      if (failure instanceof Error && failure.message.includes("RAFFLE_HISTORY_CHANGED")) {
+        setCancelTarget(null); setCancelStatus("Die Gewinnliste hat sich inzwischen geändert. Bitte prüfen und das Zurücksetzen erneut bestätigen.");
+        await load();
+      } else setCancelError("Die Bestätigung fehlt. Bitte erneut versuchen – derselbe Auftrag wird sicher geprüft und kein Los doppelt zurückgegeben.");
+    } finally {
+      cancellingRef.current = false;
+      if (alive.current) setCancelling(false);
+    }
+  };
+  const locked = busy || !!pending || cancelling || !!cancelTarget;
+  const disabled = busy || cancelling || !!cancelTarget || loading || (!pending && (!state?.entries.length || !!error));
   return (
     <main className="relative grid min-h-screen grid-rows-[auto_1fr_auto] overflow-hidden bg-[#003d55] font-sans text-[#f2dcab]">
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 bottom-24 h-64 w-64 rotate-45 border-[28px] border-[#f2dcab]/[0.04] sm:h-96 sm:w-96" />
@@ -196,10 +231,24 @@ export function RaffleScreen({ season, source = raffleSource }: { season: string
           </button></div>
         </div>
         <p className="mt-4 text-xs text-[#f2dcab]/70">Leertaste zum Losen · 1 Los je besuchter Halle + 1 für die Finaltag-Anmeldung · maximal 9 Lose · jeder Gewinn verbraucht 1 Los · {repeat ? "Mehrfachgewinne mit verbleibenden Losen" : "bisherige Gewinner ausgeschlossen – auch bei Filterwechsel"}{updated && ` · Stand ${updated.toLocaleTimeString("de-DE")}`}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3"><button className={button} disabled={busy || exporting || !state?.history.length || !source.export} onClick={() => void exportWinners()}><Download size={16} />{exporting ? "Gewinnliste wird geladen …" : "Gewinnliste (CSV)"}</button><span className="text-xs text-[#f2dcab]/70">Name, Kontakt und Preis für eure Versandplanung · dauerhaft gespeichert</span></div>
+        <div className="mt-3 flex flex-wrap items-center gap-3"><button className={button} disabled={locked || exporting || !state?.history.length || !source.export} onClick={() => void exportWinners()}><Download size={16} />{exporting ? "Gewinnliste wird geladen …" : "Gewinnliste (CSV)"}</button><span className="text-xs text-[#f2dcab]/70">Name, Kontakt und Preis für eure Versandplanung · dauerhaft gespeichert</span></div>
         {exportError && <p role="alert" className="mt-3 text-sm">{exportError}</p>}
-        <details className="mt-4 border-t border-[#f2dcab]/15 pt-3"><summary className="cursor-pointer text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]">Bisherige Gewinne ({state?.history.length ?? 0})</summary><ol className="mt-3 grid gap-2 sm:grid-cols-2">{state?.history.map(draw => <li key={draw.id} className="border-l-2 border-[#a15523] pl-3 text-sm"><span className="font-semibold">{draw.winner_name}</span> · {draw.prize}<span className="block text-xs text-[#f2dcab]/70">{new Date(draw.created_at).toLocaleTimeString("de-DE")} · {draw.tickets} Lose</span></li>)}</ol></details>
+        {cancelStatus && <p role="status" className="mt-3 text-sm">{cancelStatus}</p>}
+        <details className="mt-4 border-t border-[#f2dcab]/15 pt-3"><summary className="cursor-pointer text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f2dcab]">Bisherige Gewinne ({state?.history.length ?? 0})</summary><ol className="mt-3 grid gap-2 sm:grid-cols-2">{state?.history.map(draw => <li key={draw.id} className="flex items-center justify-between gap-3 border-l-2 border-[#a15523] pl-3 text-sm"><div className="min-w-0 break-words"><span className="font-semibold">{draw.winner_name}</span> · {draw.prize}<span className="block text-xs text-[#f2dcab]/70">{new Date(draw.created_at).toLocaleTimeString("de-DE")} · {draw.tickets} Lose</span></div>{source.cancel && <button className={`${button} shrink-0 px-3`} disabled={locked} aria-label={`Gewinn von ${draw.winner_name} rückgängig machen`} onClick={() => requestCancellation(draw)}><Undo2 size={16} /></button>}</li>)}</ol>{source.cancel && <div className="mt-4"><button className={button} disabled={locked || !state?.history.length} onClick={() => requestCancellation()}><Undo2 size={16} />Alle Gewinne zurücksetzen</button><p className="mt-2 text-xs text-[#f2dcab]/70">Gilt für die gesamte Saison-Verlosung, unabhängig vom gewählten Filter.</p></div>}</details>
       </footer>
+      <AlertDialog open={!!cancelTarget} onOpenChange={open => { if (!open && !cancellingRef.current) setCancelTarget(null); }}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto rounded-lg border-[#f2dcab]/35 bg-[#003d55] font-sans text-[#f2dcab]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{cancelTarget?.reset_all ? "Alle Gewinne zurücksetzen?" : "Gewinn rückgängig machen?"}</AlertDialogTitle>
+            <AlertDialogDescription className="break-words text-[#f2dcab]/85">{cancelTarget?.reset_all ? `Die gesamte Gewinnliste der Saison ${season} (${cancelTarget.draw_ids.length} ${cancelTarget.draw_ids.length === 1 ? "Gewinn" : "Gewinne"}) wird geleert. Alle betroffenen Gewinne werden auch aus dem CSV-Export entfernt.` : `Der Gewinn von ${cancelTarget?.name ?? "dieser Person"} wird aus der Gewinnliste und dem CSV-Export entfernt.`} Pro Gewinn kommt ein Los zurück in den Topf. Betroffene Personen können wieder gewinnen. Intern bleibt die Stornierung nachvollziehbar.</AlertDialogDescription>
+          </AlertDialogHeader>
+          {cancelError && <p role="alert" className="text-sm text-[#f2dcab]">{cancelError}</p>}
+          <AlertDialogFooter className="gap-2 sm:space-x-0">
+            <AlertDialogCancel disabled={cancelling} className={`${button} mt-0 bg-transparent text-[#f2dcab] hover:text-[#f2dcab]`}>Abbrechen</AlertDialogCancel>
+            <button className={`${button} bg-[#f2dcab] text-[#003d55] hover:bg-[#f2dcab]/90`} disabled={cancelling} onClick={() => void confirmCancellation()}>{cancelling ? "Wird zurückgesetzt …" : cancelTarget?.reset_all ? "Ja, alle zurücksetzen" : "Ja, Gewinn rückgängig machen"}</button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

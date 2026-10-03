@@ -39,6 +39,12 @@ export interface RaffleSource {
   get: (season: string, scope: RaffleScope, presentOnly: boolean, repeatAllowed: boolean) => Promise<RaffleState>;
   draw: (season: string, request: RaffleRequest) => Promise<RaffleDraw>;
   export?: (season: string) => Promise<RaffleDispatchRow[]>;
+  cancel?: (season: string, request: RaffleCancelRequest) => Promise<{ cancelled_count: number }>;
+}
+export interface RaffleCancelRequest {
+  draw_ids: string[];
+  reset_all: boolean;
+  request_id: string;
 }
 export interface RaffleDispatchRow {
   id: string;
@@ -83,5 +89,12 @@ export const raffleSource: RaffleSource = {
     const { data, error } = await supabase.rpc("export_competition_raffle_winners", { p_season: season });
     if (error) throw new Error(error.message);
     return data as RaffleDispatchRow[];
+  },
+  async cancel(season, request) {
+    const { data, error } = await supabase.rpc("cancel_competition_raffle_wins", {
+      p_season: season, p_draw_ids: request.draw_ids, p_reset_all: request.reset_all, p_request_id: request.request_id,
+    });
+    if (error) throw new Error(error.message);
+    return data as { cancelled_count: number };
   },
 };
