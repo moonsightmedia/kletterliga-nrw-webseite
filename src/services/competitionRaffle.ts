@@ -40,7 +40,7 @@ export interface RaffleSource {
 export const raffleSource: RaffleSource = {
   async get(season, scope, presentOnly) {
     const { data, error } = await supabase.rpc("get_competition_raffle", {
-      p_season: season, p_scope: scope, p_present_only: presentOnly,
+      p_season: season, p_scope: scope, p_present_only: presentOnly, p_repeat_allowed: true,
     });
     if (error) throw new Error(error.message);
     return data as RaffleState;
@@ -48,7 +48,7 @@ export const raffleSource: RaffleSource = {
   async draw(season, request) {
     const { data, error } = await supabase.rpc("draw_competition_raffle", {
       p_season: season, p_scope: request.scope, p_present_only: request.present_only,
-      p_request_id: request.request_id, p_prize: request.prize,
+      p_request_id: request.request_id, p_prize: request.prize, p_repeat_allowed: true,
     });
     if (error) throw new Error(error.message);
     return data as RaffleDraw;
