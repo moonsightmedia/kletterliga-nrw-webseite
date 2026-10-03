@@ -14,6 +14,7 @@ export interface RaffleDraw {
   profile_id: string;
   winner_name: string;
   tickets: number;
+  remaining_tickets?: number | null;
   total_tickets: number;
   pool_count: number;
   scope: RaffleScope;
@@ -37,6 +38,30 @@ export interface RaffleRequest {
 export interface RaffleSource {
   get: (season: string, scope: RaffleScope, presentOnly: boolean, repeatAllowed: boolean) => Promise<RaffleState>;
   draw: (season: string, request: RaffleRequest) => Promise<RaffleDraw>;
+  export?: (season: string) => Promise<RaffleDispatchRow[]>;
+}
+export interface RaffleDispatchRow {
+  id: string;
+  profile_id: string;
+  winner_name: string;
+  email: string | null;
+  prize: string | null;
+  created_at: string;
+  scope: RaffleScope;
+}
+export function raffleWinnersCsv(rows: RaffleDispatchRow[]) {
+  const cell = (value: string | null) => {
+    const text = value ?? "";
+    const safe = /^[\s]*[=+\-@]/.test(text) || /^[\t\r\n]/.test(text) ? `'${text}` : text;
+    return `"${safe.replace(/"/g, '""')}"`;
+  };
+  return "\uFEFF" + [
+    ["Name", "E-Mail", "Gewinn", "Zeitpunkt", "Teilnehmerkreis", "Profil-ID", "Ziehungs-ID"],
+    ...rows.map(row => [row.winner_name, row.email, row.prize || "Überraschungsgewinn",
+      new Date(row.created_at).toLocaleString("de-DE", { timeZone: "Europe/Berlin" }),
+      row.scope === "all" ? "Alle Teilnehmenden" : row.scope === "semifinal" ? "Anwesende" : "Frühere Finalisten-Ziehung",
+      row.profile_id, row.id]),
+  ].map(row => row.map(cell).join(";")).join("\r\n");
 }
 export const raffleSource: RaffleSource = {
   async get(season, scope, presentOnly, repeatAllowed) {
@@ -53,5 +78,10 @@ export const raffleSource: RaffleSource = {
     });
     if (error) throw new Error(error.message);
     return data as RaffleDraw;
+  },
+  async export(season) {
+    const { data, error } = await supabase.rpc("export_competition_raffle_winners", { p_season: season });
+    if (error) throw new Error(error.message);
+    return data as RaffleDispatchRow[];
   },
 };

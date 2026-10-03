@@ -12,7 +12,8 @@ describe("TV raffle", () => {
   it("defaults to checked-in semifinalists and shows actual ticket counts",async()=>{
     const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
     expect(s.get).toHaveBeenCalledWith("2026","semifinal",true,true);
-    expect(screen.getByLabelText("Nur eingecheckte")).toBeChecked();
+    expect(screen.getByRole("combobox",{name:"Teilnehmerkreis"})).toHaveTextContent("Anwesende");
+    expect(screen.queryByLabelText("Nur eingecheckte")).not.toBeInTheDocument();
     expect(screen.getByText("14")).toBeInTheDocument();
   });
   it("draws once on space, ignores autorepeat and locks while animation runs",async()=>{
@@ -72,5 +73,13 @@ describe("TV raffle", () => {
     const s=source(); render(<RaffleScreen season="2026" source={s}/>); await flush();
     fireEvent.click(screen.getByRole("button",{name:"Jetzt auslosen"})); await flush();
     await act(async()=>vi.advanceTimersByTime(1)); expect(screen.getByText("Herzlichen Glückwunsch")).toBeInTheDocument();
+  });
+  it("shows the consumed ticket and permanently saved prize after a draw",async()=>{
+    const s=source(); vi.mocked(s.draw).mockResolvedValue({...draw,remaining_tickets:8});
+    render(<RaffleScreen season="2026" source={s}/>); await flush();
+    fireEvent.click(screen.getByRole("button",{name:"Jetzt auslosen"})); await flush();
+    await act(async()=>vi.advanceTimersByTime(4000));
+    expect(screen.getByText(/9 Lose vor der Ziehung · 8 übrig/)).toBeInTheDocument();
+    expect(screen.getByText("Sponsorpreis")).toBeInTheDocument();
   });
 });
