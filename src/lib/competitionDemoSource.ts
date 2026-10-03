@@ -720,8 +720,11 @@ export const demoSource: CompetitionCenterSource & {
       const { item, entry } = entryClass(value, input.entry, input.version);
       if (item.phase !== "running")
         throw new Error("Eingabe für diese Klasse geschlossen.");
-      if (!item.route_id || !item.station_no)
-        throw new Error("Diese Starterliste wird auf Papier geführt.");
+      const route = value.admin.routes.find((r) => r.id === item.route_id);
+      if (!Number.isInteger(input.grip) || input.grip < 0 || input.grip > (route?.max_grip ?? 999) ||
+          (input.top && input.grip !== (route?.max_grip ?? 0)) || !Number.isInteger(input.seconds) ||
+          input.seconds < 0 || input.seconds > 300 || entry.status !== "ready")
+        throw new Error("Griff, TOP, Zeit oder Startstatus ist ungültig.");
       if (entry.attempt_id && !input.reason.trim())
         throw new Error("Begründung für die Korrektur fehlt.");
       Object.assign(entry, {

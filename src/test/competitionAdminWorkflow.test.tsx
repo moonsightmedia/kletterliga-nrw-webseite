@@ -139,15 +139,12 @@ afterEach(() => {
 });
 
 describe("focused final administration", () => {
-  it("does not offer digital scoring controls for a paper-only list", () => {
+  it("offers class start without requiring a route", () => {
     const data = fixture();
     Object.assign(data.classes[0], { phase: "published", route_id: null, station_no: null });
-    const onRoster = vi.fn();
-    render(wrap(<CompetitionFinalPanel {...common(data)} finalClass={data.classes[0]} stationHref="/entry" onRoster={onRoster} />));
-    expect(screen.getByRole("heading", { name: "Finale auf Papier" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Klasse starten" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Zur Starterliste" }));
-    expect(onRoster).toHaveBeenCalledOnce();
+    render(wrap(<CompetitionFinalPanel {...common(data)} finalClass={data.classes[0]} stationHref="/entry" onRoster={vi.fn()} />));
+    expect(screen.getByRole("button", { name: "Klasse starten" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Finaleingabe öffnen" })).toHaveAttribute("href", "/entry");
   });
   it("prints a route-less start list with handwriting space and empty scoring fields", async () => {
     const data = fixture();

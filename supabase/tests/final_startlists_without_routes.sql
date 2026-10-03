@@ -1,4 +1,4 @@
--- Run after all competition migrations, including 20261003125100, in an isolated test database.
+-- Run after all competition migrations, including 20261003134000, in an isolated test database.
 begin;
 create function pg_temp.ok(value boolean,label text) returns void language plpgsql as $$
 begin if value is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -93,7 +93,29 @@ select pg_temp.denied('select public.publish_competition_final_class(''FINAL-TES
 select set_config('paper.test_password',gen_random_uuid()::text,true);
 select public.set_competition_final_password('FINAL-TEST',current_setting('paper.test_password'));
 select pg_temp.ok(jsonb_array_length(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes')=1 and public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->'route'='null'::jsonb and jsonb_array_length(public.get_competition_final_station_preview('FINAL-TEST',1::smallint,current_setting('paper.test_password'))->'classes'->0->'entries')=2,'paper-only class and confirmed starters visible without digital route');
-select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',1::smallint,%L,(public.get_competition_final_admin(''FINAL-TEST'')->''classes''->0->''entries''->0->>''entry_id'')::uuid,gen_random_uuid(),999,false,10,2,'''')',current_setting('paper.test_password')),'auf Papier');
+reset role;
+create temporary table selected_entry as select id from competition_final_entries order by start_position limit 1;
+select set_config('paper.entry',(select id::text from selected_entry),true);
+select set_config('paper.request',gen_random_uuid()::text,true);
+set local role anon;
+select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',1::smallint,%L,%L::uuid,gen_random_uuid(),1000,false,10,2,'''')',current_setting('paper.test_password'),current_setting('paper.entry')),'ungültig');
+select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',1::smallint,%L,%L::uuid,gen_random_uuid(),25,false,301,2,'''')',current_setting('paper.test_password'),current_setting('paper.entry')),'ungültig');
+select public.submit_competition_final_attempt('FINAL-TEST',1::smallint,current_setting('paper.test_password'),current_setting('paper.entry')::uuid,current_setting('paper.request')::uuid,25,false,120,2,'');
+select public.submit_competition_final_attempt('FINAL-TEST',2::smallint,current_setting('paper.test_password'),current_setting('paper.entry')::uuid,current_setting('paper.request')::uuid,25,false,120,2,'');
+reset role;
+select pg_temp.ok((select count(*)=1 from competition_final_attempts),'duplicate request on both phones stores one result');
+select pg_temp.ok((select grip=25 and seconds=120 from competition_final_attempts where counted),'route-less grip and time saved');
+set local role anon;
+select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',2::smallint,%L,%L::uuid,gen_random_uuid(),24,false,100,2,''Papier'')',current_setting('paper.test_password'),current_setting('paper.entry')),'FINAL_VERSION_CONFLICT');
+select pg_temp.denied(format('select public.submit_competition_final_attempt(''FINAL-TEST'',2::smallint,%L,%L::uuid,gen_random_uuid(),0,true,100,3,'''')',current_setting('paper.test_password'),current_setting('paper.entry')),'Begründung');
+select public.submit_competition_final_attempt('FINAL-TEST',2::smallint,current_setting('paper.test_password'),current_setting('paper.entry')::uuid,gen_random_uuid(),0,true,100,3,'TOP auf Papier');
+reset role;
+select pg_temp.ok((select count(*)=2 from competition_final_attempts),'correction preserves earlier attempt');
+select pg_temp.ok((select is_top and grip=0 from competition_final_attempts where counted),'TOP works without physical route maximum');
+set local role authenticated;
+select public.set_competition_final_phase((public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id')::uuid,'review',4);
+select pg_temp.denied(format('select public.set_competition_final_phase(%L::uuid,''final'',5)',public.get_competition_final_admin('FINAL-TEST')->'classes'->0->>'id'),'Papierabgleich fehlen');
+
 reset role;
 select set_config('request.jwt.claim.sub','99999999-7000-4000-8000-000000000003',true);
 select set_config('request.jwt.claims','{"sub":"99999999-7000-4000-8000-000000000003","role":"authenticated"}',true);

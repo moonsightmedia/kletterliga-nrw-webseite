@@ -303,15 +303,16 @@ export function FinalStationContent({
   const dirty = !!draft.entryId && values(draft) !== draft.baseline;
   const stale = !!selectedClass && selectedClass.version !== draft.version;
   const totalSeconds = Number(draft.minutes) * 60 + Number(draft.seconds);
+  const maxGrip = selectedClass?.route?.max_grip ?? 999;
   const grip = draft.top
     ? (selectedClass?.route?.max_grip ?? 0)
     : Number(draft.grip);
   const validGrip =
-    !!selectedClass?.route &&
+    !!selectedClass &&
     (draft.top || digits(draft.grip)) &&
     Number.isSafeInteger(grip) &&
     grip >= 0 &&
-    grip <= selectedClass.route.max_grip;
+    grip <= maxGrip;
   const validTime =
     digits(draft.minutes) &&
     digits(draft.seconds) &&
@@ -321,7 +322,7 @@ export function FinalStationContent({
     !selectedEntry?.attempt_id ||
     (draft.reason.trim().length > 0 && draft.reason.length <= 500);
   const editable =
-    !!selectedClass?.route && selectedClass.phase === "running" && selectedEntry?.status === "ready";
+    selectedClass?.phase === "running" && selectedEntry?.status === "ready";
   const canSubmit =
     editable &&
     validGrip &&
@@ -344,7 +345,6 @@ export function FinalStationContent({
     );
     if (
       !targetClass ||
-      !targetClass.route ||
       !entry ||
       targetClass.phase !== "running" ||
       entry.status !== "ready"
@@ -740,12 +740,12 @@ export function FinalStationContent({
                   {className(c.league, c.class_label)}
                 </span>
                 <span className="mt-1 block text-xs text-[#003d55]/65">
-                  {c.route ? <>Route {c.route.number} · {c.entries.filter((e) => e.attempt_id).length}/{c.entries.length} erfasst</> : c.phase === "preparation" ? "Starterliste folgt" : `${c.entries.length} Starter · Papierliste`}
+                  {c.phase === "preparation" ? "Starterliste folgt" : <>{c.route && <>Route {c.route.number} · </>}{c.entries.filter((e) => e.attempt_id).length}/{c.entries.length} erfasst</>}
                 </span>
                 {c.phase !== "preparation" && <span
                   className={`mt-1 block text-xs ${c.phase === "running" ? "text-[#245543]" : "text-[#003d55]/65"}`}
                 >
-                  {c.route ? phaseLabel(c.phase) : "Starterliste freigegeben"}
+                  {phaseLabel(c.phase)}
                 </span>}
               </div>
               <ChevronRight size={20} className="shrink-0" />
@@ -756,11 +756,11 @@ export function FinalStationContent({
         <div className="space-y-3">
           {listedClass.phase !== "preparation" && <div className="flex justify-between gap-3 text-xs text-[#003d55]/65">
             <span>
-              {listedClass.route ? `${listedClass.entries.filter((e) => e.attempt_id).length}/${listedClass.entries.length} erfasst` : `${listedClass.entries.length} Starter`}
+              {`${listedClass.entries.filter((e) => e.attempt_id).length}/${listedClass.entries.length} erfasst`}
             </span>
-            <span>{listedClass.route ? phaseLabel(listedClass.phase) : "Starterliste freigegeben"}</span>
+            <span>{phaseLabel(listedClass.phase)}</span>
           </div>}
-          {!listedClass.route && listedClass.phase !== "preparation" && <p className="text-sm text-[#003d55]/70">Die Starterliste ist freigegeben. Ergebnisse werden bisher auf Papier eingetragen.</p>}
+          {listedClass.phase === "published" && <p className="text-sm text-[#003d55]/70">René öffnet die Eingabe mit „Klasse starten“.</p>}
           <div className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
             {[...listedClass.entries]
               .sort((a, b) => a.start_position - b.start_position)
@@ -769,7 +769,6 @@ export function FinalStationContent({
                   key={entry.entry_id}
                   disabled={
                     busy ||
-                    !listedClass.route ||
                     listedClass.phase !== "running" ||
                     entry.status !== "ready"
                   }
@@ -782,7 +781,7 @@ export function FinalStationContent({
                       setPendingChoice(choice);
                     else chooseEntry(choice);
                   }}
-                  aria-label={`${entry.start_position}. ${entry.name}, ${listedClass.route ? resultLabel(entry) : `Halbfinalplatz ${entry.semifinal_rank}`}`}
+                  aria-label={`${entry.start_position}. ${entry.name}, ${resultLabel(entry)}`}
                   className={`flex min-h-20 w-full items-center gap-3 border-b border-[#003d55]/10 p-4 text-left last:border-b-0 disabled:cursor-default ${focus}`}
                 >
                   <span className="w-7 shrink-0 text-lg font-semibold tabular-nums text-[#003d55]/55">
@@ -797,12 +796,12 @@ export function FinalStationContent({
                     >
                       {dirty && draft.entryId === entry.entry_id
                         ? "Entwurf · nicht übertragen"
-                        : listedClass.route ? resultLabel(entry) : `Halbfinalplatz ${entry.semifinal_rank}`}
+                        : resultLabel(entry)}
                     </span>
                   </div>
                   {entry.attempt_id ? (
                     <Check size={18} className="shrink-0 text-[#245543]" />
-                  ) : listedClass.route ? (
+                  ) : listedClass.phase === "running" ? (
                     <ChevronRight
                       size={18}
                       className="shrink-0 text-[#003d55]/55"
@@ -817,7 +816,6 @@ export function FinalStationContent({
         </div>
       ) : (view === "edit" || view === "review") &&
         selectedClass &&
-        selectedClass.route &&
         selectedEntry ? (
         <>
           {!editable && (
@@ -906,7 +904,7 @@ export function FinalStationContent({
                     <span className="mb-2 flex justify-between text-sm font-semibold">
                       <span>Erreichter Griff</span>
                       <span className="font-normal text-[#003d55]/65">
-                        0–{selectedClass.route.max_grip}
+                        0–{maxGrip}
                       </span>
                     </span>
                     <input
@@ -922,7 +920,7 @@ export function FinalStationContent({
                     {draft.grip !== "" && !validGrip && (
                       <span className="mt-2 block text-xs text-red-800">
                         Ganze Griffnummer von 0 bis{" "}
-                        {selectedClass.route.max_grip} eingeben.
+                        {maxGrip} eingeben.
                       </span>
                     )}
                   </label>
