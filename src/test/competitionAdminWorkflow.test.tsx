@@ -139,14 +139,43 @@ afterEach(() => {
 });
 
 describe("focused final administration", () => {
+  it("does not offer digital scoring controls for a paper-only list", () => {
+    const data = fixture();
+    Object.assign(data.classes[0], { phase: "published", route_id: null, station_no: null });
+    const onRoster = vi.fn();
+    render(wrap(<CompetitionFinalPanel {...common(data)} finalClass={data.classes[0]} stationHref="/entry" onRoster={onRoster} />));
+    expect(screen.getByRole("heading", { name: "Finale auf Papier" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Klasse starten" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zur Starterliste" }));
+    expect(onRoster).toHaveBeenCalledOnce();
+  });
+  it("prints a route-less start list with handwriting space and empty scoring fields", async () => {
+    const data = fixture();
+    Object.assign(data.classes[0], { phase: "published", route_id: null, station_no: null });
+    data.routes = [];
+    render(<MemoryRouter><CompetitionPrintContent season="2026" load={vi.fn().mockResolvedValue(data)} /></MemoryRouter>);
+    expect(await screen.findByText(/Route: _/)).toBeInTheDocument();
+    expect(screen.getByText("Person a").closest("tr")!.cells[3].textContent).toBe("");
+    expect(screen.getByText("Person a").closest("tr")!.cells[4].textContent).toBe("");
+    expect(screen.getByRole("button", { name: "Drucken / als PDF speichern" })).toBeEnabled();
+  });
+  it("confirms replacing a published start order and preserves an existing digital route", async () => {
+    const data = fixture();
+    data.classes[0].phase = "published";
+    render(wrap(<CompetitionRosterPanel {...common(data)} group={{ league: "lead", label: "A", rows: data.semifinal }} phase="closed" onSemifinal={vi.fn()} />));
+    fireEvent.click(screen.getByRole("button", { name: "Starterliste aktualisieren" }));
+    expect(source.publishFinalClass).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Bestätigen" }));
+    await waitFor(() => expect(source.publishFinalClass).toHaveBeenCalledWith("2026", "lead", "A", "route", 1, 4));
+  });
   it("treats a documented absence as resolved without requiring invented zero results", async () => {
     const data = fixture();
     data.classes = [];
     data.semifinal[0].excluded = "dns";
     data.semifinal[0].missing = [{ route_id: "missing-route", number: 1, settled: false }];
     render(wrap(<CompetitionRosterPanel {...common(data)} group={{ league: "lead", label: "A", rows: data.semifinal }} phase="closed" onSemifinal={vi.fn()} />));
-    await choose("Finalroute", "Route 1 · Finalroute · Griff 32");
-    expect(screen.getByRole("button", { name: "Finalfeld bestätigen" })).toBeEnabled();
+    expect(screen.queryByRole("combobox", { name: "Finalroute" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Starterliste erstellen" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: /fehlende Routeneinträge klären/ })).not.toBeInTheDocument();
   });
 
@@ -158,9 +187,10 @@ describe("focused final administration", () => {
       expect.stringContaining("Person winner"), expect.stringContaining("Person second"), expect.stringContaining("Person third"), expect.stringContaining("Person pending"),
     ]);
   });
-  it("proposes all seven at the tied cutoff, confirms explicitly and keeps frozen published order", async () => {
+  it("creates all seven at the tied cutoff without routes and keeps frozen published order", async () => {
     const data = fixture();
     data.classes = [];
+    data.routes = [];
     const group = { league: "lead" as const, label: "A", rows: data.semifinal };
     const view = render(
       wrap(
@@ -180,19 +210,16 @@ describe("focused final administration", () => {
       .map((item) => item.textContent);
     expect(proposedNames[0]).toContain("Starter 6");
     expect(proposedNames[6]).toContain("Starter 1");
-    await choose("Finalroute", "Route 1 · Finalroute · Griff 32");
     fireEvent.click(
-      screen.getByRole("button", { name: "Finalfeld bestätigen" }),
+      screen.getByRole("button", { name: "Starterliste erstellen" }),
     );
-    expect(source.publishFinalClass).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Bestätigen" }));
     await waitFor(() =>
       expect(source.publishFinalClass).toHaveBeenCalledWith(
         "2026",
         "lead",
         "A",
-        "route",
-        1,
+        null,
+        null,
         0,
       ),
     );
@@ -234,7 +261,7 @@ describe("focused final administration", () => {
       ),
     );
     expect(
-      screen.getByRole("button", { name: "Finalfeld bestätigen" }),
+      screen.getByRole("button", { name: "Starterliste erstellen" }),
     ).toBeDisabled();
     fireEvent.click(
       screen.getByRole("button", { name: "1 fehlende Routeneinträge klären" }),

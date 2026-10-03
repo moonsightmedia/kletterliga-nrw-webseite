@@ -358,10 +358,6 @@ export function CompetitionRosterPanel({
   phase: string;
   onSemifinal: () => void;
 }) {
-  const [routeSelection, setRouteSelection] = useState<{
-    key: string;
-    id: string;
-  } | null>(null);
   const [decision, setDecision] = useState<Decision | null>(null);
   if (!group)
     return <p className="py-6 text-sm">Noch keine Klassen vorhanden.</p>;
@@ -370,9 +366,7 @@ export function CompetitionRosterPanel({
     (item) => classKey(item.league, item.class_label) === key,
   );
   const mutable = !c || ["preparation", "published"].includes(c.phase);
-  const routeId =
-    routeSelection?.key === key ? routeSelection.id : (c?.route_id ?? "");
-  const route = data.routes.find((item) => item.id === routeId);
+  const route = data.routes.find((item) => item.id === c?.route_id);
   const eligible = [...group.rows]
     .filter((row) => !row.excluded)
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"));
@@ -387,8 +381,7 @@ export function CompetitionRosterPanel({
   const ready =
     phase === "closed" &&
     missing === 0 &&
-    proposed.length > 0 &&
-    Boolean(route);
+    proposed.length > 0;
   const confirmed = Boolean(c?.entries.length && c.phase !== "preparation");
   const canExclude = mutable && phase === "closed";
   const startRows = confirmed
@@ -515,26 +508,6 @@ export function CompetitionRosterPanel({
         )}
         {mutable && (
           <div className="mt-4 space-y-3 border-t border-[#003d55]/15 pt-4">
-            <label className="block text-sm font-semibold">Finalroute</label>
-            <Select
-              value={routeId}
-              disabled={busy}
-              onValueChange={(id) => setRouteSelection({ key, id })}
-            >
-              <SelectTrigger
-                aria-label="Finalroute"
-                className="min-h-12 bg-white"
-              >
-                <SelectValue placeholder="Route wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {data.routes.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    Route {item.number} · {item.name} · Griff {item.max_grip}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             {phase !== "closed" ? (
               <p className="text-sm">Halbfinaleingabe zuerst schließen.</p>
             ) : missing > 0 ? (
@@ -544,27 +517,21 @@ export function CompetitionRosterPanel({
             ) : null}
             <CompetitionButton
               disabled={busy || !ready}
-              onClick={() =>
+              onClick={() => {
+                const action = () => source.publishFinalClass(season, group.league, group.label, c?.route_id ?? null, c?.station_no ?? null, c?.version ?? 0);
+                if (!confirmed) { void run(action, "Starterliste erstellt. Jetzt drucken."); return; }
                 setDecision({
-                  title: "Finalfeld bestätigen",
-                  detail: `${className(group.league, group.label)} · ${proposed.length} Starter · Route ${route?.number}. Die Liste wird veröffentlicht. Eine bisherige Startreihenfolge wird durch die umgekehrte Halbfinalreihenfolge ersetzt.`,
+                  title: "Starterliste aktualisieren",
+                  detail: `${className(group.league, group.label)} · ${proposed.length} Starter. Die bisherige Startreihenfolge wird durch die umgekehrte Halbfinalreihenfolge ersetzt. Danach neu drucken.`,
                   button: "Bestätigen",
                   version: c?.version ?? 0,
-                  action: () =>
-                    source.publishFinalClass(
-                      season,
-                      group.league,
-                      group.label,
-                      routeId,
-                      c?.station_no ?? 1,
-                      c?.version ?? 0,
-                    ),
+                  action,
                   success:
                     "Finalstartliste freigegeben. Aktuelle Liste drucken.",
-                })
-              }
+                });
+              }}
             >
-              Finalfeld bestätigen
+              {confirmed ? "Starterliste aktualisieren" : "Starterliste erstellen"}
             </CompetitionButton>
           </div>
         )}
@@ -715,6 +682,14 @@ export function CompetitionFinalPanel({
           Startliste vorbereiten
         </CompetitionButton>
       </div>
+    );
+  if (!c.route_id)
+    return (
+      <section className={panel}>
+        <h3 className={competitionHeading}>Finale auf Papier</h3>
+        <p className="my-3 text-sm">Ergebnisse werden auf der ausgedruckten Starterliste eingetragen.</p>
+        <CompetitionButton onClick={onRoster}>Zur Starterliste</CompetitionButton>
+      </section>
     );
   const chosen = c.entries.find((entry) => entry.entry_id === selection?.id);
   const conflict = Boolean(selection && selection.version !== c.version);

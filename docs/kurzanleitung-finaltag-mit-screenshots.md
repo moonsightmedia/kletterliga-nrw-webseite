@@ -1,5 +1,17 @@
 # Finaltag · Kurzanleitung für René und die Zeitnahme
 
+## Papier-Starterlisten · 3. Oktober 2026
+
+Unter **Wettkampftag → Halbfinale & Finale** oben **Halbfinaleingabe schließen** anklicken und bestätigen. Teilnehmer können danach nicht mehr absenden; René kann weiterhin mit Begründung nachtragen oder korrigieren. Die automatische Sperre um 16 Uhr bleibt bestehen.
+
+Dann **Finale → Finalstartlisten**, Klasse auswählen, die vorgeschlagene Reihenfolge prüfen und **Starterliste erstellen** anklicken. Es sind weder Finalroute noch Finalpasswort erforderlich. **Startliste drucken** öffnet die A4-Ansicht; **Alle Startlisten drucken** druckt die bereits erstellten Listen gemeinsam. Jede Klasse beginnt auf einer eigenen Seite. Route auf dem Papier ergänzen; Griff/TOP, Dauer und Bemerkungen bleiben für die Schiedsrichter frei.
+
+Sechs Finalplätze einschließlich aller Punktgleichen am Einzugsplatz. Die Besten starten zuletzt. Pfeile ändern die Startreihenfolge, ohne den Halbfinalplatz zu verändern. Nach Änderungen den neuen Listenstand drucken. Fehlende Halbfinaleinträge zuerst klären; Teilnehmer außerhalb der Wertung werden nicht ins Finale übernommen.
+
+Papierlisten erscheinen nicht in der digitalen Finaleingabe. Bestehende Klassen mit zugeordneter Finalroute behalten die digitale Erfassung.
+
+![Papier-Starterliste mit sieben erfundenen Finalisten auf dem Tablet](screenshots/starterliste-papier-tablet.png)
+
 ## Schiedsrichter: Teilnehmerstand je Route · 3. Oktober 2026
 
 Unter **/app/schiedsrichter** zeigt jede Routenuhr die zugeordneten Klassen, die Zahl der **noch offenen** Ergebnisse und den Fortschritt **erledigt/gesamt**. Dieselben Angaben stehen bei den QR-Codes. Der Stand aktualisiert sich alle zehn Sekunden; laufende Uhren bleiben erhalten.
@@ -66,7 +78,7 @@ Schiedsrichter kontrollieren das Ergebnis und zeigen den Routen-QR. Nach Scan un
 
 Am **3. Oktober 2026 um 16:00 Uhr** sperrt die normale Abgabe automatisch. René kann anschließend weiterhin im Teilnehmerdialog mit Begründung nachtragen oder ausdrücklich als nicht geklettert mit null Punkten klären. Unter **Demo-Optionen** startet **Halbfinale ausprobieren** diesen Ablauf neu. **16-Uhr-Sperre testen** simuliert das Fristende; Robins fünfte Toprope-Route ist offen.
 
-Wenn die fehlenden Einträge geklärt sind: In **Finalstartlisten** Vorschlag prüfen, Finalroute auswählen und **Finalfeld bestätigen**. Der Dialog nennt Klasse, Route und Starterzahl. Beide Final-Handys sehen alle freigegebenen Klassen. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
+Wenn die fehlenden Einträge geklärt sind: In **Finalstartlisten** Vorschlag prüfen und **Starterliste erstellen**. Die Route wird später auf dem Ausdruck ergänzt. Sechs Plätze plus Punktgleiche; weniger verfügbare Personen ziehen vollständig ein.
 
 In **Finalstartlisten** stehen die Starts zunächst vom schlechtesten qualifizierten Halbfinalplatz zum besten. Pfeile ändern ausschließlich die Startfolge. Unter **Halbfinalfeld & Nachrücker** Ausfälle vor Klassenstart begründet dokumentieren und das Feld erneut bestätigen. **Startliste drucken** öffnet einen separaten Tab. Nach Änderungen gilt die neue Version: alten Ausdruck ersetzen.
 

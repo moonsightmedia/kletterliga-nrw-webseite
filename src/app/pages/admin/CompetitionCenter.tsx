@@ -15,6 +15,7 @@ import SemifinalAdminRanking from "@/app/components/SemifinalAdminRanking";
 import { AttendanceAccessSettings } from "@/app/components/AttendanceAccessSettings";
 import * as finalSource from "@/services/competitionFinal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ import {
 import LeagueCompetition from "./LeagueCompetition";
 import {
   CompetitionButton,
+  CompetitionDialogContent,
   CompetitionField,
   CompetitionRosterPanel,
   CompetitionFinalRoutes,
@@ -163,6 +165,7 @@ export function CompetitionCenterContent({
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [notice, setNotice] = useState("");
+  const [closeSemifinal, setCloseSemifinal] = useState(false);
   const [params, setParams] = useSearchParams();
   const supportedTabs = ["overview", "setup", "semifinal", "roster", "final", "display", "certificates"];
   const requestedTab = params.get("bereich") ?? initialTab;
@@ -336,6 +339,7 @@ export function CompetitionCenterContent({
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          {semifinalPhase === "open" && <CompetitionButton disabled={busy || loading} onClick={() => setCloseSemifinal(true)}>Halbfinaleingabe schließen</CompetitionButton>}
           <CompetitionButton asChild variant="outline">
             <Link target="_blank" rel="noreferrer" to={activeTvHref}>
               <ExternalLink size={16} />
@@ -711,6 +715,19 @@ export function CompetitionCenterContent({
           </TabsContent>
         </Tabs>
       )}
+      <Dialog open={closeSemifinal} onOpenChange={(open) => { if (!busy) setCloseSemifinal(open); }}>
+        <CompetitionDialogContent busy={busy}>
+          <DialogHeader>
+            <DialogTitle>Halbfinaleingabe schließen?</DialogTitle>
+            <DialogDescription>Teilnehmer können danach keine Ergebnisse mehr absenden. René kann weiterhin Ergebnisse nachtragen und korrigieren.</DialogDescription>
+          </DialogHeader>
+          {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
+          <div className="flex flex-wrap justify-end gap-2">
+            <DialogClose asChild><CompetitionButton variant="outline" disabled={busy}>Abbrechen</CompetitionButton></DialogClose>
+            <CompetitionButton disabled={busy || semifinalPhase !== "open"} onClick={() => void run(() => source.setCompetitionPhase(season!, "closed"), "Halbfinaleingabe geschlossen.").then((ok) => { if (ok) setCloseSemifinal(false); })}>Eingabe schließen</CompetitionButton>
+          </div>
+        </CompetitionDialogContent>
+      </Dialog>
     </div>
   );
 }

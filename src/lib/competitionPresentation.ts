@@ -92,9 +92,9 @@ export function classNextStep(
   if (!item || item.phase === "preparation")
     return {
       tab: "roster",
-      title: "Finalfeld bestätigen",
+      title: "Starterliste erstellen",
       detail:
-        "Qualifizierte und Route prüfen. Danach die Startliste drucken.",
+        "Qualifizierte prüfen, Starterliste erstellen und drucken.",
     };
   if (item.stale && item.phase === "published")
     return {
@@ -105,8 +105,8 @@ export function classNextStep(
     };
   if (item.phase === "published")
     return {
-      tab: "final",
-      title: "Finalklasse starten",
+      tab: "roster",
+      title: "Starterliste drucken",
       detail: "Aktuelle Ausdrucke verteilen und Zeitnahme bereitstellen.",
     };
   if (item.phase === "running")
