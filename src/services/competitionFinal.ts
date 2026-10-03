@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import { getPublicSupabase } from "@/services/publicSupabase";
 import type { CompetitionStanding } from "@/services/competitionDay";
 
 export type League = "toprope" | "lead";
@@ -158,19 +159,19 @@ function errorText(error: unknown): string {
     return "Diese Aktion erfordert ein persönliches Liga-Admin-Konto. Bitte melde dich erneut an.";
   return raw || "Die Aktion konnte nicht abgeschlossen werden.";
 }
-async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.rpc(name, args);
+async function rpc<T>(name: string, args: Record<string, unknown>, client = supabase): Promise<T> {
+  const { data, error } = await client.rpc(name, args);
   if (error) throw new Error(errorText(error));
   return data as T;
 }
 export const getFinalAdmin = (season: string) =>
   rpc<FinalAdmin>("get_competition_final_admin", { p_season: season });
 export const getLiveCompetition = (season: string) =>
-  rpc<LiveData>("get_competition_live", { p_season: season });
+  rpc<LiveData>("get_competition_live", { p_season: season }, getPublicSupabase());
 export const getPublicFinal = (season: string) =>
-  rpc<LiveClass[]>("get_competition_final_public", { p_season: season });
+  rpc<LiveClass[]>("get_competition_final_public", { p_season: season }, getPublicSupabase());
 export const getPublicSemifinal = (season: string) =>
-  rpc<Omit<CompetitionStanding, "profile_id">[]>("get_competition_semifinal_public", { p_season: season });
+  rpc<Omit<CompetitionStanding, "profile_id">[]>("get_competition_semifinal_public", { p_season: season }, getPublicSupabase());
 export const saveFinalRoute = (
   season: string,
   number: number,
@@ -225,8 +226,8 @@ export const publishFinalClass = (
   season: string,
   league: League,
   classLabel: string,
-  route: string,
-  station: number,
+  route: string | null,
+  station: number | null,
   expectedVersion: number,
 ) =>
   rpc<void>("publish_competition_final_class", {

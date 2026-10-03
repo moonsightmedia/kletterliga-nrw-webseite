@@ -546,6 +546,8 @@ export const demoSource: CompetitionCenterSource & {
     }),
   publishFinalClass: async (_season, league, label, route, station, version) =>
     mutate((value) => {
+      if (value.admin.phase !== "closed")
+        throw new Error("Halbfinaleingabe zuerst schließen.");
       const previous = value.admin.classes.find(
         (row) => row.league === league && row.class_label === label,
       );
@@ -556,7 +558,7 @@ export const demoSource: CompetitionCenterSource & {
       const rows = value.admin.semifinal.filter(
         (row) => row.league === league && row.class_label === label,
       );
-      if (rows.some((row) => row.missing.some((item) => !item.settled)))
+      if (rows.some((row) => !row.excluded && row.missing.some((item) => !item.settled)))
         throw new Error("Halbfinalergebnisse fehlen.");
       const eligible = rows
         .filter((row) => !row.excluded)
@@ -570,7 +572,7 @@ export const demoSource: CompetitionCenterSource & {
         league,
         class_label: label,
         route_id: route,
-        station_no: station as 1 | 2,
+        station_no: station as 1 | 2 | null,
         phase: "published",
         version: version + 1,
         published_at: now(),
@@ -689,7 +691,8 @@ export const demoSource: CompetitionCenterSource & {
     return {
       classes: value.admin.classes
         .filter((item) =>
-          ["published", "running", "review"].includes(item.phase),
+          ["published", "running", "review"].includes(item.phase) &&
+          value.admin.routes.some((route) => route.id === item.route_id),
         )
         .map((item) => ({
           ...item,
@@ -711,6 +714,8 @@ export const demoSource: CompetitionCenterSource & {
       const { item, entry } = entryClass(value, input.entry, input.version);
       if (item.phase !== "running")
         throw new Error("Eingabe für diese Klasse geschlossen.");
+      if (!item.route_id || !item.station_no)
+        throw new Error("Diese Starterliste wird auf Papier geführt.");
       if (entry.attempt_id && !input.reason.trim())
         throw new Error("Begründung für die Korrektur fehlt.");
       Object.assign(entry, {

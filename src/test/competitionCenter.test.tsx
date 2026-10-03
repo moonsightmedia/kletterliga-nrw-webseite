@@ -5,7 +5,7 @@ import CompetitionCenter, {
   CompetitionCenterContent,
 } from "@/app/pages/admin/CompetitionCenter";
 
-const api = vi.hoisted(() => ({ final: vi.fn(), semifinal: vi.fn(), route: vi.fn() }));
+const api = vi.hoisted(() => ({ final: vi.fn(), semifinal: vi.fn(), route: vi.fn(), close: vi.fn() }));
 vi.mock("@/services/seasonSettings", () => ({
   useSeasonSettings: () => ({
     settings: { season_year: "2026" },
@@ -19,7 +19,7 @@ vi.mock("@/services/competitionFinal", async (importOriginal) => ({
 }));
 vi.mock("@/services/competitionDay", () => ({
   getCompetitionAdmin: api.semifinal,
-  setCompetitionPhase: vi.fn(),
+  setCompetitionPhase: api.close,
   correctCompetitionResult: vi.fn(),
 }));
 vi.mock("@/app/pages/admin/LeagueCompetition", () => ({
@@ -27,6 +27,20 @@ vi.mock("@/app/pages/admin/LeagueCompetition", () => ({
 }));
 
 describe("competition center", () => {
+  it("closes semifinal input directly from the start-list area only after confirmation", async () => {
+    let phase = "open";
+    api.close.mockReset().mockImplementation(async () => { phase = "closed"; });
+    api.final.mockImplementation(async () => ({ phase, classes: [], routes: [], semifinal: [], stations: [], display: null, notices: [], audit: [], semifinal_audit: [] }));
+    api.semifinal.mockResolvedValue({ config: { routes: [], assignments: [] }, staff: [], results: [] });
+    render(<MemoryRouter><CompetitionCenterContent season="2026" initialTab="roster" /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole("button", { name: "Halbfinaleingabe schließen" }));
+    expect(api.close).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toHaveTextContent("René kann weiterhin Ergebnisse nachtragen");
+    fireEvent.click(screen.getByRole("button", { name: "Eingabe schließen" }));
+    await waitFor(() => expect(api.close).toHaveBeenCalledWith("2026", "closed"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Halbfinaleingabe schließen" })).not.toBeInTheDocument();
+  });
   it("keeps documented absences out of the open-route workload in the overview", async () => {
     api.final.mockResolvedValue({ phase: "closed", classes: [], routes: [], semifinal: [{ profile_id: "absent-athlete", name: "Nicht vor Ort", league: "lead", class_label: "Testklasse", points: 0, completed: 0, rank: 1, excluded: "dns", missing: [{ route_id: "unclimbed", number: 1, settled: false }] }], semifinal_results: [], stations: [], display: null, notices: [], audit: [], semifinal_audit: [] });
     api.semifinal.mockResolvedValue({ config: { routes: [], assignments: [] }, staff: [], results: [] });

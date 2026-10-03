@@ -107,7 +107,7 @@ export function CompetitionPrintContent({
               </h1>
               <span className="text-sm font-bold">Version {c.version}</span>
             </div>
-            <p className="mt-2 text-sm">
+            {c.route_id ? <p className="mt-2 text-sm">
               Finalroute{" "}
               {data.routes.find((r) => r.id === c.route_id)?.number ?? "–"}
               {data.routes.find((r) => r.id === c.route_id)?.name &&
@@ -116,7 +116,7 @@ export function CompetitionPrintContent({
               {c.published_at
                 ? new Date(c.published_at).toLocaleString("de-DE")
                 : "–"}
-            </p>
+            </p> : <div className="mt-4 space-y-2 text-sm"><p>Route: ____________________________________</p><p>Stand {c.published_at ? new Date(c.published_at).toLocaleString("de-DE") : "–"}</p></div>}
             {results && (
               <p className="mt-2 text-sm font-bold">
                 {c.phase === "final"
