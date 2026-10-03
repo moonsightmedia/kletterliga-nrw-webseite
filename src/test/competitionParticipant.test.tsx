@@ -50,7 +50,7 @@ describe("competition participant day page", () => {
     api.load.mockResolvedValue(makeData({ check_in }));
     mountPage();
     await chooseRoute();
-    expect(screen.getByRole("button", { name: /Route 5 Linie 5/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Route 5 Linie 5 Vor Ort: Route 5/ })).toBeInTheDocument();
     expect(screen.getByText(/Bitte beim Einlass melden/)).toBeInTheDocument();
     expect(screen.getByText("Einlass ausstehend")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Griff 80" })).not.toBeInTheDocument();
@@ -104,7 +104,7 @@ describe("competition participant day page", () => {
     await act(async () => { vi.advanceTimersByTime(15_000); window.dispatchEvent(new Event("focus")); });
     expect(api.load).toHaveBeenCalledTimes(1);
     await act(async () => { resolveLoad?.(makeData()); });
-    expect(screen.getByRole("button", { name: /Route 1 Linie 1/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ })).toBeInTheDocument();
   });
 
   it("locks the scanner on tab return when check-in is withdrawn and keeps the draft", async () => {
@@ -133,7 +133,7 @@ describe("competition participant day page", () => {
     api.load.mockRejectedValueOnce(new Error("network"));
     await act(async () => { window.dispatchEvent(new Event("focus")); });
     expect(screen.getByRole("alert")).toHaveTextContent("Eingabe pausiert");
-    expect(screen.getByRole("button", { name: /Route 1 Linie 1/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ergebnis absenden" })).not.toBeInTheDocument();
     expect(window.localStorage.getItem("competition-day:draft:participant-1:2026:route-1")).toBe(JSON.stringify({ zone: 7 }));
     await act(async () => { window.dispatchEvent(new Event("online")); });
@@ -173,13 +173,13 @@ describe("competition participant day page", () => {
   it("shows only the five assigned routes and offers no results for an unprepared or ineligible event", async () => {
     api.load.mockResolvedValueOnce(makeData());
     const view = mountPage();
-    expect(await screen.findByRole("button", { name: /Route 5 Linie 5/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Route 5 Linie 5 Vor Ort: Route 5/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Route 6/ })).not.toBeInTheDocument();
     view.unmount();
     api.load.mockResolvedValueOnce(makeData({ routes: [...routeSet, { ...routeSet[0], id: "extra", number: 6 }] }));
     const malformed = mountPage();
     expect(await screen.findByRole("heading", { name: "Routenzuordnung prüfen" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Route 1 Linie 1/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ })).not.toBeInTheDocument();
     malformed.unmount();
     api.load.mockResolvedValueOnce(makeData({ event: null }));
     mountPage();
@@ -191,12 +191,12 @@ describe("competition participant day page", () => {
     mountPage();
     expect(await screen.findByRole("heading", { name: "Routen in Vorbereitung" })).toBeInTheDocument();
     expect(screen.getByText("Die Ergebniseingabe ist noch geschlossen. Deine Qualifikation und Anmeldung bleiben unverändert.")).toHaveClass("text-[#003d55]");
-    expect(screen.queryByRole("button", { name: /Route 1 Linie 1/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ })).not.toBeInTheDocument();
   });
 
   it("opens the entry panel directly inside the selected route card", async () => {
     mountPage("/app/wettkampf?probelauf=1");
-    const firstRoute = await screen.findByRole("button", { name: /Route 1 Linie 1/ });
+    const firstRoute = await screen.findByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ });
     fireEvent.click(firstRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "true");
     expect(firstRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-1");
@@ -208,12 +208,21 @@ describe("competition participant day page", () => {
     fireEvent.click(firstRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: "Griff 80" })).toHaveAttribute("aria-pressed", "true");
-    const secondRoute = screen.getByRole("button", { name: /Route 2 Linie 2/ });
+    const secondRoute = screen.getByRole("button", { name: /Route 2 Linie 2 Vor Ort: Route 2/ });
     fireEvent.click(secondRoute);
     expect(firstRoute).toHaveAttribute("aria-expanded", "false");
     expect(firstRoute.nextElementSibling).toBeNull();
     expect(secondRoute.nextElementSibling).toHaveAttribute("id", "competition-route-entry-route-2");
     expect(screen.queryByText(/im ersten Versuch/i)).not.toBeInTheDocument();
+  });
+
+  it("always shows physical route labels even when local and physical numbers match", async () => {
+    mountPage();
+    await screen.findByText("Vor Ort: Route 1");
+    for (const route of routeSet) {
+      const button = screen.getByRole("button", { name: new RegExp(`Route ${route.number} Linie ${route.number} Vor Ort: Route ${route.number}`) });
+      expect(within(button).getByText(`Vor Ort: Route ${route.number}`)).toBeInTheDocument();
+    }
   });
 
   it("numbers each participant's five routes independently of the physical station numbers", async () => {
@@ -233,7 +242,7 @@ describe("competition participant day page", () => {
     mountPage();
     await chooseRoute();
     clickZone(8);
-    const routeCard = screen.getByRole("button", { name: /Route 1 Linie 1/ }).closest("article")!;
+    const routeCard = screen.getByRole("button", { name: /Route 1 Linie 1 Vor Ort: Route 1/ }).closest("article")!;
     fireEvent.click(screen.getByRole("button", { name: "QR-Code am Routenposten scannen" }));
     const dialog = await screen.findByRole("dialog", { name: "Stationscode scannen" });
     expect(within(dialog).getByText(/Route 1: Halte die Kamera/)).toBeInTheDocument();
@@ -438,7 +447,7 @@ describe("competition participant day page", () => {
     const submitButton = screen.getByRole("button", { name: "Ergebnis absenden" });
     fireEvent.click(submitButton);
     expect(await screen.findByRole("button", { name: "Wird eingetragen …" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: /Route 2 Linie 2/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Route 2 Linie 2 Vor Ort: Route 2/ }));
     expect(api.submit).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Wird eingetragen …" })).toBeDisabled();
     await act(async () => { resolveSubmit?.(makeAcceptedResult({ routeId: "route-1", zone: 6 })); });
