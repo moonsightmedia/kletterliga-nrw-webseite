@@ -1,5 +1,13 @@
 # Finaltag · Kurzanleitung für René und die Zeitnahme
 
+## Schiedsrichter: Teilnehmerstand je Route · 3. Oktober 2026
+
+Unter **/app/schiedsrichter** zeigt jede Routenuhr die zugeordneten Klassen, die Zahl der **noch offenen** Ergebnisse und den Fortschritt **erledigt/gesamt**. Dieselben Angaben stehen bei den QR-Codes. Der Stand aktualisiert sich alle zehn Sekunden; laufende Uhren bleiben erhalten.
+
+**Noch offen** meint zugelassene, angemeldete Teilnehmer ohne bestätigtes Ergebnis an dieser Route, keine Warteschlange. Noch nicht eingecheckte Personen werden zusätzlich ausgewiesen. Auch bestätigte 0 Punkte und ausdrücklich geklärte Nichtversuche zählen als erledigt. Abgemeldete, nicht erschienene oder zurückgezogene Personen zählen nicht mit. Bei Verbindungsproblemen bleibt der letzte Stand mit **Stand veraltet** sichtbar.
+
+![Schiedsrichteransicht auf dem Handy mit erfundenen Klassen und Teilnehmerzahlen](screenshots/schiedsrichter-routenstand-390.jpg)
+
 ## Teilnehmeransicht · 2. Oktober 2026
 
 Unter **Halbfinale** stehen Klasse, Eingabestatus, eingetragene Ergebnisse und Abgabezeit kompakt über den fünf Routen. Die Aufforderung zum Einlass erscheint nur bis zur Bestätigung durch die Crew. Auch ein gespeichertes Ergebnis mit 0 Punkten zählt beim Fortschritt mit; fehlende Einträge bleiben offen.

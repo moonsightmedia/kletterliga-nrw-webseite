@@ -10,6 +10,7 @@ import { competitionDeadlineReached } from "@/lib/competitionDeadline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearJudgeAccess, readJudgeAccess, saveJudgeAccess } from "@/lib/judgeAccessSession";
 import { JudgeOnboarding } from "@/app/components/JudgeOnboarding";
+import JudgeRouteProgress from "@/app/components/JudgeRouteProgress";
 import {
   COMPETITION_TIMER_DURATION_MS,
   COMPETITION_TIMER_WARNING_MS,
@@ -39,14 +40,15 @@ function routeUrl(route: CompetitionStaffRoute) {
 
 function QrImage({ route, size, className = "" }: { route: CompetitionStaffRoute; size: number; className?: string }) {
   const [image, setImage] = useState<string | null>(null);
+  const url = routeUrl(route);
   useEffect(() => {
     let active = true;
     setImage(null);
-    QRCode.toDataURL(routeUrl(route), { width: size, margin: 4, errorCorrectionLevel: QR_ERROR_CORRECTION })
+    QRCode.toDataURL(url, { width: size, margin: 4, errorCorrectionLevel: QR_ERROR_CORRECTION })
       .then((value) => { if (active) setImage(value); })
       .catch(() => { if (active) setImage(""); });
     return () => { active = false; };
-  }, [route, size]);
+  }, [url, size]);
 
   if (image === "") return <div role="status" className={`grid aspect-square w-full place-items-center rounded-2xl bg-[#ede8e1] p-4 text-center text-sm text-[#003d55] ${className}`}>QR-Code konnte nicht erzeugt werden.</div>;
   return image
@@ -64,9 +66,10 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => (
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[character] ?? character));
 
-export default function JudgeDashboard() {
+export default function JudgeDashboard({ preview: previewData }: { preview?: { season: string; load: typeof getCompetitionJudgeRoutes } } = {}) {
+  const preview = import.meta.env.DEV ? previewData : undefined;
   const { settings, loading: settingsLoading, refreshSettings } = useSeasonSettings();
-  const season = settings?.season_year ? String(settings.season_year) : null;
+  const season = preview?.season ?? (settings?.season_year ? String(settings.season_year) : null);
   const [enteredCode, setEnteredCode] = useState("");
   const [activeCode, setActiveCode] = useState("");
   const [accessReadySeason, setAccessReadySeason] = useState<string | null>(null);
@@ -87,25 +90,29 @@ export default function JudgeDashboard() {
   const [storageWarning, setStorageWarning] = useState(false);
   const alerted = useRef(new Set<string>());
   const eventSequence = useRef(0);
+  const loadPending = useRef(0);
   const selectionInitialized = useRef(false);
   const pendingRememberCode = useRef<string | null>(null);
 
   useEffect(() => {
-    if (settingsLoading || !season) return;
+    if ((settingsLoading && !preview) || !season) return;
+    if (preview) { setActiveCode("preview-only"); setAccessReadySeason(season); return; }
     try { setActiveCode(readJudgeAccess(window.localStorage, season) ?? ""); }
     catch { setActiveCode(""); }
     setAccessReadySeason(season);
-  }, [season, settingsLoading]);
+  }, [season, settingsLoading, preview]);
 
   const load = useCallback(async (code: string, background = false) => {
-    if (!code || !season) return;
+    if (!code || !season || (background && loadPending.current > 0)) return;
+    loadPending.current += 1;
     const sequence = ++eventSequence.current;
     if (!background) setLoading(true);
-    setLoadError(null);
+    if (!background) setLoadError(null);
     try {
-      const day = await getCompetitionJudgeRoutes(season, code);
+      const day = await (preview?.load ?? getCompetitionJudgeRoutes)(season, code);
       if (sequence !== eventSequence.current) return;
       setEvent(day.event);
+      setLoadError(null);
       const staffRoutes = day.routes;
       setRoutes(staffRoutes);
       if (pendingRememberCode.current === code) {
@@ -145,19 +152,20 @@ export default function JudgeDashboard() {
         setQuickQrId(null);
       }
     } finally {
+      loadPending.current -= 1;
       if (sequence === eventSequence.current && !background) setLoading(false);
     }
-  }, [season]);
+  }, [season, preview?.load]);
 
   useEffect(() => {
-    if (settingsLoading || accessReadySeason !== season) return;
+    if ((settingsLoading && !preview) || accessReadySeason !== season) return;
     if (!activeCode || !season) {
       setLoading(false);
       return;
     }
     void load(activeCode);
     return () => { eventSequence.current += 1; };
-  }, [accessReadySeason, activeCode, load, season, settingsLoading]);
+  }, [accessReadySeason, activeCode, load, season, settingsLoading, preview]);
 
   useEffect(() => {
     const invalidateHiddenView = () => {
@@ -179,7 +187,7 @@ export default function JudgeDashboard() {
     if (!activeCode || !season) return;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void load(activeCode, true);
-    }, 60_000);
+    }, 10_000);
     return () => window.clearInterval(interval);
   }, [activeCode, load, season]);
 
@@ -313,7 +321,7 @@ export default function JudgeDashboard() {
   const quickQrRoute = routes.find((route) => route.id === quickQrId) ?? null;
   const pendingResetRoute = routes.find((route) => route.id === resetTarget);
 
-  if (settingsLoading || loading) return <div className="mx-auto max-w-5xl" aria-live="polite"><StitchCard tone="muted" className="p-6"><p className="stitch-kicker">Wettkampftag</p><p className="mt-3 text-sm">Schiedsrichterbereich wird geladen …</p></StitchCard></div>;
+  if ((settingsLoading && !preview) || loading) return <div className="mx-auto max-w-5xl" aria-live="polite"><StitchCard tone="muted" className="p-6"><p className="stitch-kicker">Wettkampftag</p><p className="mt-3 text-sm">Schiedsrichterbereich wird geladen …</p></StitchCard></div>;
   if (!season) return <div className="mx-auto max-w-2xl"><StitchCard tone="muted" className="space-y-4 p-6" role="alert"><h1 className="stitch-headline text-2xl">Saison nicht verfügbar</h1><p className="text-sm leading-6">Die aktuelle Saison konnte nicht geladen werden. Bitte versuche es erneut.</p><StitchButton onClick={() => void refreshSettings()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Saisonstatus erneut laden</StitchButton></StitchCard></div>;
   if (!activeCode) return <div className="mx-auto max-w-xl space-y-6 pb-8">
     <div className="space-y-3 pt-4 sm:pt-8"><p className="stitch-kicker text-[#a15523]">Wettkampftag · {season}</p><h1 className="stitch-headline text-3xl leading-none sm:text-4xl">Deine Station.<br />Dein Überblick.</h1><p className="max-w-md text-sm leading-6 text-[#425967]">Fünf-Minuten-Uhren und Routen-QRs für den Einsatz an der Wand. Kein App-Konto nötig.</p></div>
@@ -386,6 +394,7 @@ export default function JudgeDashboard() {
                     const stateLabel = status === "finished" ? "ZEIT ABGELAUFEN" : status === "last-minute" ? "LETZTE MINUTE" : running ? "LÄUFT" : elapsed > 0 ? "PAUSIERT" : "BEREIT";
                     return <StitchCard key={route.id} tone="surface" className={`judge-timer-card min-w-0 p-4 sm:p-5 ${status === "finished" ? "judge-timer-card--finished" : status === "last-minute" ? "judge-timer-card--warning" : ""}`}>
                       <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="stitch-kicker text-[#a15523]">Route {route.number}</p><h3 className="mt-1 truncate text-sm font-bold text-[#003d55]" title={route.name}>{route.name}</h3></div><span className={`judge-state shrink-0 ${status === "finished" ? "judge-state--finished" : status === "last-minute" ? "judge-state--warning" : running ? "judge-state--running" : "judge-state--ready"}`}>{stateLabel}</span></div>
+                      <JudgeRouteProgress route={route} stale={Boolean(loadError)} />
                       <div className="flex items-end justify-between gap-3 pt-4"><div><p className="stitch-kicker text-[#526776]">Verbleibend</p><p className="stitch-headline mt-1 tabular-nums text-[clamp(3.25rem,13vw,5rem)] leading-none text-[#003d55]" aria-label={`${Math.floor(remaining / 60000)} Minuten ${Math.floor((remaining % 60000) / 1000)} Sekunden verbleibend`}>{formatCompetitionTimer(remaining)}</p></div><button type="button" aria-label={`QR-Code für Route ${route.number} anzeigen`} className="judge-qr-shortcut grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#f2dcab] text-[#003d55] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003d55]" onClick={() => setQuickQrId(route.id)}><QrCode className="h-6 w-6" aria-hidden="true" /></button></div>
                       <div role="progressbar" aria-label={`Zeitfortschritt Route ${route.number}`} aria-valuemin={0} aria-valuemax={300} aria-valuenow={Math.round(elapsed / 1000)} className="judge-timer-track mt-4 h-2 overflow-hidden rounded-full bg-[#ede8e1]"><span className="block h-full rounded-full bg-[#003d55] transition-[width] duration-200" style={{ width: `${Math.min(100, elapsed / COMPETITION_TIMER_DURATION_MS * 100)}%` }} /></div>
                       {status === "last-minute" && <p className="mt-2 text-xs font-extrabold text-[#803712]">Letzte Minute jetzt laut ankündigen.</p>}
@@ -406,7 +415,7 @@ export default function JudgeDashboard() {
                   <StitchButton variant="outline" size="sm" className="min-h-11 tracking-normal" onClick={() => void printRoutes(routes)}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Alle QR-Codes drucken</StitchButton>
                   {printError && <p role="alert" className="text-sm font-semibold text-[#803712]">{printError}</p>}
                 </StitchCard>
-                {selectedQrRoute && <StitchCard tone="cream" className="flex min-w-0 flex-col items-center p-3 text-center sm:p-6"><p className="stitch-kicker text-[#803712]">Kletterliga NRW · Halbfinale</p><h3 className="stitch-headline mt-2 text-3xl">Route {selectedQrRoute.number}</h3><p className="mt-1 text-sm font-semibold">{selectedQrRoute.name}</p><div className="my-4 flex w-full max-w-[360px] justify-center rounded-xl bg-white p-2 shadow-[0_12px_28px_rgba(0,38,55,0.1)]"><QrImage route={selectedQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div><p className="max-w-xs text-xs leading-5 text-[#425967]">Der Code bestätigt nur die physische Route. Ergebnis vorher am eigenen Handy eintragen lassen.</p><StitchButton variant="navy" className="mt-4 w-full tracking-normal sm:w-auto" onClick={() => void printRoutes([selectedQrRoute])}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Route {selectedQrRoute.number} drucken</StitchButton></StitchCard>}
+                {selectedQrRoute && <StitchCard tone="cream" className="flex min-w-0 flex-col items-center p-3 text-center sm:p-6"><p className="stitch-kicker text-[#803712]">Kletterliga NRW · Halbfinale</p><h3 className="stitch-headline mt-2 text-3xl">Route {selectedQrRoute.number}</h3><p className="mt-1 text-sm font-semibold">{selectedQrRoute.name}</p><div className="w-full"><JudgeRouteProgress route={selectedQrRoute} stale={Boolean(loadError)} /></div><div className="my-4 flex w-full max-w-[360px] justify-center rounded-xl bg-white p-2 shadow-[0_12px_28px_rgba(0,38,55,0.1)]"><QrImage route={selectedQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div><p className="max-w-xs text-xs leading-5 text-[#425967]">Der Code bestätigt nur die physische Route. Ergebnis vorher am eigenen Handy eintragen lassen.</p><StitchButton variant="navy" className="mt-4 w-full tracking-normal sm:w-auto" onClick={() => void printRoutes([selectedQrRoute])}><Printer className="h-4 w-4 shrink-0" aria-hidden="true" />Route {selectedQrRoute.number} drucken</StitchButton></StitchCard>}
                 </TabsContent>
               </Tabs>
             </>}
@@ -416,7 +425,7 @@ export default function JudgeDashboard() {
           <DialogClose className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-lg bg-white text-[#003d55] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003d55]" aria-label="QR-Code schließen"><X className="h-5 w-5" aria-hidden="true" /></DialogClose>
           <DialogHeader className="px-0 pt-0 text-left"><p className="stitch-kicker text-[#803712]">Routenbestätigung</p><DialogTitle className="stitch-headline text-2xl">Route {quickQrRoute?.number}</DialogTitle><DialogDescription className="text-sm text-[#425967]">{quickQrRoute?.name} · Ergebnis zuerst am eigenen Handy eintragen, danach diesen Code scannen lassen.</DialogDescription></DialogHeader>
           {trackedRoutes.length > 0 && <div className="flex flex-wrap gap-2" aria-label="Aktuelle Routenzeiten">{trackedRoutes.map((route) => { const timer = timers?.[route.id] ?? resetCompetitionTimer(route.id); const status = getCompetitionTimerStatus(timer, now); const remaining = Math.max(0, COMPETITION_TIMER_DURATION_MS - getCompetitionTimerElapsed(timer, now)); return <span key={route.id} className={`rounded-lg px-2.5 py-1.5 text-xs font-extrabold tabular-nums ${status === "finished" ? "bg-[#803712] text-white" : status === "last-minute" ? "bg-[#a15523] text-white" : "bg-[#003d55] text-[#f2dcab]"}`}>Route {route.number} · {formatCompetitionTimer(remaining)}{status === "finished" ? " · Ende" : status === "last-minute" ? " · letzte Minute" : ""}</span>; })}</div>}
-          {quickQrRoute && <div className="judge-qr-artwork mx-auto w-full max-w-[360px] rounded-xl bg-white p-2"><QrImage route={quickQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div>}
+          {quickQrRoute && <JudgeRouteProgress route={quickQrRoute} stale={Boolean(loadError)} />}{quickQrRoute && <div className="judge-qr-artwork mx-auto w-full max-w-[360px] rounded-xl bg-white p-2"><QrImage route={quickQrRoute} size={QR_RENDER_SIZE} className="[image-rendering:pixelated]" /></div>}
           <p className="text-center text-xs leading-5 text-[#425967]">Die Routenuhren laufen weiter, während dieser Code geöffnet ist.</p>
         </DialogContent>
       </Dialog>

@@ -3,6 +3,8 @@ import { AdminShell } from "@/app/layouts/AdminLayout";
 import LeagueCompetition from "@/app/pages/admin/LeagueCompetition";
 import { AttendanceDesk } from "@/app/components/AttendanceDesk";
 import CompetitionParticipantPreview from "@/app/pages/competition/CompetitionParticipantPreview";
+import JudgeDashboard from "@/app/pages/competition/JudgeDashboard";
+import type { CompetitionJudgeAccess } from "@/services/competitionDay";
 import { demoAttendanceSource, resetAttendanceDemo } from "@/lib/attendanceDemoSource";
 import {
   Link,
@@ -41,6 +43,13 @@ import {
 } from "@/lib/competitionDemoSource";
 
 const root = "/demo/finaltag";
+const judgePreview = { season: "2026", load: async (): Promise<CompetitionJudgeAccess> => ({
+  event: { id: "judge-progress-preview-only", phase: "open", submission_deadline_at: "2030-10-03T16:00:00+02:00" },
+  routes: [1,2].map((number) => ({id:`preview-judge-route-${number}`, number, name:number === 1 ? "Sonnenkante" : "Überhang", grade:"6+", color:"blue", qr_token:"synthetic-preview-only",
+    progress: {total:30,completed:12,remaining:18,not_checked_in:3},
+    classes:[{league:"lead" as const,class_label:"U18-w",total:18,completed:8,remaining:10,not_checked_in:2},{league:"toprope" as const,class_label:"Ü18 offen",total:12,completed:4,remaining:8,not_checked_in:1}],
+  })),
+}) };
 export default function CompetitionDemo() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,6 +64,7 @@ export default function CompetitionDemo() {
   const view =
     params.get("ansicht") ?? location.pathname.slice(root.length + 1);
   if (view === "teilnehmer") return <CompetitionParticipantPreview />;
+  if (view === "schiedsrichter") return <div className="stitch-app min-h-screen bg-[#f4f3ee] px-4 py-5 text-[#003d55]"><p className="mx-auto mb-4 max-w-4xl text-xs">Vorschau · erfundene Teilnehmerzahlen</p><JudgeDashboard preview={judgePreview} /></div>;
   if (view === "tv")
     return (
       <CompetitionLiveView
