@@ -144,6 +144,29 @@ describe("mobile final result flow", () => {
     );
   }
 
+  it("shows a preparation class without inventing starters or a route", async () => {
+    data = [{ ...fixture()[0], phase: "preparation", route: null, entries: [] }];
+    mount();
+    await login();
+    fireEvent.click(screen.getByRole("button", { name: /Vorstieg · U18 Starterliste folgt/ }));
+    expect(await screen.findByRole("heading", { name: "Vorstieg · U18" })).toBeInTheDocument();
+    expect(screen.getByText("René erstellt die Starterliste nach Abschluss des Halbfinales.")).toBeInTheDocument();
+    expect(screen.queryByText("Anna Beispiel")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Erreichter Griff")).not.toBeInTheDocument();
+  });
+  it.each(["published", "running"] as const)("shows paper starters in reverse list order but prevents scoring in phase %s", async (phase) => {
+    data = [{ ...fixture()[0], phase, route: null }];
+    mount();
+    await login();
+    fireEvent.click(screen.getByRole("button", { name: /Vorstieg · U18 2 Starter · Papierliste/ }));
+    const anna = await screen.findByRole("button", { name: /1\. Anna Beispiel/ });
+    expect(anna).toBeDisabled();
+    expect(screen.getByRole("button", { name: /2\. Ben Muster/ })).toBeDisabled();
+    expect(screen.getByText("Halbfinalplatz 6")).toBeInTheDocument();
+    fireEvent.click(anna);
+    expect(screen.queryByLabelText("Erreichter Griff")).not.toBeInTheDocument();
+    expect(source.submitFinalAttempt).not.toHaveBeenCalled();
+  });
   it("uses class and participant rows, confirms identity, and returns to the same class after saving", async () => {
     mount();
     await login(2);

@@ -8,7 +8,9 @@ Dann **Finale → Finalstartlisten**, Klasse auswählen, die vorgeschlagene Reih
 
 Sechs Finalplätze einschließlich aller Punktgleichen am Einzugsplatz. Die Besten starten zuletzt. Pfeile ändern die Startreihenfolge, ohne den Halbfinalplatz zu verändern. Nach Änderungen den neuen Listenstand drucken. Fehlende Halbfinaleinträge zuerst klären; Teilnehmer außerhalb der Wertung werden nicht ins Finale übernommen.
 
-Papierlisten erscheinen nicht in der digitalen Finaleingabe. Bestehende Klassen mit zugeordneter Finalroute behalten die digitale Erfassung.
+Unter **Finaleingabe** sieht die Crew nach Eingabe des gemeinsamen Finalpassworts alle eingerichteten Wettkampfklassen schon mit **Starterliste folgt**. Sobald René eine Starterliste erstellt, sind Namen und Startreihenfolge sichtbar — auch ohne Route. Papierlisten lassen sich dort ansehen; Ergebnisse werden auf dem Ausdruck eingetragen. Bestehende Klassen mit zugeordneter Finalroute behalten die digitale Erfassung.
+
+![Klassen vor und nach der Starterlistenfreigabe auf dem Handy – erfundene Testdaten](screenshots/finaleingabe-klassen-vorschau.png)
 
 ![Papier-Starterliste mit sieben erfundenen Finalisten auf dem Tablet](screenshots/starterliste-papier-tablet.png)
 

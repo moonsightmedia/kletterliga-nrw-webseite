@@ -140,7 +140,7 @@ export interface StationClass extends Omit<
   FinalClass,
   "route_id" | "station_no" | "published_at" | "stale"
 > {
-  route: FinalRoute;
+  route: FinalRoute | null;
 }
 
 function errorText(error: unknown): string {
@@ -287,7 +287,7 @@ export const getFinalStation = (
   station: number,
   code: string,
 ) =>
-  rpc<{ classes: StationClass[] }>("get_competition_final_station", {
+  rpc<{ classes: StationClass[] }>("get_competition_final_station_preview", {
     p_season: season,
     p_station: station,
     p_code: code,

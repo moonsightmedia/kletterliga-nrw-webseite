@@ -18,13 +18,15 @@ describe("shared final password in the isolated demo", () => {
     sessionStorage.clear();
     vi.unstubAllGlobals();
   });
-  it("lets both phones select every released class using the same password", async () => {
+  it("lets both phones see released and upcoming classes using the same password", async () => {
     const first = await demoSource.getFinalStation("2026", 1, demoStationCode);
     const second = await demoSource.getFinalStation("2026", 2, demoStationCode);
     expect(first.classes.map((c) => c.id)).toEqual(
       second.classes.map((c) => c.id),
     );
-    expect(first.classes.length).toBe(2);
+    expect(first.classes).toHaveLength(3);
+    expect(first.classes.filter((c) => c.phase !== "preparation")).toHaveLength(2);
+    expect(first.classes.find((c) => c.phase === "preparation")).toMatchObject({ route: null, entries: [] });
   });
   it("revokes the old password for both phones and keeps password values out of persisted data and audit", async () => {
     const replacement = "Synthetic-Replacement-Password";

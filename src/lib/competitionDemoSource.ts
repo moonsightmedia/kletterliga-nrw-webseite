@@ -688,19 +688,25 @@ export const demoSource: CompetitionCenterSource & {
       : code === value.codes[1];
     if (![1, 2].includes(station) || !accepted)
       throw new Error("Das Finalpasswort ist ungültig oder wurde geändert.");
-    return {
-      classes: value.admin.classes
-        .filter((item) =>
-          ["published", "running", "review"].includes(item.phase) &&
-          value.admin.routes.some((route) => route.id === item.route_id),
-        )
-        .map((item) => ({
-          ...item,
-          route: value.admin.routes.find(
-            (route) => route.id === item.route_id,
-          )!,
-        })) as StationClass[],
-    };
+    const published: StationClass[] = value.admin.classes
+      .filter((item) => ["published", "running", "review"].includes(item.phase))
+      .map((item) => ({
+        ...item,
+        route: value.admin.routes.find((route) => route.id === item.route_id) ?? null,
+      }));
+    const groups = new Map(value.admin.semifinal.map((row) => [`${row.league}|${row.class_label}`, row]));
+    const pending: StationClass[] = [...groups.values()]
+      .filter((row) => !value.admin.classes.some((item) => item.league === row.league && item.class_label === row.class_label && item.phase !== "preparation"))
+      .map((row) => ({
+        id: `preview:${row.league}|${row.class_label}`,
+        league: row.league,
+        class_label: row.class_label,
+        phase: "preparation",
+        version: 0,
+        route: null,
+        entries: [],
+      }));
+    return { classes: [...published, ...pending] };
   },
   submitFinalAttempt: async (input) => {
     const hash = await demoPasswordHash(input.code);

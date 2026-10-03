@@ -69,7 +69,9 @@ const digits = (value: string) => /^\d+$/.test(value);
 const timeLabel = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 const phaseLabel = (phase: StationClass["phase"]) =>
-  phase === "running"
+  phase === "preparation"
+    ? "Starterliste folgt"
+    : phase === "running"
     ? "Eingabe offen"
     : phase === "published"
       ? "Noch nicht gestartet"
@@ -302,10 +304,10 @@ export function FinalStationContent({
   const stale = !!selectedClass && selectedClass.version !== draft.version;
   const totalSeconds = Number(draft.minutes) * 60 + Number(draft.seconds);
   const grip = draft.top
-    ? (selectedClass?.route.max_grip ?? 0)
+    ? (selectedClass?.route?.max_grip ?? 0)
     : Number(draft.grip);
   const validGrip =
-    !!selectedClass &&
+    !!selectedClass?.route &&
     (draft.top || digits(draft.grip)) &&
     Number.isSafeInteger(grip) &&
     grip >= 0 &&
@@ -319,7 +321,7 @@ export function FinalStationContent({
     !selectedEntry?.attempt_id ||
     (draft.reason.trim().length > 0 && draft.reason.length <= 500);
   const editable =
-    selectedClass?.phase === "running" && selectedEntry?.status === "ready";
+    !!selectedClass?.route && selectedClass.phase === "running" && selectedEntry?.status === "ready";
   const canSubmit =
     editable &&
     validGrip &&
@@ -342,6 +344,7 @@ export function FinalStationContent({
     );
     if (
       !targetClass ||
+      !targetClass.route ||
       !entry ||
       targetClass.phase !== "running" ||
       entry.status !== "ready"
@@ -573,11 +576,11 @@ export function FinalStationContent({
           selectedEntry && (
             <p className="mt-2 text-sm text-[#003d55]/70">
               {className(selectedClass.league, selectedClass.class_label)} ·
-              Route {selectedClass.route.number} · Start{" "}
+              {selectedClass.route && <>Route {selectedClass.route.number} · </>}Start{" "}
               {selectedEntry.start_position}
             </p>
           )}
-        {activeCode && view === "participants" && listedClass && (
+        {activeCode && view === "participants" && listedClass?.route && (
           <p className="mt-2 text-sm text-[#003d55]/70">
             Route {listedClass.route.number} · {listedClass.route.name}
           </p>
@@ -737,15 +740,13 @@ export function FinalStationContent({
                   {className(c.league, c.class_label)}
                 </span>
                 <span className="mt-1 block text-xs text-[#003d55]/65">
-                  Route {c.route.number} ·{" "}
-                  {c.entries.filter((e) => e.attempt_id).length}/
-                  {c.entries.length} erfasst
+                  {c.route ? <>Route {c.route.number} · {c.entries.filter((e) => e.attempt_id).length}/{c.entries.length} erfasst</> : c.phase === "preparation" ? "Starterliste folgt" : `${c.entries.length} Starter · Papierliste`}
                 </span>
-                <span
+                {c.phase !== "preparation" && <span
                   className={`mt-1 block text-xs ${c.phase === "running" ? "text-[#245543]" : "text-[#003d55]/65"}`}
                 >
-                  {phaseLabel(c.phase)}
-                </span>
+                  {c.route ? phaseLabel(c.phase) : "Starterliste freigegeben"}
+                </span>}
               </div>
               <ChevronRight size={20} className="shrink-0" />
             </button>
@@ -753,13 +754,13 @@ export function FinalStationContent({
         </div>
       ) : view === "participants" && listedClass ? (
         <div className="space-y-3">
-          <div className="flex justify-between gap-3 text-xs text-[#003d55]/65">
+          {listedClass.phase !== "preparation" && <div className="flex justify-between gap-3 text-xs text-[#003d55]/65">
             <span>
-              {listedClass.entries.filter((e) => e.attempt_id).length}/
-              {listedClass.entries.length} erfasst
+              {listedClass.route ? `${listedClass.entries.filter((e) => e.attempt_id).length}/${listedClass.entries.length} erfasst` : `${listedClass.entries.length} Starter`}
             </span>
-            <span>{phaseLabel(listedClass.phase)}</span>
-          </div>
+            <span>{listedClass.route ? phaseLabel(listedClass.phase) : "Starterliste freigegeben"}</span>
+          </div>}
+          {!listedClass.route && listedClass.phase !== "preparation" && <p className="text-sm text-[#003d55]/70">Die Starterliste ist freigegeben. Ergebnisse werden bisher auf Papier eingetragen.</p>}
           <div className="overflow-hidden rounded-xl border border-[#003d55]/15 bg-white">
             {[...listedClass.entries]
               .sort((a, b) => a.start_position - b.start_position)
@@ -768,6 +769,7 @@ export function FinalStationContent({
                   key={entry.entry_id}
                   disabled={
                     busy ||
+                    !listedClass.route ||
                     listedClass.phase !== "running" ||
                     entry.status !== "ready"
                   }
@@ -780,7 +782,7 @@ export function FinalStationContent({
                       setPendingChoice(choice);
                     else chooseEntry(choice);
                   }}
-                  aria-label={`${entry.start_position}. ${entry.name}, ${resultLabel(entry)}`}
+                  aria-label={`${entry.start_position}. ${entry.name}, ${listedClass.route ? resultLabel(entry) : `Halbfinalplatz ${entry.semifinal_rank}`}`}
                   className={`flex min-h-20 w-full items-center gap-3 border-b border-[#003d55]/10 p-4 text-left last:border-b-0 disabled:cursor-default ${focus}`}
                 >
                   <span className="w-7 shrink-0 text-lg font-semibold tabular-nums text-[#003d55]/55">
@@ -795,26 +797,27 @@ export function FinalStationContent({
                     >
                       {dirty && draft.entryId === entry.entry_id
                         ? "Entwurf · nicht übertragen"
-                        : resultLabel(entry)}
+                        : listedClass.route ? resultLabel(entry) : `Halbfinalplatz ${entry.semifinal_rank}`}
                     </span>
                   </div>
                   {entry.attempt_id ? (
                     <Check size={18} className="shrink-0 text-[#245543]" />
-                  ) : (
+                  ) : listedClass.route ? (
                     <ChevronRight
                       size={18}
                       className="shrink-0 text-[#003d55]/55"
                     />
-                  )}
+                  ) : null}
                 </button>
               ))}
           </div>
           {!listedClass.entries.length && (
-            <p className="py-3 text-sm">Die Startliste ist noch leer.</p>
+            <p className="py-3 text-sm">{listedClass.phase === "preparation" ? "René erstellt die Starterliste nach Abschluss des Halbfinales." : "Die Startliste ist noch leer."}</p>
           )}
         </div>
       ) : (view === "edit" || view === "review") &&
         selectedClass &&
+        selectedClass.route &&
         selectedEntry ? (
         <>
           {!editable && (
