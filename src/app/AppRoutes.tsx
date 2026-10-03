@@ -50,6 +50,7 @@ const FinalStation = lazy(() => import("@/app/pages/competition/FinalStation"));
 const CompetitionCheckIn = lazy(() => import("@/app/pages/competition/CompetitionCheckIn"));
 const LiveScreen = lazy(() => import("@/app/pages/competition/LiveScreen"));
 const ModeratorRankings = lazy(() => import("@/app/pages/competition/ModeratorRankings"));
+const CompetitionRaffle = lazy(() => import("@/app/pages/competition/CompetitionRaffle"));
 const CompetitionPrint = lazy(() => import("@/app/pages/admin/CompetitionPrint"));
 const CompetitionCenter = lazy(() => import("@/app/pages/admin/CompetitionCenter"));
 const CompetitionStandings = lazy(() => import("@/app/pages/competition/CompetitionStandings"));
@@ -129,6 +130,7 @@ export const appRoutes = (
     <Route path="/app/schiedsrichter/einlass" element={<JudgeLayout><CompetitionCheckIn /></JudgeLayout>} />
     <Route path="/live/:season" element={<LiveScreen />} />
     <Route path="/moderation/:season" element={<ModeratorRankings />} />
+    <Route path="/verlosung/:season" element={<ProtectedRoute><RoleGuard allow={["league_admin"]}><CompetitionRaffle /></RoleGuard></ProtectedRoute>} />
 
     <Route
       path="/app"
