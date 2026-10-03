@@ -16,8 +16,9 @@ export interface SemifinalRow {
   class_label: string;
   points: number;
   completed: number;
-  rank: number;
-  excluded: "dns" | "withdrawn" | null;
+  rank: number | null;
+  is_out_of_competition?: boolean;
+  excluded: "dns" | "withdrawn" | "aw" | null;
   missing: SemifinalMissing[];
 }
 export interface FinalRoute {
@@ -120,7 +121,7 @@ export interface LiveClass {
   phase?: FinalPhase;
   entries: Array<
     | PublicFinalEntry
-    | { name: string; rank: number; points: number; completed: number }
+    | { name: string; rank: number | null; points: number; completed: number; is_out_of_competition?: boolean }
   >;
 }
 export interface LiveData {

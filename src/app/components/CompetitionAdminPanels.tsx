@@ -9,7 +9,7 @@ import {
   Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { finalPhaseLabels } from "@/lib/competitionPresentation";
+import { finalPhaseLabels, isOutOfCompetition, semifinalRankLabel } from "@/lib/competitionPresentation";
 import {
   Dialog,
   DialogClose,
@@ -375,7 +375,7 @@ export function CompetitionRosterPanel({
   const route = data.routes.find((item) => item.id === routeId);
   const eligible = [...group.rows]
     .filter((row) => !row.excluded)
-    .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "de"));
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"));
   const boundary = eligible[5]?.points;
   const proposed = eligible.filter(
     (row) => boundary === undefined || row.points >= boundary,
@@ -394,7 +394,7 @@ export function CompetitionRosterPanel({
   const startRows = confirmed
     ? [...c!.entries].sort((a, b) => a.start_position - b.start_position)
     : [...proposed].sort(
-        (a, b) => b.rank - a.rank || a.name.localeCompare(b.name, "de"),
+        (a, b) => a.points - b.points || a.name.localeCompare(b.name, "de"),
       );
   return (
     <div className="space-y-4">
@@ -587,11 +587,11 @@ export function CompetitionRosterPanel({
             >
               <div className="min-w-0">
                 <p className="break-words font-semibold">
-                  {row.rank}. {row.name}
+                  {semifinalRankLabel(row)}{row.rank !== null && "."} {row.name}
                 </p>
                 <p className="mt-1 text-xs text-[#003d55]/70">
                   {row.points} Punkte ·{" "}
-                  {row.excluded === "dns"
+                  {isOutOfCompetition(row) ? "Außer Wertung · kein Finaleinzug" : row.excluded === "dns"
                     ? "Nicht erschienen"
                     : row.excluded === "withdrawn"
                       ? "Zurückgezogen"

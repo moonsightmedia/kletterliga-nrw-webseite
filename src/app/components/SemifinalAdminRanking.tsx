@@ -29,6 +29,7 @@ import type {
   CompetitionPhase,
 } from "@/services/competitionDay";
 import { formatCompetitionDeadline } from "@/lib/competitionDeadline";
+import { isOutOfCompetition, semifinalRankLabel } from "@/lib/competitionPresentation";
 
 export interface SemifinalEdit {
   kind: "result" | "not-climbed";
@@ -105,7 +106,7 @@ export default function SemifinalAdminRanking({
           classKey(b.league, b.class_label),
           "de",
         ) ||
-        a.rank - b.rank ||
+        b.points - a.points ||
         a.name.localeCompare(b.name, "de"),
     );
   const participant = data.semifinal.find((row) => row.profile_id === selected);
@@ -288,9 +289,9 @@ export default function SemifinalAdminRanking({
             key={row.profile_id}
             onClick={() => openParticipant(row)}
             aria-label={`${row.name}: ${row.points} Punkte, Ergebnisse bearbeiten`}
-            className="grid min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto_1rem] items-center gap-3 border-b border-[#003d55]/10 px-4 py-3 text-left last:border-b-0 hover:bg-[#f7f3e9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523]"
+            className={`grid min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto_1rem] items-center gap-3 border-b border-[#003d55]/10 px-4 py-3 text-left last:border-b-0 hover:bg-[#f7f3e9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a15523] ${isOutOfCompetition(row) ? "bg-[#f7f3e9] text-[#003d55]/65" : ""}`}
           >
-            <span className="font-bold">{row.rank}.</span>
+            <span className="font-bold">{semifinalRankLabel(row)}{row.rank !== null && "."}</span>
             <span className="min-w-0">
               <span className="block break-words font-semibold">
                 {row.name}
@@ -298,7 +299,7 @@ export default function SemifinalAdminRanking({
               <span className="mt-1 block text-xs text-[#003d55]/65">
                 {classFilter === "all" &&
                   `${className(row.league, row.class_label)} · `}
-                {row.excluded ? (row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen") : row.missing.filter((m) => !m.settled).length
+                {isOutOfCompetition(row) ? "Außer Wertung" : row.excluded ? (row.excluded === "dns" ? "Nicht erschienen" : "Zurückgezogen") : row.missing.filter((m) => !m.settled).length
                   ? `${row.missing.filter((m) => !m.settled).length} offen`
                   : "Vollständig"}
               </span>
@@ -335,7 +336,7 @@ export default function SemifinalAdminRanking({
           <DialogTitle>{participant?.name}</DialogTitle>
           <DialogDescription>
             {participant &&
-              `${className(participant.league, participant.class_label)} · Platz ${participant.rank} · ${participant.points} Punkte`}
+              `${className(participant.league, participant.class_label)} · ${isOutOfCompetition(participant) ? "Außer Wertung" : `Platz ${participant.rank}`} · ${participant.points} Punkte`}
           </DialogDescription>
           {saved && (
             <p role="status" className="text-sm text-emerald-800">
@@ -371,7 +372,7 @@ export default function SemifinalAdminRanking({
                       >
                         {result
                           ? `${gripLabel(result.zone)}${result.zone !== 0 ? ` · ${result.points} Punkte` : ""}`
-                          : participant?.excluded ? (participant.excluded === "dns" ? "Nicht erschienen · kein Ergebnis erforderlich" : "Zurückgezogen · kein Ergebnis erforderlich") : missing?.settled
+                          : participant?.excluded && !isOutOfCompetition(participant) ? (participant.excluded === "dns" ? "Nicht erschienen · kein Ergebnis erforderlich" : "Zurückgezogen · kein Ergebnis erforderlich") : missing?.settled
                             ? "Nicht geklettert · 0 Punkte"
                             : "Offen"}
                       </p>
@@ -385,7 +386,7 @@ export default function SemifinalAdminRanking({
                     </div>
                     <button
                       type="button"
-                      disabled={busy || phase === "draft" || Boolean(participant?.excluded && !result)}
+                      disabled={busy || phase === "draft" || Boolean(participant?.excluded && !isOutOfCompetition(participant) && !result)}
                       onClick={() => {
                         setEditingRoute(number);
                         setEditingSnapshot(routeSnapshot(number));

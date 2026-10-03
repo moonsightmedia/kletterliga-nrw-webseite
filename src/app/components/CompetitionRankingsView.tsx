@@ -9,7 +9,7 @@ import {
   type PublicFinalEntry,
 } from "@/services/competitionFinal";
 import type { CompetitionStanding } from "@/services/competitionDay";
-import { finalPhaseLabels } from "@/lib/competitionPresentation";
+import { finalPhaseLabels, isOutOfCompetition, semifinalRankLabel } from "@/lib/competitionPresentation";
 
 export default function CompetitionRankingsView({
   semifinal,
@@ -43,7 +43,7 @@ export default function CompetitionRankingsView({
       league: entries[0].league,
       class_label: entries[0].class_label,
       entries: [...entries].sort(
-        (a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "de"),
+        (a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"),
       ),
     }));
   }, [semifinal]);
@@ -213,16 +213,17 @@ export default function CompetitionRankingsView({
                     : (selected.entries as CompetitionStanding[]).map((row) => (
                         <li
                           key={row.profile_id}
-                          className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 p-4"
+                          className={`grid grid-cols-[2rem_1fr_auto] items-center gap-3 p-4 ${isOutOfCompetition(row) ? "bg-[#f7f3e9] text-[#003d55]/65" : ""}`}
                         >
                           <span
-                            aria-label={`Platz ${row.rank}`}
+                            aria-label={isOutOfCompetition(row) ? "Außer Wertung" : `Platz ${row.rank}`}
                             className="text-xl font-bold"
                           >
-                            {row.rank}
+                            {semifinalRankLabel(row)}
                           </span>
                           <div className="min-w-0">
                             <p className="break-words font-bold">{row.name}</p>
+                            {isOutOfCompetition(row) && <p className="mt-1 text-xs font-semibold">Außer Wertung · kein Finaleinzug</p>}
                             <p className="mt-1 text-xs text-[#003d55]/70">
                               {row.completed_routes}/5 Routen eingetragen{" "}
                               {row.completed_routes < 5 && "· unvollständig"}
