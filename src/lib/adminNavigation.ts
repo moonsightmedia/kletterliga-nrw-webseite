@@ -5,7 +5,7 @@ const league = "/app/admin/league", gym = "/app/admin/gym";
 export const adminNavigationGroups: Record<string, NavGroup[]> = {
   league_admin: [
     { id: "home", label: "Übersicht", icon: LayoutDashboard, items: [{ to: league, label: "Übersicht" }] },
-    { id: "competition", label: "Wettkampftag", icon: Flag, items: [{ to: `${league}/wettkampf`, label: "Halbfinale & Finale" }, { to: `${league}/finale`, label: "Einlass & Anmeldungen" }] },
+    { id: "competition", label: "Wettkampftag", icon: Flag, items: [{ to: `${league}/wettkampf`, label: "Halbfinale & Finale" }, { to: `${league}/finale`, label: "Einlass & Anmeldungen" }, { to: "/verlosung/2026", label: "TV-Verlosung" }] },
     { id: "people", label: "Teilnehmer", icon: Users, items: [{ to: `${league}/participants`, label: "Teilnehmerübersicht" }, { to: `${league}/change-requests`, label: "Änderungsanfragen" }] },
     { id: "season", label: "Saison & Wertung", icon: Trophy, items: [{ to: `${league}/season`, label: "Saison" }, { to: `${league}/classes`, label: "Wertungsklassen" }, { to: `${league}/stage-winners`, label: "Etappensieger" }, { to: `${league}/routes`, label: "Qualifikationsrouten" }, { to: `${league}/results`, label: "Qualifikationsergebnisse" }, { to: `${league}/route-feedback`, label: "Routenfeedback" }] },
     { id: "gyms", label: "Hallen", icon: Building2, items: [{ to: `${league}/gyms`, label: "Hallen" }] },
