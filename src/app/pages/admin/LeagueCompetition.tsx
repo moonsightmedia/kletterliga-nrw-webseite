@@ -224,10 +224,10 @@ export default function LeagueCompetition({ section = "all", seasonOverride, sou
         </AccordionItem>
       }</Accordion>}
       {(section === "all" || section === "certificates") && <section className="rounded-xl border border-[#003d55]/15 bg-white p-5" aria-labelledby="certificate-release-heading">
-        <h2 id="certificate-release-heading" className="stitch-headline text-xl">Urkunden · Halbfinalwertung</h2>
+        <h2 id="certificate-release-heading" className="stitch-headline text-xl">Urkunden · Finalevent</h2>
         <p className="mt-2 text-sm leading-6">{certificatePublication?.published_at
           ? `Freigegeben: ${new Date(certificatePublication.published_at).toLocaleString("de-DE")} · Version ${certificatePublication.revision} · ${certificatePublication.certificate_count} Urkunden.`
-          : "Platzierungen aus der Halbfinalwertung. Erst nach Abschluss und Prüfung freigeben."}</p>
+          : "Finalisten erhalten ihre Finalplatzierung; die übrigen Teilnehmenden ihre Halbfinalplatzierung. Erst freigeben, wenn alle Finalklassen geprüft und abgeschlossen sind."}</p>
         <p className="mt-1 text-xs leading-5 text-[#526b72]">Die Freigabe speichert den aktuellen Ergebnisstand. Korrigierte Ergebnisse erscheinen auf Urkunden erst nach erneuter Freigabe.</p>
         {certificatePublication?.needs_refresh && <p role="alert" className="mt-2 rounded-lg bg-amber-100 p-3 text-sm font-bold text-amber-900">Seit der letzten Freigabe wurden Ergebnisse geändert. Bitte Platzierungen prüfen und den Urkundenstand aktualisieren.</p>}
         <StitchButton type="button" className="mt-4" disabled={busy || dirty || day.event?.phase !== "closed" || !admin.results.length}
@@ -236,8 +236,8 @@ export default function LeagueCompetition({ section = "all", seasonOverride, sou
     }</>}
     <AlertDialog open={certificateDialog} onOpenChange={(open) => !open && !busy && setCertificateDialog(false)}>
       <AlertDialogContent className="stitch-app max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-[#f2dcab] text-[#003d55]">
-        <AlertDialogHeader><AlertDialogTitle>{certificatePublication?.published_at ? "Urkundenstand aktualisieren?" : "Urkunden aus Halbfinalwertung freigeben?"}</AlertDialogTitle>
-          <AlertDialogDescription className="text-[#003d55]">Prüfe vorher alle Platzierungen. Nur angemeldete Teilnehmende mit mindestens einem Routenergebnis erhalten eine Urkunde. Die freigegebenen Urkunden sind danach sofort im Profil verfügbar.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogHeader><AlertDialogTitle>{certificatePublication?.published_at ? "Urkundenstand aktualisieren?" : "Urkunden für das Finalevent freigeben?"}</AlertDialogTitle>
+          <AlertDialogDescription className="text-[#003d55]">Prüfe vorher alle Platzierungen und schließe alle Finalklassen ab. Gewertete Finalisten erhalten ihre tatsächliche Finalplatzierung. Alle anderen mit Halbfinalergebnissen erhalten eine ausdrücklich als Halbfinale bezeichnete Urkunde. AW-Teilnahmen erhalten keine reguläre Platzierung. Die Urkunden sind nach der Freigabe sofort im Profil verfügbar.</AlertDialogDescription></AlertDialogHeader>
         <AlertDialogFooter><AlertDialogCancel asChild><StitchButton variant="outline" disabled={busy}>Abbrechen</StitchButton></AlertDialogCancel>
           <StitchButton disabled={busy} onClick={async () => { if (season && await action(() => source.publishFinaleCertificates(season), "Finalevent-Urkunden freigegeben.")) setCertificateDialog(false); }}>Freigeben</StitchButton></AlertDialogFooter>
       </AlertDialogContent>

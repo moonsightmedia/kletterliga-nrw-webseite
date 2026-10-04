@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 
 export type Certificate = {
   phase: "qualification" | "finale";
+  scoring_stage?: "semifinal" | "final";
   season_year: string;
   display_name: string;
   league: "lead" | "toprope";
