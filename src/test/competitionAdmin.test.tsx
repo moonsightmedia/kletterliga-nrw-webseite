@@ -178,7 +178,8 @@ describe("competition admin", () => {
     view();
     fireEvent.click(await screen.findByRole("button", { name: "Urkunden freigeben" }));
     expect(api.publish).not.toHaveBeenCalled();
-    expect(await screen.findByRole("alertdialog")).toHaveTextContent("Nur angemeldete Teilnehmende mit mindestens einem Routenergebnis");
+    expect(await screen.findByRole("alertdialog")).toHaveTextContent("Gewertete Finalisten erhalten ihre tatsächliche Finalplatzierung");
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("ausdrücklich als Halbfinale bezeichnete Urkunde");
     fireEvent.click(screen.getByRole("button", { name: "Freigeben" }));
     await waitFor(() => expect(api.publish).toHaveBeenCalledWith("2026"));
   });

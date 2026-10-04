@@ -8,7 +8,7 @@ const rust = "#a45525";
 const socialScale = 2;
 const imageCache = new Map<string, Promise<HTMLImageElement>>();
 
-const phaseTitle = (phase: Certificate["phase"]) => phase === "qualification" ? "QUALIFIKATION" : "FINALE";
+const phaseTitle = (certificate: Certificate) => certificate.phase === "qualification" ? "QUALIFIKATION" : certificate.scoring_stage === "semifinal" ? "HALBFINALE" : "FINALE";
 const classTitle = (label: string) => {
   const match = /^(U15|Ü15|Ü40)-([mw])$/i.exec(label);
   if (!match) return label;
@@ -129,7 +129,11 @@ export async function renderCertificate(certificate: Certificate, format: Certif
   draw("wordmark", 344, isPdf ? 292 : 260, 312, 25);
   const phaseImage = certificate.phase === "finale" ? "phase-finale" : "phase-qualification";
   const phaseWidth = certificate.phase === "finale" ? 242 : 315;
-  draw(phaseImage, (1000 - phaseWidth) / 2, isPdf ? 330 : 297, phaseWidth, 29);
+  if (certificate.phase === "finale" && certificate.scoring_stage === "semifinal") {
+    drawCenteredText(context, `HALBFINALE ${certificate.season_year}`, isPdf ? 354 : 321, 31, navy);
+  } else {
+    draw(phaseImage, (1000 - phaseWidth) / 2, isPdf ? 330 : 297, phaseWidth, 29);
+  }
   draw("title", 113, isPdf ? 405 : 365, 774, 112);
 
   const nameLine = isPdf ? 670 : 580;
@@ -197,7 +201,7 @@ export async function certificatePdf(certificate: Certificate): Promise<Blob> {
   const image = await pdf.embedPng(await png.arrayBuffer());
   const page = pdf.addPage([595.28, 841.89]);
   page.drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
-  pdf.setTitle(`Kletterliga NRW – ${phaseTitle(certificate.phase)} ${certificate.season_year}`);
+  pdf.setTitle(`Kletterliga NRW – ${phaseTitle(certificate)} ${certificate.season_year}`);
   pdf.setAuthor("Kletterliga NRW");
   return new Blob([Uint8Array.from(await pdf.save())], { type: "application/pdf" });
 }

@@ -151,8 +151,8 @@ export default function ProfileCertificates({ profileId }: { profileId: string }
       <div className="grid gap-3">
         {data?.qualification ? <CertificateCard certificate={data.qualification} title="Qualifikation" /> :
           <StitchCard tone="surface" className="rounded-2xl p-4"><h4 className="font-bold text-[#003d55]">Qualifikation</h4><p className="mt-1 text-sm text-[#526b72]">Für eine Urkunde ist mindestens ein gewertetes Quali-Routenergebnis nötig.</p></StitchCard>}
-        {data?.finale ? <CertificateCard certificate={data.finale} title="Finalevent" /> :
-          <StitchCard tone="surface" className="flex gap-3 rounded-2xl border border-[#003d55]/10 p-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4e1b3] text-[#003d55]"><LockKeyhole size={18} aria-hidden="true" /></span><div><h4 className="font-bold text-[#003d55]">Finalevent</h4><p className="mt-1 text-sm leading-5 text-[#526b72]">{data?.finale_published_at ? "Für dein Profil liegt kein Finalevent-Routenergebnis vor." : "Die Finalevent-Urkunden erscheinen nach Prüfung und Freigabe der Ergebnisse vom 3. Oktober."}</p></div></StitchCard>}
+        {data?.finale ? <CertificateCard certificate={data.finale} title={data.finale.scoring_stage === "semifinal" ? "Finalevent · Halbfinale" : "Finalevent · Finale"} /> :
+          <StitchCard tone="surface" className="flex gap-3 rounded-2xl border border-[#003d55]/10 p-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4e1b3] text-[#003d55]"><LockKeyhole size={18} aria-hidden="true" /></span><div><h4 className="font-bold text-[#003d55]">Finalevent</h4><p className="mt-1 text-sm leading-5 text-[#526b72]">{data?.finale_published_at ? "Für dein Profil liegt keine freigegebene Platzierungsurkunde vor." : "Die Finalevent-Urkunden erscheinen nach Prüfung und Freigabe der Ergebnisse vom 3. Oktober."}</p></div></StitchCard>}
       </div>}
   </section>;
 }

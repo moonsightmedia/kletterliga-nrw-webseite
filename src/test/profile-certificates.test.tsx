@@ -33,6 +33,15 @@ describe("ProfileCertificates", () => {
     expect(getMyCertificates).toHaveBeenCalledWith("2026");
   });
 
+  it.each([['final', 'Finalevent · Finale'], ['semifinal', 'Finalevent · Halbfinale']] as const)("labels the actual %s scoring stage", async (scoring_stage, title) => {
+    const finale = { ...certificate, phase: 'finale' as const, scoring_stage, rank: 3 };
+    vi.mocked(getMyCertificates).mockResolvedValue({ qualification: certificate, finale, finale_published_at: '2026-10-04' });
+    render(<ProfileCertificates profileId="athlete-1" />);
+    expect(await screen.findByText(title + ' · 2026')).toBeInTheDocument();
+    expect(screen.getByText('3. Platz')).toBeInTheDocument();
+    await waitFor(() => expect(renderCertificate).toHaveBeenCalledWith(finale, 'post'));
+  });
+
   it("downloads the social image when file sharing is unavailable", async () => {
     vi.mocked(getMyCertificates).mockResolvedValue({ qualification: certificate, finale: null, finale_published_at: null });
     render(<ProfileCertificates profileId="athlete-1" />);
