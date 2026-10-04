@@ -28,7 +28,7 @@ insert into public.competition_day_events(season_year,phase) values('CERT-TEST',
 insert into public.competition_day_routes(event_id,route_number,name,grade,color)
  select id,1,'Certificate route','6a','blue' from public.competition_day_events where season_year='CERT-TEST';
 insert into public.competition_day_results(event_id,route_id,profile_id,zone,flash,points)
- select e.id,r.id,('99999999-7100-4000-8000-'||lpad(n::text,12,'0'))::uuid,5,false,(10-n)*10
+ select e.id,r.id,('99999999-7100-4000-8000-'||lpad(n::text,12,'0'))::uuid,5,false,case when n=7 then 1000 else (10-n)*10 end
  from public.competition_day_events e join public.competition_day_routes r on r.event_id=e.id
  cross join generate_series(2,7) n where e.season_year='CERT-TEST';
 insert into public.competition_final_exclusions(event_id,profile_id,status,reason)
@@ -68,6 +68,13 @@ select pg_temp.denied('select public.publish_finale_certificates(''CERT-TEST'')'
 reset role;
 update public.competition_final_entries set checked_at=statement_timestamp() where class_id in
  (select c.id from public.competition_final_classes c join public.competition_day_events e on e.id=c.event_id where e.season_year='CERT-TEST') and status='ready';
+update public.competition_final_attempts set counted=false where entry_id in
+ (select en.id from public.competition_final_entries en join public.competition_final_classes c on c.id=en.class_id
+ join public.competition_day_events e on e.id=c.event_id where e.season_year='CERT-TEST' and en.semifinal_rank=1);
+set local role authenticated;
+select pg_temp.denied('select public.publish_finale_certificates(''CERT-TEST'')','FINAL_RESULTS_NOT_REVIEWED');
+reset role;
+update public.competition_final_attempts set counted=true where reason='Synthetic result';
 set local role authenticated;
 select public.publish_finale_certificates('CERT-TEST');
 select pg_temp.ok((public.get_certificate_publication('CERT-TEST')->>'certificate_count')::int=5,'AW and no-result profiles excluded');
@@ -104,4 +111,18 @@ select public.publish_finale_certificates('CERT-TEST');
 select pg_temp.ok((public.get_certificate_publication('CERT-TEST')->>'revision')::int=2,'republication increments revision');
 reset role;
 select pg_temp.ok((select rank=1 from public.finale_certificates where season_year='CERT-TEST' and profile_id='99999999-7100-4000-8000-000000000002'),'new publication applies corrected final place');
+-- Identical final score, semifinal rank and time retain a shared official place.
+update public.competition_final_entries set semifinal_rank=2 where profile_id='99999999-7100-4000-8000-000000000004'
+ and class_id in(select c.id from public.competition_final_classes c join public.competition_day_events e on e.id=c.event_id where e.season_year='CERT-TEST');
+update public.competition_final_attempts set grip=20 where entry_id in
+ (select en.id from public.competition_final_entries en join public.competition_final_classes c on c.id=en.class_id
+ join public.competition_day_events e on e.id=c.event_id where e.season_year='CERT-TEST' and en.semifinal_rank=2);
+set local role authenticated;
+select public.publish_finale_certificates('CERT-TEST');
+reset role;
+select pg_temp.ok((select count(*)=2 from public.finale_certificates where season_year='CERT-TEST' and scoring_stage='final' and rank=2),'shared final rank comes unchanged from central ranking');
+select pg_temp.actor(7);
+set local role authenticated;
+select pg_temp.ok(public.get_my_certificates('CERT-TEST')->'finale'='null'::jsonb,'top-scoring AW profile has no ranked certificate');
+reset role;
 rollback;
