@@ -23,7 +23,8 @@ describe("grouped admin navigation", () => {
   });
   it("retains every existing league destination once", () => {
     const paths=adminNavigationGroups.league_admin.flatMap(group=>group.items.map(item=>item.to));
-    expect(paths).toHaveLength(16); expect(new Set(paths).size).toBe(16);
+    expect(paths).toHaveLength(17); expect(new Set(paths).size).toBe(17);
+    expect(paths).toContain("/app/admin/league/season-feedback");
     expect(paths).toContain("/verlosung/2026");
     for(const path of ["wettkampf","finale","participants","change-requests","season","classes","stage-winners","routes","results","route-feedback","gyms","codes","mastercodes","settings"]) expect(paths).toContain(`/app/admin/league/${path}`);
   });

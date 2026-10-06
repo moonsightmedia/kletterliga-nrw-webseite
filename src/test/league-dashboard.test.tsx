@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import LeagueDashboard from "@/app/pages/admin/LeagueDashboard";
 
 const appApiMocks = vi.hoisted(() => ({
@@ -40,7 +41,7 @@ describe("LeagueDashboard", () => {
   });
 
   it("renders seasonal partner voucher KPI", async () => {
-    render(<LeagueDashboard />);
+    render(<MemoryRouter><LeagueDashboard /></MemoryRouter>);
 
     await waitFor(() => {
       expect(screen.getByText("Partnergutscheine")).toBeInTheDocument();

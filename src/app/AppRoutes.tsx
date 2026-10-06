@@ -71,6 +71,8 @@ const GymCodes = lazy(() => import("@/app/pages/admin/GymCodes"));
 const GymMastercodes = lazy(() => import("@/app/pages/admin/GymMastercodes"));
 const GymStats = lazy(() => import("@/app/pages/admin/GymStats"));
 const LeagueDashboard = lazy(() => import("@/app/pages/admin/LeagueDashboard"));
+const LeagueSeasonFeedback = lazy(() => import("@/app/pages/admin/LeagueSeasonFeedback"));
+const SeasonFeedbackPreview = import.meta.env.DEV ? lazy(() => import("@/app/pages/admin/SeasonFeedbackPreview")) : null;
 const LeagueSeason = lazy(() => import("@/app/pages/admin/LeagueSeason"));
 const LeagueGyms = lazy(() => import("@/app/pages/admin/LeagueGyms"));
 const LeagueClasses = lazy(() => import("@/app/pages/admin/LeagueClasses"));
@@ -116,6 +118,7 @@ const ParticipantRankings = () => {
 export const appRoutes = (
   <>
     {CompetitionDemo && <Route path="/demo/finaltag/*" element={<CompetitionDemo />} />}
+    {SeasonFeedbackPreview && <Route path="/demo/saisonfeedback" element={<SeasonFeedbackPreview />} />}
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
@@ -387,6 +390,7 @@ export const appRoutes = (
           </RoleGuard>
         }
       />
+      <Route path="league/season-feedback" element={<RoleGuard allow={["league_admin"]}><LeagueSeasonFeedback /></RoleGuard>} />
       <Route
         path="league/finale"
         element={
