@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, MessageSquare } from "lucide-react";
 import { Users, Building2, BarChart3, Flag, TicketPercent } from "lucide-react";
 import { listAdminSettings, listProfiles, listGyms, countResults, listRoutes, listPartnerVoucherRedemptions } from "@/services/appApi";
 import { AdminPageHeader } from "@/app/pages/admin/_components/AdminPageHeader";
@@ -109,6 +111,9 @@ const LeagueDashboard = () => {
           valueClassName="stitch-metric text-3xl text-amber-700"
         />
       </div>
+      <Link to="/app/admin/league/season-feedback" className="stitch-surface-card flex items-center gap-4 rounded-xl p-5 text-[#003d55] transition-colors hover:bg-[#f2dcab]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]">
+        <MessageSquare className="h-6 w-6 shrink-0 text-[#a15523]" aria-hidden="true" /><div className="min-w-0 flex-1"><h2 className="font-semibold">Saisonfeedback 2026</h2><p className="mt-1 text-sm text-[#003d55]/65">Rückmeldungen lesen und Wünsche für die nächste Saison auswerten.</p></div><ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
+      </Link>
     </div>
   );
 };
