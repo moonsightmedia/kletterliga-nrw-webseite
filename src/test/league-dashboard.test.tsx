@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import LeagueDashboard from "@/app/pages/admin/LeagueDashboard";
+vi.mock("@/services/supabase", () => ({ supabase: { rpc: vi.fn().mockResolvedValue({ data: 12, error: null }) } }));
 
 const appApiMocks = vi.hoisted(() => ({
   listProfiles: vi.fn(),
@@ -48,6 +49,7 @@ describe("LeagueDashboard", () => {
     });
 
     expect(screen.getByText("Kletterladen NRW (Saison)")).toBeInTheDocument();
+    expect(await screen.findByText("12 Ja-Antworten")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(appApiMocks.listPartnerVoucherRedemptions).toHaveBeenCalledWith({
       partnerSlug: "kletterladen_nrw",

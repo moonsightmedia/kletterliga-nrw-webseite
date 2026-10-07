@@ -1,0 +1,71 @@
+{
+  "season": "2026",
+  "retrievedAt": "2026-10-07T08:54:46.651Z",
+  "method": "Weighted mean of 1–5 route ratings from non-archived participants entered during qualification 2026, for active routes; aggregate only.",
+  "gyms": [
+    {
+      "name": "2T",
+      "city": "Lindlar",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/2t-climbing.png",
+      "routes": 20,
+      "ratingCount": 216,
+      "averageRating": 4.481481481481482
+    },
+    {
+      "name": "Canyon Chorweiler",
+      "city": "Köln",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/canyon-chorweiler.png",
+      "routes": 20,
+      "ratingCount": 159,
+      "averageRating": 4.188679245283019
+    },
+    {
+      "name": "Chimpanzodrome",
+      "city": "Frechen",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/chimpanzodrom.png",
+      "routes": 20,
+      "ratingCount": 224,
+      "averageRating": 4.495535714285714
+    },
+    {
+      "name": "Kletterbar Münster",
+      "city": "Münster",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/kletterbar-muenster.png",
+      "routes": 20,
+      "ratingCount": 139,
+      "averageRating": 4.244604316546763
+    },
+    {
+      "name": "Kletterfabrik Köln",
+      "city": "Köln",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/kletterfabrik-koeln.jpeg",
+      "routes": 20,
+      "ratingCount": 192,
+      "averageRating": 4.385416666666667
+    },
+    {
+      "name": "Kletterhalle Bielefeld",
+      "city": "Bielefeld",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/kletterhalle-bielefeld.svg",
+      "routes": 20,
+      "ratingCount": 132,
+      "averageRating": 4.181818181818182
+    },
+    {
+      "name": "Kletterwelt Sauerland",
+      "city": "Altena",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/kletterwelt-sauerland.png",
+      "routes": 20,
+      "ratingCount": 151,
+      "averageRating": 4.225165562913907
+    },
+    {
+      "name": "Kletterzentrum OWL",
+      "city": "Brakel",
+      "logo": "https://ssxuurccefxfhxucgepo.supabase.co/storage/v1/object/public/avatars/gyms/logos/owl-climbing.png",
+      "routes": 20,
+      "ratingCount": 123,
+      "averageRating": 4.471544715447155
+    }
+  ]
+}

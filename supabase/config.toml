@@ -63,3 +63,6 @@ verify_jwt = false
 
 [functions.auth-email]
 verify_jwt = false
+
+[functions.season-interest-2027]
+verify_jwt = false

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { SeasonPreviewHeader as Header } from "@/preview/SeasonPreviewHeader";
+import { SeasonPreviewFooter as Footer } from "@/preview/SeasonPreviewFooter";
 import { SponsorBanner } from "@/components/home/SponsorBanner";
 
 interface PageLayoutProps {
