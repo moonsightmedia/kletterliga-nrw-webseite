@@ -1,0 +1,2269 @@
+{
+  "season": "2026",
+  "retrievedAt": "2026-10-06T15:33:23.382Z",
+  "source": "Existing anonymous public result endpoints",
+  "qualificationStart": "2026-05-01",
+  "qualificationEnd": "2026-09-13",
+  "qualificationLimit": 50,
+  "gyms": [
+    {
+      "name": "2T",
+      "city": "Lindlar",
+      "website": "https://www.2tklettern.de"
+    },
+    {
+      "name": "Canyon Chorweiler",
+      "city": "Köln",
+      "website": "https://www.canyon-chorweiler.de"
+    },
+    {
+      "name": "Chimpanzodrome",
+      "city": "Frechen",
+      "website": "https://www.chimpanzodrome.de"
+    },
+    {
+      "name": "Kletterbar Münster",
+      "city": "Münster",
+      "website": "https://www.kletterbar-muenster.de"
+    },
+    {
+      "name": "Kletterfabrik Köln",
+      "city": "Köln",
+      "website": "https://www.kletterfabrik.koeln"
+    },
+    {
+      "name": "Kletterhalle Bielefeld",
+      "city": "Bielefeld",
+      "website": "www.alpinzentrum-bielefeld.de"
+    },
+    {
+      "name": "Kletterwelt Sauerland",
+      "city": "Altena",
+      "website": "https://www.kletterwelt-sauerland.de"
+    },
+    {
+      "name": "Kletterzentrum OWL",
+      "city": "Brakel",
+      "website": "https://www.alpenverein-weserland.de"
+    }
+  ],
+  "final": [
+    {
+      "key": "lead|U15-m",
+      "phase": "final",
+      "league": "lead",
+      "entries": [
+        {
+          "grip": 35,
+          "name": "Karl Wunderlich",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 224,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 1
+        },
+        {
+          "grip": 32,
+          "name": "Max Bonacker ",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 210,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 2
+        }
+      ],
+      "class_label": "U15-m"
+    },
+    {
+      "key": "lead|Ü15-m",
+      "phase": "final",
+      "league": "lead",
+      "entries": [
+        {
+          "grip": 0,
+          "name": "Dominik Klein",
+          "rank": 1,
+          "is_top": true,
+          "status": "ready",
+          "seconds": 188,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 7
+        },
+        {
+          "grip": 0,
+          "name": "Noah Kuhrt",
+          "rank": 2,
+          "is_top": true,
+          "status": "ready",
+          "seconds": 228,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 39,
+          "name": "Jonas  Spätling",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 216,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 6
+        },
+        {
+          "grip": 34,
+          "name": "Vincent  Meise",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 131,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 5
+        },
+        {
+          "grip": 29,
+          "name": "Ole Frodermann ",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 135,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 2
+        },
+        {
+          "grip": 24,
+          "name": "Florian Ishorst",
+          "rank": 6,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 87,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 3
+        },
+        {
+          "grip": 24,
+          "name": "Stefan Dillenburg",
+          "rank": 7,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 114,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 1
+        }
+      ],
+      "class_label": "Ü15-m"
+    },
+    {
+      "key": "lead|Ü15-w",
+      "phase": "final",
+      "league": "lead",
+      "entries": [
+        {
+          "grip": 33,
+          "name": "Christiane  Rötzel",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 121,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 7
+        },
+        {
+          "grip": 27,
+          "name": "Elisa Lücke",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 134,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 6
+        },
+        {
+          "grip": 21,
+          "name": "Mara van Dinter ",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 118,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 5
+        },
+        {
+          "grip": 20,
+          "name": "Natalie Fritsch",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 87,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 4
+        },
+        {
+          "grip": 20,
+          "name": "Lea Waldapfel",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 122,
+          "has_result": true,
+          "semifinal_rank": 6,
+          "start_position": 2
+        },
+        {
+          "grip": 15,
+          "name": "Anna-Lena Baloniak",
+          "rank": 6,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 74,
+          "has_result": true,
+          "semifinal_rank": 6,
+          "start_position": 1
+        },
+        {
+          "grip": 13,
+          "name": "Nina Weiss",
+          "rank": 7,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 48,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 3
+        }
+      ],
+      "class_label": "Ü15-w"
+    },
+    {
+      "key": "lead|Ü40-m",
+      "phase": "final",
+      "league": "lead",
+      "entries": [
+        {
+          "grip": 36,
+          "name": "Holger Höcker",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 125,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 6
+        },
+        {
+          "grip": 30,
+          "name": "Tobias  Rittiger ",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 169,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 25,
+          "name": "Dominink  Sporenberg",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 164,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 5
+        },
+        {
+          "grip": 22,
+          "name": "Marcel Anthöfer",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 145,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 3
+        },
+        {
+          "grip": 20,
+          "name": "Tomi Rößer",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 196,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 2
+        },
+        {
+          "grip": 20,
+          "name": "Daniel Ackermann",
+          "rank": 6,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 207,
+          "has_result": true,
+          "semifinal_rank": 6,
+          "start_position": 1
+        }
+      ],
+      "class_label": "Ü40-m"
+    },
+    {
+      "key": "lead|Ü40-w",
+      "phase": "final",
+      "league": "lead",
+      "entries": [
+        {
+          "grip": 25,
+          "name": "Silke Lamby",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 140,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 6
+        },
+        {
+          "grip": 21,
+          "name": "Julia Beaujean",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 150,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 19,
+          "name": "Alena Knak",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 161,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 5
+        },
+        {
+          "grip": 19,
+          "name": "Viera Rittiger",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 158,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 3
+        },
+        {
+          "grip": 19,
+          "name": "Nora Sporenberg",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 185,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 2
+        },
+        {
+          "grip": null,
+          "name": "Sigi Rötzel ",
+          "rank": null,
+          "is_top": null,
+          "status": "dns",
+          "seconds": null,
+          "has_result": false,
+          "semifinal_rank": 6,
+          "start_position": 1
+        }
+      ],
+      "class_label": "Ü40-w"
+    },
+    {
+      "key": "toprope|U15-m",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 17,
+          "name": "Jannis Sporenberg",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 68,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 4
+        },
+        {
+          "grip": 10,
+          "name": "Lennard Knoch",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 138,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 1
+        },
+        {
+          "grip": 9,
+          "name": "Titus Lamby",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 59,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 3
+        },
+        {
+          "grip": null,
+          "name": "Niklas  Wilms",
+          "rank": null,
+          "is_top": null,
+          "status": "dns",
+          "seconds": null,
+          "has_result": false,
+          "semifinal_rank": 3,
+          "start_position": 2
+        }
+      ],
+      "class_label": "U15-m"
+    },
+    {
+      "key": "toprope|Ü15-m",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 0,
+          "name": "Samuel Kretschmer",
+          "rank": 1,
+          "is_top": true,
+          "status": "ready",
+          "seconds": 175,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 6
+        },
+        {
+          "grip": 24,
+          "name": "Stephan Bartling",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 154,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 5
+        },
+        {
+          "grip": 18,
+          "name": "Pablo Poblete",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 114,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 18,
+          "name": "Arturo Bujarrabal-Dueso",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 116,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 3
+        },
+        {
+          "grip": 18,
+          "name": "Joel Schumacher ",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 100,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 2
+        },
+        {
+          "grip": 16,
+          "name": "Karim  Naal",
+          "rank": 6,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 81,
+          "has_result": true,
+          "semifinal_rank": 6,
+          "start_position": 1
+        }
+      ],
+      "class_label": "Ü15-m"
+    },
+    {
+      "key": "toprope|U15-w",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 30,
+          "name": "Mariella Achenbach ",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 300,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 5
+        },
+        {
+          "grip": 15,
+          "name": "Isabel  Rittiger ",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 97,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 3
+        },
+        {
+          "grip": 12,
+          "name": "Pia Becker",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 141,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 4
+        },
+        {
+          "grip": 12,
+          "name": "Kira Komsthöft",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 63,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 1
+        },
+        {
+          "grip": 11,
+          "name": "Nisha  Holzporz",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 85,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 2
+        }
+      ],
+      "class_label": "U15-w"
+    },
+    {
+      "key": "toprope|Ü15-w",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 23,
+          "name": "Malia  Tavares ",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 127,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 21,
+          "name": "Anna Schäfer",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 139,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 6
+        },
+        {
+          "grip": 20,
+          "name": "Viktoria Piasecki",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 95,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 1
+        },
+        {
+          "grip": 19,
+          "name": "Sarah  Topal",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 93,
+          "has_result": true,
+          "semifinal_rank": 5,
+          "start_position": 2
+        },
+        {
+          "grip": 15,
+          "name": "Klara Peters",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 85,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 5
+        },
+        {
+          "grip": 8,
+          "name": "Agustina Carretero",
+          "rank": 6,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 42,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 3
+        }
+      ],
+      "class_label": "Ü15-w"
+    },
+    {
+      "key": "toprope|Ü40-m",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 16,
+          "name": "Tom Prause ",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 105,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 4
+        },
+        {
+          "grip": 16,
+          "name": "Philipp Knoch",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 121,
+          "has_result": true,
+          "semifinal_rank": 4,
+          "start_position": 2
+        },
+        {
+          "grip": 15,
+          "name": "Florian Bechtel",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 103,
+          "has_result": true,
+          "semifinal_rank": 6,
+          "start_position": 1
+        },
+        {
+          "grip": 14,
+          "name": "Maternus  Honnen",
+          "rank": 4,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 77,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 6
+        },
+        {
+          "grip": 13,
+          "name": "Timo Achenbach",
+          "rank": 5,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 117,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 5
+        },
+        {
+          "grip": null,
+          "name": "Ole Wilms",
+          "rank": null,
+          "is_top": null,
+          "status": "dns",
+          "seconds": null,
+          "has_result": false,
+          "semifinal_rank": 4,
+          "start_position": 3
+        }
+      ],
+      "class_label": "Ü40-m"
+    },
+    {
+      "key": "toprope|Ü40-w",
+      "phase": "final",
+      "league": "toprope",
+      "entries": [
+        {
+          "grip": 24,
+          "name": "Eva Klingelmann ",
+          "rank": 1,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 137,
+          "has_result": true,
+          "semifinal_rank": 1,
+          "start_position": 3
+        },
+        {
+          "grip": 20,
+          "name": "Ronja Wildberger",
+          "rank": 2,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 146,
+          "has_result": true,
+          "semifinal_rank": 2,
+          "start_position": 2
+        },
+        {
+          "grip": 15,
+          "name": "Kristina Knoch",
+          "rank": 3,
+          "is_top": false,
+          "status": "ready",
+          "seconds": 113,
+          "has_result": true,
+          "semifinal_rank": 3,
+          "start_position": 1
+        }
+      ],
+      "class_label": "Ü40-w"
+    }
+  ],
+  "semifinal": [
+    {
+      "name": "Max Bonacker ",
+      "rank": 1,
+      "league": "lead",
+      "points": 460,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Karl Wunderlich",
+      "rank": 2,
+      "league": "lead",
+      "points": 410,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Dominik Klein",
+      "rank": 1,
+      "league": "lead",
+      "points": 500,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Jonas  Spätling",
+      "rank": 2,
+      "league": "lead",
+      "points": 480,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Noah Kuhrt",
+      "rank": 3,
+      "league": "lead",
+      "points": 470,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Vincent  Meise",
+      "rank": 3,
+      "league": "lead",
+      "points": 470,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Florian Ishorst",
+      "rank": 5,
+      "league": "lead",
+      "points": 450,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Ole Frodermann ",
+      "rank": 5,
+      "league": "lead",
+      "points": 450,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Stefan Dillenburg",
+      "rank": 5,
+      "league": "lead",
+      "points": 450,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Dustin Dörnen",
+      "rank": 8,
+      "league": "lead",
+      "points": 400,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Christian  Schipplick ",
+      "rank": 9,
+      "league": "lead",
+      "points": 380,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Nicki Hallmich",
+      "rank": 10,
+      "league": "lead",
+      "points": 350,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Malte Schwiddessen",
+      "rank": 11,
+      "league": "lead",
+      "points": 300,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Fabian Friedrich",
+      "rank": 12,
+      "league": "lead",
+      "points": 280,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Jonathan Schmitz",
+      "rank": 13,
+      "league": "lead",
+      "points": 240,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Mia Lehmann",
+      "rank": null,
+      "league": "lead",
+      "points": 500,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": true
+    },
+    {
+      "name": "Christiane  Rötzel",
+      "rank": 1,
+      "league": "lead",
+      "points": 490,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Elisa Lücke",
+      "rank": 2,
+      "league": "lead",
+      "points": 470,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Mara van Dinter ",
+      "rank": 3,
+      "league": "lead",
+      "points": 360,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Natalie Fritsch",
+      "rank": 4,
+      "league": "lead",
+      "points": 340,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Nina Weiss",
+      "rank": 5,
+      "league": "lead",
+      "points": 290,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Anna-Lena Baloniak",
+      "rank": 6,
+      "league": "lead",
+      "points": 250,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Lea Waldapfel",
+      "rank": 6,
+      "league": "lead",
+      "points": 250,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Holger Höcker",
+      "rank": 1,
+      "league": "lead",
+      "points": 420,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Dominink  Sporenberg",
+      "rank": 2,
+      "league": "lead",
+      "points": 410,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Tobias  Rittiger ",
+      "rank": 3,
+      "league": "lead",
+      "points": 400,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Marcel Anthöfer",
+      "rank": 4,
+      "league": "lead",
+      "points": 370,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Tomi Rößer",
+      "rank": 5,
+      "league": "lead",
+      "points": 340,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Daniel Ackermann",
+      "rank": 6,
+      "league": "lead",
+      "points": 330,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Silke Lamby",
+      "rank": 1,
+      "league": "lead",
+      "points": 460,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Alena Knak",
+      "rank": 2,
+      "league": "lead",
+      "points": 420,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Julia Beaujean",
+      "rank": 3,
+      "league": "lead",
+      "points": 390,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Viera Rittiger",
+      "rank": 4,
+      "league": "lead",
+      "points": 370,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Nora Sporenberg",
+      "rank": 5,
+      "league": "lead",
+      "points": 360,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Sigi Rötzel ",
+      "rank": 6,
+      "league": "lead",
+      "points": 180,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Jannis Sporenberg",
+      "rank": 1,
+      "league": "toprope",
+      "points": 390,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Titus Lamby",
+      "rank": 2,
+      "league": "toprope",
+      "points": 280,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Lennard Knoch",
+      "rank": 3,
+      "league": "toprope",
+      "points": 270,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Niklas  Wilms",
+      "rank": 3,
+      "league": "toprope",
+      "points": 270,
+      "class_label": "U15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Samuel Kretschmer",
+      "rank": 1,
+      "league": "toprope",
+      "points": 450,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Stephan Bartling",
+      "rank": 1,
+      "league": "toprope",
+      "points": 450,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Pablo Poblete",
+      "rank": 3,
+      "league": "toprope",
+      "points": 430,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Arturo Bujarrabal-Dueso",
+      "rank": 4,
+      "league": "toprope",
+      "points": 410,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Joel Schumacher ",
+      "rank": 5,
+      "league": "toprope",
+      "points": 390,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Karim  Naal",
+      "rank": 6,
+      "league": "toprope",
+      "points": 370,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Gabriel Bechtel",
+      "rank": 7,
+      "league": "toprope",
+      "points": 250,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Piet Heil",
+      "rank": 7,
+      "league": "toprope",
+      "points": 250,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Berke Kreutz",
+      "rank": 9,
+      "league": "toprope",
+      "points": 140,
+      "class_label": "Ü15-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Mariella Achenbach ",
+      "rank": 1,
+      "league": "toprope",
+      "points": 360,
+      "class_label": "U15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Pia Becker",
+      "rank": 2,
+      "league": "toprope",
+      "points": 220,
+      "class_label": "U15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Isabel  Rittiger ",
+      "rank": 3,
+      "league": "toprope",
+      "points": 190,
+      "class_label": "U15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Nisha  Holzporz",
+      "rank": 4,
+      "league": "toprope",
+      "points": 120,
+      "class_label": "U15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Kira Komsthöft",
+      "rank": 5,
+      "league": "toprope",
+      "points": 110,
+      "class_label": "U15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Anna Schäfer",
+      "rank": 1,
+      "league": "toprope",
+      "points": 400,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Klara Peters",
+      "rank": 1,
+      "league": "toprope",
+      "points": 400,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Malia  Tavares ",
+      "rank": 3,
+      "league": "toprope",
+      "points": 370,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Agustina Carretero",
+      "rank": 4,
+      "league": "toprope",
+      "points": 330,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Sarah  Topal",
+      "rank": 5,
+      "league": "toprope",
+      "points": 310,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Viktoria Piasecki",
+      "rank": 5,
+      "league": "toprope",
+      "points": 310,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Nadja Jungbeck ",
+      "rank": 7,
+      "league": "toprope",
+      "points": 280,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Lena Freund",
+      "rank": 8,
+      "league": "toprope",
+      "points": 240,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Malina Bartling ",
+      "rank": 9,
+      "league": "toprope",
+      "points": 230,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Madita Runge",
+      "rank": 10,
+      "league": "toprope",
+      "points": 220,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Angelina Job Kolady",
+      "rank": 11,
+      "league": "toprope",
+      "points": 170,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Xenia Schmidt",
+      "rank": 12,
+      "league": "toprope",
+      "points": 150,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Rebecca Xenia Rohde",
+      "rank": 13,
+      "league": "toprope",
+      "points": 140,
+      "class_label": "Ü15-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Maternus  Honnen",
+      "rank": 1,
+      "league": "toprope",
+      "points": 390,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Timo Achenbach",
+      "rank": 2,
+      "league": "toprope",
+      "points": 300,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Tom Prause ",
+      "rank": 3,
+      "league": "toprope",
+      "points": 270,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Ole Wilms",
+      "rank": 4,
+      "league": "toprope",
+      "points": 250,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Philipp Knoch",
+      "rank": 4,
+      "league": "toprope",
+      "points": 250,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Florian Bechtel",
+      "rank": 6,
+      "league": "toprope",
+      "points": 210,
+      "class_label": "Ü40-m",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Eva Klingelmann ",
+      "rank": 1,
+      "league": "toprope",
+      "points": 420,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Ronja Wildberger",
+      "rank": 2,
+      "league": "toprope",
+      "points": 350,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    },
+    {
+      "name": "Kristina Knoch",
+      "rank": 3,
+      "league": "toprope",
+      "points": 320,
+      "class_label": "Ü40-w",
+      "completed_routes": 5,
+      "is_out_of_competition": false
+    }
+  ],
+  "qualification": [
+    {
+      "league": "lead",
+      "category": "u15-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Mia Lehmann",
+          "points": 484.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Leona Ivlieva",
+          "points": 480
+        }
+      ]
+    },
+    {
+      "league": "lead",
+      "category": "u15-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Oskar Behme",
+          "points": 320
+        },
+        {
+          "rank": 2,
+          "display_name": "Max Bonacker",
+          "points": 208.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Karl Wunderlich",
+          "points": 85
+        },
+        {
+          "rank": 4,
+          "display_name": "Niels Michelfeit",
+          "points": 72.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Mats Michelfeit",
+          "points": 66.5
+        }
+      ]
+    },
+    {
+      "league": "lead",
+      "category": "ue15-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Christiane  Rötzel",
+          "points": 415
+        },
+        {
+          "rank": 2,
+          "display_name": "Natalie Fritsch",
+          "points": 410
+        },
+        {
+          "rank": 3,
+          "display_name": "Julia Birke",
+          "points": 280.5
+        },
+        {
+          "rank": 4,
+          "display_name": "Lea Waldapfel",
+          "points": 215.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Elisa Lücke",
+          "points": 179
+        },
+        {
+          "rank": 6,
+          "display_name": "Janine Wegener",
+          "points": 162.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Karla Schmitz-Kolkmann",
+          "points": 148
+        },
+        {
+          "rank": 8,
+          "display_name": "Anna-Lena Baloniak",
+          "points": 141
+        },
+        {
+          "rank": 9,
+          "display_name": "Marta Fritsche",
+          "points": 138.5
+        },
+        {
+          "rank": 10,
+          "display_name": "Nina Weiss",
+          "points": 118.5
+        },
+        {
+          "rank": 11,
+          "display_name": "Clara Segota",
+          "points": 51.5
+        },
+        {
+          "rank": 12,
+          "display_name": "Mara van Dinter",
+          "points": 38
+        },
+        {
+          "rank": 13,
+          "display_name": "Sina-Sophie  Hering",
+          "points": 32
+        },
+        {
+          "rank": 14,
+          "display_name": "Julia Heilmann",
+          "points": 0
+        },
+        {
+          "rank": 14,
+          "display_name": "Nadine Armbruster",
+          "points": 0
+        }
+      ]
+    },
+    {
+      "league": "lead",
+      "category": "ue15-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Ole Frodermann",
+          "points": 663.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Nicki Hallmich",
+          "points": 573.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Malte Schwiddessen",
+          "points": 439
+        },
+        {
+          "rank": 4,
+          "display_name": "Jonas  Spätling",
+          "points": 406.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Fabian Friedrich",
+          "points": 376.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Paul Mennicken",
+          "points": 370.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Stefan Dillenburg",
+          "points": 315
+        },
+        {
+          "rank": 8,
+          "display_name": "Florian Ishorst",
+          "points": 288
+        },
+        {
+          "rank": 9,
+          "display_name": "Christian  Schipplick",
+          "points": 276
+        },
+        {
+          "rank": 10,
+          "display_name": "Noah Kuhrt",
+          "points": 260.5
+        },
+        {
+          "rank": 11,
+          "display_name": "Florian  Lucks",
+          "points": 226
+        },
+        {
+          "rank": 12,
+          "display_name": "Markus Hoeland",
+          "points": 203.5
+        },
+        {
+          "rank": 13,
+          "display_name": "Robert Schuster",
+          "points": 200
+        },
+        {
+          "rank": 14,
+          "display_name": "Vincent  Meise",
+          "points": 196.5
+        },
+        {
+          "rank": 15,
+          "display_name": "David Rahier",
+          "points": 175.5
+        },
+        {
+          "rank": 16,
+          "display_name": "Dustin Dörnen",
+          "points": 125
+        },
+        {
+          "rank": 17,
+          "display_name": "Kai Kaufhold",
+          "points": 103
+        },
+        {
+          "rank": 18,
+          "display_name": "Nick Meckel",
+          "points": 95.5
+        },
+        {
+          "rank": 19,
+          "display_name": "Julian Eberhardt",
+          "points": 78.5
+        },
+        {
+          "rank": 20,
+          "display_name": "Dominik Klein",
+          "points": 66
+        },
+        {
+          "rank": 21,
+          "display_name": "Jonathan Schmitz",
+          "points": 40.5
+        },
+        {
+          "rank": 22,
+          "display_name": "Fabian  Mantica",
+          "points": 33
+        },
+        {
+          "rank": 23,
+          "display_name": "Janosch Althoff",
+          "points": 0
+        }
+      ]
+    },
+    {
+      "league": "lead",
+      "category": "ue40-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Silke Lamby",
+          "points": 549
+        },
+        {
+          "rank": 2,
+          "display_name": "Viera Rittiger",
+          "points": 491
+        },
+        {
+          "rank": 3,
+          "display_name": "Julia Beaujean",
+          "points": 319
+        },
+        {
+          "rank": 4,
+          "display_name": "Tatjana Lenz",
+          "points": 293.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Alena Knak",
+          "points": 249
+        },
+        {
+          "rank": 6,
+          "display_name": "Andrea Lazik-Palm",
+          "points": 244.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Nora Sporenberg",
+          "points": 215
+        },
+        {
+          "rank": 8,
+          "display_name": "Andrea Wolff",
+          "points": 180.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Simone Rohs",
+          "points": 174
+        },
+        {
+          "rank": 10,
+          "display_name": "Daniela Lücke",
+          "points": 160.5
+        },
+        {
+          "rank": 11,
+          "display_name": "Sigi Rötzel",
+          "points": 126
+        },
+        {
+          "rank": 12,
+          "display_name": "Daniela  Bartels",
+          "points": 45.5
+        },
+        {
+          "rank": 13,
+          "display_name": "Celine Bohl",
+          "points": 42
+        }
+      ]
+    },
+    {
+      "league": "lead",
+      "category": "ue40-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Marcel Anthöfer",
+          "points": 579.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Tobias  Rittiger",
+          "points": 495
+        },
+        {
+          "rank": 3,
+          "display_name": "Nico Forsthofer",
+          "points": 360.5
+        },
+        {
+          "rank": 4,
+          "display_name": "Martin Taschenmacher",
+          "points": 332.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Holger Höcker",
+          "points": 328.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Dominink  Sporenberg",
+          "points": 326.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Kilian Nötzold",
+          "points": 255
+        },
+        {
+          "rank": 8,
+          "display_name": "Daniel Ackermann",
+          "points": 201.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Tomi Rößer",
+          "points": 196.5
+        },
+        {
+          "rank": 10,
+          "display_name": "Michael Brändel",
+          "points": 126.5
+        },
+        {
+          "rank": 11,
+          "display_name": "Christian  Diergarten",
+          "points": 89.5
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "u15-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Isabel  Rittiger",
+          "points": 498
+        },
+        {
+          "rank": 2,
+          "display_name": "Mariella Achenbach",
+          "points": 274.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Kira Komsthöft",
+          "points": 188
+        },
+        {
+          "rank": 4,
+          "display_name": "Pia Becker",
+          "points": 115.5
+        },
+        {
+          "rank": 5,
+          "display_name": "Nisha  Holzporz",
+          "points": 82.5
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "u15-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Jannis Sporenberg",
+          "points": 483.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Ayaru Ewert",
+          "points": 471.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Titus Lamby",
+          "points": 410
+        },
+        {
+          "rank": 4,
+          "display_name": "Niklas  Wilms",
+          "points": 408
+        },
+        {
+          "rank": 5,
+          "display_name": "Mika Klodt",
+          "points": 98.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Maarten  Ryba",
+          "points": 92
+        },
+        {
+          "rank": 7,
+          "display_name": "Theodor  Meyer zu Bentrup",
+          "points": 80
+        },
+        {
+          "rank": 8,
+          "display_name": "Lennard Knoch",
+          "points": 79.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Henri  Vervölgyi",
+          "points": 64
+        },
+        {
+          "rank": 10,
+          "display_name": "Konstantin Lajios",
+          "points": 38
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "ue15-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Klara Peters",
+          "points": 782
+        },
+        {
+          "rank": 2,
+          "display_name": "Viktoria Piasecki",
+          "points": 642.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Malina Bartling",
+          "points": 594.5
+        },
+        {
+          "rank": 4,
+          "display_name": "Nadja Jungbeck",
+          "points": 594
+        },
+        {
+          "rank": 5,
+          "display_name": "Minh Truong",
+          "points": 566.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Xenia Schmidt",
+          "points": 480.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Sarah  Topal",
+          "points": 452
+        },
+        {
+          "rank": 8,
+          "display_name": "Madita Runge",
+          "points": 401
+        },
+        {
+          "rank": 9,
+          "display_name": "Monika Wedel",
+          "points": 303.5
+        },
+        {
+          "rank": 10,
+          "display_name": "Lena Freund",
+          "points": 292.5
+        },
+        {
+          "rank": 11,
+          "display_name": "Christina  Bierwirth",
+          "points": 288.5
+        },
+        {
+          "rank": 12,
+          "display_name": "Anna Schäfer",
+          "points": 277
+        },
+        {
+          "rank": 13,
+          "display_name": "Svenja Wagner",
+          "points": 189
+        },
+        {
+          "rank": 14,
+          "display_name": "Lina Höhler",
+          "points": 184
+        },
+        {
+          "rank": 15,
+          "display_name": "Angelina Job Kolady",
+          "points": 179
+        },
+        {
+          "rank": 16,
+          "display_name": "Agustina Carretero",
+          "points": 173
+        },
+        {
+          "rank": 17,
+          "display_name": "Rebecca Xenia Rohde",
+          "points": 166.5
+        },
+        {
+          "rank": 18,
+          "display_name": "Klara Herrmann",
+          "points": 73.5
+        },
+        {
+          "rank": 19,
+          "display_name": "Andrea Kupitz",
+          "points": 72.5
+        },
+        {
+          "rank": 20,
+          "display_name": "Malia  Tavares",
+          "points": 70
+        },
+        {
+          "rank": 21,
+          "display_name": "Lea Krüger",
+          "points": 65
+        },
+        {
+          "rank": 22,
+          "display_name": "Lena Niet",
+          "points": 56.5
+        },
+        {
+          "rank": 23,
+          "display_name": "Evelyn Teichert",
+          "points": 33
+        },
+        {
+          "rank": 24,
+          "display_name": "Sarah  Benz",
+          "points": 22
+        },
+        {
+          "rank": 25,
+          "display_name": "Merit Feykens",
+          "points": 0
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "ue15-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Samuel Kretschmer",
+          "points": 836.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Stephan Bartling",
+          "points": 832.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Karim  Naal",
+          "points": 765.5
+        },
+        {
+          "rank": 4,
+          "display_name": "Joel Schumacher",
+          "points": 658
+        },
+        {
+          "rank": 5,
+          "display_name": "Piet Heil",
+          "points": 570.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Gabriel Bechtel",
+          "points": 534
+        },
+        {
+          "rank": 7,
+          "display_name": "Dominik Borcherding",
+          "points": 442
+        },
+        {
+          "rank": 8,
+          "display_name": "Arturo Bujarrabal-Dueso",
+          "points": 399.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Pablo Poblete",
+          "points": 201
+        },
+        {
+          "rank": 10,
+          "display_name": "Leif Gerhartz",
+          "points": 108
+        },
+        {
+          "rank": 11,
+          "display_name": "Stephan Michelfeit",
+          "points": 72.5
+        },
+        {
+          "rank": 12,
+          "display_name": "Berke Kreutz",
+          "points": 44
+        },
+        {
+          "rank": 13,
+          "display_name": "Sebastian Kühnel",
+          "points": 26
+        },
+        {
+          "rank": 14,
+          "display_name": "Tim Jakab",
+          "points": 11
+        },
+        {
+          "rank": 15,
+          "display_name": "Gerrit Kolar",
+          "points": 0
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "ue40-w",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Ronja Wildberger",
+          "points": 516.5
+        },
+        {
+          "rank": 2,
+          "display_name": "Eva Klingelmann",
+          "points": 440.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Aleks Kletterbunny",
+          "points": 346
+        },
+        {
+          "rank": 4,
+          "display_name": "Sahrah El Ghammaz",
+          "points": 236
+        },
+        {
+          "rank": 5,
+          "display_name": "freya hemme",
+          "points": 229
+        },
+        {
+          "rank": 6,
+          "display_name": "Nadine Langner",
+          "points": 166
+        },
+        {
+          "rank": 7,
+          "display_name": "Kristina Knoch",
+          "points": 143.5
+        },
+        {
+          "rank": 8,
+          "display_name": "Eva Kossmann",
+          "points": 111.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Katharina Michelfeit",
+          "points": 67.5
+        },
+        {
+          "rank": 10,
+          "display_name": "Bettina  Kroh",
+          "points": 54.5
+        }
+      ]
+    },
+    {
+      "league": "toprope",
+      "category": "ue40-m",
+      "rows": [
+        {
+          "rank": 1,
+          "display_name": "Florian Bechtel",
+          "points": 487
+        },
+        {
+          "rank": 2,
+          "display_name": "Ole Wilms",
+          "points": 375.5
+        },
+        {
+          "rank": 3,
+          "display_name": "Tom Prause",
+          "points": 366.5
+        },
+        {
+          "rank": 4,
+          "display_name": "Timo Achenbach",
+          "points": 271
+        },
+        {
+          "rank": 5,
+          "display_name": "Hubertus Lücke",
+          "points": 199.5
+        },
+        {
+          "rank": 6,
+          "display_name": "Maternus  Honnen",
+          "points": 188.5
+        },
+        {
+          "rank": 7,
+          "display_name": "Paul Zakalek",
+          "points": 170.5
+        },
+        {
+          "rank": 8,
+          "display_name": "Philipp Knoch",
+          "points": 143.5
+        },
+        {
+          "rank": 9,
+          "display_name": "Daniele Martella",
+          "points": 142.5
+        },
+        {
+          "rank": 10,
+          "display_name": "Michael Resvoll",
+          "points": 92
+        },
+        {
+          "rank": 11,
+          "display_name": "Steffen Kobbe",
+          "points": 89.5
+        },
+        {
+          "rank": 12,
+          "display_name": "Anton  Joos",
+          "points": 76
+        },
+        {
+          "rank": 13,
+          "display_name": "Jörg Schaffrath",
+          "points": 58
+        },
+        {
+          "rank": 14,
+          "display_name": "Norbert Palm",
+          "points": 0
+        }
+      ]
+    }
+  ]
+}

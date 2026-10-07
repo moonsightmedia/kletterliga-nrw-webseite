@@ -22,7 +22,7 @@ const organizationSchema = {
   sport: "Klettern",
 };
 
-const publicRoutes = [
+const legacyRoutes = [
   {
     path: "/",
     title: "Kletterliga NRW",
@@ -414,6 +414,18 @@ const publicRoutes = [
       url: `${siteUrl}/datenschutz`,
     },
   },
+];
+
+const seasonPages = [
+  { path: '/', title: 'Saisonrückblick – Kletterliga NRW', h1: 'Was für eine Saison.', description: 'Saison 2026 der Kletterliga NRW: Rückblick, öffentliche Ergebnisse, Finalbilder und der unverbindliche Ausblick auf 2027.' },
+  { path: '/saison/2026', title: 'Saison 2026 – Kletterliga NRW', h1: 'Danke für diese Saison!', description: 'Acht Hallen, zwei Ligen und ein gemeinsames Finale am 3. Oktober 2026 in Altena. Rückblick, Bilder und Partner der Kletterliga NRW.' },
+  { path: '/ergebnisse/2026', title: 'Ergebnisse 2026 – Kletterliga NRW', h1: 'Ergebnisse 2026', description: 'Öffentliche Ergebnisse der Kletterliga NRW 2026: Qualifikation, Halbfinale und Finale in Toprope und Vorstieg. Ohne Anmeldung.' },
+  { path: '/saison/2027', title: 'Ausblick 2027 – Kletterliga NRW', h1: 'Saison 2027 – mit dir?', description: 'Könntest du dir vorstellen, 2027 dabei zu sein? Zeige ganz unverbindlich dein Interesse. Keine Anmeldung und keine Verpflichtung.' },
+  { path: '/archiv', title: 'Saisonarchiv – Kletterliga NRW', h1: 'Unser Saisonarchiv', description: 'Abgeschlossene Saisons der Kletterliga NRW: Rückblicke, Ergebnisse und Bilder.' },
+];
+const publicRoutes = [
+  ...seasonPages.map(page => ({ ...page, intro: page.description, keywords: 'Kletterliga NRW, Saison 2026, Ergebnisse Klettern, Finale Altena', sections: [], links: seasonPages.filter(other => other.path !== page.path).map(other => ({ href: other.path, label: other.h1 })), schema: { '@context': 'https://schema.org', '@type': 'WebPage', name: page.title, url: `${siteUrl}${page.path}`, description: page.description } })),
+  ...legacyRoutes.filter(page => ['/teilnahmebedingungen', '/impressum', '/datenschutz', '/kontakt'].includes(page.path)),
 ];
 
 const appPage = {

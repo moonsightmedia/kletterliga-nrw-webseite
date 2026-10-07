@@ -22,6 +22,11 @@ const Datenschutz = () => {
         <div className="container-kl">
           <AnimatedSection animation="fade-up">
             <div className="mx-auto max-w-4xl space-y-8">
+              <div className="rounded-lg bg-white p-6 shadow-sm">
+                <h2 className="font-headline text-2xl text-primary">Unverbindliches Interesse an Saison 2027</h2>
+                <p className="mt-4 text-muted-foreground">Wenn du auf „Ja“ klickst, speichern wir eine zufällige Browserkennung und den Zeitpunkt deiner Antwort, um das Interesse an der Saison 2027 einzuschätzen und doppelte Antworten im selben Browser zu vermeiden. Dafür wird die Kennung in deinem Browser gespeichert. Wir erfassen dabei weder deinen Namen noch deine E-Mail-Adresse oder IP-Adresse in der Interessensliste. Du kannst die lokale Kennung über die Website-Daten deines Browsers löschen. Nach Abschluss der Planung für 2027 löschen wir die Interessensliste. Deine Antwort ist keine Anmeldung.</p>
+              </div>
+
               <div className="rounded-lg border border-border bg-muted/40 p-6">
                 <h2 className="font-headline text-2xl text-primary">1. Verantwortliche Stelle</h2>
                 <p className="mt-4 text-muted-foreground">
