@@ -43,7 +43,7 @@ export const SeasonPreviewHeader = () => {
     <>
       {/* Top Corner Accent - Static, doesn't scroll */}
       <div className="absolute top-8 right-0 z-30 overflow-hidden pointer-events-none hidden lg:block">
-        <div 
+        <div
           className="bg-secondary w-[280px] h-[140px]"
           style={{
             clipPath: 'polygon(100% 0, 30% 0, 100% 100%)',
@@ -63,9 +63,9 @@ export const SeasonPreviewHeader = () => {
         <div className="container-kl max-[380px]:px-3 flex items-center justify-between gap-2">
           {/* Logo */}
           <Link to="/" className="flex min-w-0 items-center gap-2 group">
-            <img 
-              src={logo} 
-              alt="Kletterliga NRW" 
+            <img
+              src={logo}
+              alt="Kletterliga NRW"
               className="hidden sm:block w-10 h-10 md:w-12 md:h-12 object-contain transition-transform duration-300 group-hover:scale-110"
             />
             <div className="min-w-0">

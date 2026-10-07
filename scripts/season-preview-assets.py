@@ -38,4 +38,3 @@ for page in range((len(samples)+34)//35):
             sheet.paste(im, (x, y))
             draw.text((x+4, y+150), path.stem.rsplit('-', 1)[-1], fill='#003d55')
     sheet.save(OUT / f'contact-{page+1}.jpg')
-
