@@ -75,6 +75,46 @@
 .sp-interest-photo .sp-yes:disabled>span{font-size:17px;gap:10px;white-space:nowrap}
 .sp-interest-photo .sp-yes svg{flex-shrink:0}
 .sp-interest-photo .sp-interest-feedback{min-height:72px}
+
+/* One mobile photograph + invitation, immediately followed by the survey. */
+.sp-interest.sp-interest-2027{background:var(--sp-blue);color:var(--sp-beige);min-height:0;padding:140px 0 46px}
+.sp-interest-2027 .sp-interest-layout{grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.sp-interest-2027 .sp-interest-copy{position:relative;z-index:2;max-width:450px}
+.sp-interest-2027 .sp-eyebrow{color:var(--sp-beige);font-size:11px;letter-spacing:.14em}
+.sp-interest-2027 h1{margin:20px 0 28px;line-height:1;letter-spacing:-.025em}
+.sp-interest-2027 h1>span{display:block;font-size:clamp(90px,10vw,150px)}
+.sp-interest-2027 h1 em{display:block;color:var(--sp-beige);font-size:clamp(34px,4vw,56px);margin-top:10px}
+.sp-interest-confirm{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:58px;padding:15px 22px;border:2px solid transparent;border-radius:2px;background:var(--sp-beige);color:var(--sp-blue);font:750 16px/1.4 Inter,system-ui,sans-serif;cursor:pointer;transition:background .15s}
+.sp-interest-confirm svg{flex-shrink:0}
+.sp-interest-confirm:hover:not(:disabled){background:#fff0ce}
+.sp-interest-confirm:active:not(:disabled){background:#e9ca8c}
+.sp-interest-confirm:disabled{cursor:default;background:var(--sp-beige);color:var(--sp-blue)}
+.sp-interest-2027 .sp-nonbinding{font-size:12px;font-weight:400;min-height:21px;line-height:1.6;margin:10px 0 0!important;color:var(--sp-beige)}
+.sp-interest-2027 .sp-demo-note{color:var(--sp-beige);font-size:11px;margin:6px 0 0!important}
+.sp-interest-2027 .sp-demo-note a{color:inherit;text-decoration:underline}
+.sp-interest-scroll{display:flex;align-items:center;justify-content:space-between;gap:20px;color:var(--sp-beige);font-size:13px;font-weight:600;text-decoration:none;min-height:44px;padding:14px 0 0;margin-top:22px;border-top:1px solid #f2dcab40}
+.sp-interest-scroll svg{transform:rotate(90deg);flex-shrink:0}
+.sp-interest-scroll:hover{color:#fff0ce}
+.sp-interest-2027 .sp-interest-picture{height:470px;min-height:0;box-shadow:none}
+.sp-interest-2027 .sp-interest-picture>img{object-position:center 40%}
+.sp-interest-2027 .sp-interest-picture figcaption{font-size:10px;font-weight:400;left:18px;bottom:16px}
+.sp-interest-2027 a:focus-visible,.sp-interest-2027 button:focus-visible{outline:3px solid var(--sp-beige);outline-offset:5px}
+@media(max-width:760px){
+ .sp-interest.sp-interest-2027{padding:76px 0 0}
+ .sp-interest-2027 .sp-interest-layout{display:block;position:relative;padding:0;max-width:none;isolation:isolate}
+ .sp-interest-2027 .sp-interest-picture{position:absolute;inset:0;height:100%;width:100%;min-height:0;margin:0;z-index:0}
+ .sp-interest-2027 .sp-interest-picture>img{object-position:center 20%;transform:translateY(-40px)}
+ .sp-interest-2027 .sp-interest-picture:after{inset:0;background:linear-gradient(180deg,#003d5510 0%,#003d5530 23%,#003d55e6 40%,#003d55 88%)}
+ .sp-interest-2027 .sp-interest-picture figcaption{left:auto;right:14px;bottom:auto;top:14px;font-size:9px;color:#fff;text-shadow:0 1px 4px #000}
+ .sp-interest-2027 .sp-interest-copy{display:flex;flex-direction:column;justify-content:flex-end;max-width:none;min-height:540px;padding:250px 24px 24px}
+ .sp-interest-2027 .sp-eyebrow{font-size:10px;letter-spacing:.12em}
+ .sp-interest-2027 h1{margin:13px 0 24px}
+ .sp-interest-2027 h1>span{font-size:clamp(64px,19vw,88px)}
+ .sp-interest-2027 h1 em{font-size:clamp(32px,10vw,44px);margin-top:5px}
+ .sp-interest-confirm{min-height:56px;padding:14px 18px;font-size:16px}
+ .sp-interest-2027 .sp-nonbinding{font-size:11px;margin-top:9px!important}
+ .sp-interest-scroll{font-size:12px;min-height:42px;margin-top:18px;padding-top:12px}
+}
 .season-preview .sponsor-marquee-track:hover,.season-preview .sponsor-marquee-track:focus-visible{animation-play-state:paused}
 @media(max-width:600px){.sp-lightbox-controls{gap:10px}.sp-lightbox-controls>p{font-size:12px}.sp-results-table th,.sp-results-table td{overflow-wrap:anywhere}.sp-results-table tbody th{min-width:96px}.sp-result-filters button{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.season-preview *,.sp-lightbox *,.sp-mobile-menu *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

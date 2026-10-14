@@ -12,6 +12,7 @@ import seasonData from './data/season-2026.json';
 import gymStats from './data/gym-stats-2026.json';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useSeasonInterest } from './useSeasonInterest';
+import Ideen2027 from '@/pages/Ideen2027';
 
 const photos = [
   { file: 'moment-1', alt: 'Eine Person klettert im Scheinwerferlicht vor der dunklen Hallenwand', caption: 'Alles geben. Bis zum letzten Griff.' },
@@ -165,7 +166,18 @@ function NextSeason() {
 }
 
 function Interest({ interested, onInterest, busy, error, production }: { interested: boolean; onInterest: () => void; busy: boolean; error: string; production: boolean }) {
-  return <section className="sp-interest sp-interest-photo"><div className="sp-hero-texture" aria-hidden="true" /><div className="container-kl sp-interest-layout"><div className="sp-interest-copy"><p className="sp-eyebrow">Kletterliga NRW · Ausblick 2027</p><p className="sp-interest-kicker">Noch eine Runde?</p><h1>KÖNNTEST DU DIR VORSTELLEN,<br /><em>DABEI ZU SEIN?</em></h1><p className="sp-interest-description">Neue Routen. Neue Begegnungen.<br />Und vielleicht bist du wieder mit dabei.</p><button className="sp-button sp-yes" onClick={onInterest} disabled={interested || busy} aria-busy={busy}><span>{interested ? <><Check size={23} /> Danke für dein Ja!</> : busy ? <>Wird gespeichert …</> : <>Ja. <ArrowUpRight size={24} /></>}</span></button><p className="sp-nonbinding"><strong>Ganz unverbindlich.</strong><br />Du meldest dich damit nicht an und gehst keine Verpflichtung ein.</p><div className="sp-interest-feedback" role="status">{interested ? <p>Danke für dein Interesse! Schön, dass du dir vorstellen kannst, dabei zu sein.</p> : null}</div>{error && <p role="alert">{error}</p>}{production ? <p className="sp-demo-note">Wir zählen dein Interesse einmal pro Browser. Keine Anmeldung nötig.</p> : <p className="sp-demo-note">Lokale Vorschau · Noch keine öffentliche Zählung.</p>}</div><figure className="sp-interest-picture"><img src={image('next-climb')} alt="Eine junge Kletterin am Seil im Finale der Saison 2026" width="1280" height="1920" /><span className="sp-interest-photo-year" aria-hidden="true">2027</span><figcaption>Die Lust aufs Klettern bleibt.<small>Foto aus Saison 2026 · Justus Hoehn</small></figcaption></figure></div></section>;
+  return <section className="sp-interest sp-interest-photo sp-interest-2027"><div className="container-kl sp-interest-layout">
+    <div className="sp-interest-copy">
+      <p className="sp-eyebrow">Kletterliga NRW · Nächste Saison</p>
+      <h1><span>2027.</span><em>MIT DIR?</em></h1>
+      <button className="sp-interest-confirm" onClick={onInterest} disabled={interested || busy} aria-busy={busy} aria-describedby="interest-unbinding"><span>{interested ? "Danke, vorgemerkt" : busy ? "Wird gespeichert …" : "Ja, ich wäre dabei"}</span>{interested ? <Check size={21} aria-hidden="true" /> : !busy && <ArrowUpRight size={21} aria-hidden="true" />}</button>
+      <p className="sp-nonbinding" id="interest-unbinding" role={interested ? "status" : undefined}>{interested ? production ? "Dein Interesse ist gespeichert. Keine Anmeldung." : "Vorschau: Es wurde nichts gespeichert." : "Unverbindlich. Keine Anmeldung."}</p>
+      {error && <p role="alert">{error}</p>}
+      {production && <p className="sp-demo-note">Einmal pro Browser gezählt. <Link to="/datenschutz">Datenschutz</Link></p>}
+      <a className="sp-interest-scroll" href="#ideen-2027"><span>8 Themen. Deine Meinung.</span><ArrowRight size={18} aria-hidden="true" /></a>
+    </div>
+    <figure className="sp-interest-picture"><img src={image('next-climb')} alt="Eine junge Kletterin am Seil im Finale der Saison 2026" width="1280" height="1920" /><figcaption>Finaltag 2026 · Justus Hoehn</figcaption></figure>
+  </div></section>;
 }
 
 function Archive() {
@@ -173,12 +185,13 @@ function Archive() {
 }
 
 export default function SeasonPreview({ production = false }: { production?: boolean }) {
-  const { interested, busy, error, submit } = useSeasonInterest(production);
+  const interestProduction = production && !import.meta.env.DEV;
+  const { interested, busy, error, submit } = useSeasonInterest(interestProduction);
   return <div className="season-preview"><ScrollPosition production={production} /><a className="sp-skip-link" href="#inhalt">Zum Inhalt</a><SponsorBanner /><Header /><main id="inhalt" tabIndex={-1}><Routes>
     <Route path="/" element={<><Hero /><Story production={production} /><Gallery /><NextSeason /></>} />
     <Route path="/saison/2026" element={<><Hero season /><Story full production={production} /><SeasonGyms /><ResultsLink /><Gallery /><Thanks /><NextSeason /></>} />
     <Route path="/ergebnisse/2026" element={<SeasonResults />} />
-    <Route path="/saison/2027" element={<Interest interested={interested} onInterest={submit} busy={busy} error={error} production={production} />} />
+    <Route path="/saison/2027" element={<><Interest interested={interested} onInterest={submit} busy={busy} error={error} production={interestProduction} /><Ideen2027 /></>} />
     <Route path="/archiv" element={<Archive />} />
     <Route path="*" element={<section className="sp-section"><h1>HIER GEHT’S ZUR LIGA.</h1><Link className="sp-text-link" to="/"><ChevronLeft size={18} /> Zur Startseite</Link></section>} />
   </Routes></main>{!production && <div className="sp-preview-label">Gestaltungsentwurf · Vorschau zur Abstimmung</div>}<Footer /></div>;

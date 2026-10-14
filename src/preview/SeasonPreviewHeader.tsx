@@ -55,7 +55,9 @@ export const SeasonPreviewHeader = () => {
       <header
         className={cn(
           "fixed top-8 left-0 right-0 z-50 transition-all duration-300",
-          isScrolled
+          location.pathname === "/saison/2027"
+            ? cn("bg-background py-4", isScrolled && "shadow-md")
+            : isScrolled
             ? "bg-background/95 backdrop-blur-md shadow-md py-2"
             : "bg-transparent py-4"
         )}

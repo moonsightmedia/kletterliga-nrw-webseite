@@ -48,6 +48,7 @@ class MockIntersectionObserver implements IntersectionObserver {
 }
 
 Object.defineProperty(window, "IntersectionObserver", {
+  configurable: true,
   writable: true,
   value: MockIntersectionObserver,
 });
