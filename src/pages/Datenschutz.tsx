@@ -24,7 +24,43 @@ const Datenschutz = () => {
             <div className="mx-auto max-w-4xl space-y-8">
               <div className="rounded-lg bg-white p-6 shadow-sm">
                 <h2 className="font-headline text-2xl text-primary">Unverbindliches Interesse an Saison 2027</h2>
-                <p className="mt-4 text-muted-foreground">Wenn du auf „Ja“ klickst, speichern wir eine zufällige Browserkennung und den Zeitpunkt deiner Antwort, um das Interesse an der Saison 2027 einzuschätzen und doppelte Antworten im selben Browser zu vermeiden. Dafür wird die Kennung in deinem Browser gespeichert. Wir erfassen dabei weder deinen Namen noch deine E-Mail-Adresse oder IP-Adresse in der Interessensliste. Du kannst die lokale Kennung über die Website-Daten deines Browsers löschen. Nach Abschluss der Planung für 2027 löschen wir die Interessensliste. Deine Antwort ist keine Anmeldung.</p>
+                <p className="mt-4 text-muted-foreground">Wenn du auf „Ja, ich wäre dabei“ klickst, speichern wir eine zufällige Browserkennung und den Zeitpunkt deiner Antwort, um das Interesse an der Saison 2027 einzuschätzen und doppelte Antworten im selben Browser zu vermeiden. Dafür wird die Kennung in deinem Browser gespeichert. Wir erfassen dabei weder deinen Namen noch deine E-Mail-Adresse oder IP-Adresse in der Interessensliste. Du kannst die lokale Kennung über die Website-Daten deines Browsers löschen. Nach Abschluss der Planung für 2027 löschen wir die Interessensliste. Deine Antwort ist keine Anmeldung. Diese separate Interessensabfrage wird nicht mit deinen Umfrageantworten verknüpft.</p>
+              </div>
+
+              <div className="rounded-lg bg-white p-6 shadow-sm">
+                <h2 className="font-headline text-2xl text-primary">Freiwillige Ideen-Abstimmung für 2027</h2>
+                <p className="mt-4 text-muted-foreground">Die Umfrage richtet sich an Personen ab 16 Jahren. Mit dem ausdrücklichen Start bestätigst du, dass du mindestens 16 Jahre alt bist. Wir fragen dafür kein Geburtsdatum ab.</p>
+                <p className="mt-4 text-muted-foreground">
+                  Erst nach deinem Klick auf „Einverstanden – Umfrage starten“ wird deine Auswahl ab der ersten Antwort nach jeder Änderung an unseren Server übertragen
+                  und für die Planung der Saison 2027 gespeichert. Auch unvollständige Fragebögen werden
+                  ausgewertet; nicht beantwortete Fragen gelten nicht als Zustimmung oder Ablehnung.
+                  Gespeichert werden Auswahlantworten, freiwillige Ideentexte (je höchstens 500 Zeichen), Fragebogenversion, eine zufällige Antwort-ID,
+                  Bearbeitungsstand und Speicherzeitpunkte sowie die Version des Einwilligungstextes und der serverseitige Zeitpunkt ihres ersten Empfangs. Wir fragen weder Name noch E-Mail-Adresse ab
+                  und verknüpfen die Antworten nicht mit deinem Teilnehmerkonto oder der Interessensabfrage.
+                  Ein zufälliger Bearbeitungsschlüssel bleibt nur im Arbeitsspeicher der geöffneten Seite;
+                  serverseitig wird ausschließlich sein Hash gespeichert. Er schützt Änderungen und Löschung,
+                  ist aber kein Nachweis einer einzelnen Person. Die Umfrage setzt keine eigenen Cookies
+                  und speichert weder Antworten noch Kennung dauerhaft im Browser.
+                  Bitte schreibe keine Namen, Kontaktdaten oder andere personenbezogene Angaben in die Ideentexte.
+                </p>
+                <p className="mt-4 text-muted-foreground">
+                  Zur Begrenzung von Spam wird aus der IP-Adresse und einem kurzlebigen Zufallswert eine
+                  Kennung gebildet, die nur im Arbeitsspeicher des Servers bleibt. Sie wird nicht mit den
+                  Antworten gespeichert. Technische Zugriffsdaten können außerdem beim Hosting anfallen.
+                  Die Antworten sind nur für berechtigte Liga-Admins zugänglich und werden für die
+                  Saisonplanung 2027 ausgewertet. Rechtsgrundlage für die Planungsauswertung ist deine
+                  freiwillige Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Eine Nichtteilnahme hat keine Auswirkungen auf deine Liga-Teilnahme.
+                  Du kannst die Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Die Rechtmäßigkeit der Verarbeitung vor dem Widerruf bleibt unberührt.
+                  Solange die Umfrage geöffnet ist, kannst du über „Einwilligung widerrufen & Antworten entfernen“ deine erfassten Antworten mit einem Klick entfernen.
+                  Für einen späteren Widerruf kannst du einen vertraulichen Code als Textdatei herunterladen und auf der Seite <a href="/ideen-2027/widerruf" className="underline">Einwilligung widerrufen</a> eingeben. Der Code wird nicht in einer URL, einem Cookie oder im Browser-Storage gespeichert. Er erlaubt die Entfernung deiner Antworten; gib ihn nicht weiter.
+                  Ohne diesen Code können wir eine einzelne Antwort nicht sicher wiederfinden;
+                  wir verlangen keine zusätzlichen Identitätsdaten nur zur Identifizierung einer Antwort.
+                  Für Fragen nutze den unten genannten Datenschutzkontakt. Nach Abschluss der Planung löschen wir die Einzelantworten,
+                  spätestens am 31. März 2027; zusammengefasste Ergebnisse ohne Einzelantworten können erhalten bleiben.
+                  Zur Verhinderung verspäteter Wiederherstellung bleibt nach dem Entfernen vorübergehend ein gesperrter Datensatz ohne Antworten erhalten; er unterliegt ebenfalls dem Löschprozess.
+                  Die Frist gilt für die produktive Umfragetabelle einschließlich dieser Widerrufsdatensätze. Technische Sicherungskopien können bis zum Ende ihrer begrenzten Aufbewahrungsdauer bestehen bleiben; sie werden nicht für die Planung ausgewertet. Nach einer Wiederherstellung müssen die Löschungen erneut angewendet werden, bevor die Antworten wieder genutzt werden.
+                  Unvollständige und vollständig abgeschlossene Einsendungen werden getrennt ausgewiesen.
+                </p>
               </div>
 
               <div className="rounded-lg border border-border bg-muted/40 p-6">

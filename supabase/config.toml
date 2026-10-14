@@ -66,3 +66,7 @@ verify_jwt = false
 
 [functions.season-interest-2027]
 verify_jwt = false
+
+# submit-ideas-survey-2027: public anonymous choices, strict server-side validation
+[functions.submit-ideas-survey-2027]
+verify_jwt = false

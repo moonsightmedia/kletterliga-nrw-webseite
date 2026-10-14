@@ -2,7 +2,7 @@ import { Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -25,8 +25,15 @@ import Kontakt from "./pages/Kontakt";
 import Saisonfeedback from "./pages/Saisonfeedback";
 import MailBestaetigen from "./pages/MailBestaetigen";
 import MailAbbestellen from "./pages/MailAbbestellen";
+import { filterSurveyTelemetry, isIdeasSurveyPath } from "@/lib/surveyTelemetry";
+import IdeenWiderruf2027 from "./pages/IdeenWiderruf2027";
 
 const queryClient = new QueryClient();
+const PrivacyAwareTelemetry = () => {
+  const { pathname } = useLocation();
+  if (isIdeasSurveyPath(pathname)) return null;
+  return <><Analytics beforeSend={filterSurveyTelemetry} /><SpeedInsights beforeSend={filterSurveyTelemetry} /></>;
+};
 const RouteFallback = () => {
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
   const isAppRoute = isAppPathname(pathname);
@@ -52,6 +59,7 @@ const AppShell = () => {
 
   return (
     <BrowserRouter>
+      <PrivacyAwareTelemetry />
       <Toaster />
       <AppIndexability />
       <ClosedGate>
@@ -76,6 +84,8 @@ const AppShell = () => {
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/kontakt" element={<Kontakt />} />
               <Route path="/feedback-2026" element={<Saisonfeedback />} />
+              <Route path="/ideen-2027" element={<Navigate to="/saison/2027#ideen-2027" replace />} />
+              <Route path="/ideen-2027/widerruf" element={<IdeenWiderruf2027 />} />
               <Route path="/mail/bestaetigen" element={<MailBestaetigen />} />
               <Route path="/mail/abbestellen" element={<MailAbbestellen />} />
               {appRoutes}
@@ -91,8 +101,6 @@ const AppShell = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Analytics />
-      <SpeedInsights />
       <AppShell />
     </TooltipProvider>
   </QueryClientProvider>
