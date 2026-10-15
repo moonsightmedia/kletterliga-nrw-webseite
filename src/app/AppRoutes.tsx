@@ -72,6 +72,8 @@ const GymMastercodes = lazy(() => import("@/app/pages/admin/GymMastercodes"));
 const GymStats = lazy(() => import("@/app/pages/admin/GymStats"));
 const LeagueDashboard = lazy(() => import("@/app/pages/admin/LeagueDashboard"));
 const LeagueSeasonFeedback = lazy(() => import("@/app/pages/admin/LeagueSeasonFeedback"));
+const LeagueIdeasSurvey = lazy(() => import("@/app/pages/admin/LeagueIdeasSurvey"));
+const IdeasSurveyPreview = import.meta.env.DEV ? lazy(() => import("@/app/pages/admin/IdeasSurveyPreview")) : null;
 const SeasonFeedbackPreview = import.meta.env.DEV ? lazy(() => import("@/app/pages/admin/SeasonFeedbackPreview")) : null;
 const LeagueSeason = lazy(() => import("@/app/pages/admin/LeagueSeason"));
 const LeagueGyms = lazy(() => import("@/app/pages/admin/LeagueGyms"));
@@ -119,6 +121,7 @@ export const appRoutes = (
   <>
     {CompetitionDemo && <Route path="/demo/finaltag/*" element={<CompetitionDemo />} />}
     {SeasonFeedbackPreview && <Route path="/demo/saisonfeedback" element={<SeasonFeedbackPreview />} />}
+    {IdeasSurveyPreview && <Route path="/demo/ideen-auswertung" element={<IdeasSurveyPreview />} />}
     <Route element={<AuthLayout />}>
       <Route path="/app/login" element={<Login />} />
       <Route path="/app/register" element={<Register />} />
@@ -391,6 +394,7 @@ export const appRoutes = (
         }
       />
       <Route path="league/season-feedback" element={<RoleGuard allow={["league_admin"]}><LeagueSeasonFeedback /></RoleGuard>} />
+      <Route path="league/ideas-2027" element={<RoleGuard allow={["league_admin"]}><LeagueIdeasSurvey /></RoleGuard>} />
       <Route
         path="league/finale"
         element={
