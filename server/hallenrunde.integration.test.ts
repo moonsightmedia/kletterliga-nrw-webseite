@@ -49,16 +49,22 @@ test("stores one durable reply per hall and exposes it only to that hall or a le
   expect((await post({ action: "reply", reply })).status).toBe(401);
   expect((await post({ action: "reply", reply }, cookie, "https://example.invalid")).status).toBe(403);
   expect((await post({ action: "reply", reply: blankReply }, cookie)).status).toBe(422);
+  const missingConditions = await post({ action: "reply", reply: { ...reply, conditions: "  " } }, cookie);
+  expect(missingConditions.status).toBe(422);
+  expect(await missingConditions.json()).toMatchObject({ errors: { conditions: expect.any(String) } });
   expect((await post({ action: "reply", reply }, cookie)).status).toBe(200);
 
   await stop();
   await start();
   const update = await post({ action: "reply", hall: "Demo-Kletterhalle OWL", reply: {
-    ...reply, note: "Aktualisierte Testantwort", blockedPeriods: [{ from: "2027-06-12", to: "2027-06-13" }],
+    ...reply, conditions: "  Wenn die Routen bis Mai fertig sind.  ", note: "Aktualisierte Testantwort",
   } }, cookie);
   expect(update.status).toBe(200);
   const current = await update.json();
-  expect(current.reply).toMatchObject({ from: "2027-05-01", to: "2027-08-31", note: "Aktualisierte Testantwort" });
+  expect(current.reply).toMatchObject({
+    from: "2027-05-01", to: "2027-08-31", note: "Aktualisierte Testantwort",
+    conditions: "Wenn die Routen bis Mai fertig sind.", blockedPeriods: [],
+  });
   expect(await (await post({ action: "access", code: "TEST27" })).json()).toEqual({ hall: "Demo-Kletterhalle OWL", saved: null });
   expect(await (await post({ action: "access", code: "DEMO27" })).json()).toEqual({ hall: "Demo-Kletterhalle Köln", saved: current });
   expect(await localAdminReport(db)).toEqual([

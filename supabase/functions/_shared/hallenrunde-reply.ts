@@ -39,6 +39,7 @@ const replyFields = z.object({
   decisionBy: z.string().max(10),
   blockedPeriods: z.array(dateSpan).max(maxBlockedPeriods).default([]),
   blockers: z.string().trim().max(600),
+  conditions: z.string().trim().max(600).optional(),
   final: z.enum(["", "yes", "maybe", "no"]),
   note: z.string().trim().max(1200),
 });
@@ -65,6 +66,7 @@ export function validateReply(input: unknown): { reply?: Reply; errors: ReplyErr
   if (!reply.decision) errors.decision = "Wählt bitte aus, wie eure Halle zur Saison steht.";
 
   if (reply.decision === "yes") {
+    if (reply.conditions === "") errors.conditions = "Gebt bitte an, unter welchen Bedingungen ihr teilnehmen könnt.";
     if (reply.blockedPeriods.some(({ from, to }) => !validDay(from) || !validDay(to) || from > to || from < season.start || to > season.end)) {
       errors.blockedPeriods = "Sperrtermine müssen zwischen dem 1. Mai und dem 15. September 2027 liegen.";
     } else reply.blockedPeriods = mergeBlockedPeriods(reply.blockedPeriods);
@@ -93,6 +95,7 @@ export function validateReply(input: unknown): { reply?: Reply; errors: ReplyErr
     reply.final = "";
     reply.blockedPeriods = [];
     reply.blockers = "";
+    delete reply.conditions;
   }
   if (reply.decision === "later") {
     if (!validDay(reply.decisionBy) || reply.decisionBy < season.repliesOpen || reply.decisionBy >= season.start) {

@@ -12,7 +12,7 @@ import "react-day-picker/dist/style.css";
 
 const steps = ["Halle öffnen", "Rückmeldung", "Prüfen"];
 const choices = [
-  { value: "yes", title: "Zusage", hint: "Wir sind 2027 dabei." },
+  { value: "yes", title: "Zusage", hint: "Wir möchten 2027 dabei sein." },
   { value: "later", title: "Noch offen", hint: "Wir brauchen mehr Zeit." },
   { value: "no", title: "Absage", hint: "Wir setzen 2027 aus." },
 ] as const;
@@ -211,8 +211,18 @@ export default function App({ local = false }: { local?: boolean }) {
               {errors.decision && <p className="hr-error" id="decision-error">{errors.decision}</p>}
 
               {reply.decision === "yes" && <>
+                <label className="hr-condition-toggle">
+                  <input type="checkbox" checked={reply.conditions !== undefined}
+                    onChange={e => change({ conditions: e.target.checked ? "" : undefined })} />
+                  <span>Wir können nur unter bestimmten Bedingungen teilnehmen.</span>
+                </label>
+                {reply.conditions !== undefined && <Field name="conditions" label="Bedingungen für eure Teilnahme"
+                  hint="Was muss geklärt oder erfüllt sein, damit ihr dabei sein könnt?" error={errors.conditions}>
+                  <textarea {...fieldProps("conditions", true)} required rows={2} maxLength={600}
+                    value={reply.conditions} onChange={e => change({ conditions: e.target.value })} />
+                </Field>}
                 <PeriodPicker reply={reply} change={change} errors={errors} />
-                {!!reply.blockedPeriods?.length && <Field name="blockers" label="Sperrtermine oder Bedingungen" hint="Optional. Schreibt kurz dazu, warum diese Tage für eure Halle nicht passen." error={errors.blockers}>
+                {!!reply.blockedPeriods?.length && <Field name="blockers" label="Hinweis zu den Sperrterminen" hint="Optional. Schreibt kurz dazu, warum diese Tage für eure Halle nicht passen." error={errors.blockers}>
                   <textarea {...fieldProps("blockers", true)} rows={2} maxLength={600} value={reply.blockers} onChange={e => change({ blockers: e.target.value })} />
                 </Field>}
                 <Field label="Interesse an der Finalausrichtung?" name="final">

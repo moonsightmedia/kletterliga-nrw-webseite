@@ -103,6 +103,12 @@ h2, h3 { color: var(--blue); }
 
 .hr-decision { border: 0; padding: 0; margin: 0; min-width: 0; }
 .hr-decision legend { margin-bottom: 10px; }
+.hr-condition-toggle {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px;
+  border: 1px solid var(--field-line); color: var(--blue); font-weight: 700; cursor: pointer;
+}
+.hr-condition-toggle input { flex: none; width: 17px; height: 17px; margin-top: 3px; accent-color: var(--blue); }
+.hr-condition-toggle:has(input:checked) { background: var(--pale); border-color: var(--rust); }
 .hr-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .hr-choice {
   position: relative; display: grid; align-content: center; gap: 4px; min-height: 78px;
