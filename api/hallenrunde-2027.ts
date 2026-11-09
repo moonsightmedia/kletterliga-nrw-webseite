@@ -49,10 +49,17 @@ async function handleRequest(req: Request): Promise<Response> {
       signal: AbortSignal.timeout(8000),
     });
     const headers = new Headers(noStore);
-    for (const key of ["set-cookie", "retry-after"]) {
-      const value = upstream.headers.get(key);
-      if (value) headers.set(key, value);
+    // The Supabase gateway can append a cookie scoped to its own domain.
+    const hallCookie = upstream.headers.getSetCookie()
+      .flatMap(value => value.split(/,(?=\s*[\w-]+=)/))
+      .map(value => value.trim().match(/^hallenrunde_2027=([0-9a-f]{64}|);/))
+      .find(Boolean);
+    if (hallCookie) {
+      const token = hallCookie[1];
+      headers.set("Set-Cookie", `hallenrunde_2027=${token}; Max-Age=${token ? 28800 : 0}; Path=/api/hallenrunde-2027; HttpOnly; SameSite=Strict; Secure`);
     }
+    const retryAfter = upstream.headers.get("retry-after");
+    if (retryAfter) headers.set("Retry-After", retryAfter);
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch {
     return problem(503, "Der Speicher ist gerade nicht erreichbar. Versucht es bitte erneut.");
