@@ -47,19 +47,6 @@ const LeagueDashboard = () => {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Liga"
-          title="Liga-Übersicht"
-          description="Globale Kennzahlen der Saison."
-        />
-        <p className="text-sm text-[rgba(27,28,26,0.64)]">Lade Statistiken…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <AdminPageHeader
@@ -68,7 +55,17 @@ const LeagueDashboard = () => {
         description="Detaillierte Übersicht und Verwaltung der Liga."
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <Link to="/app/admin/league/hallenrunde-2027" className="stitch-surface-card flex items-center gap-4 rounded-xl p-5 text-[#003d55] transition-colors hover:bg-[#f2dcab]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]">
+        <Building2 className="h-6 w-6 shrink-0 text-[#a15523]" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">Hallenrückmeldungen 2027</h2>
+          <p className="mt-1 text-sm text-[#003d55]/65">Zusagen, offene Entscheidungen, Zeitfenster und Sperrtermine einsehen.</p>
+        </div>
+        <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
+      </Link>
+
+      {loading ? <p role="status" className="text-sm text-[#526570]">Statistiken werden geladen …</p> :
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <AdminStatCard
           icon={Users}
           label="Teilnehmer"
@@ -111,7 +108,8 @@ const LeagueDashboard = () => {
           iconClassName="text-amber-700"
           valueClassName="stitch-metric text-3xl text-amber-700"
         />
-      </div>
+        </div>
+      }
       <Link to="/app/admin/league/season-feedback" className="stitch-surface-card flex items-center gap-4 rounded-xl p-5 text-[#003d55] transition-colors hover:bg-[#f2dcab]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d55]">
         <MessageSquare className="h-6 w-6 shrink-0 text-[#a15523]" aria-hidden="true" /><div className="min-w-0 flex-1"><h2 className="font-semibold">Saisonfeedback 2026</h2><p className="mt-1 text-sm text-[#003d55]/65">Rückmeldungen lesen und Wünsche für die nächste Saison auswerten.</p></div><ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
       </Link>

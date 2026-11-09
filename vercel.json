@@ -13,6 +13,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/hallen/2027",
+      "destination": "/hallen/2027/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -20,6 +24,12 @@
   "headers": [
     {
       "source": "/finale-2026/(teilnehmende|crew)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/hallen/2027",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
