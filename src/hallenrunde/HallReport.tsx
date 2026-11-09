@@ -6,9 +6,15 @@ import type { Decision, SavedReply } from "./reply";
 
 export type HallReportEntry = { id: string; hall: string; enabled: boolean; saved: SavedReply | null };
 export type HallReportSource = (signal: AbortSignal) => Promise<HallReportEntry[]>;
-type Status = Decision | "pending";
-const statuses: Record<Status, string> = { yes: "Zusage", later: "Noch offen", no: "Absage", pending: "Keine Antwort" };
-const getStatus = (entry: HallReportEntry): Status => entry.saved?.reply.decision || "pending";
+type Status = Decision | "conditional" | "pending";
+const statuses: Record<Status, string> = {
+  yes: "Zusage", conditional: "Zusage unter Bedingungen", later: "Noch offen", no: "Absage", pending: "Keine Antwort",
+};
+const getStatus = (entry: HallReportEntry): Status => {
+  const reply = entry.saved?.reply;
+  if (reply?.decision === "yes" && reply.conditions) return "conditional";
+  return reply?.decision || "pending";
+};
 const dateTime = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Berlin" });
 
 export default function HallReport({ source }: { source: HallReportSource }) {
@@ -38,7 +44,7 @@ export default function HallReport({ source }: { source: HallReportSource }) {
   const counts = entries?.reduce((total, entry) => {
     total[getStatus(entry)]++;
     return total;
-  }, { yes: 0, later: 0, no: 0, pending: 0 });
+  }, { yes: 0, conditional: 0, later: 0, no: 0, pending: 0 });
 
   return <div className="w-full space-y-6 text-[#003d55]">
     <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#003d55]/20 pb-5">
@@ -49,7 +55,7 @@ export default function HallReport({ source }: { source: HallReportSource }) {
 
     {loading && <p role="status">Rückmeldungen werden geladen …</p>}
     {error && <p role="alert" className="border-l-4 border-red-700 bg-red-50 px-4 py-3 text-red-900">{error}</p>}
-    {counts && <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    {counts && <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
       {(Object.keys(statuses) as Status[]).map(status => <div key={status} className="border border-[#003d55]/15 bg-white p-3 sm:p-4">
         <dt className="text-sm">{statuses[status]}</dt><dd className="mt-1 text-2xl font-bold tabular-nums">{counts[status]}</dd>
       </div>)}
