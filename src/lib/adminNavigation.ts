@@ -8,7 +8,10 @@ export const adminNavigationGroups: Record<string, NavGroup[]> = {
     { id: "competition", label: "Wettkampftag", icon: Flag, items: [{ to: `${league}/wettkampf`, label: "Halbfinale & Finale" }, { to: `${league}/finale`, label: "Einlass & Anmeldungen" }, { to: "/verlosung/2026", label: "TV-Verlosung" }] },
     { id: "people", label: "Teilnehmer", icon: Users, items: [{ to: `${league}/participants`, label: "Teilnehmerübersicht" }, { to: `${league}/change-requests`, label: "Änderungsanfragen" }] },
     { id: "season", label: "Saison & Wertung", icon: Trophy, items: [{ to: `${league}/season`, label: "Saison" }, { to: `${league}/classes`, label: "Wertungsklassen" }, { to: `${league}/stage-winners`, label: "Etappensieger" }, { to: `${league}/routes`, label: "Qualifikationsrouten" }, { to: `${league}/results`, label: "Qualifikationsergebnisse" }, { to: `${league}/route-feedback`, label: "Routenfeedback" }, { to: `${league}/season-feedback`, label: "Saisonfeedback" }, { to: `${league}/ideas-2027`, label: "Ideen 2027" }] },
-    { id: "gyms", label: "Hallen", icon: Building2, items: [{ to: `${league}/gyms`, label: "Hallen" }] },
+    { id: "gyms", label: "Hallen", icon: Building2, items: [
+      { to: `${league}/gyms`, label: "Hallen" },
+      { to: `${league}/hallenrunde-2027`, label: "Hallenrückmeldungen 2027" },
+    ] },
     { id: "settings", label: "Verwaltung", icon: Settings, items: [{ to: `${league}/codes`, label: "Teilnahmecodes" }, { to: `${league}/mastercodes`, label: "Mastercodes" }, { to: `${league}/settings`, label: "Einstellungen" }] },
   ],
   gym_admin: [

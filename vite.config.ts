@@ -21,5 +21,11 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        hallenrunde: path.resolve(__dirname, "hallen/2027/index.html"),
+      },
+    },
   },
 }));
